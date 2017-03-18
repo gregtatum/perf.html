@@ -9,6 +9,7 @@ import ScrubberViewportIndicator from '../components/ScrubberViewportIndicator';
 import { connect } from 'react-redux';
 import { getProfile, getProfileViewOptions, getThreadOrder, getDisplayRange, getZeroAt } from '../reducers/profile-view';
 import { getTimelineHorizontalViewport } from '../reducers/timeline-view';
+import { getSelectedTab } from '../reducers/url-state';
 
 import * as actions from '../actions';
 
@@ -40,6 +41,7 @@ class ProfileViewerHeader extends PureComponent {
     const {
       profile, className, threadOrder, changeThreadOrder, selection,
       updateProfileSelection, timeRange, zeroAt, timelineHorizontalViewport,
+      selectedTab,
     } = this.props;
     const threads = profile.threads;
     const { hasSelection, isModifying, selectionStart, selectionEnd } = selection;
@@ -54,7 +56,8 @@ class ProfileViewerHeader extends PureComponent {
                            selectionStart={selectionStart}
                            selectionEnd={selectionEnd}
                            onSelectionChange={updateProfileSelection}
-                           onZoomButtonClick={this._onZoomButtonClick}>
+                           onZoomButtonClick={this._onZoomButtonClick}
+                           selectedTab={selectedTab} >
       <div className={`${className}HeaderIntervalMarkerOverviewContainer ${className}HeaderIntervalMarkerOverviewContainerJank`}>
         {
           threadOrder.map(threadIndex => {
@@ -106,7 +109,11 @@ class ProfileViewerHeader extends PureComponent {
           }
         </Reorderable>}
       </OverflowEdgeIndicator>
-      <ScrubberViewportIndicator timelineHorizontalViewport={timelineHorizontalViewport} />
+      {
+        selectedTab === 'timeline'
+          ? <ScrubberViewportIndicator timelineHorizontalViewport={timelineHorizontalViewport} />
+          : null
+      }
     </TimeSelectionScrubber>;
   }
 }
@@ -133,4 +140,5 @@ export default connect(state => ({
   timeRange: getDisplayRange(state),
   zeroAt: getZeroAt(state),
   timelineHorizontalViewport: getTimelineHorizontalViewport(state),
+  selectedTab: getSelectedTab(state),
 }), actions)(ProfileViewerHeader);

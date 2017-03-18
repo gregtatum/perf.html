@@ -119,12 +119,14 @@ class TimeSelectionScrubberImpl extends PureComponent {
     const {
       className, zeroAt, rangeStart, rangeEnd, children,
       hasSelection, isModifying, selectionStart, selectionEnd,
-      width, onSelectionChange, onZoomButtonClick,
+      width, onSelectionChange, onZoomButtonClick, selectedTab,
     } = this.props;
 
     const {
       hoverLocation,
     } = this.state;
+
+    const showScrubber = hasSelection && selectedTab !== 'timeline';
 
     return (
       <div className={className}
@@ -137,14 +139,14 @@ class TimeSelectionScrubberImpl extends PureComponent {
                   rangeEnd={rangeEnd}
                   width={width}/>
         { children }
-        { hasSelection ? <SelectionScrubberOverlay rangeStart={rangeStart}
+        { showScrubber ? <SelectionScrubberOverlay rangeStart={rangeStart}
                                                    rangeEnd={rangeEnd}
                                                    selectionStart={selectionStart}
                                                    selectionEnd={selectionEnd}
                                                    isModifying={isModifying}
                                                    width={width}
                                                    onSelectionChange={onSelectionChange}
-                                                   onZoomButtonClick={onZoomButtonClick}/>
+                                                   onZoomButtonClick={onZoomButtonClick} />
                        : null }
         <div className='timeSelectionScrubberHoverIndicator'
              style={{
@@ -170,6 +172,7 @@ TimeSelectionScrubberImpl.propTypes = {
   onSelectionChange: PropTypes.func,
   onZoomButtonClick: PropTypes.func,
   children: PropTypes.node,
+  selectedTab: PropTypes.string.isRequired,
 };
 
 const TimeSelectionScrubber = withSize(TimeSelectionScrubberImpl);
