@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
 import TreeView from './TreeView';
+import NodeIcon from './NodeIcon';
 import { getStackAsFuncArray } from '../profile-data';
 import { getInvertCallstack, getJSOnly, getSearchString, getSelectedThreadIndex } from '../reducers/url-state';
 import {
@@ -21,7 +22,7 @@ class ProfileTreeView extends Component {
       { propName: 'totalTime', title: 'Running Time' },
       { propName: 'totalTimePercent', title: '' },
       { propName: 'selfTime', title: 'Self' },
-      { propName: 'icon', title: '' },
+      { propName: 'icon', title: '', component: NodeIcon },
     ];
     this._mainColumn = { propName: 'name', title: '' };
     this._appendageColumn = { propName: 'lib', title: '' };

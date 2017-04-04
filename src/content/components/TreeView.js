@@ -2,7 +2,6 @@ import React, { Component, PropTypes } from 'react';
 import shallowCompare from 'react-addons-shallow-compare';
 import classNames from 'classnames';
 import VirtualList from './VirtualList';
-import NodeIcon from './NodeIcon';
 import { BackgroundImageStyleDef } from './StyleDef';
 
 import { ContextMenuTrigger } from 'react-contextmenu';
@@ -26,6 +25,7 @@ TreeViewHeader.propTypes = {
   fixedColumns: PropTypes.arrayOf(PropTypes.shape({
     propName: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
+    component: PropTypes.func,
   })).isRequired,
   mainColumn: PropTypes.shape({
     propName: PropTypes.string.isRequired,
@@ -74,17 +74,16 @@ class TreeViewRowFixedColumns extends Component {
       <div className={`treeViewRow treeViewRowFixedColumns ${evenOddClassName} ${selected ? 'selected' : ''}`} style={{height: '16px'}} onMouseDown={this._onClick}>
         {
           columns.map(col => {
-            let renderedComponent;
-            if (col.propName === 'icon') {
-              renderedComponent = <NodeIcon node={ node }/>;
-            } else {
-              renderedComponent = reactStringWithHighlightedSubstrings(
-                node[col.propName], highlightString, 'treeViewHighlighting'
-              );
-            }
+            const RenderComponent = col.component;
+
             return <span className={`treeViewRowColumn treeViewFixedColumn ${col.propName}`}
                     key={col.propName}>
-                    { renderedComponent }
+                    { RenderComponent ?
+                        <RenderComponent node={node} /> :
+                        reactStringWithHighlightedSubstrings(
+                          node[col.propName], highlightString, 'treeViewHighlighting'
+                        )
+                    }
                    </span>;
           })
         }
@@ -392,10 +391,8 @@ class TreeView extends Component {
     return (
       <div className='treeView'>
         { icons.map(
-            ({ className, icon }) =>
-              <BackgroundImageStyleDef key={className} className={className} url={icon} />
-            )
-        }
+            ({ className, icon }) => <BackgroundImageStyleDef className={className} url={icon} key={className} />
+        ) }
         <TreeViewHeader fixedColumns={fixedColumns}
                          mainColumn={mainColumn}/>
         <ContextMenuTrigger id={contextMenuId}
@@ -423,6 +420,7 @@ TreeView.propTypes = {
   fixedColumns: PropTypes.arrayOf(PropTypes.shape({
     propName: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
+    component: PropTypes.func,
   })).isRequired,
   mainColumn: PropTypes.shape({
     propName: PropTypes.string.isRequired,
