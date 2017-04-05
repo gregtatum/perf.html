@@ -33,46 +33,47 @@ type compareFn<T> = { (a: T, b: T): number };
  * @returns The data table.
  */
 export function sortDataTable<KeyColumnElementType>(
-  table: DataTable,
-  keyColumn: KeyColumnElementType[],
-  comparator: compareFn<KeyColumnElementType>
-): DataTable {
-  function swap(i, j) {
+   table: DataTable,
+   keyColumn: KeyColumnElementType[],
+   comparator: compareFn<KeyColumnElementType>
+ ): DataTable {
+  const tempRow: { [string]: any } = {};
+  let tempKey;
+  function remember(index: Number) {
     for (const columnName in table) {
       if (columnName !== 'length') {
         const column = table[columnName];
-        const temp = column[i];
-        column[i] = column[j];
-        column[j] = temp;
+        tempRow[columnName] = column[index];
+        tempKey = keyColumn[index];
       }
     }
   }
 
-  function partition(pivot, left, right) {
-    const pivotValue = keyColumn[pivot];
-    let partitionIndex = left;
-
-    for (let i = left; i < right; i++) {
-      if (comparator(keyColumn[i], pivotValue) < 0) {
-        swap(i, partitionIndex);
-        partitionIndex++;
+  function shiftRight(index: Number) {
+    for (const columnName in table) {
+      if (columnName !== 'length') {
+        const column = table[columnName];
+        column[index + 1] = column[index];
       }
     }
-    swap(right, partitionIndex);
-    return partitionIndex;
   }
 
-  function quickSort(left, right) {
-    if (left < right) {
-      const pivot = right;
-      const partitionIndex = partition(pivot, left, right);
-
-      // Sort left and right
-      quickSort(left, partitionIndex - 1);
-      quickSort(partitionIndex + 1, right);
+  function restore(index: Number) {
+    for (const columnName in table) {
+      if (columnName !== 'length') {
+        table[columnName][index] = tempRow[columnName];
+      }
     }
   }
 
-  quickSort(0, table.length - 1);
+  for (let i = 1; i < table.length; i++) {
+    remember(i);
+    let j;
+    for (j = i - 1; j >= 0 && comparator(keyColumn[j], tempKey) > 0; j--) {
+      shiftRight(j);
+    }
+    restore(j + 1);
+  }
+
   return table;
 }
