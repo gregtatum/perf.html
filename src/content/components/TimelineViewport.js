@@ -85,7 +85,7 @@ export default function withTimelineViewport<T>(WrappedComponent: ReactClass<T>)
 
     constructor(props: Props) {
       super(props);
-
+      console.log('!!! TimelineViewport constructor');
       (this: any)._mouseWheelListener = this._mouseWheelListener.bind(this);
       (this: any)._mouseDownListener = this._mouseDownListener.bind(this);
       (this: any)._mouseMoveListener = this._mouseMoveListener.bind(this);
@@ -163,6 +163,7 @@ export default function withTimelineViewport<T>(WrappedComponent: ReactClass<T>)
     componentWillReceiveProps(newProps: Props) {
       if (this.props.isRowExpanded !== newProps.isRowExpanded) {
         this.setState(this.getDefaultState(newProps));
+        this._setSizeNextFrame();
         return;
       }
       if (
@@ -175,7 +176,7 @@ export default function withTimelineViewport<T>(WrappedComponent: ReactClass<T>)
 
     _setSize() {
       const rect = this.refs.container.getBoundingClientRect();
-      console.log('!!! _setSize - rect.width', rect.width);
+      console.log('!!! _setSize - rect.width', rect.width, rect.height, (new Error()).stack);
       if (this.state.containerWidth !== rect.width || this.state.containerHeight !== rect.height) {
         this.setState({
           containerWidth: rect.width,

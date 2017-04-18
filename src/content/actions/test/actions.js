@@ -228,17 +228,17 @@ describe('actions/changeTimelineMarkersExpandedThread', function () {
     function isExpanded(thread, threadIndex) {
       return TimelineSelectors.getAreMarkersExpanded(store.getState(), threadIndex);
     }
+    // Timeline markers are open by default.
+    assert.deepEqual(threads.map(isExpanded), [true, true, true]);
 
-    assert.deepEqual(threads.map(isExpanded), [false, false, false]);
-
-    store.dispatch(changeTimelineMarkersExpandedThread(1, true));
-    assert.deepEqual(threads.map(isExpanded), [false, true, false]);
-
-    store.dispatch(changeTimelineMarkersExpandedThread(2, true));
-    assert.deepEqual(threads.map(isExpanded), [false, false, true]);
+    store.dispatch(changeTimelineMarkersExpandedThread(1, false));
+    assert.deepEqual(threads.map(isExpanded), [true, false, true]);
 
     store.dispatch(changeTimelineMarkersExpandedThread(2, false));
-    assert.deepEqual(threads.map(isExpanded), [false, false, false]);
+    assert.deepEqual(threads.map(isExpanded), [true, false, false]);
+
+    store.dispatch(changeTimelineMarkersExpandedThread(2, true));
+    assert.deepEqual(threads.map(isExpanded), [true, false, true]);
   });
 });
 

@@ -35,16 +35,17 @@ class TimlineViewTimelinesImpl extends Component {
   render() {
     const { threads, threadOrder, changeThreadOrder, height } = this.props;
 
-    const className = 'timelineViewTimelines';
-
     return (
       <div className='timelineViewTimelines'>
         <div className='timelineViewTimelinesScroller'
              ref={element => {
                this.scrollElement = element;
              }}>
-          {/* <Reorderable tagName='div'
-                       className={`${className}ThreadList`}
+          <div className='timelineViewDivider'>
+            Sample based callstacks
+          </div>
+          <Reorderable tagName='div'
+                       className={'timelineViewTimelinesThreadList'}
                        order={threadOrder}
                        orient='vertical'
                        onChangeOrder={changeThreadOrder}>
@@ -55,8 +56,11 @@ class TimlineViewTimelinesImpl extends Component {
                                     getScrollElement={this.getScrollElement} />
               </div>
             ))}
-          </Reorderable> */}
-          <div className={`${className}ThreadList`}>
+          </Reorderable>
+          <div className='timelineViewDivider'>
+            Marker Events
+          </div>
+          <div className={'timelineViewTimelinesThreadList'}>
             {threads.map((thread, threadIndex) => (
               <div className='timelineViewRow' key={threadIndex}>
                 <TimelineMarkers threadIndex={threadIndex}
