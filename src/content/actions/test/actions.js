@@ -11,7 +11,8 @@ import {
 } from '../profile-view';
 import {
   changeFlameChartColorStrategy,
-  changeTimelineExpandedThread,
+  changeTimelineMarkersExpandedThread,
+  changeTimelineFlameChartExpandedThread,
 } from '../timeline';
 import { receiveProfileFromAddon } from '../receive-profile';
 import { getCategoryByImplementation } from '../../color-categories';
@@ -197,24 +198,46 @@ describe('selectors/getLeafCategoryStackTimingForFlameChart', function () {
   });
 });
 
-describe('actions/changeTimelineExpandedThread', function () {
-  it('can set one timeline thread as expanded', function () {
+describe('actions/changeTimelineFlameChartExpandedThread', function () {
+  it('can set one timeline flame chart thread as expanded', function () {
     const store = storeWithProfile();
     const threads = ProfileViewSelectors.getThreads(store.getState());
 
     function isExpanded(thread, threadIndex) {
-      return TimelineSelectors.getIsThreadExpanded(store.getState(), threadIndex);
+      return TimelineSelectors.getIsFlameChartExpanded(store.getState(), threadIndex);
     }
 
     assert.deepEqual(threads.map(isExpanded), [false, false, false]);
 
-    store.dispatch(changeTimelineExpandedThread(1, true));
+    store.dispatch(changeTimelineFlameChartExpandedThread(1, true));
     assert.deepEqual(threads.map(isExpanded), [false, true, false]);
 
-    store.dispatch(changeTimelineExpandedThread(2, true));
+    store.dispatch(changeTimelineFlameChartExpandedThread(2, true));
     assert.deepEqual(threads.map(isExpanded), [false, false, true]);
 
-    store.dispatch(changeTimelineExpandedThread(2, false));
+    store.dispatch(changeTimelineFlameChartExpandedThread(2, false));
+    assert.deepEqual(threads.map(isExpanded), [false, false, false]);
+  });
+});
+
+describe('actions/changeTimelineMarkersExpandedThread', function () {
+  it('can set one timeline markers thread as expanded', function () {
+    const store = storeWithProfile();
+    const threads = ProfileViewSelectors.getThreads(store.getState());
+
+    function isExpanded(thread, threadIndex) {
+      return TimelineSelectors.getAreMarkersExpanded(store.getState(), threadIndex);
+    }
+
+    assert.deepEqual(threads.map(isExpanded), [false, false, false]);
+
+    store.dispatch(changeTimelineMarkersExpandedThread(1, true));
+    assert.deepEqual(threads.map(isExpanded), [false, true, false]);
+
+    store.dispatch(changeTimelineMarkersExpandedThread(2, true));
+    assert.deepEqual(threads.map(isExpanded), [false, false, true]);
+
+    store.dispatch(changeTimelineMarkersExpandedThread(2, false));
     assert.deepEqual(threads.map(isExpanded), [false, false, false]);
   });
 });

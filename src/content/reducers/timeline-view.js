@@ -5,13 +5,34 @@ import type { Action } from '../actions/types';
 
 type IsThreadExpandedMap = Map<ThreadIndex, boolean>;
 type TimelineViewState = {
-  isThreadExpanded: IsThreadExpandedMap,
+  isFlameChartExpanded: IsThreadExpandedMap,
+  areMarkersExpanded: IsThreadExpandedMap,
   hasZoomedViaMousewheel: boolean,
 }
 
-function isThreadExpanded(state: IsThreadExpandedMap = new Map(), action: Action) {
+function isFlameChartExpanded(state: IsThreadExpandedMap = new Map(), action: Action) {
   switch (action.type) {
-    case 'CHANGE_TIMELINE_EXPANDED_THREAD': {
+    case 'CHANGE_TIMELINE_FLAME_CHART_EXPANDED_THREAD': {
+      const newState = new Map(state);
+      // For now only allow one thread to be open at a time, evaluate whether or not do
+      // more than one.
+      if (action.isExpanded) {
+        for (const [threadIndex, isExpanded] of state) {
+          if (isExpanded) {
+            newState.set(threadIndex, false);
+          }
+        }
+      }
+      newState.set(action.threadIndex, action.isExpanded);
+      return newState;
+    }
+  }
+  return state;
+}
+
+function areMarkersExpanded(state: IsThreadExpandedMap = new Map(), action: Action) {
+  switch (action.type) {
+    case 'CHANGE_TIMELINE_MARKERS_EXPANDED_THREAD': {
       const newState = new Map(state);
       // For now only allow one thread to be open at a time, evaluate whether or not do
       // more than one.
@@ -38,11 +59,14 @@ function hasZoomedViaMousewheel(state: boolean = false, action: Action) {
   return state;
 }
 
-export default combineReducers({ isThreadExpanded, hasZoomedViaMousewheel });
+export default combineReducers({ isFlameChartExpanded, areMarkersExpanded, hasZoomedViaMousewheel });
 
 export const getTimelineView = (state: Object): TimelineViewState => state.timelineView;
-export const getIsThreadExpanded = (state: Object, threadIndex: ThreadIndex) => {
-  return Boolean(getTimelineView(state).isThreadExpanded.get(threadIndex));
+export const getIsFlameChartExpanded = (state: Object, threadIndex: ThreadIndex) => {
+  return Boolean(getTimelineView(state).isFlameChartExpanded.get(threadIndex));
+};
+export const getAreMarkersExpanded = (state: Object, threadIndex: ThreadIndex) => {
+  return Boolean(getTimelineView(state).areMarkersExpanded.get(threadIndex));
 };
 export const getHasZoomedViaMousewheel = (state: Object): boolean => {
   return getTimelineView(state).hasZoomedViaMousewheel;
