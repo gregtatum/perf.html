@@ -175,6 +175,7 @@ export default function withTimelineViewport<T>(WrappedComponent: ReactClass<T>)
 
     _setSize() {
       const rect = this.refs.container.getBoundingClientRect();
+      console.log('!!! _setSize - rect.width', rect.width);
       if (this.state.containerWidth !== rect.width || this.state.containerHeight !== rect.height) {
         this.setState({
           containerWidth: rect.width,
@@ -318,6 +319,12 @@ export default function withTimelineViewport<T>(WrappedComponent: ReactClass<T>)
             });
           } else {
             const timeRangeLength = timeRange.end - timeRange.start;
+            console.log('!!! updateProfileSelection', {
+              hasSelection: true,
+              isModifying: false,
+              selectionStart: timeRange.start + timeRangeLength * newViewportLeft,
+              selectionEnd: timeRange.start + timeRangeLength * newViewportRight,
+            });
             updateProfileSelection({
               hasSelection: true,
               isModifying: false,
@@ -398,6 +405,13 @@ export default function withTimelineViewport<T>(WrappedComponent: ReactClass<T>)
       const viewportVerticalChanged = newViewportTop !== viewportTop;
 
       if (viewportHorizontalChanged) {
+        console.log('!!! updateProfileSelection2', {
+          hasSelection: true,
+          isModifying: false,
+          selectionStart: timeRange.start + timeRangeLength * newViewportLeft,
+          selectionEnd: timeRange.start + timeRangeLength * newViewportRight,
+        });
+
         updateProfileSelection({
           hasSelection: true,
           isModifying: false,

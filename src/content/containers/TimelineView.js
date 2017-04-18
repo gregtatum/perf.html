@@ -5,6 +5,7 @@ import { getThreads, getThreadOrder } from '../reducers/profile-view';
 import actions from '../actions';
 import FlameChartSettings from '../components/FlameChartSettings';
 import TimelineFlameChart from './TimelineFlameChart';
+import TimelineMarkers from './TimelineMarkers';
 import Reorderable from '../components/Reorderable';
 import { withSize } from '../with-size';
 
@@ -42,7 +43,7 @@ class TimlineViewTimelinesImpl extends Component {
              ref={element => {
                this.scrollElement = element;
              }}>
-          <Reorderable tagName='div'
+          {/* <Reorderable tagName='div'
                        className={`${className}ThreadList`}
                        order={threadOrder}
                        orient='vertical'
@@ -54,7 +55,16 @@ class TimlineViewTimelinesImpl extends Component {
                                     getScrollElement={this.getScrollElement} />
               </div>
             ))}
-          </Reorderable>
+          </Reorderable> */}
+          <div className={`${className}ThreadList`}>
+            {threads.map((thread, threadIndex) => (
+              <div className='timelineViewRow' key={threadIndex}>
+                <TimelineMarkers threadIndex={threadIndex}
+                                 viewHeight={height}
+                                 getScrollElement={this.getScrollElement} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
