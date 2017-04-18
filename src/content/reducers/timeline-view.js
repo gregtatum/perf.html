@@ -34,15 +34,6 @@ function areMarkersExpanded(state: IsThreadExpandedMap = new Map(), action: Acti
   switch (action.type) {
     case 'CHANGE_TIMELINE_MARKERS_EXPANDED_THREAD': {
       const newState = new Map(state);
-      // For now only allow one thread to be open at a time, evaluate whether or not do
-      // more than one.
-      if (action.isExpanded) {
-        for (const [threadIndex, isExpanded] of state) {
-          if (isExpanded) {
-            newState.set(threadIndex, false);
-          }
-        }
-      }
       newState.set(action.threadIndex, action.isExpanded);
       return newState;
     }
@@ -66,7 +57,8 @@ export const getIsFlameChartExpanded = (state: Object, threadIndex: ThreadIndex)
   return Boolean(getTimelineView(state).isFlameChartExpanded.get(threadIndex));
 };
 export const getAreMarkersExpanded = (state: Object, threadIndex: ThreadIndex) => {
-  return Boolean(getTimelineView(state).areMarkersExpanded.get(threadIndex));
+  // Default to being expanded by checking if not equal to false.
+  return getTimelineView(state).areMarkersExpanded.get(threadIndex) !== false;
 };
 export const getHasZoomedViaMousewheel = (state: Object): boolean => {
   return getTimelineView(state).hasZoomedViaMousewheel;
