@@ -45,7 +45,7 @@ class TimlineViewTimelinesImpl extends Component {
             Sample based callstacks
           </div>
           <Reorderable tagName='div'
-                       className={'timelineViewTimelinesThreadList'}
+                       className='timelineViewTimelinesThreadList'
                        order={threadOrder}
                        orient='vertical'
                        onChangeOrder={changeThreadOrder}>
@@ -60,7 +60,7 @@ class TimlineViewTimelinesImpl extends Component {
           <div className='timelineViewDivider'>
             Marker Events
           </div>
-          <div className={'timelineViewTimelinesThreadList'}>
+          <div className='timelineViewTimelinesThreadList'>
             {threads.map((thread, threadIndex) => (
               <div className='timelineViewRow' key={threadIndex}>
                 <TimelineMarkers threadIndex={threadIndex}
