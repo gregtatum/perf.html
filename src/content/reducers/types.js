@@ -64,6 +64,8 @@ export type URLState = {
   implementation: ImplementationFilter,
   invertCallstack: boolean,
   hidePlatformDetails: boolean,
+  chargeToCallers: IndexIntoFuncTable[],
+  pruneSubtree: IndexIntoFuncTable[],
 };
 
 export type IconState = Set<string>;

@@ -5,7 +5,7 @@ import { createSelector } from 'reselect';
 import { urlFromState } from '../url-handling';
 import * as RangeFilters from '../range-filters';
 
-import type { ThreadIndex } from '../../common/types/profile';
+import type { ThreadIndex, IndexIntoFuncTable } from '../../common/types/profile';
 import type { StartEndRange } from '../../common/types/units';
 import type {
   Action, CallTreeFiltersPerThread, CallTreeFilter, DataSource, ImplementationFilter,
@@ -135,6 +135,35 @@ function hidePlatformDetails(state: boolean = false, action: Action) {
   }
 }
 
+function chargeToCallers(state: IndexIntoFuncTable[] = [], action: Action) {
+  switch (action.type) {
+    case 'CHARGE_FUNC_TO_CALLER':
+      if (!state.includes(action.funcIndex)) {
+        return state.concat(action.funcIndex);
+      }
+      return state;
+    case 'UNCHARGE_FUNC_TO_CALLER':
+      const { funcIndex } = action;
+      return state.filter(index => index !== funcIndex);
+    default:
+      return state;
+  }
+}
+
+function pruneSubtree(state: IndexIntoFuncTable[] = [], action: Action) {
+  switch (action.type) {
+    case 'PRUNE_SUBTREE':
+      if (!state.includes(action.funcIndex)) {
+        return state.concat(action.funcIndex);
+      }
+      return state;
+    case 'RESTORE_SUBTREE':
+      const { funcIndex } = action;
+      return state.filter(index => index !== funcIndex);
+    default:
+      return state;
+  }
+}
 const urlStateReducer: Reducer<URLState> = (regularUrlStateReducer => (state: URLState, action: Action): URLState => {
   switch (action.type) {
     case '@@urlenhancer/updateURLState':
@@ -145,7 +174,7 @@ const urlStateReducer: Reducer<URLState> = (regularUrlStateReducer => (state: UR
 })(combineReducers({
   dataSource, hash, selectedTab, rangeFilters, selectedThread,
   callTreeSearchString, callTreeFilters, implementation, invertCallstack,
-  hidePlatformDetails,
+  hidePlatformDetails, chargeToCallers, pruneSubtree,
 }));
 export default urlStateReducer;
 
@@ -163,6 +192,8 @@ export const getSelectedThreadIndex = (state: State) => getURLState(state).selec
 export const getCallTreeFilters = (state: State, threadIndex: ThreadIndex): CallTreeFilter[] => {
   return getURLState(state).callTreeFilters[threadIndex] || [];
 };
+export const getChargeToCallersList = (state: State) => getURLState(state).chargeToCallers;
+export const getPruneSubtreeList = (state: State) => getURLState(state).pruneSubtree;
 
 export const getURLPredictor = createSelector(
   getURLState,

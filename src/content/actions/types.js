@@ -98,7 +98,11 @@ type URLStateAction =
   { type: 'POP_CALL_TREE_FILTERS', threadIndex: ThreadIndex, firstRemovedFilterIndex: number } |
   { type: 'CHANGE_IMPLEMENTATION_FILTER', implementation: ImplementationFilter } |
   { type: 'CHANGE_INVERT_CALLSTACK', invertCallstack: boolean } |
-  { type: 'CHANGE_HIDE_PLATFORM_DETAILS', hidePlatformDetails: boolean };
+  { type: 'CHANGE_HIDE_PLATFORM_DETAILS', hidePlatformDetails: boolean } |
+  { type: 'CHARGE_FUNC_TO_CALLER', funcIndex: IndexIntoFuncTable } |
+  { type: 'UNCHARGE_FUNC_TO_CALLER', funcIndex: IndexIntoFuncTable } |
+  { type: 'PRUNE_SUBTREE', funcIndex: IndexIntoFuncTable } |
+  { type: 'RESTORE_SUBTREE', funcIndex: IndexIntoFuncTable };
 
 type IconsAction =
   { type: 'ICON_HAS_LOADED', icon: string } |

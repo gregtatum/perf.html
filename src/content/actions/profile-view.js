@@ -148,3 +148,31 @@ export function popCallTreeFilters(threadIndex: ThreadIndex, firstRemovedFilterI
     firstRemovedFilterIndex,
   };
 }
+
+export function chargeFuncToCaller(funcIndex: IndexIntoFuncTable) {
+  return {
+    type: 'CHARGE_FUNC_TO_CALLER',
+    funcIndex,
+  };
+}
+
+export function unchargeFuncToCaller(funcIndex: IndexIntoFuncTable) {
+  return {
+    type: 'UNCHARGE_FUNC_TO_CALLER',
+    funcIndex,
+  };
+}
+
+export function pruneSubtree(funcIndex: IndexIntoFuncTable) {
+  return {
+    type: 'PRUNE_SUBTREE',
+    funcIndex,
+  };
+}
+
+export function restoreSubtree(funcIndex: IndexIntoFuncTable) {
+  return {
+    type: 'RESTORE_SUBTREE',
+    funcIndex,
+  };
+}

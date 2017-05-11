@@ -73,6 +73,15 @@ export function urlFromState(urlState: URLState) {
       query.hidePlatformDetails = urlState.hidePlatformDetails ? null : undefined;
       break;
   }
+
+  if (urlState.chargeToCallers.length > 0) {
+    query.chargeToCallers = urlState.chargeToCallers.join(',');
+  }
+  
+  if (urlState.pruneSubtree.length > 0) {
+    query.pruneSubtree = urlState.pruneSubtree.join(',');
+  }
+
   const qString = queryString.stringify(query);
   return pathname + (qString ? '?' + qString : '');
 }
@@ -110,6 +119,8 @@ export function stateFromCurrentLocation(): URLState {
         implementation: 'combined',
         invertCallstack: false,
         hidePlatformDetails: false,
+        chargeToCallers: [],
+        pruneSubtree: [],
       };
     }
   }
@@ -143,5 +154,21 @@ export function stateFromCurrentLocation(): URLState {
     implementation,
     invertCallstack: query.invertCallstack !== undefined,
     hidePlatformDetails: query.hidePlatformDetails !== undefined,
+    chargeToCallers: query.chargeToCallers ? _parseIdList(query.chargeToCallers) : [],
+    pruneSubtree: query.pruneSubtree ? _parseIdList(query.pruneSubtree) : [],
   };
+}
+
+/**
+ * Parse an ID list, and only return a list of valid IDs.
+ * e.g. "2,3,7,10" => [2, 3, 7, 10]
+ */
+function _parseIdList(string: string): number[] {
+  return string
+    .split(',')
+    .map(part => parseInt(part, 10))
+    // Filter for valid ints
+    .filter(number => number >= 0)
+    // Make sure this list is unique.
+    .filter((value, index, array) => array.indexOf(value) === index);
 }

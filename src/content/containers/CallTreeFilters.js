@@ -3,6 +3,8 @@ import ButtonWithPanel from '../components/ButtonWithPanel';
 import ArrowPanel from '../components/ArrowPanel';
 import Reorderable from '../components/Reorderable';
 import classNames from 'classnames';
+import { getChargeToCallersList, getPruneSubtreeList } from '../reducers/url-state';
+import { connect } from 'react-redux';
 
 import './CallTreeFilters.css';
 
@@ -59,4 +61,7 @@ class CallTreeFilters extends PureComponent {
   }
 }
 
-export default CallTreeFilters;
+export default connect(state => ({
+  chargeToCallersList: getChargeToCallersList(state)
+  pruneSubtreeList: getPruneSubtreeList(state)
+}), actions)(CallTreeFilters);

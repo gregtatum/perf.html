@@ -7,7 +7,7 @@ import { selectedThreadSelectors } from '../reducers/profile-view';
 import copy from 'copy-to-clipboard';
 
 import type { IndexIntoFuncStackTable, FuncStackInfo } from '../../common/types/profile-derived';
-import type { Thread } from '../../common/types/profile';
+import type { Thread, IndexIntoFuncTable } from '../../common/types/profile';
 
 type Props = {
   thread: Thread,
@@ -19,7 +19,19 @@ class ProfileCallTreeContextMenu extends PureComponent {
 
   constructor(props: Props) {
     super(props);
-    (this: any).handleClick = this.handleClick.bind(this);
+    (this: any).copyFunctionName = this.copyFunctionName.bind(this);
+    (this: any).copyStack = this.copyStack.bind(this);
+    (this: any).chargeFuncToCaller = this.chargeFuncToCaller.bind(this);
+    (this: any).pruneSubtree = this.pruneSubtree.bind(this);
+  }
+
+  getSelectedFuncIndex(): IndexIntoFuncTable {
+    const {
+      selectedFuncStack,
+      funcStackInfo: { funcStackTable },
+    } = this.props;
+
+    return funcStackTable.func[selectedFuncStack];
   }
 
   copyFunctionName(): void {
@@ -55,28 +67,24 @@ class ProfileCallTreeContextMenu extends PureComponent {
     copy(stack);
   }
 
-  handleClick(event: SyntheticEvent, data: { type: string }): void {
-    switch (data.type) {
-      case 'copyFunctionName':
-        this.copyFunctionName();
-        break;
-      case 'copyStack':
-        this.copyStack();
-        break;
-    }
+  chargeFuncToCaller(): void {
+    this.props.chargeFuncToCaller(this.getSelectedFuncIndex());
+  }
+
+  pruneSubtree(): void {
+    this.props.chargeFuncToCaller(this.getSelectedFuncIndex());
   }
 
   render() {
     return (
       <ContextMenu id={'ProfileCallTreeContextMenu'}>
         <SubMenu title='Copy' hoverDelay={200}>
-          <MenuItem onClick={this.handleClick} data={{type: 'copyFunctionName'}}>Function Name</MenuItem>
-          <MenuItem onClick={this.handleClick} data={{type: 'copyStack'}}>Stack</MenuItem>
+          <MenuItem onClick={this.copyFunctionName}>Function Name</MenuItem>
+          <MenuItem onClick={this.copyStack}>Stack</MenuItem>
         </SubMenu>
-        <SubMenu title='Hide' hoverDelay={200}>
-          <MenuItem>This function</MenuItem>
-          <MenuItem>This function and descendants</MenuItem>
-          <MenuItem>Library "libsystem_kernel.dylib"</MenuItem>
+        <SubMenu title='Prune' hoverDelay={200}>
+          <MenuItem onClick={this.chargeFuncToCaller}>This function</MenuItem>
+          <MenuItem onClick={this.pruneSubtree}>This function and descendants</MenuItem>
         </SubMenu>
         <SubMenu title='Focus' hoverDelay={200}>
           <MenuItem>Calls made by this function</MenuItem>
