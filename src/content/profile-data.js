@@ -804,6 +804,12 @@ export function getFriendlyThreadName(threads: Thread[], thread: Thread): string
         case 'plugin':
           label = 'Plugin';
           break;
+        case 'gpu':
+          label = 'GPU';
+          break;
+        default:
+          label = `GeckoMain [${thread.processType}]`;
+          break;
       }
       break;
   }
