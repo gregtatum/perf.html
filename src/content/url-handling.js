@@ -7,21 +7,7 @@ import queryString from 'query-string';
 import { stringifyRangeFilters, parseRangeFilters } from './range-filters';
 import { stringifyCallTreeFilters, parseCallTreeFilters } from './call-tree-filters';
 import type { URLState } from './reducers/types';
-
-// {
-//   // general:
-//   dataSource: 'from-addon', 'from-file', 'local', 'public',
-//   hash: '' or 'aoeurschsaoeuch',
-//   selectedTab: 'summary' or 'calltree' or ...,
-//   rangeFilters: [] or [{ start, end }, ...],
-//   selectedThread: 0 or 1 or ...,
-//
-//   // only when selectedTab === 'calltree':
-//   callTreeSearchString: '' or '::RunScript' or ...,
-//   callTreeFilters: [[], [{type:'prefix', matchJSOnly:true, prefixFuncs:[1,3,7]}, {}, ...], ...], // one per thread
-//   jsOnly: false or true,
-//   invertCallstack: false or true,
-// }
+import { uintArrayToString, stringToUintArray } from './uintarray-encoding';
 
 function dataSourceDirs(urlState: URLState) {
   const { dataSource } = urlState;
@@ -77,6 +63,17 @@ export function urlFromState(urlState: URLState) {
       query.hidePlatformDetails = urlState.hidePlatformDetails ? null : undefined;
       break;
   }
+
+  const pruneFunctionsList = urlState.pruneFunctions[urlState.selectedThread];
+  if (pruneFunctionsList && pruneFunctionsList.length > 0) {
+    query.pruneFunctions = uintArrayToString(pruneFunctionsList);
+  }
+
+  const pruneSubtreeList = urlState.pruneSubtree[urlState.selectedThread];
+  if (pruneSubtreeList && pruneSubtreeList.length > 0) {
+    query.pruneSubtree = uintArrayToString(pruneSubtreeList);
+  }
+
   const qString = queryString.stringify(query);
   return pathname + (qString ? '?' + qString : '');
 }
@@ -114,6 +111,8 @@ export function stateFromCurrentLocation(): URLState {
         implementation: 'combined',
         invertCallstack: false,
         hidePlatformDetails: false,
+        pruneFunctions: {},
+        pruneSubtree: {},
       };
     }
   }
@@ -147,5 +146,11 @@ export function stateFromCurrentLocation(): URLState {
     implementation,
     invertCallstack: query.invertCallstack !== undefined,
     hidePlatformDetails: query.hidePlatformDetails !== undefined,
+    pruneFunctions: {
+      [selectedThread]: query.pruneFunctions ? stringToUintArray(query.pruneFunctions) : [],
+    },
+    pruneSubtree: {
+      [selectedThread]: query.pruneSubtree ? stringToUintArray(query.pruneSubtree) : [],
+    },
   };
 }

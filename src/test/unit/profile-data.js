@@ -440,7 +440,7 @@ describe('filter threads by implementation', function () {
   const profile = processProfile(profileWithJS);
   const thread = profile.threads[0];
 
-  it('will return the same thread if filtering to "all"', function () {
+  it('will return the same thread if filtering to "combined"', function () {
     assert.equal(filterThreadByFunc(thread, 'combined', [], []), thread);
   });
 
