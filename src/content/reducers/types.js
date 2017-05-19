@@ -15,6 +15,7 @@ import type { Attempt } from '../errors';
 
 export type Reducer<T> = (T, Action) => T;
 
+export type LastAddedFilter = null | { threadIndex: ThreadIndex, funcIndex: IndexIntoFuncTable };
 export type RequestedLib = { pdbName: string, breakpadId: string };
 export type SymbolicationStatus = 'DONE' | 'SYMBOLICATING';
 export type ThreadViewOptions = {
@@ -35,6 +36,7 @@ export type ProfileViewState = {
     tabOrder: number[],
   },
   profile: Profile,
+  lastAddedFilter: LastAddedFilter | null,
 };
 
 export type AppViewState =
