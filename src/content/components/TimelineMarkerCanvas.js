@@ -259,11 +259,12 @@ class TimelineMarkerCanvas extends PureComponent {
   }
 
   render() {
-    const { containerWidth, containerHeight } = this.props;
+    const { containerWidth, containerHeight, isDragging } = this.props;
 
     return <TimelineCanvas className='timelineMarkerCanvas'
                            containerWidth={containerWidth}
                            containerHeight={containerHeight}
+                           isDragging={isDragging}
                            onDoubleClickItem={this.onDoubleClickMarker}
                            getHoveredItemInfo={this.getHoveredMarkerInfo}
                            drawCanvas={this.drawCanvas}

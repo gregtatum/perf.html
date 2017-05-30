@@ -216,11 +216,12 @@ class FlameChartCanvas extends PureComponent {
 
 
   render() {
-    const { containerWidth, containerHeight } = this.props;
+    const { containerWidth, containerHeight, isDragging } = this.props;
 
     return <TimelineCanvas className='flameChartCanvas'
                            containerWidth={containerWidth}
                            containerHeight={containerHeight}
+                           isDragging={isDragging}
                            onDoubleClickItem={this._onDoubleClickStack}
                            getHoveredItemInfo={this._getHoveredStackInfo}
                            drawCanvas={this._drawCanvas}
