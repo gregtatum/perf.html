@@ -7,6 +7,8 @@ import { combineReducers } from 'redux';
 
 import type { Action } from '../actions/types';
 import type { State, AppState, AppViewState, Reducer } from './types';
+import type { Component } from 'react';
+import type { CssPixels } from '../../common/types/units';
 
 function view(state: AppViewState = { phase: 'INITIALIZING' }, action: Action): AppViewState {
   if (state.phase === 'PROFILE') {
@@ -41,6 +43,24 @@ function view(state: AppViewState = { phase: 'INITIALIZING' }, action: Action): 
   }
 }
 
+function tooltipContents(state: Component<any, any, any> | null = null, action: Action) {
+  switch (action.type) {
+    case 'TOOLTIP_HOVER_ITEM_CHANGED': {
+      return action.component;
+    }
+  }
+  return state;
+}
+
+function tooltipPosition(state: [CssPixels, CssPixels] = [0, 0], action: Action) {
+  switch (action.type) {
+    case 'TOOLTIP_COORDINATES_CHANGED': {
+      return action.coordinates;
+    }
+  }
+  return state;
+}
+
 function isURLSetupDone(state: boolean = false, action: Action) {
   switch (action.type) {
     case '@@urlenhancer/urlSetupDone':
@@ -49,7 +69,7 @@ function isURLSetupDone(state: boolean = false, action: Action) {
       return state;
   }
 }
-const appStateReducer: Reducer<AppState> = combineReducers({ view, isURLSetupDone });
+const appStateReducer: Reducer<AppState> = combineReducers({ view, isURLSetupDone, tooltipContents, tooltipPosition });
 export default appStateReducer;
 
 export const getApp = (state: State): AppState => state.app;

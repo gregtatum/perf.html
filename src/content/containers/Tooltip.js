@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
 
 require('./Tooltip.css');
 
@@ -9,7 +10,7 @@ type Props = {
   boundedAtBottom: boolean,
 }
 
-export default class Tooltip extends PureComponent {
+class Tooltip extends PureComponent {
   state: {
     interiorElement: ?HTMLElement,
   }
@@ -59,3 +60,7 @@ export default class Tooltip extends PureComponent {
     );
   }
 }
+
+export default connect(state => {
+
+})(Tooltip);

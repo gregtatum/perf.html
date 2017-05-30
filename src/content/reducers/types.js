@@ -9,11 +9,12 @@ import type {
   Action, ExpandedSet, CallTreeFiltersPerThread, DataSource, ProfileSelection,
   ImplementationFilter,
 } from '../actions/types';
-import type { Milliseconds, StartEndRange } from '../../common/types/units';
+import type { Milliseconds, StartEndRange, CssPixels } from '../../common/types/units';
 import type { IndexIntoMarkersTable, IndexIntoFuncTable, Profile, ThreadIndex } from '../../common/types/profile';
 import type { Attempt } from '../errors';
 import type { GetLabel } from '../labeling-strategies';
 import type { GetCategory } from '../color-categories';
+import type { Component } from 'react';
 
 export type Reducer<T> = (T, Action) => T;
 
@@ -50,6 +51,8 @@ export type AppViewState =
 export type AppState = {
   view: AppViewState,
   isURLSetupDone: boolean,
+  tooltipContents: Component<any, any, any> | null,
+  tooltipPosition: [CssPixels, CssPixels],
 };
 
 export type SummaryViewState = {

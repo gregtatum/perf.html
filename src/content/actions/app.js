@@ -4,6 +4,7 @@
 
 // @flow
 import type { Action } from './types';
+import type { Component } from 'react';
 
 export function changeSelectedTab(selectedTab: string): Action {
   return {
@@ -23,5 +24,19 @@ export function changeTabOrder(tabOrder: number[]): Action {
   return {
     type: 'CHANGE_TAB_ORDER',
     tabOrder,
+  };
+}
+
+export function changeTooltipHoveredItem(component: Component<any, any, any>): Action {
+  return {
+    type: 'TOOLTIP_HOVER_ITEM_CHANGED',
+    component,
+  };
+}
+
+export function changeTooltipCoordinates(coordinates: [CssPixels, CssPixels]): Action {
+  return {
+    type: 'TOOLTIP_COORDINATES_CHANGED',
+    coordinates,
   };
 }

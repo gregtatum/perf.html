@@ -22,6 +22,7 @@ import { getSelectedTab } from '../reducers/url-state';
 import ProfileViewerHeader from '../containers/ProfileViewerHeader';
 import ProfileCallTreeContextMenu from '../containers/ProfileCallTreeContextMenu';
 import ProfileThreadHeaderContextMenu from '../containers/ProfileThreadHeaderContextMenu';
+import Tooltip from './Tooltip';
 
 import type { StartEndRange } from '../../common/types/units';
 
@@ -104,6 +105,7 @@ class ProfileViewer extends PureComponent {
         <SymbolicationStatusOverlay />
         <ProfileCallTreeContextMenu />
         <ProfileThreadHeaderContextMenu />
+        <Tooltip />
       </div>
     );
   }

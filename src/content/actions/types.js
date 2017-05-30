@@ -5,10 +5,12 @@
 // @flow
 import type { Summary } from '../../common/summarize-profile';
 import type { Profile, Thread, ThreadIndex, IndexIntoMarkersTable, IndexIntoFuncTable } from '../../common/types/profile';
+import type { CssPixels } from '../../common/types/units';
 import type { State } from '../reducers/types';
 import type { GetLabel } from '../labeling-strategies';
 import type { GetCategory } from '../color-categories';
 import type { TemporaryError } from '../errors';
+import type { Component } from 'react';
 
 export type ExpandedSet = Set<ThreadIndex>;
 export type PrefixCallTreeFilter = {
@@ -87,6 +89,10 @@ type TimelineAction =
    { type: 'CHANGE_TIMELINE_FLAME_CHART_EXPANDED_THREAD', threadIndex: ThreadIndex, isExpanded: boolean } |
    { type: 'CHANGE_TIMELINE_MARKERS_EXPANDED_THREAD', threadIndex: ThreadIndex, isExpanded: boolean };
 
+type TooltipAction =
+  { type: "TOOLTIP_HOVER_ITEM_CHANGED", component: Component<any, any, any> | null } |
+  { type: "TOOLTIP_COORDINATES_CHANGED", coordinates: [CssPixels, CssPixels] };
+
 type URLEnhancerAction =
   { type: "@@urlenhancer/urlSetupDone" } |
   { type: '@@urlenhancer/updateURLState', urlState: any };
@@ -114,6 +120,7 @@ export type Action =
   ProfileAction |
   ReceiveProfileAction |
   TimelineAction |
+  TooltipAction |
   URLEnhancerAction |
   URLStateAction |
   IconsAction;

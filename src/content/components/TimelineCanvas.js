@@ -4,6 +4,10 @@ import { timeCode } from '../../common/time-code';
 import classNames from 'classnames';
 import Tooltip from './Tooltip';
 import type { CssPixels, DevicePixels, NonNull } from '../../common/types/units';
+import typeof {
+  changeTooltipHoveredItem as ChangeTooltipHoveredItem,
+  changeTooltipCoordinates as ChangeTooltipCoordinates,
+} from '../actions/app';
 
 type HoveredItem = NonNull;
 
@@ -16,6 +20,8 @@ type Props = {
   getHoveredItemInfo: HoveredItem => string,
   drawCanvas: (CanvasRenderingContext2D, HoveredItem) => void,
   hitTest: (x: CssPixels, y: CssPixels) => null | HoveredItem,
+  changeTooltipHoveredItem: ChangeTooltipHoveredItem,
+  changeTooltipCoordinates: ChangeTooltipCoordinates,
 };
 
 require('./TimelineCanvas.css');
