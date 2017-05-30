@@ -7,6 +7,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { timeCode } from '../../common/time-code';
 import { withSize } from '../with-size';
+import Tooltip from './Tooltip';
 import type { Milliseconds, CssPixels } from '../../common/types/units';
 import type { TracingMarker } from '../../common/types/profile-derived';
 
@@ -36,6 +37,8 @@ class IntervalMarkerOverview extends PureComponent {
   state: {
     hoveredItem: TracingMarker|null,
     mouseDownItem: TracingMarker|null,
+    mouseX: CssPixels,
+    mouseY: CssPixels,
   }
 
   _canvas: HTMLCanvasElement|null
@@ -43,7 +46,12 @@ class IntervalMarkerOverview extends PureComponent {
 
   constructor(props: Props) {
     super(props);
-    this.state = { hoveredItem: null, mouseDownItem: null };
+    this.state = {
+      hoveredItem: null,
+      mouseDownItem: null,
+      mouseX: 0,
+      mouseY: 0,
+    };
     (this: any)._onMouseDown = this._onMouseDown.bind(this);
     (this: any)._onMouseMove = this._onMouseMove.bind(this);
     (this: any)._onMouseUp = this._onMouseUp.bind(this);
@@ -100,10 +108,19 @@ class IntervalMarkerOverview extends PureComponent {
     return null;
   }
 
-  _onMouseMove(e) {
-    const hoveredItem = this._hitTest(e);
+  _onMouseMove(event: SyntheticMouseEvent) {
+    const hoveredItem = this._hitTest(event);
     if (this.state.hoveredItem !== hoveredItem) {
       this.setState({ hoveredItem });
+    }
+
+    const canvas = this._canvas;
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      this.setState({
+        mouseX: event.pageX - rect.left,
+        mouseY: event.pageY - rect.top,
+      });
     }
   }
 
@@ -143,10 +160,10 @@ class IntervalMarkerOverview extends PureComponent {
   render() {
     this._scheduleDraw();
     const { className, isSelected } = this.props;
-    const { mouseDownItem, hoveredItem } = this.state;
-    const title = !mouseDownItem && hoveredItem ? hoveredItem.title : null;
+    const { mouseDownItem, hoveredItem, mouseX, mouseY } = this.state;
+    const tooltipText = !mouseDownItem && hoveredItem ? hoveredItem.title : null;
     const canvasClassName = className.split(' ').map(name => `${name}Canvas`).join(' ');
-
+    console.log('!!! tooltip', tooltipText);
     return (
       <div className={classNames(className, isSelected ? 'selected' : null)}>
         <canvas className={classNames(canvasClassName, 'intervalMarkerTimelineCanvas')}
@@ -154,8 +171,17 @@ class IntervalMarkerOverview extends PureComponent {
                 onMouseDown={this._onMouseDown}
                 onMouseMove={this._onMouseMove}
                 onMouseUp={this._onMouseUp}
-                onMouseOut={this._onMouseOut}
-                title={title}/>
+                onMouseOut={this._onMouseOut}/>
+        {
+          tooltipText
+            ? <Tooltip mouseX={mouseX}
+                       mouseY={mouseY}
+                       offsetParent={this._takeCanvasRef}
+                       boundedAtBottom={false}>
+                {tooltipText}
+              </Tooltip>
+            : null
+        }
       </div>
     );
   }

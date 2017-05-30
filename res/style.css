@@ -347,7 +347,6 @@ body, #root, .profileViewer {
   margin: 0;
   height: 6px;
   position: relative;
-  overflow: hidden;
   opacity: 0.75;
   background-color: transparent;
   transition: background-color 500ms;

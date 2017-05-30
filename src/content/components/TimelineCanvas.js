@@ -2,7 +2,7 @@
 import React, { Component } from 'react';
 import { timeCode } from '../../common/time-code';
 import classNames from 'classnames';
-
+import Tooltip from './Tooltip';
 import type { CssPixels, DevicePixels, NonNull } from '../../common/types/units';
 
 type HoveredItem = NonNull;
@@ -11,6 +11,7 @@ type Props = {
   containerWidth: CssPixels,
   containerHeight: CssPixels,
   className: string,
+  isDragging: boolean,
   onDoubleClickItem: HoveredItem => void,
   getHoveredItemInfo: HoveredItem => string,
   drawCanvas: (CanvasRenderingContext2D, HoveredItem) => void,
@@ -25,15 +26,22 @@ export default class TimelineCanvas extends Component {
   _requestedAnimationFrame: boolean;
   _devicePixelRatio: 1;
   _ctx: CanvasRenderingContext2D;
+  _canvas: HTMLElement;
   state: {
-    hoveredItem: null | HoveredItem;
+    hoveredItem: null | HoveredItem,
+    mouseX: CssPixels,
+    mouseY: CssPixels,
   };
 
   constructor(props: Props) {
     super(props);
     this._requestedAnimationFrame = false;
     this._devicePixelRatio = 1;
-    this.state = { hoveredItem: null };
+    this.state = {
+      hoveredItem: null,
+      mouseX: 0,
+      mouseY: 0,
+    };
 
     (this: any)._onMouseMove = this._onMouseMove.bind(this);
     (this: any)._onMouseOut = this._onMouseOut.bind(this);
@@ -103,6 +111,13 @@ export default class TimelineCanvas extends Component {
     if (!hoveredItemsAreEqual(maybeHoveredItem, this.state.hoveredItem)) {
       this.setState({ hoveredItem: maybeHoveredItem });
     }
+
+    if (x !== this.state.mouseX || y !== this.state.mouseY) {
+      this.setState({
+        mouseX: x,
+        mouseY: y,
+      });
+    }
   }
 
   _onMouseOut() {
@@ -128,7 +143,8 @@ export default class TimelineCanvas extends Component {
   }
 
   render() {
-    const { hoveredItem } = this.state;
+    const { isDragging } = this.props;
+    const { hoveredItem, mouseX, mouseY } = this.state;
     this._scheduleDraw();
 
     const className = classNames({
@@ -137,12 +153,29 @@ export default class TimelineCanvas extends Component {
       hover: hoveredItem !== null,
     });
 
-    return <canvas className={className}
-                   ref='canvas'
-                   onMouseMove={this._onMouseMove}
-                   onMouseOut={this._onMouseOut}
-                   onDoubleClick={this._onDoubleClick}
-                   title={this._getHoveredItemInfo()} />;
+    const tooltipText = this._getHoveredItemInfo();
+
+    return (
+      <div ref={el => {
+        return this._canvas = el;
+      }}>
+        <canvas className={className}
+                ref='canvas'
+                onMouseMove={this._onMouseMove}
+                onMouseOut={this._onMouseOut}
+                onDoubleClick={this._onDoubleClick} />
+        {
+          this._canvas && !isDragging && tooltipText
+            ? <Tooltip mouseX={mouseX}
+                       mouseY={mouseY}
+                       offsetParent={this.refs.canvas}
+                       boundedAtBottom={true}>
+                {tooltipText}
+              </Tooltip>
+            : null
+        }
+      </div>
+    );
   }
 }
 
