@@ -31,6 +31,7 @@ type Props = {
   getCategory: GetCategory,
   getLabel: GetLabel,
   updateProfileSelection: ProfileSelection => Action,
+  isDragging: boolean,
 };
 
 type HoveredStackTiming = {

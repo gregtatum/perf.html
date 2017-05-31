@@ -22,6 +22,7 @@ type Props = {
   rowHeight: CssPixels,
   markers: TracingMarker[],
   updateProfileSelection: ProfileSelection => Action,
+  isDragging: boolean,
 };
 
 const ROW_HEIGHT = 16;

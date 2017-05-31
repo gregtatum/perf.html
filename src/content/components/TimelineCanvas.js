@@ -112,12 +112,10 @@ export default class TimelineCanvas extends Component {
       this.setState({ hoveredItem: maybeHoveredItem });
     }
 
-    if (x !== this.state.mouseX || y !== this.state.mouseY) {
-      this.setState({
-        mouseX: x,
-        mouseY: y,
-      });
-    }
+    this.setState({
+      mouseX: event.pageX,
+      mouseY: event.pageY,
+    });
   }
 
   _onMouseOut() {
@@ -156,20 +154,17 @@ export default class TimelineCanvas extends Component {
     const tooltipText = this._getHoveredItemInfo();
 
     return (
-      <div ref={el => {
-        return this._canvas = el;
-      }}>
+      <div>
         <canvas className={className}
                 ref='canvas'
                 onMouseMove={this._onMouseMove}
                 onMouseOut={this._onMouseOut}
                 onDoubleClick={this._onDoubleClick} />
         {
-          this._canvas && !isDragging && tooltipText
+          !isDragging && tooltipText
             ? <Tooltip mouseX={mouseX}
                        mouseY={mouseY}
-                       offsetParent={this.refs.canvas}
-                       boundedAtBottom={true}>
+                       ref={tooltipText}>
                 {tooltipText}
               </Tooltip>
             : null
