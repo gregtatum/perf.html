@@ -9,6 +9,8 @@ import type { CssPixels } from '../../common/types/units';
 
 require('./Tooltip.css');
 
+const MOUSE_OFFSET = 15;
+
 type Props = {
   mouseX: CssPixels,
   mouseY: CssPixels,
@@ -20,25 +22,27 @@ export default class Tooltip extends PureComponent {
 
   state: {
     interiorElement: HTMLElement | null,
-    interiorElementRAF: HTMLElement | null,
+    isNewContentLaidOut: boolean,
   };
 
+  _isMounted: boolean;
   _mountElement: ?HTMLElement;
 
   constructor(props: Props) {
     super(props);
-    (this: any)._getMountElement = this._getMountElement.bind(this);
+    (this: any)._setMountElement = this._setMountElement.bind(this);
     this.state = {
       interiorElement: null,
-      interiorElementRAF: null,
+      isNewContentLaidOut: false,
     };
   }
 
-  _getMountElement(el: HTMLElement) {
+  _setMountElement(el: HTMLElement) {
     this.setState({ interiorElement: el });
   }
 
   componentDidMount() {
+    this._isMounted = true;
     // Create a DOM node outside of the normal heirarchy.
     const el = document.createElement('div');
     el.className = 'tooltipMount';
@@ -58,28 +62,39 @@ export default class Tooltip extends PureComponent {
     if (this._mountElement) {
       this._mountElement.remove();
     }
+    this._isMounted = false;
   }
 
   componentWillReceiveProps(nextProps: Props) {
     if (nextProps.children !== this.props.children) {
-      this.setState({interiorElementRAF: null });
-      this._allowInteriorElementLayout();
+      // If the children are different, allow them to do an initial lay out on the DOM.
+      this.setState({isNewContentLaidOut: false });
+      this._forceUpdateAfterRAF();
     }
   }
 
   componentDidUpdate() {
-    this._allowInteriorElementLayout();
+    // Force an additional update to this component if the children content is
+    // different as it needs to fully lay out one time on the DOM to proper calculate
+    // sizing and positioning.
+    const { interiorElement, isNewContentLaidOut } = this.state;
+    if (interiorElement && !isNewContentLaidOut) {
+      this._forceUpdateAfterRAF();
+    }
+
     this._renderTooltipContents();
   }
 
-  _allowInteriorElementLayout() {
-    const { interiorElement, interiorElementRAF } = this.state;
-    if (interiorElement && !interiorElementRAF) {
-      // Allow the interior element to fully lay out, then update the sizing.
-      requestAnimationFrame(() => {
-        this.setState({ interiorElementRAF: interiorElement });
-      });
-    }
+  /**
+   * Children content needs to be on the DOM (not just virtual DOM) in order to correctly
+   * calculate the sizing and positioning of the tooltip.
+   */
+  _forceUpdateAfterRAF() {
+    requestAnimationFrame(() => {
+      if (this._isMounted) {
+        this.setState({ isNewContentLaidOut: true });
+      }
+    });
   }
 
   /**
@@ -94,9 +109,14 @@ export default class Tooltip extends PureComponent {
       ? Math.max(0, (mouseX + interiorElement.offsetWidth) - window.innerWidth)
       : 0;
 
-    const offsetY = interiorElement
-      ? Math.max(0, (mouseY + interiorElement.offsetHeight + 15) - window.innerHeight)
-      : 0;
+    let offsetY = 0;
+    if (interiorElement) {
+      if (mouseY + interiorElement.offsetHeight + MOUSE_OFFSET > window.innerHeight) {
+        offsetY = interiorElement.offsetHeight + MOUSE_OFFSET;
+      } else {
+        offsetY = -MOUSE_OFFSET;
+      }
+    }
 
     const style = {
       left: mouseX - offsetX,
@@ -104,9 +124,9 @@ export default class Tooltip extends PureComponent {
     };
 
     ReactDOM.render(
-        <div className='tooltip' style={style} ref={this._getMountElement}>
-          {children}
-        </div>,
+      <div className='tooltip' style={style} ref={this._setMountElement}>
+        {children}
+      </div>,
       this._mountElement
     );
   }

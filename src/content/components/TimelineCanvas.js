@@ -13,7 +13,7 @@ type Props = {
   className: string,
   isDragging: boolean,
   onDoubleClickItem: HoveredItem => void,
-  getHoveredItemInfo: HoveredItem => string,
+  getHoveredItemInfo: HoveredItem => React$Element<*>,
   drawCanvas: (CanvasRenderingContext2D, HoveredItem) => void,
   hitTest: (x: CssPixels, y: CssPixels) => null | HoveredItem,
 };
@@ -132,7 +132,7 @@ export default class TimelineCanvas extends Component {
     this.props.onDoubleClickItem(hoveredItem);
   }
 
-  _getHoveredItemInfo(): null | string {
+  _getHoveredItemInfo(): null | React$Element<*> {
     const { hoveredItem } = this.state;
     if (hoveredItem === null) {
       return null;
@@ -151,7 +151,7 @@ export default class TimelineCanvas extends Component {
       hover: hoveredItem !== null,
     });
 
-    const tooltipText = this._getHoveredItemInfo();
+    const tooltipContents = this._getHoveredItemInfo();
 
     return (
       <div>
@@ -161,11 +161,10 @@ export default class TimelineCanvas extends Component {
                 onMouseOut={this._onMouseOut}
                 onDoubleClick={this._onDoubleClick} />
         {
-          !isDragging && tooltipText
+          !isDragging && tooltipContents
             ? <Tooltip mouseX={mouseX}
-                       mouseY={mouseY}
-                       ref={tooltipText}>
-                {tooltipText}
+                       mouseY={mouseY}>
+                {tooltipContents}
               </Tooltip>
             : null
         }

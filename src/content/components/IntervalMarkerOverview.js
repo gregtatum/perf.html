@@ -157,7 +157,7 @@ class IntervalMarkerOverview extends PureComponent {
     this._scheduleDraw();
     const { className, isSelected } = this.props;
     const { mouseDownItem, hoveredItem, mouseX, mouseY } = this.state;
-    const tooltipText = !mouseDownItem && hoveredItem ? hoveredItem.title : null;
+    const tooltipContents = !mouseDownItem && hoveredItem ? hoveredItem.title : null;
     const canvasClassName = className.split(' ').map(name => `${name}Canvas`).join(' ');
 
     return (
@@ -169,12 +169,12 @@ class IntervalMarkerOverview extends PureComponent {
                 onMouseUp={this._onMouseUp}
                 onMouseOut={this._onMouseOut}/>
         {
-          tooltipText
+          tooltipContents
             ? <Tooltip mouseX={mouseX}
                        mouseY={mouseY}
                        offsetParent={this._takeCanvasRef}
                        boundedAtBottom={false}>
-                {tooltipText}
+                {tooltipContents}
               </Tooltip>
             : null
         }
