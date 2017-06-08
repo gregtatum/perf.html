@@ -1,6 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+// @flow
 
 import React, { PureComponent, PropTypes } from 'react';
 import { connect, Provider } from 'react-redux';
@@ -15,20 +16,22 @@ import { getDataSource, getHash } from '../reducers/url-state';
 import URLManager from './URLManager';
 
 import type { Store } from '../types';
-import type { AppViewState } from '../reducers/types';
+import type { AppViewState, State } from '../reducers/types';
+
+require('./Root.css');
 
 const LOADING_MESSAGES = Object.freeze({
-  'from-addon': 'Retrieving profile from the gecko profiler addon...',
-  'from-file': 'Reading the file and parsing the profile in it...',
+  'from-addon': 'Grabbing the profile from the Gecko Profiler Addon...',
+  'from-file': 'Reading the file and parsing the profile...',
   'local': 'Not implemented yet.',
-  'public': 'Retrieving profile from the public profile store...',
+  'public': 'Downloading and the profile...',
 });
 
 const ERROR_MESSAGES = Object.freeze({
-  'from-addon': "Couldn't retrieve the profile from the gecko profiler addon.",
+  'from-addon': "Couldn't retrieve the profile from the Gecko Profiler Addon.",
   'from-file': "Couldn't read the file or parse the profile in it.",
   'local': 'Not implemented yet.',
-  'public': "Couldn't Retrieve the profile from the public profile store.",
+  'public': 'Could not download the profile.',
 });
 
 // TODO Switch to a proper i18n library
@@ -44,8 +47,8 @@ type ProfileViewProps = {
   view: AppViewState,
   dataSource: string,
   hash: string,
-  retrieveProfileFromAddon: void => void,
-  retrieveProfileFromWeb: string => void,
+  retrieveProfileFromAddon: typeof retrieveProfileFromAddon,
+  retrieveProfileFromWeb: typeof retrieveProfileFromWeb,
 };
 
 class ProfileViewWhenReadyImpl extends PureComponent {
@@ -68,6 +71,42 @@ class ProfileViewWhenReadyImpl extends PureComponent {
     }
   }
 
+  renderMessage(
+    message: string,
+    additionalMessage: Component<*> | string | null,
+    showLoader: boolean
+  ) {
+    return (
+      <div className='rootMessageContainer'>
+        <div className='rootMessage'>
+          <h1 className='rootMessageTitle'>perf.html</h1>
+          <div className='rootMessageText'>{ message }</div>
+          {
+            additionalMessage
+              ? <div className='rootMessageAdditional'>{ additionalMessage }</div>
+              : null
+          }
+          {
+            showLoader
+              ? <div className='loading'>
+                  <div className='loading-div loading-div-1 loading-row-1'></div>
+                  <div className='loading-div loading-div-2 loading-row-2'></div>
+                  <div className='loading-div loading-div-3 loading-row-3'></div>
+                  <div className='loading-div loading-div-4 loading-row-3'></div>
+                  <div className='loading-div loading-div-5 loading-row-4'></div>
+                  <div className='loading-div loading-div-6 loading-row-4'></div>
+                  <div className='loading-div loading-div-7 loading-row-4'></div>
+                  <div className='loading-div loading-div-8 loading-row-4'></div>
+                  <div className='loading-div loading-div-9 loading-row-4'></div>
+                  <div className='loading-div loading-div-10 loading-row-4'></div>
+                </div>
+              : null
+          }
+        </div>
+      </div>
+    );
+  }
+
   render() {
     const { view, dataSource } = this.props;
     switch (view.phase) {
@@ -76,7 +115,10 @@ class ProfileViewWhenReadyImpl extends PureComponent {
           return <Home />;
         }
 
-        const message = LOADING_MESSAGES[dataSource] || 'View not found';
+        const loadingMessage = LOADING_MESSAGES[dataSource];
+        const message = loadingMessage ? loadingMessage : 'View not found';
+        const showLoader = Boolean(loadingMessage);
+
         let additionalMessage = '';
         if (view.additionalData) {
           if (view.additionalData.message) {
@@ -89,12 +131,7 @@ class ProfileViewWhenReadyImpl extends PureComponent {
           }
         }
 
-        return (
-          <div>
-            <div>{ message }</div>
-            { additionalMessage && <div>{ additionalMessage }</div>}
-          </div>
-        );
+        return this.renderMessage(message, additionalMessage, showLoader);
       }
       case 'FATAL_ERROR': {
         const message = ERROR_MESSAGES[dataSource] || "Couldn't retrieve the profile.";
@@ -107,37 +144,20 @@ class ProfileViewWhenReadyImpl extends PureComponent {
           `;
         }
 
-        return (
-          <div>
-            <div>{ message }</div>
-            { additionalMessage && <div>{ additionalMessage }</div>}
-          </div>
-        );
+        return this.renderMessage(message, additionalMessage, false);
       }
       case 'PROFILE':
         return <ProfileViewer/>;
       case 'ROUTE_NOT_FOUND':
-        return <div>There is no route handler for the URL {window.location.pathname + window.location.search}</div>;
+        return <Home specialMessage='That view route could not be found.' />;
       default:
-        return <div>View not found.</div>;
+        return <Home specialMessage='The URL you came in on was not recognized.' />;
     }
   }
 }
 
-ProfileViewWhenReadyImpl.propTypes = {
-  view: PropTypes.shape({
-    phase: PropTypes.string.isRequired,
-    additionalData: PropTypes.object,
-    error: PropTypes.instanceOf(Error),
-  }).isRequired,
-  dataSource: PropTypes.string.isRequired,
-  hash: PropTypes.string,
-  retrieveProfileFromAddon: PropTypes.func.isRequired,
-  retrieveProfileFromWeb: PropTypes.func.isRequired,
-};
-
 const ProfileViewWhenReady = connect(
-  state => ({
+  (state: State) => ({
     view: getView(state),
     dataSource: getDataSource(state),
     hash: getHash(state),
