@@ -1,14 +1,74 @@
-import { UniqueStringArray } from '../content/unique-string-array';
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-export function attemptToUnserializeChromeProfileFormat(profile) {
+// @flow
+import { UniqueStringArray } from './unique-string-array';
+import { getEmptyProfile, getEmptyThread } from './profile-data';
+
+import type { Profile, Thread } from '../common/types/profile';
+
+type Entry = {
+  // Process ID
+  pid: number,
+  // Thread ID
+  tid: number,
+  // Timestamp
+  ts: number,
+  ph: string,
+  cat: string,
+  name: string,
+  dur: number,
+  tdur: number,
+  tts: number,
+  args: any,
+};
+
+type ChromeProfile = Array<Entry>;
+
+type NodeIndex = number;
+type CpuProfile = {
+  startTime: number,
+  endTime: number,
+  nodes: Array<{
+    callFrame: {
+      columnNumber: number,
+      functionName: string,
+      lineNumber: number,
+      scriptId: string,
+      url: string,
+    },
+    children: NodeIndex[],
+    hitCount: number,
+    id: NodeIndex,
+  }>,
+  samples: NodeIndex[],
+  timeDeltas: number[],
+}
+
+type CpuProfileEntry = Entry & {
+  args: {
+    data: CpuProfile,
+  },
+};
+
+type ChromeProfileByName = {[name: string]: CpuProfileEntry | Object};
+
+fetch('./profile.json')
+  .then(profile => profile.json())
+  .then(attemptToUnserializeChromeProfileFormat);
+
+export function attemptToUnserializeChromeProfileFormat(
+  profile: ChromeProfile
+): Profile | null {
   if (!Array.isArray(profile)) {
-    return undefined;
+    return null;
   }
 
-  const profileByName = {};
+  const profileByName: ChromeProfileByName = {};
   for (const row of profile) {
     if (typeof row !== 'object') {
-      return undefined;
+      return null;
     }
     profileByName[row.name] = null;
   }
@@ -18,37 +78,35 @@ export function attemptToUnserializeChromeProfileFormat(profile) {
   });
 
   if (!profileByName.CpuProfile) {
-    return undefined;
+    return null;
   }
-  return {
-    meta: {
-      // TODO - Interval is not verified.
-      interval: 1,
-      startTime: getLowestProfileStartTime(profileByName),
-      platform: 'unknown',
-      oscpu: 'unknown',
-      misc: 'unknown',
-      abi: 'unknown',
-      toolkit: 'unknown',
-      product: 'unknown',
-    },
-    threads: profileByName.CpuProfile.map(row => processCpuProfile(row, profileByName)),
-  };
+  const cpuProfileEntries: CpuProfileEntry[] = profileByName.CpuProfile;
+
+  const processedProfile = getEmptyProfile();
+
+  // TODO - The current interval is just a wild guess.
+  processedProfile.meta.interval = 1;
+  processedProfile.meta.product = 'Chrome';
+  processedProfile.meta.startTime = getLowestProfileStartTime(profileByName);
+  processedProfile.threads = cpuProfileEntries.map(entry => processCpuProfile(entry, profileByName));
+
+  return processedProfile;
 }
 
-function getLowestProfileStartTime(profileByName) {
-  const startTime = cpuProfile => cpuProfile.args.data.cpuProfile.startTime;
+function getLowestProfileStartTime(profileByName): number {
+  const startTime = (cpuProfile: CpuProfile) => cpuProfile.args.data.cpuProfile.startTime;
   const firstProfile = profileByName.CpuProfile.reduce((a, b) => Math.min(startTime(a), startTime(b)));
   return startTime(firstProfile);
 }
 
-function processCpuProfile(row, profileByName) {
-  const {cpuProfile} = row.args.data;
-  const {endTime, startTime, timeDeltas, samples, nodes} = cpuProfile;
-  const thread = getBlankThread();
+function processCpuProfile(entry: CpuProfileEntry, profileByName): Thread {
+  const cpuProfile: CpuProfile = entry.args.data.cpuProfile;
+  const {startTime, timeDeltas, samples, nodes} = cpuProfile;
+  const thread = getEmptyThread();
   thread.name = 'cpuProfile';
-  thread.tid = row.tid;
-  thread.name = getThreadName(profileByName, row.tid);
+  thread.tid = entry.tid;
+  thread.pid = entry.pid;
+  thread.name = getThreadName(profileByName, entry.tid);
   const nodeIdToFrameId = {};
   const nodesById = {};
   const nodeIdToStackId = {};
@@ -60,9 +118,8 @@ function processCpuProfile(row, profileByName) {
     return timeAccumulation;
   });
 
-  nodes.forEach((node, i) => {
+  nodes.forEach(node => {
     nodesById[node.id] = node;
-    cpuProfile;
 
     const funcNameIndex = thread.stringTable.indexForString(node.callFrame.functionName);
     let funcIndex = stringTableIndexToNewFuncIndex.get(funcNameIndex);
@@ -70,7 +127,7 @@ function processCpuProfile(row, profileByName) {
       funcIndex = thread.funcTable.length;
       thread.funcTable.name.push(funcNameIndex);
       thread.funcTable.length++;
-      thread.funcTable.resource.push(undefined);
+      thread.funcTable.resource.push(-1);
       thread.funcTable.address.push(undefined);
       thread.funcTable.isJS.push(true);
     }
@@ -132,58 +189,4 @@ function getThreadName(profileByName, tid) {
 function getProcessLabels(profileByName, pid) {
   const process_labels = profileByName.process_labels.find(row => row.pid === pid);
   return process_labels ? process_labels.args.labels : 'Unknown';
-}
-
-function getBlankThread(name) {
-  return {
-    name: null,
-    tid: null,
-    processType: null,
-    samples: {
-      length: 0,
-      time: [],
-      stack: [],
-      responsiveness: [],
-      rss: [],
-      uss: [],
-      frameNumber: [],
-      power: [],
-    },
-    markers: {
-      length: 0,
-      time: [],
-      name: [],
-      data: [],
-    },
-    stackTable: {
-      length: 0,
-      prefix: [],
-      frame: [],
-    },
-    frameTable: {
-      length: 0,
-      implementation: [],
-      optimizations: [],
-      line: [],
-      category: [],
-      func: [],
-      address: [],
-    },
-    funcTable: {
-      length: 0,
-      name: [],
-      resource: [],
-      address: [],
-      isJS: [],
-    },
-    resourceTable: {
-      length: 0,
-      type: [],
-      name: [],
-      lib: [],
-      icon: [],
-      addonId: [],
-    },
-    stringTable: new UniqueStringArray(),
-  };
 }
