@@ -28,6 +28,9 @@ export type StackTable = {
   frame: IndexIntoFrameTable[],
   prefix: Array<IndexIntoStackTable|null>,
   length: number,
+  // Profiles can be filtered in arbitrary ways. If dealing with a filtered profile,
+  // provide a Map that points back to the original index of the unfiltered StackTable.
+  unfilteredIndex?: Map<IndexIntoStackTable, IndexIntoStackTable>,
 };
 
 /**

@@ -244,10 +244,12 @@ function _applyFuncFilters(
   return timeCode('filterThread', () => {
     const { stackTable, frameTable, samples } = thread;
 
+    const unfilteredIndex = new Map();
     const newStackTable = {
       length: 0,
       frame: [],
       prefix: [],
+      unfilteredIndex,
     };
 
     const oldStackToNewStack = new Map();
@@ -277,6 +279,10 @@ function _applyFuncFilters(
             newStack = newStackTable.length++;
             newStackTable.prefix[newStack] = prefixNewStack;
             newStackTable.frame[newStack] = frameIndex;
+            unfilteredIndex.set(
+              stackIndex,
+              _getUnfilteredStackIndex(stackTable, stackIndex)
+            );
           }
           oldStackToNewStack.set(stackIndex, newStack);
           prefixStackAndFrameToStack.set(prefixStackAndFrameIndex, newStack);
@@ -539,11 +545,13 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
     const prefixDepth = prefixFuncs.length;
     const stackMatches = new Int32Array(stackTable.length);
     const oldStackToNewStack = new Map();
+    const unfilteredIndex = new Map();
     oldStackToNewStack.set(null, null);
-    const newStackTable = {
+    const newStackTable: StackTable = {
       length: 0,
       prefix: [],
       frame: [],
+      unfilteredIndex,
     };
     for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
       const prefix = stackTable.prefix[stackIndex];
@@ -567,6 +575,10 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
           newStackTable.prefix[newStackIndex] = newStackPrefix !== undefined ? newStackPrefix : null;
           newStackTable.frame[newStackIndex] = frame;
           oldStackToNewStack.set(stackIndex, newStackIndex);
+          unfilteredIndex.set(
+            stackIndex,
+            _getUnfilteredStackIndex(stackTable, stackIndex)
+          );
         }
       }
       stackMatches[stackIndex] = stackMatchesUpTo;
@@ -584,6 +596,16 @@ export function filterThreadToPrefixStack(thread: Thread, prefixFuncs: IndexInto
       samples: newSamples,
     });
   });
+}
+
+function _getUnfilteredStackIndex(
+  stackTable: StackTable,
+  filteredIndex: IndexIntoStackTable
+): IndexIntoStackTable {
+  const unfilteredStackIndex = stackTable.unfilteredIndex
+    ? stackTable.unfilteredIndex.get(filteredIndex)
+    : undefined;
+  return unfilteredStackIndex === undefined ? filteredIndex : unfilteredStackIndex;
 }
 
 /**
