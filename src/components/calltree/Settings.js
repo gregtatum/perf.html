@@ -10,7 +10,7 @@ import actions from '../../actions';
 import { getImplementationFilter, getInvertCallstack, getSearchString } from '../../reducers/url-state';
 import IdleSearchField from '../shared/IdleSearchField';
 
-import './ProfileCallTreeSettings.css';
+import './Settings.css';
 
 type Props = {
   implementationFilter: string,
@@ -21,7 +21,7 @@ type Props = {
   changeCallTreeSearchString: string => void,
 };
 
-class ProfileCallTreeSettings extends PureComponent {
+class CallTreeSettings extends PureComponent {
   props: Props;
 
   constructor(props) {
@@ -46,13 +46,13 @@ class ProfileCallTreeSettings extends PureComponent {
   render() {
     const { implementationFilter, invertCallstack, searchString } = this.props;
     return (
-      <div className='profileCallTreeSettings'>
-        <ul className='profileCallTreeSettingsList'>
-          <li className='profileCallTreeSettingsListItem'>
-            <label className='profileCallTreeSettingsLabel'>
+      <div className='callTreeSettings'>
+        <ul className='callTreeSettingsList'>
+          <li className='callTreeSettingsListItem'>
+            <label className='callTreeSettingsLabel'>
               Filter:
               <select
-                     className='profileCallTreeSettingsSelect'
+                     className='callTreeSettingsSelect'
                      onChange={this._onImplementationFilterChange}
                      value={implementationFilter}>
                 <option value='combined'>Combined stacks</option>
@@ -61,20 +61,20 @@ class ProfileCallTreeSettings extends PureComponent {
               </select>
             </label>
           </li>
-          <li className='profileCallTreeSettingsListItem'>
-            <label className='profileCallTreeSettingsLabel'>
+          <li className='callTreeSettingsListItem'>
+            <label className='callTreeSettingsLabel'>
               <input type='checkbox'
-                     className='profileCallTreeSettingsCheckbox'
+                     className='callTreeSettingsCheckbox'
                      onChange={this._onInvertCallstackClick}
                      checked={invertCallstack}/>
               { ' Invert call stack' }
             </label>
           </li>
         </ul>
-        <div className='profileCallTreeSettingsSearchbar'>
-          <label className='profileCallTreeSettingsSearchbarLabel'>
+        <div className='callTreeSettingsSearchbar'>
+          <label className='callTreeSettingsSearchbarLabel'>
             {'Filter stacks: '}
-            <IdleSearchField className='profileCallTreeSettingsSearchField'
+            <IdleSearchField className='callTreeSettingsSearchField'
                              title='Only display stacks which contain a function whose name matches this substring'
                              idlePeriod={200}
                              defaultValue={searchString}
@@ -86,7 +86,7 @@ class ProfileCallTreeSettings extends PureComponent {
   }
 }
 
-ProfileCallTreeSettings.propTypes = {
+CallTreeSettings.propTypes = {
   implementationFilter: PropTypes.string.isRequired,
   changeImplementationFilter: PropTypes.func.isRequired,
   invertCallstack: PropTypes.bool.isRequired,
@@ -99,4 +99,4 @@ export default connect(state => ({
   invertCallstack: getInvertCallstack(state),
   implementationFilter: getImplementationFilter(state),
   searchString: getSearchString(state),
-}), actions)(ProfileCallTreeSettings);
+}), actions)(CallTreeSettings);

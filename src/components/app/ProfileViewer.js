@@ -9,7 +9,7 @@ import { connect } from 'react-redux';
 import TabBar from './TabBar';
 import classNames from 'classnames';
 import ProfileSummaryView from '../summary/ProfileSummaryView';
-import ProfileCallTreeView from '../calltree/ProfileCallTreeView';
+import CallTreeView from '../calltree/CallTreeView';
 import ProfileMarkersView from '../markers/ProfileMarkersView';
 import ProfileTaskTracerView from '../tasktracer/ProfileTaskTracerView';
 import ProfileLogView from '../log/ProfileLogView';
@@ -20,8 +20,8 @@ import TimelineView from '../timeline/TimelineView';
 import actions from '../../actions';
 import { getProfileViewOptions, getDisplayRange } from '../../reducers/profile-view';
 import { getSelectedTab } from '../../reducers/url-state';
-import ProfileViewerHeader from '../header/ProfileViewerHeader';
-import ProfileCallTreeContextMenu from '../calltree/ProfileCallTreeContextMenu';
+import HeaderView from '../header/HeaderView';
+import CallTreeContextMenu from '../calltree/ContextMenu';
 import ProfileThreadHeaderContextMenu from '../header/ProfileThreadHeaderContextMenu';
 
 import type { StartEndRange } from '../../types/units';
@@ -96,7 +96,7 @@ class ProfileViewer extends PureComponent {
           <ProfileFilterNavigator />
           <ProfileSharing />
         </div>
-        <ProfileViewerHeader />
+        <HeaderView />
         <TabBar tabs={this._tabs}
                 selectedTabName={selectedTab}
                 tabOrder={tabOrder}
@@ -104,14 +104,14 @@ class ProfileViewer extends PureComponent {
                 onChangeTabOrder={changeTabOrder} />
         {{
           summary: <ProfileSummaryView />,
-          calltree: <ProfileCallTreeView />,
+          calltree: <CallTreeView />,
           markers: <ProfileMarkersView />,
           tasktracer: <ProfileTaskTracerView rangeStart={timeRange.start} rangeEnd={timeRange.end} />,
           timeline: <TimelineView />,
           log: <ProfileLogView />,
         }[selectedTab]}
         <SymbolicationStatusOverlay />
-        <ProfileCallTreeContextMenu />
+        <CallTreeContextMenu />
         <ProfileThreadHeaderContextMenu />
       </div>
     );

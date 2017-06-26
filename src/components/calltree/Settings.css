@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-.profileCallTreeSettings {
+.callTreeSettings {
   height: 25px;
   padding: 0;
   line-height: 25px;
@@ -12,7 +12,7 @@
   flex-flow: row nowrap;
 }
 
-.profileCallTreeSettingsList {
+.callTreeSettingsList {
   display: block;
   flex: 1;
   list-style: none;
@@ -22,12 +22,12 @@
   align-items: flex-start;
 }
 
-.profileCallTreeSettingsListItem {
+.callTreeSettingsListItem {
   margin: 0 5px;
   padding: 0;
 }
 
-.profileCallTreeSettingsLabel {
+.callTreeSettingsLabel {
   -webkit-user-select: none;
   -moz-user-select: none;
   user-select: none;
@@ -37,19 +37,19 @@
   height: 25px;
 }
 
-.profileCallTreeSettingsSelect {
+.callTreeSettingsSelect {
   margin: 0 5px;
   font-size: 11px;
 }
 
-.profileCallTreeSettingsCheckbox {
+.callTreeSettingsCheckbox {
   margin: 0 5px;
 }
 
-.profileCallTreeSettingsSearchbar {
+.callTreeSettingsSearchbar {
   padding: 0 10px;
 }
 
-.profileCallTreeSettingsSearchField {
+.callTreeSettingsSearchField {
   width: 250px;
 }

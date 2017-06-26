@@ -6,14 +6,14 @@ import { connect } from 'react-redux';
 import actions from '../../actions';
 import { selectedThreadSelectors } from '../../reducers/profile-view';
 import { getSelectedThreadIndex } from '../../reducers/url-state';
-import FilterNavigatorBar from './FilterNavigatorBar';
+import FilterNavigatorBar from '../shared/FilterNavigatorBar';
 
-import './ProfileCallTreeFilterNavigator.css';
+import './FilterNavigator.css';
 
 export default connect(state => {
   const items = selectedThreadSelectors.getCallTreeFilterLabels(state);
   return {
-    className: 'profileCallTreeFilterNavigator',
+    className: 'callTreeFilterNavigator',
     items,
     selectedItem: items.length - 1,
     threadIndex: getSelectedThreadIndex(state),

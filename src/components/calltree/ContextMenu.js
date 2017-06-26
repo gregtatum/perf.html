@@ -19,7 +19,7 @@ type Props = {
   selectedFuncStack: IndexIntoFuncStackTable,
 }
 
-class ProfileCallTreeContextMenu extends PureComponent {
+class CallTreeContextMenu extends PureComponent {
 
   constructor(props: Props) {
     super(props);
@@ -72,7 +72,7 @@ class ProfileCallTreeContextMenu extends PureComponent {
 
   render() {
     return (
-      <ContextMenu id={'ProfileCallTreeContextMenu'}>
+      <ContextMenu id={'CallTreeContextMenu'}>
         <SubMenu title='Copy' hoverDelay={200}>
           <MenuItem onClick={this.handleClick} data={{type: 'copyFunctionName'}}>Function Name</MenuItem>
           <MenuItem onClick={this.handleClick} data={{type: 'copyStack'}}>Stack</MenuItem>
@@ -86,4 +86,4 @@ export default connect(state => ({
   thread: selectedThreadSelectors.getFilteredThread(state),
   funcStackInfo: selectedThreadSelectors.getFuncStackInfo(state),
   selectedFuncStack: selectedThreadSelectors.getSelectedFuncStack(state),
-}), actions)(ProfileCallTreeContextMenu);
+}), actions)(CallTreeContextMenu);

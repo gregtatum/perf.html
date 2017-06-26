@@ -7,7 +7,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import TreeView from '../shared/TreeView';
-import NodeIcon from './NodeIcon';
+import NodeIcon from '../shared/NodeIcon';
 import { getStackAsFuncArray } from '../../profile-logic/profile-data';
 import { getInvertCallstack, getImplementationFilter, getSearchString, getSelectedThreadIndex } from '../../reducers/url-state';
 import {
@@ -42,7 +42,7 @@ type Props = {
   addCallTreeFilter: typeof addCallTreeFilter,
 };
 
-class ProfileTreeView extends PureComponent {
+class CallTreeTree extends PureComponent {
   props: Props;
   _fixedColumns: Column[];
   _mainColumn: Column;
@@ -155,7 +155,7 @@ class ProfileTreeView extends PureComponent {
                 appendageButtons={this._appendageButtons}
                 onAppendageButtonClick={this._onAppendageButtonClick}
                 ref={ ref => { this._treeView = ref; }}
-                contextMenuId={'ProfileCallTreeContextMenu'}
+                contextMenuId={'CallTreeContextMenu'}
                 icons={this.props.icons} />
     );
 
@@ -180,4 +180,4 @@ export default connect(
   }),
   { changeSelectedFuncStack, changeExpandedFuncStacks, addCallTreeFilter },
   null, { withRef: true }
-)(ProfileTreeView);
+)(CallTreeTree);

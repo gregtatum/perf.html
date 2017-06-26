@@ -7,6 +7,8 @@ import classNames from 'classnames';
 import { timeCode } from '../../utils/time-code';
 import { getSampleFuncStacks } from '../../profile-logic/profile-data';
 
+require('./ThreadStackGraph.css');
+
 class ThreadStackGraph extends PureComponent {
 
   constructor(props) {

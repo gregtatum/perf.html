@@ -5,12 +5,12 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import ProfileThreadHeaderBar from './ProfileThreadHeaderBar';
+import HeaderThreadBar from './ThreadBar';
 import Reorderable from '../shared/Reorderable';
 import TimeSelectionScrubber from './TimeSelectionScrubber';
 import ProfileThreadJankOverview from './ProfileThreadJankOverview';
 import ProfileThreadTracingMarkerOverview from './ProfileThreadTracingMarkerOverview';
-import OverflowEdgeIndicator from './OverflowEdgeIndicator';
+import OverflowEdgeIndicator from '../shared/OverflowEdgeIndicator';
 import { connect } from 'react-redux';
 import { getProfile, getProfileViewOptions, getDisplayRange, getZeroAt } from '../../reducers/profile-view';
 import { getVisibleThreadOrder, getHiddenThreads, getThreadOrder } from '../../reducers/url-state';
@@ -27,6 +27,8 @@ import type { ProfileSelection } from '../../types/actions';
 import type { State } from '../../types/reducers';
 import type { Milliseconds, StartEndRange } from '../../types/units';
 
+require('./HeaderView.css');
+
 type Props = {|
   profile: Profile,
   className: string,
@@ -42,7 +44,7 @@ type Props = {|
   changeSelectedThread: typeof changeSelectedThread,
 |};
 
-class ProfileViewerHeader extends PureComponent {
+class HeaderView extends PureComponent {
   props: Props;
 
   constructor(props: Props) {
@@ -69,12 +71,12 @@ class ProfileViewerHeader extends PureComponent {
 
   render() {
     const {
-      profile, className, threadOrder, visibleThreadOrder, changeThreadOrder,
+      profile, threadOrder, visibleThreadOrder, changeThreadOrder,
       selection, updateProfileSelection, timeRange, zeroAt, hiddenThreads,
     } = this.props;
     const threads = profile.threads;
 
-    return <TimeSelectionScrubber className={`${className}Header`}
+    return <TimeSelectionScrubber className='header'
                            zeroAt={zeroAt}
                            rangeStart={timeRange.start}
                            rangeEnd={timeRange.end}
@@ -82,14 +84,14 @@ class ProfileViewerHeader extends PureComponent {
                            selection={selection}
                            onSelectionChange={updateProfileSelection}
                            onZoomButtonClick={this._onZoomButtonClick}>
-      <div className={`${className}HeaderIntervalMarkerOverviewContainer ${className}HeaderIntervalMarkerOverviewContainerJank`}>
+      <div className='headerIntervalMarkerOverviewContainer headerIntervalMarkerOverviewContainerJank'>
         {
           visibleThreadOrder.map(threadIndex => {
             const threadName = threads[threadIndex].name;
             const processType = threads[threadIndex].processType;
             return (
               ((threadName === 'GeckoMain' && processType !== 'plugin') ?
-                <ProfileThreadJankOverview className={`${className}HeaderIntervalMarkerOverview ${className}HeaderIntervalMarkerOverviewJank`}
+                <ProfileThreadJankOverview className='headerIntervalMarkerOverview headerIntervalMarkerOverviewJank'
                                            rangeStart={timeRange.start}
                                            rangeEnd={timeRange.end}
                                            threadIndex={threadIndex}
@@ -100,14 +102,14 @@ class ProfileViewerHeader extends PureComponent {
           })
         }
       </div>
-      <div className={`${className}HeaderIntervalMarkerOverviewContainer ${className}HeaderIntervalMarkerOverviewContainerGfx`}>
+      <div className='headerIntervalMarkerOverviewContainer headerIntervalMarkerOverviewContainerGfx'>
         {
           visibleThreadOrder.map(threadIndex => {
             const threadName = threads[threadIndex].name;
             const processType = threads[threadIndex].processType;
             return (
               (((threadName === 'GeckoMain' || threadName === 'Compositor' || threadName ==='Renderer') && processType !== 'plugin') ?
-                <ProfileThreadTracingMarkerOverview className={`${className}HeaderIntervalMarkerOverview ${className}HeaderIntervalMarkerOverviewGfx ${className}HeaderIntervalMarkerOverviewThread${threadName}`}
+                <ProfileThreadTracingMarkerOverview className={`headerIntervalMarkerOverview headerIntervalMarkerOverviewGfx headerIntervalMarkerOverviewThread${threadName}`}
                                                     rangeStart={timeRange.start}
                                                     rangeEnd={timeRange.end}
                                                     threadIndex={threadIndex}
@@ -118,15 +120,15 @@ class ProfileViewerHeader extends PureComponent {
           })
         }
       </div>
-      <OverflowEdgeIndicator className={`${className}HeaderOverflowEdgeIndicator`}>
+      <OverflowEdgeIndicator className='headerOverflowEdgeIndicator'>
         {<Reorderable tagName='ol'
-                     className={`${className}HeaderThreadList`}
+                     className='headerThreadList'
                      order={threadOrder}
                      orient='vertical'
                      onChangeOrder={changeThreadOrder}>
           {
             threads.map((thread, threadIndex) =>
-              <ProfileThreadHeaderBar key={threadIndex}
+              <HeaderThreadBar key={threadIndex}
                                       index={threadIndex}
                                       interval={profile.meta.interval}
                                       rangeStart={timeRange.start}
@@ -144,7 +146,6 @@ export default connect(
   (state: State) => ({
     profile: getProfile(state),
     selection: getProfileViewOptions(state).selection,
-    className: 'profileViewer',
     visibleThreadOrder: getVisibleThreadOrder(state),
     threadOrder: getThreadOrder(state),
     hiddenThreads: getHiddenThreads(state),
@@ -157,4 +158,4 @@ export default connect(
     addRangeFilterAndUnsetSelection,
     changeSelectedThread,
   }
-)(ProfileViewerHeader);
+)(HeaderView);

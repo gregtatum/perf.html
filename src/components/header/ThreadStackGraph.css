@@ -1,0 +1,15 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+.headerThreadStackGraph {
+  height: 30px;
+  width: calc(100% - 150px);
+  position: relative;
+}
+
+.headerThreadStackGraphCanvas {
+  display: block;
+  height: 30px;
+  width: 100%;
+}

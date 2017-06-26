@@ -4,7 +4,7 @@
 
 import React, { PureComponent, PropTypes } from 'react';
 import TimeRuler from './TimeRuler';
-import SelectionScrubberOverlay from './SelectionScrubberOverlay';
+import SelectionScrubberOverlay from './SelectionScrubber';
 import clamp from 'clamp';
 import { getContentRect } from '../../utils/css-geometry-tools';
 import { withSize } from '../shared/WithSize';

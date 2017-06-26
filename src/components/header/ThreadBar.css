@@ -1,0 +1,41 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+.headerThreadBarHidden {
+  height: 0;
+  pointer-events: none;
+}
+
+.headerThreadBar {
+  margin: 0;
+  padding: 0;
+  height: 30px;
+  display: flex;
+  flex-flow: row nowrap;
+  border-top: 1px solid #D6D6D6;
+  box-shadow: 0 1px #D6D6D6;
+  background-color: white;
+}
+
+.headerThreadBar.selected {
+  background-color: hsl(220, 50%, 93%);
+}
+
+.headerThreadBar > h1 {
+  width: 135px;
+  font-weight: normal;
+  font: message-box;
+  font-size: 100%;
+  line-height: 30px;
+  border-right: 1px solid #D6D6D6;
+  margin: 0;
+  margin-left: 14px;
+  cursor: default;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

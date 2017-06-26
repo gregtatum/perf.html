@@ -7,6 +7,8 @@ import classNames from 'classnames';
 import clamp from 'clamp';
 import Draggable from '../shared/Draggable';
 
+require('./SelectionScrubber.css');
+
 export default class SelectionScubberOverlay extends PureComponent {
   constructor(props) {
     super(props);
@@ -55,21 +57,21 @@ export default class SelectionScubberOverlay extends PureComponent {
     const beforeWidth = (selectionStart - rangeStart) / (rangeEnd - rangeStart) * width;
     const selectionWidth = (selectionEnd - selectionStart) / (rangeEnd - rangeStart) * width;
     return (
-      <div className='overlay'>
-        <div className='dimmerBefore' style={{width: `${beforeWidth}px`}}></div>
-        <div className='selectionScrubberWrapper'>
-          <div className='selectionScrubberGrippy' style={{width: `${selectionWidth}px`}}>
-            <Draggable className='grippyRangeStart' value={selection} onMove={this._rangeStartOnMove}/>
-            <Draggable className='grippyMoveRange' value={selection} onMove={this._moveRangeOnMove}/>
-            <Draggable className='grippyRangeEnd' value={selection} onMove={this._rangeEndOnMove}/>
+      <div className='headerSelectionScrubber'>
+        <div className='headerSelectionScrubberDimmerBefore' style={{width: `${beforeWidth}px`}}></div>
+        <div className='headerSelectionScrubberWrapper'>
+          <div className='headerSelectionScrubberGrippy' style={{width: `${selectionWidth}px`}}>
+            <Draggable className='headerSelectionScrubberGrippyRangeStart' value={selection} onMove={this._rangeStartOnMove}/>
+            <Draggable className='headerSelectionScrubberGrippyMoveRange' value={selection} onMove={this._moveRangeOnMove}/>
+            <Draggable className='headerSelectionScrubberGrippyRangeEnd' value={selection} onMove={this._rangeEndOnMove}/>
           </div>
-          <div className='selectionScrubberInner'>
-            <button className={classNames('selectionScrubberZoomButton', { hidden: isModifying })}
+          <div className='headerSelectionScrubberInner'>
+            <button className={classNames('headerSelectionScrubberZoomButton', { hidden: isModifying })}
                     onMouseDown={this._zoomButtonOnMouseDown}
                     onClick={this._zoomButtonOnClick}/>
           </div>
         </div>
-        <div className='dimmerAfter'></div>
+        <div className='headerSelectionScrubberDimmerAfter'></div>
       </div>
     );
   }

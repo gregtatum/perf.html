@@ -1,0 +1,80 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+.header {
+  position: relative;
+  margin-left: 149px;
+  border-left: 1px solid #D6D6D6;
+  -moz-user-focus: ignore;
+}
+
+.headerTimeRuler {
+  height: 20px;
+  overflow: hidden;
+}
+
+.headerTimeRuler::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: -150px;
+  right: 0;
+  height: 1px;
+  background: #D6D6D6;
+  z-index: 3;
+}
+
+.headerOverflowEdgeIndicatorScrollbox {
+  margin: 0 0 0 -150px;
+  padding-left: 150px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.headerIntervalMarkerOverviewContainerJank {
+  padding: 6px 0;
+  border-bottom: 1px solid #D6D6D6;
+}
+
+.headerIntervalMarkerOverviewJank {
+  padding: 2px 0;
+}
+
+.headerIntervalMarkerOverview {
+  list-style: none;
+  display: block;
+  margin: 0;
+  height: 6px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0.75;
+  background-color: transparent;
+  transition: background-color 500ms;
+}
+
+.headerIntervalMarkerOverview.selected {
+  opacity: 1;
+  background-color: #e4eaf6;
+}
+
+.headerIntervalMarkerOverviewThreadGeckoMain {
+  height: 18px;
+  border-bottom: 1px solid #D6D6D6;
+}
+
+.headerThreadList {
+  list-style: none;
+  margin: 0 0 0 -150px;
+  padding: 0;
+  box-shadow: inset 0 1px #D6D6D6;
+}
+
+.header:hover > .timeSelectionScrubberHoverIndicator {
+  visibility: visible;
+}
+
+.header:hover .selectionScrubberZoomButton,
+.selectionScrubberZoomButton:active {
+  opacity: 1.0;
+}

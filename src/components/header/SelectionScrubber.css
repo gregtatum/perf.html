@@ -1,0 +1,97 @@
+.headerSelectionScrubber {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-flow: row nowrap;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  margin-left: -5px;
+  padding-left: 5px;
+  overflow: hidden;
+}
+
+.headerSelectionScrubberDimmerBefore,
+.headerSelectionScrubberDimmerAfter {
+  background: rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.headerSelectionScrubberDimmerAfter {
+  flex: 1;
+}
+
+.headerSelectionScrubberWrapper {
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.headerSelectionScrubberInner {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
+.headerSelectionScrubberZoomButton {
+  width: 30px;
+  height: 30px;
+  pointer-events: auto;
+  box-sizing: border-box;
+  border-radius: 100%;
+  margin: -15px;
+  position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: url(./zoom-icon.svg) center center no-repeat rgba(255, 255, 255, 0.6);
+  transition: opacity 200ms ease-in-out;
+  will-change: opacity;
+  opacity: 0.5;
+}
+
+.headerSelectionScrubberZoomButton.hidden {
+  opacity: 0.0 !important;
+  pointer-events: none;
+}
+
+.headerSelectionScrubberZoomButton:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.headerSelectionScrubberZoomButton:active:hover {
+  background-color: rgba(160, 160, 160, 0.6);
+}
+
+.headerSelectionScrubberGrippyRangeStart,
+.headerSelectionScrubberGrippyRangeEnd {
+  width: 0px;
+  padding: 3px;
+  background: #AAA;
+  border: 1px solid white;
+  margin: 0 -4px;
+  cursor: ew-resize;
+  border-radius: 5px;
+  position: relative;
+  z-index: 3;
+}
+
+.headerSelectionScrubberGrippyRangeStart:hover,
+.headerSelectionScrubberGrippyRangeStart.dragging,
+.headerSelectionScrubberGrippyRangeEnd:hover,
+.headerSelectionScrubberGrippyRangeEnd.dragging {
+  background: #888;
+}
+
+.headerSelectionScrubberGrippyMoveRange {
+  flex: 1;
+  cursor: -webkit-grab;
+  cursor: grab;
+}
+
+.headerSelectionScrubberGrippyMoveRange.dragging {
+  cursor: -webkit-grabbing;
+  cursor: grabbing;
+}

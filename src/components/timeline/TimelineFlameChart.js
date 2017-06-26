@@ -111,7 +111,7 @@ class TimelineFlameChart extends PureComponent {
           * The timeline will eventually have its own context menu, but for now re-use
           * the one in the header for hiding threads.
           */}
-        <ContextMenuTrigger id={'ProfileThreadHeaderContextMenu'}
+        <ContextMenuTrigger id={'HeaderThreadContextMenu'}
                             title={processDetails}
                             attributes={{ className: 'timelineFlameChartLabels grippy' }}>
           <span>{threadName}</span>

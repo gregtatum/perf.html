@@ -18,6 +18,8 @@ import type { Milliseconds } from '../../types/units';
 import type { FuncStackInfo, IndexIntoFuncStackTable } from '../../types/profile-derived';
 import type { State } from '../../types/reducers';
 
+require('./ThreadBar.css');
+
 type Props = {
   threadIndex: ThreadIndex,
   thread: Thread,
@@ -79,11 +81,11 @@ class ProfileThreadHeaderBar extends PureComponent {
     if (isHidden) {
       // If this thread is hidden, render out a stub element so that the Reorderable
       // Component still works across all the threads.
-      return <li className='profileThreadHeaderBarHidden' />;
+      return <li className='headerThreadBarHidden' />;
     }
     return (
-      <li className={'profileThreadHeaderBar' + (isSelected ? ' selected' : '')} style={style}>
-        <ContextMenuTrigger id={'ProfileThreadHeaderContextMenu'}
+      <li className={'headerThreadBar' + (isSelected ? ' selected' : '')} style={style}>
+        <ContextMenuTrigger id={'HeaderThreadContextMenu'}
                             renderTag='h1'
                             attributes={{
                               title: processDetails,
@@ -94,7 +96,7 @@ class ProfileThreadHeaderBar extends PureComponent {
         </ContextMenuTrigger>
         <ThreadStackGraph interval={interval}
                           thread={thread}
-                          className='threadStackGraph'
+                          className='headerThreadStackGraph'
                           rangeStart={rangeStart}
                           rangeEnd={rangeEnd}
                           funcStackInfo={funcStackInfo}

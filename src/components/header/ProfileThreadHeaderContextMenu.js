@@ -54,7 +54,7 @@ class ProfileThreadHeaderContextMenu extends PureComponent {
     const { threads, threadOrder, hiddenThreads } = this.props;
 
     return (
-      <ContextMenu id={'ProfileThreadHeaderContextMenu'}>
+      <ContextMenu id={'HeaderThreadContextMenu'}>
         {threadOrder.map(threadIndex => {
           const isHidden = hiddenThreads.includes(threadIndex);
           return (

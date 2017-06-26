@@ -5,7 +5,7 @@
 import { connect } from 'react-redux';
 import actions from '../../actions';
 import { getRangeFilterLabels } from '../../reducers/url-state';
-import FilterNavigatorBar from '../calltree/FilterNavigatorBar';
+import FilterNavigatorBar from '../shared/FilterNavigatorBar';
 
 export default connect(state => {
   const items = getRangeFilterLabels(state);
