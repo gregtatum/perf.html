@@ -2,20 +2,25 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import Worker from './worker-factory';
+// import Worker from './worker-factory';
 
-const zeeWorker = new Worker('zee-worker');
+let zeeWorker;
 const zeeCallbacks = [];
-
-zeeWorker.onmessage = function (msg) {
-  zeeCallbacks[msg.data.callbackID][msg.data.type](msg.data.data);
-  zeeCallbacks[msg.data.callbackID] = null;
-};
+export function getGZWorker() {
+  if (!zeeWorker) {
+    zeeWorker = new Worker('zee-worker');
+    zeeWorker.onmessage = function (msg) {
+      zeeCallbacks[msg.data.callbackID][msg.data.type](msg.data.data);
+      zeeCallbacks[msg.data.callbackID] = null;
+    };
+  }
+}
 
 // Neuters data's buffer, if data is a typed array.
 export function compress(data, compressionLevel) {
   const arrayData = (typeof data === 'string') ? (new TextEncoder()).encode(data) : data;
   return new Promise(function (resolve, reject) {
+    const zeeWorker = getGZWorker();
     zeeWorker.postMessage({
       request: 'compress',
       data: arrayData,
@@ -32,6 +37,7 @@ export function compress(data, compressionLevel) {
 // Neuters data's buffer, if data is a typed array.
 export function decompress(data) {
   return new Promise(function (resolve, reject) {
+    const zeeWorker = getGZWorker();
     zeeWorker.postMessage({
       request: 'decompress',
       data: data,

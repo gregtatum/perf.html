@@ -1,32 +1,15 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+import startApp from './app';
+import startWorkers from './profile-logic/summary-worker';
 
-import React from 'react';
-import Perf from 'react-addons-perf';
-import { render } from 'react-dom';
-import Root from './components/app/Root';
-import createStore from './create-store';
-import '../res/style.css';
+const isWorkerEnvironment = typeof self.importScripts === 'function';
 
-if (process.env.NODE_ENV === 'production') {
-  const runtime = require('offline-plugin/runtime');
-  runtime.install({
-    onUpdateReady: () => {
-      runtime.applyUpdate();
-    },
-  });
+if (isWorkerEnvironment) {
+  debugger;
+  if (process.env.NODE_ENV === 'test') {
+    // startMockWorkerInterface();
+  } else {
+    startWorkers();
+  }
+} else {
+  startApp();
 }
-
-window.geckoProfilerPromise = new Promise(function (resolve) {
-  window.connectToGeckoProfiler = resolve;
-});
-
-const store = createStore();
-
-render(
-  <Root store={store} />,
-  document.getElementById('root')
-);
-
-window.Perf = Perf;

@@ -51,4 +51,4 @@ class DOMRectPolyfill implements DOMRectInterface {
   }
 }
 
-export default window.DOMRect ? window.DOMRect : DOMRectPolyfill;
+export default (window && window.DOMRect) ? window.DOMRect : DOMRectPolyfill;

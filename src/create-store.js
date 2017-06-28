@@ -12,7 +12,24 @@ import threadDispatcher from './utils/thread-middleware';
 import messages from './profile-logic/summary-worker/messages-content';
 import handleMessages from './utils/message-handler';
 import type { Store } from './types/store';
-import Worker from './utils/worker-factory';
+// import Worker from './utils/worker-factory';
+
+function getWorkerPath(): string {
+  const rootEl = document.querySelector('#root');
+  if (!rootEl) {
+    throw new Error('Could not find the root element on the page.');
+  }
+  const scriptEl = rootEl.nextElementSibling;
+  if (!scriptEl) {
+    throw new Error('Could not find the script element on the page.');
+  }
+  const bundleSrc = scriptEl.getAttribute('src');
+  if (!bundleSrc) {
+    throw new Error('Could not find the script src from the script tag');
+  }
+  debugger;
+  return bundleSrc;
+}
 
 /**
  * Isolate the store creation into a function, so that it can be used outside of the
@@ -20,7 +37,7 @@ import Worker from './utils/worker-factory';
  * @return {object} Redux store.
  */
 export default function initializeStore(): Store {
-  const worker = new Worker('worker');
+  const worker = new Worker(getWorkerPath());
 
   const middlewares = [
     thunk,
