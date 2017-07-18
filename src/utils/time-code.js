@@ -7,7 +7,9 @@
 export function timeCode<T>(label: string, codeAsACallback: () => T): T {
   if (
     typeof performance !== 'undefined' &&
-    process.env.NODE_ENV === 'development'
+    process.env.NODE_ENV === 'development' &&
+    typeof localStorage === 'object' &&
+    localStorage.logTimeCode === 'true'
   ) {
     const start = performance.now();
     const result = codeAsACallback();

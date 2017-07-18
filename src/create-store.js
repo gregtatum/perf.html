@@ -24,7 +24,10 @@ export default function initializeStore(): Store {
 
   const middlewares = [thunk, threadDispatcher(worker, 'toWorker')];
 
-  if (process.env.NODE_ENV === 'development') {
+  if (
+    process.env.NODE_ENV === 'development' &&
+    localStorage.logRedux === 'true'
+  ) {
     middlewares.push(
       createLogger({
         titleFormatter: action => `content action ${action.type}`,

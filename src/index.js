@@ -18,6 +18,22 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+if (process.env.NODE_ENV === 'development') {
+  if (localStorage.logRedux !== 'true' && localStorage.logRedux !== 'false') {
+    localStorage.logRedux = 'true';
+  }
+  if (localStorage.logRedux !== 'true' && localStorage.logRedux !== 'false') {
+    localStorage.logTimeCode = 'true';
+  }
+  console.log(
+    'perf.html logging is enabled. To toggle the level set the following values to true or false'
+  );
+  console.log(`localStorage.logRedux - Currently ${localStorage.logRedux}`);
+  console.log(
+    `localStorage.logTimeCode - Currently ${localStorage.logTimeCode}`
+  );
+}
+
 window.geckoProfilerPromise = new Promise(function(resolve) {
   window.connectToGeckoProfiler = resolve;
 });
