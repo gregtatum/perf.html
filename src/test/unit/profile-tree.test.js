@@ -5,25 +5,16 @@
 import { processProfile } from '../../profile-logic/process-profile';
 import exampleProfile from '.././fixtures/profiles/example-profile';
 import { getCallTree } from '../../profile-logic/profile-tree';
-import {
-  getFuncStackInfo,
-  invertCallstack,
-} from '../../profile-logic/profile-data';
+import { invertCallstack } from '../../profile-logic/profile-data';
 
 describe('profile-tree', function() {
   const profile = processProfile(exampleProfile);
   const thread = profile.threads[0];
 
   describe('unfiltered call tree', function() {
-    const funcStackInfo = getFuncStackInfo(
-      thread.stackTable,
-      thread.frameTable,
-      thread.funcTable
-    );
     const callTree = getCallTree(
       thread,
       profile.meta.interval,
-      funcStackInfo,
       'combined',
       false
     );
@@ -59,15 +50,9 @@ describe('profile-tree', function() {
 
   describe('inverted call tree', function() {
     const inverted = invertCallstack(thread);
-    const funcStackInfo = getFuncStackInfo(
-      inverted.stackTable,
-      inverted.frameTable,
-      inverted.funcTable
-    );
     const callTree = getCallTree(
       inverted,
       profile.meta.interval,
-      funcStackInfo,
       'combined',
       true
     );

@@ -19,12 +19,7 @@ import type {
   IndexIntoStackTable,
   ThreadIndex,
 } from '../types/profile';
-import type {
-  FuncStackInfo,
-  FuncStackTable,
-  IndexIntoFuncStackTable,
-  TracingMarker,
-} from '../types/profile-derived';
+import type { TracingMarker } from '../types/profile-derived';
 import type { StartEndRange } from '../types/units';
 import { timeCode } from '../utils/time-code';
 import { getEmptyTaskTracerData } from './task-tracer';
@@ -42,84 +37,6 @@ export const resourceTypes = {
   otherhost: 4,
   url: 5,
 };
-
-/**
- * Generate the FuncStackInfo which contains the FuncStackTable, and a map to convert
- * an IndexIntoStackTable to a IndexIntoFuncStackTable. This function runs through
- * a stackTable, and de-duplicates stacks that have frames that point to the same
- * function.
- *
- * See `src/types/profile-derived.js` for the type definitions.
- * See `docs/func-stacks.md` for a detailed explanation of funcStacks.
- */
-export function getFuncStackInfo(
-  stackTable: StackTable,
-  frameTable: FrameTable,
-  funcTable: FuncTable
-): FuncStackInfo {
-  return timeCode('getFuncStackInfo', () => {
-    const stackIndexToFuncStackIndex = new Uint32Array(stackTable.length);
-    const funcCount = funcTable.length;
-    // Maps can't key off of two items, so combine the prefixFuncStack and the funcIndex
-    // using the following formula: prefixFuncStack * funcCount + funcIndex => funcStack
-    const prefixFuncStackAndFuncToFuncStackMap = new Map();
-
-    // The funcStackTable components.
-    const prefix: Array<IndexIntoFuncStackTable> = [];
-    const func: Array<IndexIntoFuncTable> = [];
-    const depth: Array<number> = [];
-    let length = 0;
-
-    function addFuncStack(
-      prefixIndex: IndexIntoFuncStackTable,
-      funcIndex: IndexIntoFuncTable
-    ) {
-      const index = length++;
-      prefix[index] = prefixIndex;
-      func[index] = funcIndex;
-      if (prefixIndex === -1) {
-        depth[index] = 0;
-      } else {
-        depth[index] = depth[prefixIndex] + 1;
-      }
-    }
-
-    // Go through each stack, and create a new funcStack table, which is based off of
-    // functions rather than frames.
-    for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
-      const prefixStack = stackTable.prefix[stackIndex];
-      // We know that at this point the following condition holds:
-      // assert(prefixStack === null || prefixStack < stackIndex);
-      const prefixFuncStack =
-        prefixStack === null ? -1 : stackIndexToFuncStackIndex[prefixStack];
-      const frameIndex = stackTable.frame[stackIndex];
-      const funcIndex = frameTable.func[frameIndex];
-      const prefixFuncStackAndFuncIndex =
-        prefixFuncStack * funcCount + funcIndex;
-      let funcStackIndex = prefixFuncStackAndFuncToFuncStackMap.get(
-        prefixFuncStackAndFuncIndex
-      );
-      if (funcStackIndex === undefined) {
-        funcStackIndex = length;
-        addFuncStack(prefixFuncStack, funcIndex);
-        prefixFuncStackAndFuncToFuncStackMap.set(
-          prefixFuncStackAndFuncIndex,
-          funcStackIndex
-        );
-      }
-      stackIndexToFuncStackIndex[stackIndex] = funcStackIndex;
-    }
-
-    const funcStackTable: FuncStackTable = {
-      prefix: new Int32Array(prefix),
-      func: new Int32Array(func),
-      depth,
-      length,
-    };
-
-    return { funcStackTable, stackIndexToFuncStackIndex };
-  });
-}
 
 /**
  * This function runs through a stackTable, and de-duplicates stacks that have frames
@@ -146,7 +63,7 @@ export function deDuplicateFunctionFrames(thread: Thread): Thread {
     const funcCount = funcTable.length;
 
     // Maps can't key off of two items, so combine the prefixTransformedStack and the funcIndex
-    // using the following formula: prefixTransformedStack * funcCount + funcIndex => funcStack
+    // using the following formula: prefixTransformedStack * funcCount + funcIndex => stackIndex
     const prefixTransformedStackAndFuncToFuncStackMap = new Map();
 
     const prefix = [];
@@ -181,7 +98,7 @@ export function deDuplicateFunctionFrames(thread: Thread): Thread {
     };
 
     function addTransformedStack(
-      prefixIndex: IndexIntoFuncStackTable | -1,
+      prefixIndex: IndexIntoStackTable | -1,
       stackIndex: IndexIntoStackTable,
       funcIndex: IndexIntoFuncTable,
       frameIndex: IndexIntoFrameTable
@@ -308,17 +225,6 @@ function _addMergedIndexToMap(
   } else {
     existingValue.push(originalIndex);
   }
-}
-
-export function getSampleFuncStacks(
-  samples: SamplesTable,
-  stackIndexToFuncStackIndex: {
-    [key: IndexIntoStackTable]: IndexIntoFuncStackTable,
-  }
-): Array<IndexIntoFuncStackTable | null> {
-  return samples.stack.map(stack => {
-    return stack === null ? null : stackIndexToFuncStackIndex[stack];
-  });
 }
 
 function _getTimeRangeForThread(
@@ -895,56 +801,6 @@ export function filterThreadToRange(
     samples: newSamples,
     markers: newMarkers,
   });
-}
-
-export function getFuncStackFromFuncArray(
-  funcArray: IndexIntoFuncTable[],
-  funcStackTable: FuncStackTable
-): IndexIntoFuncStackTable | null {
-  let fs = -1;
-  for (let i = 0; i < funcArray.length; i++) {
-    const func = funcArray[i];
-    let nextFS = -1;
-    for (
-      let funcStackIndex = fs + 1;
-      funcStackIndex < funcStackTable.length;
-      funcStackIndex++
-    ) {
-      if (
-        funcStackTable.prefix[funcStackIndex] === fs &&
-        funcStackTable.func[funcStackIndex] === func
-      ) {
-        nextFS = funcStackIndex;
-        break;
-      }
-    }
-    if (nextFS === -1) {
-      return null;
-    }
-    fs = nextFS;
-  }
-  return fs;
-}
-
-export function getStackAsFuncArray(
-  funcStackIndex: IndexIntoFuncStackTable | null,
-  funcStackTable: FuncStackTable
-): IndexIntoFuncTable[] {
-  if (funcStackIndex === null) {
-    return [];
-  }
-  if (funcStackIndex * 1 !== funcStackIndex) {
-    console.log('bad funcStackIndex in getStackAsFuncArray:', funcStackIndex);
-    return [];
-  }
-  const funcArray = [];
-  let fs = funcStackIndex;
-  while (fs !== -1) {
-    funcArray.push(funcStackTable.func[fs]);
-    fs = funcStackTable.prefix[fs];
-  }
-  funcArray.reverse();
-  return funcArray;
 }
 
 export function invertCallstack(thread: Thread): Thread {

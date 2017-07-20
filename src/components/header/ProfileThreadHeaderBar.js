@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 // @flow
 
 import React, { PureComponent } from 'react';
@@ -9,49 +8,41 @@ import { connect } from 'react-redux';
 import ThreadStackGraph from './ThreadStackGraph';
 import { selectorsForThread } from '../../reducers/profile-view';
 import { getSelectedThreadIndex } from '../../reducers/url-state';
+import { getSampleIndexClosestToTime } from '../../profile-logic/profile-data';
 import {
-  getSampleIndexClosestToTime,
-  getStackAsFuncArray,
-} from '../../profile-logic/profile-data';
-import actions from '../../actions';
+  changeSelectedThread,
+  changeSelectedStack,
+} from '../../actions/profile-view';
 import ContextMenuTrigger from '../shared/ContextMenuTrigger';
 
 import type {
-  IndexIntoFuncTable,
   Thread,
   ThreadIndex,
+  IndexIntoStackTable,
 } from '../../types/profile';
 import type { Milliseconds } from '../../types/units';
-import type {
-  FuncStackInfo,
-  IndexIntoFuncStackTable,
-} from '../../types/profile-derived';
 import type { State } from '../../types/reducers';
 
 type Props = {
   threadIndex: ThreadIndex,
   thread: Thread,
-  funcStackInfo: FuncStackInfo,
   interval: Milliseconds,
   rangeStart: Milliseconds,
   rangeEnd: Milliseconds,
-  selectedFuncStack: IndexIntoFuncStackTable,
+  selectedStack: IndexIntoStackTable,
   isSelected: boolean,
   isHidden: boolean,
   style: Object,
   threadName: string,
   processDetails: string,
-  changeSelectedThread: ThreadIndex => void,
-  changeSelectedFuncStack: (
-    IndexIntoFuncStackTable,
-    IndexIntoFuncTable[]
-  ) => void,
+  changeSelectedThread: typeof changeSelectedThread,
+  changeSelectedStack: typeof changeSelectedStack,
 };
 
 class ProfileThreadHeaderBar extends PureComponent {
   props: Props;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     (this: any)._onLabelMouseDown = this._onLabelMouseDown.bind(this);
     (this: any)._onGraphClick = this._onGraphClick.bind(this);
@@ -68,21 +59,13 @@ class ProfileThreadHeaderBar extends PureComponent {
     }
   }
 
-  _onGraphClick(time: number) {
+  _onGraphClick(time?: number) {
     const { threadIndex, changeSelectedThread } = this.props;
     changeSelectedThread(threadIndex);
     if (time !== undefined) {
-      const { thread, funcStackInfo, changeSelectedFuncStack } = this.props;
+      const { thread } = this.props;
       const sampleIndex = getSampleIndexClosestToTime(thread.samples, time);
-      const newSelectedStack = thread.samples.stack[sampleIndex];
-      const newSelectedFuncStack =
-        newSelectedStack === null
-          ? -1
-          : funcStackInfo.stackIndexToFuncStackIndex[newSelectedStack];
-      changeSelectedFuncStack(
-        threadIndex,
-        getStackAsFuncArray(newSelectedFuncStack, funcStackInfo.funcStackTable)
-      );
+      changeSelectedStack(threadIndex, thread.samples.stack[sampleIndex]);
     }
   }
 
@@ -94,9 +77,8 @@ class ProfileThreadHeaderBar extends PureComponent {
       interval,
       rangeStart,
       rangeEnd,
-      funcStackInfo,
-      selectedFuncStack,
       isSelected,
+      selectedStack,
       style,
       threadName,
       processDetails,
@@ -129,8 +111,7 @@ class ProfileThreadHeaderBar extends PureComponent {
           className="threadStackGraph"
           rangeStart={rangeStart}
           rangeEnd={rangeEnd}
-          funcStackInfo={funcStackInfo}
-          selectedFuncStack={selectedFuncStack}
+          selectedStack={selectedStack}
           onClick={this._onGraphClick}
           onMarkerSelect={this._onMarkerSelect}
         />
@@ -139,20 +120,23 @@ class ProfileThreadHeaderBar extends PureComponent {
   }
 }
 
-export default connect((state: State, props) => {
-  const threadIndex: ThreadIndex = props.index;
-  const selectors = selectorsForThread(threadIndex);
-  const selectedThread = getSelectedThreadIndex(state);
-  return {
-    thread: selectors.getFilteredThread(state),
-    threadName: selectors.getFriendlyThreadName(state),
-    processDetails: selectors.getThreadProcessDetails(state),
-    funcStackInfo: selectors.getFuncStackInfo(state),
-    selectedFuncStack:
-      threadIndex === selectedThread
-        ? selectors.getSelectedFuncStack(state)
-        : -1,
-    isSelected: threadIndex === selectedThread,
-    threadIndex,
-  };
-}, actions)(ProfileThreadHeaderBar);
+export default connect(
+  (state: State, props) => {
+    const threadIndex: ThreadIndex = props.index;
+    const selectors = selectorsForThread(threadIndex);
+    const selectedThread = getSelectedThreadIndex(state);
+    const isSelected = threadIndex === selectedThread;
+    return {
+      thread: selectors.getFilteredThread(state),
+      threadName: selectors.getFriendlyThreadName(state),
+      processDetails: selectors.getThreadProcessDetails(state),
+      selectedStack: isSelected ? selectors.getSelectedStack(state) : -1,
+      isSelected,
+      threadIndex,
+    };
+  },
+  {
+    changeSelectedStack,
+    changeSelectedThread,
+  }
+)(ProfileThreadHeaderBar);

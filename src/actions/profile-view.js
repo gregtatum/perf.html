@@ -11,8 +11,8 @@ import type {
 import type { Action, ThunkAction } from '../types/store';
 import type {
   ThreadIndex,
-  IndexIntoFuncTable,
   IndexIntoMarkersTable,
+  IndexIntoStackTable,
 } from '../types/profile';
 
 /**
@@ -20,13 +20,14 @@ import type {
  * and filtering. Currently the call tree's actions are in this file, but should be
  * split apart. These actions should most likely affect every panel.
  */
-export function changeSelectedFuncStack(
+
+export function changeSelectedStack(
   threadIndex: ThreadIndex,
-  selectedFuncStack: IndexIntoFuncTable[]
+  selectedStack: IndexIntoStackTable | null
 ): Action {
   return {
-    type: 'CHANGE_SELECTED_FUNC_STACK',
-    selectedFuncStack,
+    type: 'CHANGE_SELECTED_STACK',
+    selectedStack,
     threadIndex,
   };
 }
@@ -81,14 +82,14 @@ export function changeCallTreeSearchString(searchString: string): Action {
   };
 }
 
-export function changeExpandedFuncStacks(
+export function changeExpandedStacks(
   threadIndex: ThreadIndex,
-  expandedFuncStacks: Array<IndexIntoFuncTable[]>
+  expandedStacks: Array<IndexIntoStackTable>
 ): Action {
   return {
-    type: 'CHANGE_EXPANDED_FUNC_STACKS',
+    type: 'CHANGE_EXPANDED_STACKS',
     threadIndex,
-    expandedFuncStacks,
+    expandedStacks,
   };
 }
 
