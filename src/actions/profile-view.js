@@ -11,8 +11,8 @@ import type {
 import type { Action, ThunkAction } from '../types/store';
 import type {
   ThreadIndex,
+  IndexIntoFuncTable,
   IndexIntoMarkersTable,
-  IndexIntoStackTable,
 } from '../types/profile';
 
 /**
@@ -23,7 +23,7 @@ import type {
 
 export function changeSelectedStack(
   threadIndex: ThreadIndex,
-  selectedStack: IndexIntoStackTable | null
+  selectedStack: IndexIntoFuncTable[]
 ): Action {
   return {
     type: 'CHANGE_SELECTED_STACK',
@@ -84,7 +84,7 @@ export function changeCallTreeSearchString(searchString: string): Action {
 
 export function changeExpandedStacks(
   threadIndex: ThreadIndex,
-  expandedStacks: Array<IndexIntoStackTable>
+  expandedStacks: Array<IndexIntoFuncTable[]>
 ): Action {
   return {
     type: 'CHANGE_EXPANDED_STACKS',

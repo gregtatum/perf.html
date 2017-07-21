@@ -15,7 +15,7 @@ import type {
 } from './actions';
 import type { Milliseconds, StartEndRange } from './units';
 import type {
-  IndexIntoStackTable,
+  IndexIntoFuncTable,
   IndexIntoMarkersTable,
   Profile,
   ThreadIndex,
@@ -29,8 +29,8 @@ export type Reducer<T> = (T, Action) => T;
 export type RequestedLib = { debugName: string, breakpadId: string };
 export type SymbolicationStatus = 'DONE' | 'SYMBOLICATING';
 export type ThreadViewOptions = {|
-  expandedStacks: Array<IndexIntoStackTable>,
-  selectedStack: IndexIntoStackTable | null,
+  selectedStack: IndexIntoFuncTable[],
+  expandedStacks: Array<IndexIntoFuncTable[]>,
   selectedMarker: IndexIntoMarkersTable | -1,
 |};
 export type ProfileViewState = {

@@ -8,6 +8,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import TreeView from '../shared/TreeView';
 import NodeIcon from './NodeIcon';
+import { getStackAsFuncArray } from '../../profile-logic/profile-data';
 import {
   getInvertCallstack,
   getImplementationFilter,
@@ -44,7 +45,7 @@ type Props = {
   interval: number,
   tree: ProfileTreeClass,
   selectedStack: IndexIntoStackTable | null,
-  expandedStacks: Array<IndexIntoStackTable>,
+  expandedStacks: Array<IndexIntoStackTable | null>,
   searchString: string,
   disableOverscan: boolean,
   implementationFilter: string,
@@ -107,42 +108,44 @@ class ProfileTreeView extends PureComponent {
   }
 
   _onSelectedStackChange(stackIndex: IndexIntoStackTable) {
-    const { threadIndex, changeSelectedStack } = this.props;
-    changeSelectedStack(threadIndex, stackIndex);
+    const { threadIndex, changeSelectedStack, thread } = this.props;
+    changeSelectedStack(threadIndex, getStackAsFuncArray(stackIndex, thread));
   }
 
-  _onExpandedStacksChange(newExpandedStacks: Array<IndexIntoStackTable>) {
-    const { threadIndex, changeExpandedStacks } = this.props;
-    changeExpandedStacks(threadIndex, newExpandedStacks);
+  _onExpandedStacksChange(
+    newExpandedStacks: Array<IndexIntoStackTable | null>
+  ) {
+    const { threadIndex, changeExpandedStacks, thread } = this.props;
+    changeExpandedStacks(
+      threadIndex,
+      newExpandedStacks.map(stackIndex =>
+        getStackAsFuncArray(stackIndex, thread)
+      )
+    );
   }
 
-  _onAppendageButtonClick(/*stackIndex: IndexIntoStackTable | null*/) {
-    // const {
-    //   threadIndex,
-    //   addCallTreeFilter,
-    //   implementationFilter,
-    //   invertCallstack,
-    // } = this.props;
-    // const jsOnly = implementationFilter === 'js';
-    // if (invertCallstack) {
-    //   addCallTreeFilter(threadIndex, {
-    //     type: 'postfix',
-    //     postfixFuncs: getStackAsFuncArray(
-    //       funcStackIndex,
-    //       funcStackInfo.funcStackTable
-    //     ),
-    //     matchJSOnly: jsOnly,
-    //   });
-    // } else {
-    //   addCallTreeFilter(threadIndex, {
-    //     type: 'prefix',
-    //     prefixFuncs: getStackAsFuncArray(
-    //       funcStackIndex,
-    //       funcStackInfo.funcStackTable
-    //     ),
-    //     matchJSOnly: jsOnly,
-    //   });
-    // }
+  _onAppendageButtonClick(stackIndex: IndexIntoStackTable | null) {
+    const {
+      threadIndex,
+      addCallTreeFilter,
+      implementationFilter,
+      invertCallstack,
+      thread,
+    } = this.props;
+    const jsOnly = implementationFilter === 'js';
+    if (invertCallstack) {
+      addCallTreeFilter(threadIndex, {
+        type: 'postfix',
+        postfixFuncs: getStackAsFuncArray(stackIndex, thread),
+        matchJSOnly: jsOnly,
+      });
+    } else {
+      addCallTreeFilter(threadIndex, {
+        type: 'prefix',
+        prefixFuncs: getStackAsFuncArray(stackIndex, thread),
+        matchJSOnly: jsOnly,
+      });
+    }
   }
 
   procureInterestingInitialSelection() {

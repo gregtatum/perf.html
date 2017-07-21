@@ -19,7 +19,7 @@ type Props = {
   interval: Milliseconds,
   rangeStart: Milliseconds,
   rangeEnd: Milliseconds,
-  selectedStack: IndexIntoStackTable,
+  selectedStack: IndexIntoStackTable | null,
   className: string,
   onClick: (Milliseconds | void) => void,
   onMarkerSelect: IndexIntoMarkersTable => void,

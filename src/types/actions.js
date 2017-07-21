@@ -9,7 +9,6 @@ import type {
   ThreadIndex,
   IndexIntoMarkersTable,
   IndexIntoFuncTable,
-  IndexIntoStackTable,
 } from './profile';
 import type { GetLabel } from '../profile-logic/labeling-strategies';
 import type { GetCategory } from '../profile-logic/color-categories';
@@ -18,11 +17,13 @@ import type { TemporaryError } from '../utils/errors';
 export type ExpandedSet = Set<ThreadIndex>;
 export type PrefixCallTreeFilter = {
   type: 'prefix',
-  stack: IndexIntoStackTable,
+  prefixFuncs: IndexIntoFuncTable[],
+  matchJSOnly: boolean,
 };
 export type PostfixCallTreeFilter = {
   type: 'postfix',
-  stack: IndexIntoStackTable,
+  postfixFuncs: IndexIntoFuncTable[],
+  matchJSOnly: boolean,
 };
 export type CallTreeFilter = PrefixCallTreeFilter | PostfixCallTreeFilter;
 export type CallTreeFiltersPerThread = { [id: ThreadIndex]: CallTreeFilter[] };
@@ -76,12 +77,12 @@ type ProfileAction =
   | {
       type: 'CHANGE_SELECTED_STACK',
       threadIndex: ThreadIndex,
-      selectedStack: IndexIntoStackTable | null,
+      selectedStack: IndexIntoFuncTable[],
     }
   | {
       type: 'CHANGE_EXPANDED_STACKS',
       threadIndex: ThreadIndex,
-      expandedStacks: Array<IndexIntoStackTable>,
+      expandedStacks: Array<IndexIntoFuncTable[]>,
     }
   | {
       type: 'CHANGE_SELECTED_MARKER',

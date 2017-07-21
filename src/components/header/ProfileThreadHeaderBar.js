@@ -8,7 +8,10 @@ import { connect } from 'react-redux';
 import ThreadStackGraph from './ThreadStackGraph';
 import { selectorsForThread } from '../../reducers/profile-view';
 import { getSelectedThreadIndex } from '../../reducers/url-state';
-import { getSampleIndexClosestToTime } from '../../profile-logic/profile-data';
+import {
+  getSampleIndexClosestToTime,
+  getStackAsFuncArray,
+} from '../../profile-logic/profile-data';
 import {
   changeSelectedThread,
   changeSelectedStack,
@@ -29,7 +32,7 @@ type Props = {
   interval: Milliseconds,
   rangeStart: Milliseconds,
   rangeEnd: Milliseconds,
-  selectedStack: IndexIntoStackTable,
+  selectedStack: IndexIntoStackTable | null,
   isSelected: boolean,
   isHidden: boolean,
   style: Object,
@@ -60,12 +63,23 @@ class ProfileThreadHeaderBar extends PureComponent {
   }
 
   _onGraphClick(time?: number) {
-    const { threadIndex, changeSelectedThread } = this.props;
+    const {
+      thread,
+      threadIndex,
+      changeSelectedThread,
+      changeSelectedStack,
+    } = this.props;
     changeSelectedThread(threadIndex);
     if (time !== undefined) {
-      const { thread } = this.props;
       const sampleIndex = getSampleIndexClosestToTime(thread.samples, time);
-      changeSelectedStack(threadIndex, thread.samples.stack[sampleIndex]);
+      console.log(
+        'getStackAsFuncArray',
+        getStackAsFuncArray(thread.samples.stack[sampleIndex], thread)
+      );
+      changeSelectedStack(
+        threadIndex,
+        getStackAsFuncArray(thread.samples.stack[sampleIndex], thread)
+      );
     }
   }
 
@@ -77,8 +91,8 @@ class ProfileThreadHeaderBar extends PureComponent {
       interval,
       rangeStart,
       rangeEnd,
-      isSelected,
       selectedStack,
+      isSelected,
       style,
       threadName,
       processDetails,

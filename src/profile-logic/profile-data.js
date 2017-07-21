@@ -803,6 +803,73 @@ export function filterThreadToRange(
   });
 }
 
+/**
+ * Searches through a thread's StackTable to find a stackIndex given a list
+ * of function indexes.
+ */
+export function getStackFromFuncArray(
+  funcArray: IndexIntoFuncTable[],
+  { stackTable, frameTable }: Thread
+): IndexIntoStackTable | null {
+  let stackToSearch = null;
+  // Go through the func array
+  for (let i = 0; i < funcArray.length; i++) {
+    const funcIndex = funcArray[i];
+    let postfixStack = null;
+
+    // Go through the entire StackTable and try to find a postfix stack.
+    // This works because there is an invariant in the stackTable that a
+    // stack's prefix is always less than its stack index.
+    for (
+      let possiblyPostfixStack = stackToSearch === null ? 0 : stackToSearch;
+      possiblyPostfixStack < stackTable.length;
+      possiblyPostfixStack++
+    ) {
+      const frameIndex = stackTable.frame[possiblyPostfixStack];
+      if (
+        // This is a postfix stack.
+        stackTable.prefix[possiblyPostfixStack] === stackToSearch &&
+        // This matches the func in the funcArray.
+        frameTable.func[frameIndex] === funcIndex
+      ) {
+        postfixStack = possiblyPostfixStack;
+        break;
+      }
+    }
+    if (postfixStack === null) {
+      return null;
+    }
+    stackToSearch = postfixStack;
+  }
+  return stackToSearch;
+}
+
+/**
+ * Transform a stack index into a list of functions from the root to that stack.
+ */
+export function getStackAsFuncArray(
+  stackIndex: IndexIntoStackTable | null,
+  { stackTable, frameTable }: Thread
+): IndexIntoFuncTable[] {
+  if (stackIndex === null) {
+    return [];
+  }
+  if (stackIndex * 1 !== stackIndex) {
+    console.log('bad stackIndex in getStackAsFuncArray:', stackIndex);
+    return [];
+  }
+  const funcArray = [];
+  let prefixStackIndex = stackIndex;
+  while (prefixStackIndex !== null) {
+    const frameIndex = stackTable.frame[prefixStackIndex];
+    const funcIndex = frameTable.func[frameIndex];
+    funcArray.push(funcIndex);
+    prefixStackIndex = stackTable.prefix[prefixStackIndex];
+  }
+  funcArray.reverse();
+  return funcArray;
+}
+
 export function invertCallstack(thread: Thread): Thread {
   return timeCode('invertCallstack', () => {
     const { stackTable, frameTable, samples } = thread;

@@ -24,6 +24,7 @@ import type {
   Profile,
   Thread,
   ThreadIndex,
+  IndexIntoFuncTable,
   IndexIntoStackTable,
   SamplesTable,
   TaskTracer,
@@ -114,10 +115,34 @@ function viewOptionsPerThread(state: ThreadViewOptions[] = [], action: Action) {
     case 'RECEIVE_PROFILE_FROM_URL':
     case 'RECEIVE_PROFILE_FROM_FILE':
       return action.profile.threads.map(() => ({
+        selectedStack: [],
         expandedStacks: [],
-        selectedStack: null,
         selectedMarker: -1,
       }));
+    case 'COALESCED_FUNCTIONS_UPDATE': {
+      const { functionsUpdatePerThread } = action;
+      // For each thread, apply oldFuncToNewFuncMap to that thread's
+      // selectedStack and expandedStacks.
+      return state.map((threadViewOptions, threadIndex) => {
+        if (!functionsUpdatePerThread[threadIndex]) {
+          return threadViewOptions;
+        }
+        const { oldFuncToNewFuncMap } = functionsUpdatePerThread[threadIndex];
+        return {
+          selectedStack: threadViewOptions.selectedStack.map(oldFunc => {
+            const newFunc = oldFuncToNewFuncMap.get(oldFunc);
+            return newFunc === undefined ? oldFunc : newFunc;
+          }),
+          expandedStacks: threadViewOptions.expandedStacks.map(oldFuncArray => {
+            return oldFuncArray.map(oldFunc => {
+              const newFunc = oldFuncToNewFuncMap.get(oldFunc);
+              return newFunc === undefined ? oldFunc : newFunc;
+            });
+          }),
+          selectedMarker: threadViewOptions.selectedMarker,
+        };
+      });
+    }
     case 'CHANGE_SELECTED_STACK': {
       const { selectedStack, threadIndex } = action;
       return [
@@ -309,7 +334,7 @@ export type SelectorsForThread = {
   getFilteredThread: State => Thread,
   getRangeSelectionFilteredThread: State => Thread,
   getSelectedStack: State => IndexIntoStackTable | null,
-  getExpandedStacks: State => Array<IndexIntoStackTable>,
+  getExpandedStacks: State => Array<IndexIntoStackTable | null>,
   getCallTree: State => ProfileTree.ProfileTreeClass,
   getFilteredThreadForFlameChart: State => Thread,
   getMaxDepthForFlameChart: State => number,
@@ -445,11 +470,32 @@ export const selectorsForThread = (
         );
       }
     );
-    const getSelectedStack = (state: State) =>
-      getViewOptions(state).selectedStack;
-    const getExpandedStacks = (state: State) =>
-      getViewOptions(state).expandedStacks;
-
+    const _getSelectedStackAsFuncArray = createSelector(
+      getViewOptions,
+      (threadViewOptions): IndexIntoFuncTable[] =>
+        threadViewOptions.selectedStack
+    );
+    const getSelectedStack = createSelector(
+      getThread,
+      _getSelectedStackAsFuncArray,
+      (thread, funcArray): IndexIntoStackTable | null => {
+        return ProfileData.getStackFromFuncArray(funcArray, thread);
+      }
+    );
+    const _getExpandedStacksAsFuncArrays = createSelector(
+      getViewOptions,
+      (threadViewOptions): Array<IndexIntoFuncTable[]> =>
+        threadViewOptions.expandedStacks
+    );
+    const getExpandedStacks = createSelector(
+      getThread,
+      _getExpandedStacksAsFuncArrays,
+      (thread, funcArrays): (IndexIntoStackTable | null)[] => {
+        return funcArrays.map(funcArray =>
+          ProfileData.getStackFromFuncArray(funcArray, thread)
+        );
+      }
+    );
     const getCallTree = createSelector(
       getRangeSelectionFilteredThread,
       getProfileInterval,

@@ -13,7 +13,7 @@ import type {
 import type { Node } from '../types/profile-derived';
 import type { Milliseconds } from '../types/units';
 
-type stackChildren = IndexIntoStackTable[];
+type StackChildren = IndexIntoStackTable[];
 type StackTimes = {
   selfTime: Float32Array,
   totalTime: Float32Array,
@@ -31,7 +31,7 @@ class ProfileTree {
   _rootTotalTime: number;
   _rootCount: number;
   _nodes: Map<IndexIntoStackTable, Node>;
-  _children: Map<IndexIntoStackTable, stackChildren>;
+  _children: Map<IndexIntoStackTable, StackChildren>;
   _jsOnly: boolean;
 
   constructor(
@@ -52,14 +52,14 @@ class ProfileTree {
     this._jsOnly = jsOnly;
   }
 
-  getRoots() {
+  getRoots(): StackChildren {
     return this.getChildren(-1);
   }
 
   /**
    * Return an array of stackIndex for the children of the node with index stackIndex.
    */
-  getChildren(stackIndex: IndexIntoStackTable): stackChildren {
+  getChildren(stackIndex: IndexIntoStackTable): StackChildren {
     let children = this._children.get(stackIndex);
     if (children === undefined) {
       const { stackTable } = this.thread;
