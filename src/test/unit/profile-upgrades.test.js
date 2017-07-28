@@ -20,50 +20,37 @@ import {
   CURRENT_GECKO_VERSION,
 } from '../../profile-logic/gecko-profile-versioning';
 
-/**
- * This only lightly tests our conversion of old cleopatra formats to see that they
- * don't throw exceptions.
- */
-describe('upgrade old cleopatra profiles', function() {
-  [
-    require('../fixtures/upgrades/old-cleopatra-profile.sps.json'),
-    require('../fixtures/upgrades/ancient-cleopatra-profile.sps.json'),
-  ].forEach((cleopatraProfile: Object) => {
-    it('should detect the profile as an old cleopatra profile', function() {
-      expect(isOldCleopatraFormat(cleopatraProfile)).toBe(true);
-    });
-    it('should be able to convert the old cleopatra profile into a processed profile', function() {
-      const processedProfile = convertOldCleopatraProfile(cleopatraProfile);
-      expect(isProcessedProfile(processedProfile)).toBe(true);
-      // For now, just test that upgrading doesn't throw any exceptions.
-      upgradeProcessedProfileToCurrentVersion(processedProfile);
-      expect(processedProfile.threads.length).toBeGreaterThanOrEqual(1);
-      expect(processedProfile.threads[0].name).toBe('GeckoMain');
-    });
-  });
-});
-
 describe('upgrade processed profiles', function() {
-  let profilesTested = 0;
-  function matchesSnapshot(version: number, serializedProfile: Object) {
-    it(`upgrades profile-${version}.json to the current processProfile format`, function() {
-      const processedProfile: Object = unserializeProfileOfArbitraryFormat(
-        serializedProfile
-      );
-      delete processedProfile.meta.version;
-      expect(processedProfile).toMatchSnapshot('upgraded-process-profile');
-      profilesTested++;
-    });
+  const referenceProfile: Object = require('../fixtures/upgrades/processed-7.json');
+  delete referenceProfile.meta.version;
+
+  // Processed profiles contain a stringTable which isn't easily comparable.
+  // Instead, serialize the profiles first, so that the stringTable becomes a
+  // stringArray, and compare the serialized versions.
+  function getComparableProfile(profile: Object): Object {
+    const comparableProfile = JSON.parse(serializeProfile(profile));
+    delete comparableProfile.meta.version;
+    return comparableProfile;
   }
 
-  matchesSnapshot(7, require('../fixtures/upgrades/processed-7.json'));
-  matchesSnapshot(6, require('../fixtures/upgrades/processed-6.json'));
-  matchesSnapshot(5, require('../fixtures/upgrades/processed-5.json'));
-  matchesSnapshot(4, require('../fixtures/upgrades/processed-4.json'));
-  matchesSnapshot(3, require('../fixtures/upgrades/processed-3.json'));
-  matchesSnapshot(2, require('../fixtures/upgrades/processed-2.json'));
-  matchesSnapshot(1, require('../fixtures/upgrades/processed-1.json'));
-  matchesSnapshot(0, require('../fixtures/upgrades/processed-0.json'));
+  let profilesTested = 0;
+  function checkProfile(version: number, profileJSON: Object) {
+    it(`"profile-${version}.json" should be equal to the referenceProfile`, function() {
+      expect(
+        getComparableProfile(unserializeProfileOfArbitraryFormat(profileJSON))
+      ).toEqual(referenceProfile);
+    });
+    profilesTested++;
+  }
+
+  checkProfile(7, require('../fixtures/upgrades/processed-7.json'));
+  checkProfile(6, require('../fixtures/upgrades/processed-6.json'));
+  checkProfile(5, require('../fixtures/upgrades/processed-5.json'));
+  checkProfile(4, require('../fixtures/upgrades/processed-4.json'));
+  checkProfile(3, require('../fixtures/upgrades/processed-3.json'));
+  checkProfile(2, require('../fixtures/upgrades/processed-2.json'));
+  checkProfile(1, require('../fixtures/upgrades/processed-1.json'));
+  checkProfile(0, require('../fixtures/upgrades/processed-0.json'));
 
   /**
    * If this test fails, then a new processed-x.json needs to be added. Run the
@@ -74,7 +61,7 @@ describe('upgrade processed profiles', function() {
     // console.log(
     //   serializeProfile(
     //     unserializeProfileOfArbitraryFormat(
-    //       require('../fixtures/upgrades/processed-7.json')
+    //       require('../fixtures/upgrades/processed-0.json')
     //     )
     //   )
     // );
@@ -83,41 +70,61 @@ describe('upgrade processed profiles', function() {
   });
 });
 
-fdescribe('upgrade gecko profiles version 3 and above', function() {
+describe('upgrade gecko profiles', function() {
+  const referenceGeckoProfile = require('../fixtures/upgrades/gecko-7.json');
+  expect(referenceGeckoProfile.meta.version).toEqual(CURRENT_GECKO_VERSION);
+
   let profilesTested = 0;
-  function matchesSnapshot(version: number, geckoProfile: Object) {
-    it(`upgrades "gecko-${version}.json" to the current processProfile format`, function() {
+  function checkProfile(version: number, geckoProfile: Object) {
+    it(`"gecko-${version}.json" should be equal to the referenceProfile`, function() {
       upgradeGeckoProfileToCurrentVersion(geckoProfile);
-      expect(geckoProfile).toMatchSnapshot('upgraded-gecko-profile');
-      profilesTested++;
+      expect(geckoProfile).toEqual(referenceGeckoProfile);
     });
+    profilesTested++;
   }
 
-  // Uncomment this to output your next ./upgrades/gecko-X.json
-  // upgradeGeckoProfileToCurrentVersion(afterUpgradeGeckoReference);
-  // console.log(JSON.stringify(afterUpgradeGeckoReference));
-
-  matchesSnapshot(7, require('../fixtures/upgrades/gecko-7.json'));
-  matchesSnapshot(6, require('../fixtures/upgrades/gecko-6.json'));
-  matchesSnapshot(5, require('../fixtures/upgrades/gecko-5.json'));
-  matchesSnapshot(4, require('../fixtures/upgrades/gecko-4.json'));
-  matchesSnapshot(3, require('../fixtures/upgrades/gecko-3.json'));
+  checkProfile(7, require('../fixtures/upgrades/gecko-7.json'));
+  checkProfile(6, require('../fixtures/upgrades/gecko-6.json'));
+  checkProfile(5, require('../fixtures/upgrades/gecko-5.json'));
+  checkProfile(4, require('../fixtures/upgrades/gecko-4.json'));
+  checkProfile(3, require('../fixtures/upgrades/gecko-3.json'));
 
   /**
-   * If this test fails, then a new processed-x.json needs to be added. Run the
+   * If this test fails, then a new gecko-x.json needs to be added. Run the
    * following console.log to output a new one, then manually run it through
    * JSON.stringify(output, null, 2) to pretty print the output.
    */
-  it('tests every gecko profile version', function() {
+  it('tests every processed profile', function() {
     // console.log(
-    //   serializeProfile(
-    //     unserializeProfileOfArbitraryFormat(
-    //       require('../fixtures/upgrades/processed-7.json')
-    //     )
-    //   )
+    //   upgradeGeckoProfileToCurrentVersion(require('../fixtures/upgrades/gecko-3.json'))
     // );
 
+    // Only test from version 3.
     const expectedProfilesTested = CURRENT_GECKO_VERSION - 2;
     expect(expectedProfilesTested).toBe(profilesTested);
+  });
+});
+
+/**
+ * This only lightly tests our conversion of old cleopatra formats to see that they
+ * don't throw exceptions.
+ */
+describe('upgrade old cleopatra profiles', function() {
+  const exampleOldCleopatraProfiles = [
+    require('../fixtures/upgrades/old-cleopatra-profile.sps.json'),
+    require('../fixtures/upgrades/ancient-cleopatra-profile.sps.json'),
+  ];
+  exampleOldCleopatraProfiles.forEach(exampleOldCleopatraProfile => {
+    it('should detect the profile as an old cleopatra profile', function() {
+      expect(isOldCleopatraFormat(exampleOldCleopatraProfile)).toBe(true);
+    });
+    it('should be able to convert the old cleopatra profile into a processed profile', function() {
+      const profile = convertOldCleopatraProfile(exampleOldCleopatraProfile);
+      expect(isProcessedProfile(profile)).toBe(true);
+      // For now, just test that upgrading doesn't throw any exceptions.
+      upgradeProcessedProfileToCurrentVersion(profile);
+      expect(profile.threads.length).toBeGreaterThanOrEqual(1);
+      expect(profile.threads[0].name).toBe('GeckoMain');
+    });
   });
 });

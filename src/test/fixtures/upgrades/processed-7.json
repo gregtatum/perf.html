@@ -10,42 +10,42 @@
     "stackwalk": 1,
     "startTime": 1460221352723.438,
     "toolkit": "cocoa",
-    "preprocessedProfileVersion": 6
+    "version": 3,
+    "preprocessedProfileVersion": 7
   },
   "threads": [
     {
       "name": "GeckoMain",
-      "processType": "default",
       "libs": [
         {
           "breakpadId": "F1D957D30B413D55A539BBA06F90DD8F0",
-          "arch": "x86_64",
-          "debugPath": "",
-          "debugName": "firefox",
           "name": "firefox",
-          "path": "/Applications/FirefoxNightly.app/Contents/MacOS/firefox",
           "start": 4294967296,
-          "end": 4294977296
+          "end": 4294977296,
+          "debugName": "firefox",
+          "path": "/Applications/FirefoxNightly.app/Contents/MacOS/firefox",
+          "arch": "x86_64",
+          "debugPath": ""
         },
         {
           "breakpadId": "1000000000000000000000000000000A1",
-          "arch": "x86_64",
-          "debugPath": "",
-          "debugName": "examplebinary",
           "name": "examplebinary",
-          "path": "/tmp/examplebinary",
           "start": 8589934592,
-          "end": 8589934612
+          "end": 8589934612,
+          "debugName": "examplebinary",
+          "path": "/tmp/examplebinary",
+          "arch": "x86_64",
+          "debugPath": ""
         },
         {
-          "breakpadId": "100000000000000000000000000000A27",
-          "arch": "x86_64",
-          "debugPath": "",
-          "debugName": "examplebinary2.pdb",
           "name": "examplebinary2",
-          "path": "C:\\examplebinary2",
           "start": 8589934612,
-          "end": 8589934632
+          "end": 8589934632,
+          "breakpadId": "100000000000000000000000000000A27",
+          "debugName": "examplebinary2.pdb",
+          "path": "C:\\examplebinary2",
+          "arch": "x86_64",
+          "debugPath": ""
         }
       ],
       "frameTable": {
@@ -170,6 +170,13 @@
           2,
           3,
           4
+        ],
+        "depth": [
+          0,
+          1,
+          2,
+          2,
+          2
         ]
       },
       "markers": {
@@ -306,41 +313,56 @@
           null
         ]
       },
-      "stringArray": []
+      "processType": "default",
+      "stringArray": [
+        "(root)",
+        "0x100000f84",
+        "0x100001a45",
+        "Startup::XRE_Main",
+        "VsyncTimestamp",
+        "Reflow",
+        "baseline",
+        "frobnicate (chrome://blargh:34)",
+        "DOMEvent",
+        "MinorGC",
+        "Rasterize",
+        "firefox",
+        "chrome://blargh",
+        "frobnicate"
+      ]
     },
     {
       "name": "Compositor",
-      "processType": "default",
       "libs": [
         {
           "breakpadId": "F1D957D30B413D55A539BBA06F90DD8F0",
-          "arch": "x86_64",
-          "debugPath": "",
-          "debugName": "firefox",
           "name": "firefox",
-          "path": "/Applications/FirefoxNightly.app/Contents/MacOS/firefox",
           "start": 4294967296,
-          "end": 4294977296
+          "end": 4294977296,
+          "debugName": "firefox",
+          "path": "/Applications/FirefoxNightly.app/Contents/MacOS/firefox",
+          "arch": "x86_64",
+          "debugPath": ""
         },
         {
           "breakpadId": "1000000000000000000000000000000A1",
-          "arch": "x86_64",
-          "debugPath": "",
-          "debugName": "examplebinary",
           "name": "examplebinary",
-          "path": "/tmp/examplebinary",
           "start": 8589934592,
-          "end": 8589934612
+          "end": 8589934612,
+          "debugName": "examplebinary",
+          "path": "/tmp/examplebinary",
+          "arch": "x86_64",
+          "debugPath": ""
         },
         {
-          "breakpadId": "100000000000000000000000000000A27",
-          "arch": "x86_64",
-          "debugPath": "",
-          "debugName": "examplebinary2.pdb",
           "name": "examplebinary2",
-          "path": "C:\\examplebinary2",
           "start": 8589934612,
-          "end": 8589934632
+          "end": 8589934632,
+          "breakpadId": "100000000000000000000000000000A27",
+          "debugName": "examplebinary2.pdb",
+          "path": "C:\\examplebinary2",
+          "arch": "x86_64",
+          "debugPath": ""
         }
       ],
       "frameTable": {
@@ -465,6 +487,13 @@
           2,
           3,
           4
+        ],
+        "depth": [
+          0,
+          1,
+          2,
+          2,
+          2
         ]
       },
       "markers": {
@@ -601,41 +630,56 @@
           null
         ]
       },
-      "stringArray": []
+      "processType": "default",
+      "stringArray": [
+        "(root)",
+        "0x100000f84",
+        "0x100001a45",
+        "Startup::XRE_Main",
+        "VsyncTimestamp",
+        "Reflow",
+        "baseline",
+        "frobnicate (chrome://blargh:34)",
+        "DOMEvent",
+        "MinorGC",
+        "Rasterize",
+        "firefox",
+        "chrome://blargh",
+        "frobnicate"
+      ]
     },
     {
       "name": "GeckoMain",
-      "processType": "tab",
       "libs": [
         {
           "breakpadId": "9F950E2CE3CD3E1ABD06D80788B606E60",
-          "arch": "x86_64",
-          "debugPath": "",
-          "debugName": "firefox-webcontent",
           "name": "firefox-webcontent",
-          "path": "/Applications/FirefoxNightly.app/Contents/MacOS/firefox-webcontent.app/Contents/MacOS/firefox-webcontent",
           "start": 4294967296,
-          "end": 4294977296
+          "end": 4294977296,
+          "debugName": "firefox-webcontent",
+          "path": "/Applications/FirefoxNightly.app/Contents/MacOS/firefox-webcontent.app/Contents/MacOS/firefox-webcontent",
+          "arch": "x86_64",
+          "debugPath": ""
         },
         {
           "breakpadId": "1000000000000000000000000000000A1",
-          "arch": "x86_64",
-          "debugPath": "",
-          "debugName": "examplebinary",
           "name": "examplebinary",
-          "path": "/tmp/examplebinary",
           "start": 8589934592,
-          "end": 8589934612
+          "end": 8589934612,
+          "debugName": "examplebinary",
+          "path": "/tmp/examplebinary",
+          "arch": "x86_64",
+          "debugPath": ""
         },
         {
-          "breakpadId": "100000000000000000000000000000A27",
-          "arch": "x86_64",
-          "debugPath": "",
-          "debugName": "examplebinary2.pdb",
           "name": "examplebinary2",
-          "path": "C:\\examplebinary2",
           "start": 8589934612,
-          "end": 8589934632
+          "end": 8589934632,
+          "breakpadId": "100000000000000000000000000000A27",
+          "debugName": "examplebinary2.pdb",
+          "path": "C:\\examplebinary2",
+          "arch": "x86_64",
+          "debugPath": ""
         }
       ],
       "frameTable": {
@@ -760,6 +804,13 @@
           2,
           3,
           4
+        ],
+        "depth": [
+          0,
+          1,
+          2,
+          2,
+          2
         ]
       },
       "markers": {
@@ -896,7 +947,23 @@
           null
         ]
       },
-      "stringArray": []
+      "processType": "tab",
+      "stringArray": [
+        "(root)",
+        "0x100000f84",
+        "0x100001a45",
+        "Startup::XRE_Main",
+        "VsyncTimestamp",
+        "Reflow",
+        "baseline",
+        "frobnicate (chrome://blargh:34)",
+        "DOMEvent",
+        "MinorGC",
+        "Rasterize",
+        "firefox-webcontent",
+        "chrome://blargh",
+        "frobnicate"
+      ]
     }
   ],
   "tasktracer": {

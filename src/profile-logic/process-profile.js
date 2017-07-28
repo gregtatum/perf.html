@@ -649,10 +649,7 @@ export function processProfile(geckoProfile: GeckoProfile): Profile {
  * Take a processed profile and remove any non-serializable classes such as the
  * StringTable class.
  */
-export function serializeProfile(
-  profile: Profile,
-  prettyPrint: boolean
-): string {
+export function serializeProfile(profile: Profile): string {
   // stringTable -> stringArray
   const newProfile = Object.assign({}, profile, {
     threads: profile.threads.map(thread => {
@@ -669,9 +666,6 @@ export function serializeProfile(
     delete newTasktracer.stringTable;
     newTasktracer.stringArray = stringTable.serializeToArray();
     newProfile.tasktracer = newTasktracer;
-  }
-  if (prettyPrint) {
-    JSON.stringify(newProfile, null, 2);
   }
   return JSON.stringify(newProfile);
 }
