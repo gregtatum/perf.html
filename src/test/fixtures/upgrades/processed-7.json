@@ -10,7 +10,6 @@
     "stackwalk": 1,
     "startTime": 1460221352723.438,
     "toolkit": "cocoa",
-    "version": 4,
     "preprocessedProfileVersion": 6
   },
   "threads": [
@@ -307,22 +306,7 @@
           null
         ]
       },
-      "stringArray": [
-        "(root)",
-        "0x100000f84",
-        "0x100001a45",
-        "Startup::XRE_Main",
-        "VsyncTimestamp",
-        "Reflow",
-        "baseline",
-        "frobnicate (chrome://blargh:34)",
-        "DOMEvent",
-        "MinorGC",
-        "Rasterize",
-        "firefox",
-        "chrome://blargh",
-        "frobnicate"
-      ]
+      "stringArray": []
     },
     {
       "name": "Compositor",
@@ -617,22 +601,7 @@
           null
         ]
       },
-      "stringArray": [
-        "(root)",
-        "0x100000f84",
-        "0x100001a45",
-        "Startup::XRE_Main",
-        "VsyncTimestamp",
-        "Reflow",
-        "baseline",
-        "frobnicate (chrome://blargh:34)",
-        "DOMEvent",
-        "MinorGC",
-        "Rasterize",
-        "firefox",
-        "chrome://blargh",
-        "frobnicate"
-      ]
+      "stringArray": []
     },
     {
       "name": "GeckoMain",
@@ -927,22 +896,7 @@
           null
         ]
       },
-      "stringArray": [
-        "(root)",
-        "0x100000f84",
-        "0x100001a45",
-        "Startup::XRE_Main",
-        "VsyncTimestamp",
-        "Reflow",
-        "baseline",
-        "frobnicate (chrome://blargh:34)",
-        "DOMEvent",
-        "MinorGC",
-        "Rasterize",
-        "firefox-webcontent",
-        "chrome://blargh",
-        "frobnicate"
-      ]
+      "stringArray": []
     }
   ],
   "tasktracer": {

@@ -9,7 +9,7 @@ import { resourceTypes } from './profile-data';
 import { provideHostSide } from '../utils/promise-worker';
 import immutableUpdate from '../utils/immutable-update';
 import {
-  CURRENT_VERSION,
+  CURRENT_PROCESSED_VERSION,
   upgradeProcessedProfileToCurrentVersion,
   isProcessedProfile,
 } from './processed-profile-versioning';
@@ -637,7 +637,7 @@ export function processProfile(geckoProfile: GeckoProfile): Profile {
 
   const result = {
     meta: Object.assign({}, geckoProfile.meta, {
-      preprocessedProfileVersion: CURRENT_VERSION,
+      preprocessedProfileVersion: CURRENT_PROCESSED_VERSION,
     }),
     threads,
     tasktracer,
@@ -649,7 +649,10 @@ export function processProfile(geckoProfile: GeckoProfile): Profile {
  * Take a processed profile and remove any non-serializable classes such as the
  * StringTable class.
  */
-export function serializeProfile(profile: Profile): string {
+export function serializeProfile(
+  profile: Profile,
+  prettyPrint: boolean
+): string {
   // stringTable -> stringArray
   const newProfile = Object.assign({}, profile, {
     threads: profile.threads.map(thread => {
@@ -666,6 +669,9 @@ export function serializeProfile(profile: Profile): string {
     delete newTasktracer.stringTable;
     newTasktracer.stringArray = stringTable.serializeToArray();
     newProfile.tasktracer = newTasktracer;
+  }
+  if (prettyPrint) {
+    JSON.stringify(newProfile, null, 2);
   }
   return JSON.stringify(newProfile);
 }

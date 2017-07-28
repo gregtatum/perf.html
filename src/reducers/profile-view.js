@@ -459,9 +459,19 @@ export const selectorsForThread = (
       _getImplementationAndSearchFilteredThread,
       URLState.getInvertCallstack,
       (thread, shouldInvertCallstack): Thread => {
-        return shouldInvertCallstack
+        const filteredThread = shouldInvertCallstack
           ? ProfileData.invertCallstack(thread)
           : thread;
+
+        if (
+          !filteredThread.stackTable.transformedToOriginalStack ||
+          !filteredThread.stackTable.originalToTransformedStack
+        ) {
+          throw new Error(
+            "The filtered thread's StackTable did not have transformation tables."
+          );
+        }
+        return filteredThread;
       }
     );
     const getRangeSelectionFilteredThread = createSelector(
