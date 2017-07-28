@@ -13,6 +13,7 @@ import {
 import {
   invertCallstack,
   getStackFromFuncArray,
+  getProfileWithTransformTables,
 } from '../../profile-logic/profile-data';
 import type { ProfileTreeClass } from '../../profile-logic/profile-tree';
 import type { IndexIntoStackTable } from '../../types/profile';
@@ -299,7 +300,9 @@ describe('inverted call tree', function() {
   const stackE_branchL = 0;
 
   function getInvertedCallTreeFromProfile(): ProfileTreeClass {
-    const profile = getProfileForInvertedCallTree();
+    const profile = getProfileWithTransformTables(
+      getProfileForInvertedCallTree()
+    );
     const invertedThread = invertCallstack(profile.threads[0]);
     const { interval } = profile.meta;
 

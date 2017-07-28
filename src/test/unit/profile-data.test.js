@@ -13,6 +13,7 @@ import { processProfile } from '../../profile-logic/process-profile';
 import {
   resourceTypes,
   filterThreadByImplementation,
+  deDuplicateFunctionFrames,
 } from '../../profile-logic/profile-data';
 import exampleProfile from '.././fixtures/profiles/example-profile';
 import profileWithJS from '.././fixtures/profiles/timings-with-js';
@@ -346,7 +347,7 @@ describe('color-categories', function() {
 
 describe('filter-by-implementation', function() {
   const profile = processProfile(profileWithJS);
-  const thread = profile.threads[0];
+  const thread = deDuplicateFunctionFrames(profile.threads[0]);
 
   function stackIsJS(filteredThread, stackIndex) {
     const frameIndex = filteredThread.stackTable.frame[stackIndex];

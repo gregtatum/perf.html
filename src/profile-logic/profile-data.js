@@ -216,6 +216,39 @@ export function deDuplicateFunctionFrames(thread: Thread): Thread {
   });
 }
 
+export function getProfileWithTransformTables(profile: Profile): Profile {
+  return Object.assign({}, profile, {
+    thread: profile.threads.map(thread =>
+      Object.assign({
+        stackTable: Object.assign(thread.stackTable, {
+          transformedToOriginalStack: _createOneToOneTransformMap(
+            thread.stackTable.length
+          ),
+          originalToTransformedStack: _createOneToOneTransformMap(
+            thread.stackTable.length
+          ),
+        }),
+        frameTable: Object.assign(thread.frameTable, {
+          transformedToOriginalFrame: _createOneToOneTransformMap(
+            thread.frameTable.length
+          ),
+          originalToTransformedFrame: _createOneToOneTransformMap(
+            thread.frameTable.length
+          ),
+        }),
+      })
+    ),
+  });
+}
+
+function _createOneToOneTransformMap(length) {
+  const array = [];
+  for (let i = 0; i < length; i++) {
+    array[i] = i;
+  }
+  return array;
+}
+
 function _assertStacksOrderedCorrectly(stackTable: StackTable) {
   for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
     const prefixIndex = stackTable.prefix[stackIndex];
