@@ -446,7 +446,10 @@ export const selectorsForThread = (
     const _getImplementationFilteredThread = createSelector(
       _getRangeAndCallTreeFilteredThread,
       URLState.getImplementationFilter,
-      ProfileData.filterThreadByImplementation
+      (thread, filter) =>
+        ProfileData.deDuplicateFunctionFrames(
+          ProfileData.filterThreadByImplementation(thread, filter)
+        )
     );
     const _getImplementationAndSearchFilteredThread = createSelector(
       _getImplementationFilteredThread,

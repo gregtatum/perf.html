@@ -54,10 +54,10 @@ export function deDuplicateFunctionFrames(thread: Thread): Thread {
       stackTable.transformedToOriginalStack ||
       frameTable.transformedToOriginalFrame
     ) {
-      throw new Error(
-        'This function is currently assuming that it is the first to transform a ' +
-          'thread, so if there are already transformations applied it will fail.'
-      );
+      // throw new Error(
+      //   'This function is currently assuming that it is the first to transform a ' +
+      //     'thread, so if there are already transformations applied it will fail.'
+      // );
     }
     const func: Array<IndexIntoFuncTable> = [];
     const funcCount = funcTable.length;
@@ -219,8 +219,8 @@ export function deDuplicateFunctionFrames(thread: Thread): Thread {
 export function getProfileWithTransformTables(profile: Profile): Profile {
   return Object.assign({}, profile, {
     thread: profile.threads.map(thread =>
-      Object.assign({
-        stackTable: Object.assign(thread.stackTable, {
+      Object.assign({}, thread, {
+        stackTable: Object.assign({}, thread.stackTable, {
           transformedToOriginalStack: _createOneToOneTransformMap(
             thread.stackTable.length
           ),
@@ -228,7 +228,7 @@ export function getProfileWithTransformTables(profile: Profile): Profile {
             thread.stackTable.length
           ),
         }),
-        frameTable: Object.assign(thread.frameTable, {
+        frameTable: Object.assign({}, thread.frameTable, {
           transformedToOriginalFrame: _createOneToOneTransformMap(
             thread.frameTable.length
           ),
@@ -241,7 +241,7 @@ export function getProfileWithTransformTables(profile: Profile): Profile {
   });
 }
 
-function _createOneToOneTransformMap(length) {
+function _createOneToOneTransformMap(length: number) {
   const array = [];
   for (let i = 0; i < length; i++) {
     array[i] = i;
@@ -339,9 +339,8 @@ export function filterThreadByImplementation(
         return !isProbablyJitCode;
       });
     case 'js':
-      return _filterThreadByFunc(
-        thread,
-        funcIndex => funcTable.isJS[funcIndex]
+      return deDuplicateFunctionFrames(
+        _filterThreadByFunc(thread, funcIndex => funcTable.isJS[funcIndex])
       );
     default:
       return thread;

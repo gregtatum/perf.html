@@ -68,8 +68,10 @@ class ProfileTree {
           ? this._rootCount
           : this._stackChildCount[stackIndex];
       children = [];
+      // Invariant note: The child stack index will always be greater than the parent
+      // stack index.
       for (
-        let childStackIndex = stackIndex === null ? -1 : stackIndex + 1;
+        let childStackIndex = stackIndex === null ? 0 : stackIndex + 1;
         childStackIndex < stackTable.length && children.length < childCount;
         childStackIndex++
       ) {

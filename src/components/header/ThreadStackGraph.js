@@ -137,7 +137,7 @@ class ThreadStackGraph extends PureComponent {
       }
       const stackIndex = sampleStacks[i];
       if (stackIndex === null) {
-        return;
+        continue;
       }
       const isHighlighted = hasSelectedStackPrefix(stackIndex);
 

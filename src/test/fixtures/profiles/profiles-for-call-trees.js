@@ -19,7 +19,10 @@ import type {
   IndexIntoStackTable,
 } from '../../../types/profile';
 
-import { getEmptyProfile } from '../../../profile-logic/profile-data';
+import {
+  getEmptyProfile,
+  deDuplicateFunctionFrames,
+} from '../../../profile-logic/profile-data';
 import { getEmptyThread } from '../../store/fixtures/profiles';
 
 /**
@@ -182,6 +185,7 @@ export function getProfileForInvertedCallTree(): Profile {
   _addToStackTable(stackTable, Y, stackRightX, 4); // 9 prefix X
   _addToStackTable(stackTable, Z, stackRightY, 5); // 10 prefix Y
 
+  profile.threads[0] = deDuplicateFunctionFrames(profile.threads[0]);
   return profile;
 }
 
@@ -220,6 +224,8 @@ function _createProfileFromFuncsAndSampleStacks(
     line: Array(funcNames.length).fill(null),
     optimizations: Array(funcNames.length).fill(null),
     length: funcNames.length,
+    transformedToOriginalFrame: _createOneToOneMap(funcNames.length),
+    originalFrameToTransformed: _createOneToOneMap(funcNames.length),
   };
 
   const stackTable: StackTable = {
@@ -227,6 +233,8 @@ function _createProfileFromFuncsAndSampleStacks(
     prefix: [],
     length: 0,
     depth: [],
+    transformedToOriginalStack: [],
+    originalStackToTransformed: [],
   };
 
   const samples: SamplesTable = {
@@ -254,8 +262,22 @@ function _addToStackTable(
   prefix: IndexIntoStackTable | null,
   depth: number
 ): void {
+  const index = stackTable.length++;
   stackTable.frame.push(frame);
   stackTable.prefix.push(prefix);
   stackTable.depth.push(depth);
-  stackTable.length++;
+  if (Array.isArray(stackTable.transformedToOriginalStack)) {
+    stackTable.transformedToOriginalStack.push(index);
+  }
+  if (Array.isArray(stackTable.originalStackToTransformed)) {
+    stackTable.originalStackToTransformed.push(index);
+  }
+}
+
+function _createOneToOneMap(length) {
+  const array = [];
+  for (let i = 0; i < length; i++) {
+    array[i] = i;
+  }
+  return array;
 }
