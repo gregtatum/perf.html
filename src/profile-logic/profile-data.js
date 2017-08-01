@@ -39,6 +39,72 @@ export const resourceTypes = {
 };
 
 /**
+ * In a stack transformationation step, it's easier to map indexes from the previous
+ * StackTable to the newly transformed StackTable. The logic is more difficult going back
+ * to the canonical StackTable of the recorded profile. This function mutates the
+ * transformedStackTable to point back to the very first indexes, rather than the indexes
+ * of the previous StackTable.
+ *
+ * For a series of StackTable transformations, use the following terminology:
+ *
+ *  canonicalStackTable -> * -> * -> previousStackTable -> nextStackTable
+ *                                                      ^
+ *                                                      |
+ *                                      This transformation just happened
+ */
+function _mutateStackTransformMapToCanonicalIndexes(
+  previousStackTable: StackTable,
+  nextStackTable: StackTable
+) {
+  // Rename these maps to make more sense to what they are actually pointing to.
+  const previousToCanonical = previousStackTable.transformedToOriginalStack;
+  const canonicalToPrevious = previousStackTable.originalToTransformedStack;
+  if (!previousToCanonical || !canonicalToPrevious) {
+    // This was the first transformation step, so don't do anything.
+    return;
+  }
+
+  // Name the index maps something easy to understand for our use case.
+  const nextToPrevious = nextStackTable.transformedToOriginalStack;
+  const previousToNext = nextStackTable.originalToTransformedStack;
+
+  if (!nextToPrevious || !previousToNext) {
+    throw new Error('The transformation maps were not found.');
+  }
+
+  // Compute the transformToOriginalStack.
+  for (
+    let transformedStackIndex = 0;
+    transformedStackIndex < nextToPrevious.length;
+    transformedStackIndex++
+  ) {
+    const previousStack = nextToPrevious[transformedStackIndex];
+    // The original stack is a number, just map it.
+    if (typeof previousStack === 'number') {
+      nextToPrevious[transformedStackIndex] =
+        previousToCanonical[previousStack];
+    } else if (Array.isArray(previousStack)) {
+      const canonicalStacks: IndexIntoStackTable[] = [];
+      for (let i = 0; i < previousStack.length; i++) {
+        const canonicalStack = previousToCanonical[previousStack[i]];
+        if (typeof canonicalStack === 'number') {
+          canonicalStacks.push(canonicalStack);
+        } else {
+          for (let j = 0; j < canonicalStack.length; j++) {
+            canonicalStacks.push(canonicalStack[j]);
+          }
+        }
+      }
+      nextToPrevious[transformedStackIndex] = canonicalStacks;
+    }
+  }
+
+  nextStackTable.originalToTransformedStack = canonicalToPrevious.map(
+    previousIndex => previousToNext[previousIndex]
+  );
+}
+
+/**
  * This function runs through a stackTable, and de-duplicates stacks that have frames
  * that point to the same function. When a profiler runs, it only collects raw memory
  * addresses. During the symbolication process (where names are assigned to these
@@ -47,18 +113,10 @@ export const resourceTypes = {
  * were merged together. This function simplifies the matter by combining the stacks
  * that are made up of frames that share the same function.
  */
-export function deDuplicateFunctionFrames(thread: Thread): Thread {
-  return timeCode('deDuplicateFunctionFrames', () => {
+export function mergeStacksThatShareFunctions(thread: Thread): Thread {
+  return timeCode('mergeStacksThatShareFunctions', () => {
     const { stackTable, frameTable, funcTable, samples } = thread;
-    if (
-      stackTable.transformedToOriginalStack ||
-      frameTable.transformedToOriginalFrame
-    ) {
-      // throw new Error(
-      //   'This function is currently assuming that it is the first to transform a ' +
-      //     'thread, so if there are already transformations applied it will fail.'
-      // );
-    }
+
     const func: Array<IndexIntoFuncTable> = [];
     const funcCount = funcTable.length;
 
@@ -66,18 +124,14 @@ export function deDuplicateFunctionFrames(thread: Thread): Thread {
     // using the following formula: transformedPrefixStack * funcCount + funcIndex => stackIndex
     const transformedPrefixStackAndFuncToTransformedStackMap = new Map();
 
-    const prefix = [];
-    const frame = [];
-    const depth = [];
     const originalToTransformedStack = [];
     const transformedToOriginalStack = [];
-    const length = 0;
 
     const transformedStackTable: StackTable = {
-      prefix,
-      frame,
-      depth,
-      length,
+      prefix: [],
+      frame: [],
+      depth: [],
+      length: 0,
       originalToTransformedStack,
       transformedToOriginalStack,
     };
@@ -105,17 +159,19 @@ export function deDuplicateFunctionFrames(thread: Thread): Thread {
     ) {
       const index = transformedStackTable.length++;
 
-      prefix[index] = prefixIndex === -1 ? null : prefixIndex;
+      transformedStackTable.prefix[index] =
+        prefixIndex === -1 ? null : prefixIndex;
       func[index] = funcIndex;
 
       _addMergedIndexToMap(transformedToOriginalStack, stackIndex, index);
       _addMergedIndexToMap(transformedToOriginalFrame, frameIndex, frameIndex);
 
-      frame[index] = frameIndex;
+      transformedStackTable.frame[index] = frameIndex;
       if (prefixIndex === -1) {
-        depth[index] = 0;
+        transformedStackTable.depth[index] = 0;
       } else {
-        depth[index] = depth[prefixIndex] + 1;
+        transformedStackTable.depth[index] =
+          transformedStackTable.depth[prefixIndex] + 1;
       }
     }
 
@@ -194,6 +250,12 @@ export function deDuplicateFunctionFrames(thread: Thread): Thread {
       }
       originalToTransformedStack[stackIndex] = transformedStackIndex;
     }
+
+    // Update our transformed indexes back to the canonical ones.
+    _mutateStackTransformMapToCanonicalIndexes(
+      stackTable,
+      transformedStackTable
+    );
 
     // The indices here are stable:
     const transformedSamples = Object.assign({}, samples, {
@@ -339,7 +401,7 @@ export function filterThreadByImplementation(
         return !isProbablyJitCode;
       });
     case 'js':
-      return deDuplicateFunctionFrames(
+      return mergeStacksThatShareFunctions(
         _filterThreadByFunc(thread, funcIndex => funcTable.isJS[funcIndex])
       );
     default:

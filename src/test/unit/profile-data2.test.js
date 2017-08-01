@@ -8,7 +8,7 @@ import { processProfile } from '../../profile-logic/process-profile';
 import exampleProfile from '.././fixtures/profiles/example-profile';
 import {
   getTracingMarkers,
-  deDuplicateFunctionFrames,
+  mergeStacksThatShareFunctions,
 } from '../../profile-logic/profile-data';
 
 import type { Thread, IndexIntoStackTable } from '../../types/profile';
@@ -78,18 +78,18 @@ describe('profile-data', function() {
     return stackList;
   }
 
-  describe('deDuplicateFunctionFrames', function() {
+  describe('mergeStacksThatShareFunctions', function() {
     const { threads: [thread] } = getMergingStacksProfile();
-    const deDuplicatedThread = deDuplicateFunctionFrames(thread);
+    const mergedThread = mergeStacksThatShareFunctions(thread);
     const originalStackListA = _getStackList(thread, thread.samples.stack[0]);
     const originalStackListB = _getStackList(thread, thread.samples.stack[1]);
-    const deDuplicatedStackListA = _getStackList(
-      deDuplicatedThread,
-      deDuplicatedThread.samples.stack[0]
+    const mergedStackListA = _getStackList(
+      mergedThread,
+      mergedThread.samples.stack[0]
     );
-    const deDuplicatedStackListB = _getStackList(
-      deDuplicatedThread,
-      deDuplicatedThread.samples.stack[1]
+    const mergedStackListB = _getStackList(
+      mergedThread,
+      mergedThread.samples.stack[1]
     );
 
     it('starts with a fully unduplicated set stack frames', function() {
@@ -118,7 +118,7 @@ describe('profile-data', function() {
       expect(originalStackListB).toEqual([6, 5, 2, 1, 0]);
     });
 
-    it('can create a new stack table with de-duplicated function frames', function() {
+    it('can create a new stack table with merged stacks that share functions', function() {
       /**
        * This structure represents the desired de-duplication.
        *
@@ -138,22 +138,22 @@ describe('profile-data', function() {
        *
        *       ^sample 0          ^sample 1
        */
-      expect(deDuplicatedStackListA).toEqual([4, 3, 2, 1, 0]);
-      expect(deDuplicatedStackListB).toEqual([5, 3, 2, 1, 0]);
-      expect(deDuplicatedThread.stackTable.length).toEqual(6);
+      expect(mergedStackListA).toEqual([4, 3, 2, 1, 0]);
+      expect(mergedStackListB).toEqual([5, 3, 2, 1, 0]);
+      expect(mergedThread.stackTable.length).toEqual(6);
     });
 
     it('provides a mapping back to the original ids', function() {
-      const { transformedToOriginalStack } = deDuplicatedThread.stackTable;
+      const { transformedToOriginalStack } = mergedThread.stackTable;
       if (!transformedToOriginalStack) {
         throw new Error(
-          'transformedToOriginalStack must exist in the deDuplicatedThread'
+          'transformedToOriginalStack must exist in the mergedThread'
         );
       }
-      const backToOriginalStackListA = deDuplicatedStackListA.map(
+      const backToOriginalStackListA = mergedStackListA.map(
         index => transformedToOriginalStack[index]
       );
-      const backToOriginalStackListB = deDuplicatedStackListB.map(
+      const backToOriginalStackListB = mergedStackListB.map(
         index => transformedToOriginalStack[index]
       );
 
@@ -162,10 +162,10 @@ describe('profile-data', function() {
     });
 
     it('provides a mapping back from the original ids to the transformed ids', function() {
-      const { originalToTransformedStack } = deDuplicatedThread.stackTable;
+      const { originalToTransformedStack } = mergedThread.stackTable;
       if (!originalToTransformedStack) {
         throw new Error(
-          'transformedToOriginalStack must exist in the deDuplicatedThread'
+          'transformedToOriginalStack must exist in the mergedThread'
         );
       }
       const toTransformedStackListA = originalStackListA.map(

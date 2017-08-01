@@ -375,12 +375,12 @@ export const selectorsForThread = (
       getCallTreeFilters,
       CallTreeFilters.getCallTreeFilterLabels
     );
-    const _getDeDuplicatedFunctionFramesThread = createSelector(
+    const _getMergedStacksThatShareFunctionsThread = createSelector(
       getThread,
-      thread => ProfileData.deDuplicateFunctionFrames(thread)
+      thread => ProfileData.mergeStacksThatShareFunctions(thread)
     );
     const getRangeFilteredThread = createSelector(
-      _getDeDuplicatedFunctionFramesThread,
+      _getMergedStacksThatShareFunctionsThread,
       getDisplayRange,
       (thread, range): Thread => {
         const { start, end } = range;
@@ -447,7 +447,7 @@ export const selectorsForThread = (
       _getRangeAndCallTreeFilteredThread,
       URLState.getImplementationFilter,
       (thread, filter) =>
-        ProfileData.deDuplicateFunctionFrames(
+        ProfileData.mergeStacksThatShareFunctions(
           ProfileData.filterThreadByImplementation(thread, filter)
         )
     );

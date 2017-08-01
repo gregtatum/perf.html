@@ -21,7 +21,7 @@ import type {
 
 import {
   getEmptyProfile,
-  deDuplicateFunctionFrames,
+  mergeStacksThatShareFunctions,
 } from '../../../profile-logic/profile-data';
 import { getEmptyThread } from '../../store/fixtures/profiles';
 
@@ -185,7 +185,7 @@ export function getProfileForInvertedCallTree(): Profile {
   _addToStackTable(stackTable, Y, stackRightX, 4); // 9 prefix X
   _addToStackTable(stackTable, Z, stackRightY, 5); // 10 prefix Y
 
-  profile.threads[0] = deDuplicateFunctionFrames(profile.threads[0]);
+  profile.threads[0] = mergeStacksThatShareFunctions(profile.threads[0]);
   return profile;
 }
 
