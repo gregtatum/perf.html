@@ -72,6 +72,20 @@ export type FocusSubtreeTransform = {|
   inverted: boolean,
 |};
 
-export type Transform = FocusSubtreeTransform;
+export type MergeSubtree = {|
+  type: 'merge-subtree',
+  callNodePath: IndexIntoFuncTable[],
+  implementation: ImplementationFilter,
+  inverted: boolean,
+|};
+
+export type MergeCallNode = {|
+  type: 'merge-call-node',
+  callNodePath: IndexIntoFuncTable[],
+  implementation: ImplementationFilter,
+  inverted: boolean,
+|};
+
+export type Transform = FocusSubtreeTransform | MergeSubtree | MergeCallNode;
 export type TransformStack = Transform[];
 export type TransformStacksPerThread = { [id: ThreadIndex]: TransformStack };

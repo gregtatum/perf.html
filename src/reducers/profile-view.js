@@ -44,10 +44,7 @@ import type {
   SymbolicationStatus,
   ThreadViewOptions,
 } from '../types/reducers';
-import type {
-  TransformStack,
-  FocusSubtreeTransform,
-} from '../types/transforms';
+import type { TransformStack, Transform } from '../types/transforms';
 
 function profile(
   state: Profile = ProfileData.getEmptyProfile(),
@@ -100,7 +97,7 @@ function profile(
 
 function callNodePathAfterNewTransform(
   callNodePath: IndexIntoFuncTable[],
-  transform: FocusSubtreeTransform
+  transform: Transform
 ): IndexIntoFuncTable[] {
   if (!transform.inverted && transform.implementation !== 'js') {
     return removePrefixFromCallNodePath(transform.callNodePath, callNodePath);
@@ -394,6 +391,7 @@ export type SelectorsForThread = {
   getFilteredThread: State => Thread,
   getRangeSelectionFilteredThread: State => Thread,
   getCallNodeInfo: State => CallNodeInfo,
+  getSelectedCallNodePath: State => IndexIntoFuncTable[],
   getSelectedCallNodeIndex: State => IndexIntoCallNodeTable | null,
   getExpandedCallNodeIndexes: State => Array<IndexIntoCallNodeTable | null>,
   getCallTree: State => CallTree.CallTree,
@@ -486,6 +484,12 @@ export const selectorsForThread = (
                     transform.callNodePath,
                     transform.implementation
                   );
+            case 'merge-subtree':
+              console.log('TODO');
+              return thread;
+            case 'merge-call-node':
+              console.log('TODO');
+              return thread;
             default:
               throw new Error('Unhandled transform.');
           }
@@ -535,14 +539,14 @@ export const selectorsForThread = (
         return ProfileData.getCallNodeInfo(stackTable, frameTable, funcTable);
       }
     );
-    const _getSelectedCallNodeAsPath = createSelector(
+    const getSelectedCallNodePath = createSelector(
       getViewOptions,
       (threadViewOptions): IndexIntoFuncTable[] =>
         threadViewOptions.selectedCallNodePath
     );
     const getSelectedCallNodeIndex = createSelector(
       getCallNodeInfo,
-      _getSelectedCallNodeAsPath,
+      getSelectedCallNodePath,
       (callNodeInfo, callNodePath): IndexIntoCallNodeTable | null => {
         return ProfileData.getCallNodeFromPath(
           callNodePath,
@@ -654,6 +658,7 @@ export const selectorsForThread = (
       getFilteredThread,
       getRangeSelectionFilteredThread,
       getCallNodeInfo,
+      getSelectedCallNodePath,
       getSelectedCallNodeIndex,
       getExpandedCallNodeIndexes,
       getCallTree,
