@@ -13,6 +13,7 @@ import {
   addTransformToStack,
   popTransformsFromStack,
   changeInvertCallstack,
+  changeImplementationFilter,
 } from '../../actions/profile-view';
 import { selectedThreadSelectors } from '../../reducers/profile-view';
 import { CallTree } from '../../profile-logic/call-tree';
@@ -154,7 +155,7 @@ describe('"focus-subtree" transform', function() {
   });
 });
 
-describe('"merge-call-node" transform', function() {
+fdescribe('"merge-call-node" transform', function() {
   describe('on a call tree', function() {
     /**
      * Assert this transformation:
@@ -201,11 +202,159 @@ describe('"merge-call-node" transform', function() {
 
   fdescribe('on a JS call tree', function() {
     const profile = getProfileWithMixedJSImplementation();
-    const { dispatch, getState } = storeWithProfile(profile);
-    const originalCallTree = selectedThreadSelectors.getCallTree(getState());
+    const threadIndex = 0;
 
-    it('starts as an unfiltered call tree', function() {
-      expect(formatTree(originalCallTree)).toMatchSnapshot();
+    // funcIndexes in the profile fixture.
+    /* eslint-disable no-unused-vars */
+    const RUN_SCRIPT = 0;
+    const ON_LOAD = 1;
+    const A = 2;
+    const B = 3;
+    const ION_CANNON = 4;
+    /* eslint-enable no-unused-vars */
+
+    const mergeJSPathAB = {
+      type: 'merge-call-node',
+      callNodePath: [ON_LOAD, A],
+      implementation: 'js',
+      inverted: false,
+    };
+
+    const mergeInvertedJSPathAB = {
+      type: 'merge-call-node',
+      callNodePath: [B, A, ION_CANNON],
+      implementation: 'js',
+      inverted: true,
+    };
+
+    const mergeCombinedPathToA = {
+      type: 'merge-call-node',
+      callNodePath: [RUN_SCRIPT, ON_LOAD, A],
+      implementation: 'combined',
+      inverted: false,
+    };
+
+    it('starts as an untransformed call tree', function() {
+      /**
+       *     JS::RunScript
+       *          ↓
+       *        onLoad
+       *      ↙       ↘
+       *     a        js::jit::IonCannon
+       *     ↓             ↓
+       *     b             a
+       *                   ↓
+       *                   b
+       */
+      const { getState } = storeWithProfile(profile);
+      expect(
+        formatTree(selectedThreadSelectors.getCallTree(getState()))
+      ).toMatchSnapshot();
     });
+
+    it('has an untransformed JS only view', function() {
+      /**
+       *    onLoad
+       *      ↓
+       *      a
+       *      ↓
+       *      b
+       */
+      const { dispatch, getState } = storeWithProfile(profile);
+      dispatch(changeImplementationFilter('js'));
+      expect(
+        formatTree(selectedThreadSelectors.getCallTree(getState()))
+      ).toMatchSnapshot();
+    });
+
+    it('can merge the node at JS path "onLoad" -> "A"', function() {
+      /**
+       *    onLoad
+       *      ↓
+       *      b
+       */
+      const { dispatch, getState } = storeWithProfile(profile);
+      dispatch(changeImplementationFilter('js'));
+      dispatch(addTransformToStack(threadIndex, mergeJSPathAB));
+      expect(
+        formatTree(selectedThreadSelectors.getCallTree(getState()))
+      ).toMatchSnapshot();
+    });
+
+    it('can merge the node at JS path "onLoad" -> "A" on an combined call tree', function() {
+      /**
+       *     JS::RunScript
+       *          ↓
+       *        onLoad
+       *      ↙       ↘
+       *     b        js::jit::IonCannon
+       *                   ↓
+       *                   b
+       */
+      const { dispatch, getState } = storeWithProfile(profile);
+      dispatch(addTransformToStack(threadIndex, mergeJSPathAB));
+      expect(
+        formatTree(selectedThreadSelectors.getCallTree(getState()))
+      ).toMatchSnapshot();
+    });
+
+    fit(
+      'can merge a combined CallNodePath, and display a correct JS call tree',
+      function() {
+        /**
+       *    onLoad
+       *   ↙      ↘
+       *  b        a
+       *           ↓
+       *           b
+       */
+        const { dispatch, getState } = storeWithProfile(profile);
+        dispatch(changeImplementationFilter('js'));
+        dispatch(addTransformToStack(threadIndex, mergeCombinedPathToA));
+        expect(
+          formatTree(selectedThreadSelectors.getCallTree(getState()))
+        ).toMatchSnapshot();
+      }
+    );
+
+    xit('starts as an inverted call tree', function() {
+      /**
+       *                       b
+       *                       ↓
+       *                       a
+       *                   ↙       ↘
+       *  js::jit::IonCannon      onLoad
+       *          ↓                 ↓
+       *       onLoad          JS::RunScript
+       *          ↓
+       *    JS::RunScript
+       */
+      const { dispatch, getState } = storeWithProfile(profile);
+      dispatch(changeInvertCallstack(true));
+      expect(
+        formatTree(selectedThreadSelectors.getCallTree(getState()))
+      ).toMatchSnapshot();
+    });
+
+    xit(
+      'can merge path [b, a, js::jit::IonCannon] inverted call tree',
+      function() {
+        /**
+       *          b
+       *          ↓
+       *          a
+       *          ↓
+       *        onLoad
+       *          ↓
+       *    JS::RunScript
+       */
+        const { dispatch, getState } = storeWithProfile(profile);
+        dispatch(changeInvertCallstack(true));
+        dispatch(addTransformToStack(threadIndex, mergeInvertedJSPathAB));
+        expect(
+          formatTree(selectedThreadSelectors.getCallTree(getState()))
+        ).toMatchSnapshot();
+      }
+    );
   });
 });

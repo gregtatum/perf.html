@@ -488,7 +488,7 @@ export const selectorsForThread = (
               return thread;
             case 'merge-call-node':
               console.log('TODO');
-              debugger;
+
               return transform.inverted
                 ? (console.log('TODO'), thread)
                 : ProfileData.mergeCallNode(

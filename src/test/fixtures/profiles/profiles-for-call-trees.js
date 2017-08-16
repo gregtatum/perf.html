@@ -260,23 +260,30 @@ function _addToStackTable(
 
 export function getProfileWithMixedJSImplementation(): Profile {
   // These first indexes for funcs, frames, and stacks all share the same values as there
-  // is a one to one relationship between them all in the layout of this fixture.
+  // is a one to one relationship between them.
   const RUN_SCRIPT = 0;
   const ON_LOAD = 1;
   const A = 2;
   const B = 3;
   const ION_CANNON = 4;
-  // These two indexes are valid for the Ion frames and stacks. The funcs are from the
-  // previous list.
+  // These two indexes are valid for the Ion frames and stacks. The func indexes are from
+  // the previous list.
   const A_ION = 5;
   const B_ION = 6;
 
-  const funcNames = ['JS::RunScript', 'onLoad', 'a', 'b', 'js::jit::IonCannon'];
   const sampleStacks = [B, B_ION, B_ION];
-  const { stackTable, funcTable } = profile.threads[0];
+  const profile = getEmptyProfile();
+  const thread = getEmptyThread();
+  const { stackTable, stringTable } = thread;
 
-  const funcTable: FuncTable = {
-    name: funcNames,
+  const blankStringIndex = stringTable.indexForString('');
+  const funcNames = ['JS::RunScript', 'onLoad', 'a', 'b', 'js::jit::IonCannon'];
+  const funcNameIndices = funcNames.map(name =>
+    stringTable.indexForString(name)
+  );
+
+  thread.funcTable = {
+    name: funcNameIndices,
     address: Array(funcNames.length).fill(blankStringIndex),
     isJS: [false, true, true, true, false],
     resource: Array(funcNames.length).fill(-1),
@@ -286,7 +293,7 @@ export function getProfileWithMixedJSImplementation(): Profile {
   };
 
   const frameFuncs = [RUN_SCRIPT, ON_LOAD, A, B, ION_CANNON, A, B];
-  const frameTable = {
+  thread.frameTable = {
     func: frameFuncs,
     address: Array(frameFuncs.length).fill(-1),
     category: Array(frameFuncs.length).fill(null),
@@ -304,54 +311,16 @@ export function getProfileWithMixedJSImplementation(): Profile {
   _addToStackTable(stackTable, A, ION_CANNON); // 5
   _addToStackTable(stackTable, B, A_ION); // 6
 
-  /*
-const profile = getEmptyProfile();
-const thread = getEmptyThread();
-const funcNames = funcNameStrings.map(name =>
-  thread.stringTable.indexForString(name)
-);
-const blankStringIndex = thread.stringTable.indexForString('');
+  thread.samples = {
+    responsiveness: Array(sampleStacks.length).fill(0),
+    stack: sampleStacks,
+    time: sampleStacks.map((_, i) => i),
+    rss: Array(sampleStacks.length).fill(0),
+    uss: Array(sampleStacks.length).fill(0),
+    length: sampleStacks.length,
+  };
 
-// Be explicit about table creation so flow errors are really readable.
-const funcTable: FuncTable = {
-  name: funcNames,
-  address: Array(funcNames.length).fill(blankStringIndex),
-  isJS: Array(funcNames.length).fill(false),
-  resource: Array(funcNames.length).fill(-1),
-  fileName: Array(funcNames.length).fill(blankStringIndex),
-  lineNumber: Array(funcNames.length).fill(null),
-  length: funcNames.length,
-};
+  profile.threads.push(thread);
 
-const frameTable: FrameTable = {
-  func: funcNames.map((_, i) => i),
-  address: Array(funcNames.length).fill(-1),
-  category: Array(funcNames.length).fill(null),
-  implementation: Array(funcNames.length).fill(null),
-  line: Array(funcNames.length).fill(null),
-  optimizations: Array(funcNames.length).fill(null),
-  length: funcNames.length,
-};
-
-const stackTable: StackTable = {
-  frame: [],
-  prefix: [],
-  length: 0,
-  depth: [],
-};
-
-const samples: SamplesTable = {
-  responsiveness: Array(sampleStacks.length).fill(0),
-  stack: sampleStacks,
-  time: sampleStacks.map((_, i) => i),
-  rss: Array(sampleStacks.length).fill(0),
-  uss: Array(sampleStacks.length).fill(0),
-  length: sampleStacks.length,
-};
-
-profile.threads.push(
-  Object.assign(thread, { samples, stackTable, funcTable, frameTable })
-);
-*/
   return profile;
 }

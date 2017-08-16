@@ -71,12 +71,62 @@ exports[`"focus-subtree" transform on an inverted call tree starts as an inverte
        - A (total: 1.0ms, self:0.0ms)"
 `;
 
-exports[`"merge-call-node" transform on a JS call tree starts as an unfiltered call tree 1`] = `
+exports[`"merge-call-node" transform on a JS call tree can merge a combined CallNodePath, and display a correct JS call tree 1`] = `
+"
+- onLoad (total: 3.0ms, self:0.0ms)
+ - a (total: 2.0ms, self:0.0ms)
+   - b (total: 2.0ms, self:2.0ms)
+ - b (total: 1.0ms, self:1.0ms)"
+`;
+
+exports[`"merge-call-node" transform on a JS call tree can merge path [b, a, js::jit::IonCannon] inverted call tree 1`] = `
+"
+- b (total: 3.0ms, self:3.0ms)
+ - a (total: 3.0ms, self:0.0ms)
+   - onLoad (total: 3.0ms, self:0.0ms)
+     - JS::RunScript (total: 3.0ms, self:0.0ms)"
+`;
+
+exports[`"merge-call-node" transform on a JS call tree can merge the node at JS path "onLoad" -> "A" 1`] = `
+"
+- onLoad (total: 3.0ms, self:0.0ms)
+ - b (total: 3.0ms, self:3.0ms)"
+`;
+
+exports[`"merge-call-node" transform on a JS call tree can merge the node at JS path "onLoad" -> "A" on an combined call tree 1`] = `
 "
 - JS::RunScript (total: 3.0ms, self:0.0ms)
  - onLoad (total: 3.0ms, self:0.0ms)
    - js::jit::IonCannon (total: 2.0ms, self:0.0ms)
-     - JS::RunScript (total: 2.0ms, self:2.0ms)
+     - b (total: 2.0ms, self:2.0ms)
+   - b (total: 1.0ms, self:1.0ms)"
+`;
+
+exports[`"merge-call-node" transform on a JS call tree has an untransformed JS only view 1`] = `
+"
+- onLoad (total: 3.0ms, self:0.0ms)
+ - a (total: 3.0ms, self:0.0ms)
+   - b (total: 3.0ms, self:3.0ms)"
+`;
+
+exports[`"merge-call-node" transform on a JS call tree starts as an inverted call tree 1`] = `
+"
+- b (total: 3.0ms, self:3.0ms)
+ - a (total: 3.0ms, self:0.0ms)
+   - js::jit::IonCannon (total: 2.0ms, self:0.0ms)
+     - onLoad (total: 2.0ms, self:0.0ms)
+       - JS::RunScript (total: 2.0ms, self:0.0ms)
+   - onLoad (total: 1.0ms, self:0.0ms)
+     - JS::RunScript (total: 1.0ms, self:0.0ms)"
+`;
+
+exports[`"merge-call-node" transform on a JS call tree starts as an untransformed call tree 1`] = `
+"
+- JS::RunScript (total: 3.0ms, self:0.0ms)
+ - onLoad (total: 3.0ms, self:0.0ms)
+   - js::jit::IonCannon (total: 2.0ms, self:0.0ms)
+     - a (total: 2.0ms, self:0.0ms)
+       - b (total: 2.0ms, self:2.0ms)
    - a (total: 1.0ms, self:0.0ms)
      - b (total: 1.0ms, self:1.0ms)"
 `;
