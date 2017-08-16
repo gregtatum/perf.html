@@ -93,19 +93,19 @@ export function getProfileForUnfilteredCallTree(): Profile {
 /**
  * Create the following sample structure:
  *
- *      A    A    A 
- *      |    |    | 
- *      v    v    v 
- *      B    B    B 
- *      |    |    | 
- *      v    v    v 
- *      C    X    C 
- *      |    |    | 
- *      v    v    v 
- *      D    Y    X 
- *      |    |    | 
- *      v    v    v 
- *      E    Z    Y 
+ *      A    A    A
+ *      |    |    |
+ *      v    v    v
+ *      B    B    B
+ *      |    |    |
+ *      v    v    v
+ *      C    X    C
+ *      |    |    |
+ *      v    v    v
+ *      D    Y    X
+ *      |    |    |
+ *      v    v    v
+ *      E    Z    Y
  *                |
  *                v
  *                Z
@@ -256,4 +256,102 @@ function _addToStackTable(
   stackTable.frame.push(frame);
   stackTable.prefix.push(prefix);
   stackTable.length++;
+}
+
+export function getProfileWithMixedJSImplementation(): Profile {
+  // These first indexes for funcs, frames, and stacks all share the same values as there
+  // is a one to one relationship between them all in the layout of this fixture.
+  const RUN_SCRIPT = 0;
+  const ON_LOAD = 1;
+  const A = 2;
+  const B = 3;
+  const ION_CANNON = 4;
+  // These two indexes are valid for the Ion frames and stacks. The funcs are from the
+  // previous list.
+  const A_ION = 5;
+  const B_ION = 6;
+
+  const funcNames = ['JS::RunScript', 'onLoad', 'a', 'b', 'js::jit::IonCannon'];
+  const sampleStacks = [B, B_ION, B_ION];
+  const { stackTable, funcTable } = profile.threads[0];
+
+  const funcTable: FuncTable = {
+    name: funcNames,
+    address: Array(funcNames.length).fill(blankStringIndex),
+    isJS: [false, true, true, true, false],
+    resource: Array(funcNames.length).fill(-1),
+    fileName: Array(funcNames.length).fill(blankStringIndex),
+    lineNumber: Array(funcNames.length).fill(null),
+    length: funcNames.length,
+  };
+
+  const frameFuncs = [RUN_SCRIPT, ON_LOAD, A, B, ION_CANNON, A, B];
+  const frameTable = {
+    func: frameFuncs,
+    address: Array(frameFuncs.length).fill(-1),
+    category: Array(frameFuncs.length).fill(null),
+    implementation: Array(frameFuncs.length).fill(null),
+    line: Array(frameFuncs.length).fill(null),
+    optimizations: Array(frameFuncs.length).fill(null),
+    length: frameFuncs.length,
+  };
+
+  _addToStackTable(stackTable, RUN_SCRIPT, null); // 0
+  _addToStackTable(stackTable, ON_LOAD, RUN_SCRIPT); // 1
+  _addToStackTable(stackTable, A, ON_LOAD); // 2
+  _addToStackTable(stackTable, B, A); // 3
+  _addToStackTable(stackTable, ION_CANNON, ON_LOAD); // 4
+  _addToStackTable(stackTable, A, ION_CANNON); // 5
+  _addToStackTable(stackTable, B, A_ION); // 6
+
+  /*
+const profile = getEmptyProfile();
+const thread = getEmptyThread();
+const funcNames = funcNameStrings.map(name =>
+  thread.stringTable.indexForString(name)
+);
+const blankStringIndex = thread.stringTable.indexForString('');
+
+// Be explicit about table creation so flow errors are really readable.
+const funcTable: FuncTable = {
+  name: funcNames,
+  address: Array(funcNames.length).fill(blankStringIndex),
+  isJS: Array(funcNames.length).fill(false),
+  resource: Array(funcNames.length).fill(-1),
+  fileName: Array(funcNames.length).fill(blankStringIndex),
+  lineNumber: Array(funcNames.length).fill(null),
+  length: funcNames.length,
+};
+
+const frameTable: FrameTable = {
+  func: funcNames.map((_, i) => i),
+  address: Array(funcNames.length).fill(-1),
+  category: Array(funcNames.length).fill(null),
+  implementation: Array(funcNames.length).fill(null),
+  line: Array(funcNames.length).fill(null),
+  optimizations: Array(funcNames.length).fill(null),
+  length: funcNames.length,
+};
+
+const stackTable: StackTable = {
+  frame: [],
+  prefix: [],
+  length: 0,
+  depth: [],
+};
+
+const samples: SamplesTable = {
+  responsiveness: Array(sampleStacks.length).fill(0),
+  stack: sampleStacks,
+  time: sampleStacks.map((_, i) => i),
+  rss: Array(sampleStacks.length).fill(0),
+  uss: Array(sampleStacks.length).fill(0),
+  length: sampleStacks.length,
+};
+
+profile.threads.push(
+  Object.assign(thread, { samples, stackTable, funcTable, frameTable })
+);
+*/
+  return profile;
 }

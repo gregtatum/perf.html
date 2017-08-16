@@ -6,6 +6,7 @@
 import {
   getProfileForUnfilteredCallTree,
   getProfileForInvertedCallTree,
+  getProfileWithMixedJSImplementation,
 } from '../fixtures/profiles/profiles-for-call-trees';
 import { storeWithProfile } from '../fixtures/stores';
 import {
@@ -37,7 +38,7 @@ export function formatTree(
   }, previousString);
 }
 
-describe('focus subtree transform', function() {
+describe('"focus-subtree" transform', function() {
   describe('on a call tree', function() {
     /**
      * Assert this transformation:
@@ -149,6 +150,62 @@ describe('focus subtree transform', function() {
       dispatch(changeInvertCallstack(false));
       const callTree = selectedThreadSelectors.getCallTree(getState());
       expect(formatTree(callTree)).toMatchSnapshot();
+    });
+  });
+});
+
+describe('"merge-call-node" transform', function() {
+  describe('on a call tree', function() {
+    /**
+     * Assert this transformation:
+     *
+     *                     A:3,0                              A:3,0
+     *                       |                                  |
+     *                       v       Focus [A, B, C]            v
+     *                     B:3,0           -->                B:3,0
+     *                     /    \                           /   |   \
+     *                    v      v                         v    v    v
+     *                C:2,0     H:1,0                 D:1,0   F:1,0   I:1,1
+     *               /      \         \                 |       |
+     *              v        v         v                v       v
+     *            D:1,0     F:1,0     I:1,1           E:1,1   G:1,1
+     *            |           |
+     *            v           v
+     *          E:1,1       G:1,1
+     */
+    const profile = getProfileForUnfilteredCallTree();
+    const { dispatch, getState } = storeWithProfile(profile);
+    const originalCallTree = selectedThreadSelectors.getCallTree(getState());
+    const threadIndex = 0;
+    const A = 0;
+    const B = 1;
+    const C = 2;
+
+    it('starts as an unfiltered call tree', function() {
+      expect(formatTree(originalCallTree)).toMatchSnapshot();
+    });
+
+    it('call node [A, B, C] can be merged into [A, B]', function() {
+      dispatch(
+        addTransformToStack(threadIndex, {
+          type: 'merge-call-node',
+          callNodePath: [A, B, C],
+          implementation: 'combined',
+          inverted: false,
+        })
+      );
+      const callTree = selectedThreadSelectors.getCallTree(getState());
+      expect(formatTree(callTree)).toMatchSnapshot();
+    });
+  });
+
+  fdescribe('on a JS call tree', function() {
+    const profile = getProfileWithMixedJSImplementation();
+    const { dispatch, getState } = storeWithProfile(profile);
+    const originalCallTree = selectedThreadSelectors.getCallTree(getState());
+
+    it('starts as an unfiltered call tree', function() {
+      expect(formatTree(originalCallTree)).toMatchSnapshot();
     });
   });
 });

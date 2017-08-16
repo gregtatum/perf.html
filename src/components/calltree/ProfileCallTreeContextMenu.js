@@ -4,7 +4,7 @@
 
 // @flow
 import React, { PureComponent } from 'react';
-import { ContextMenu, MenuItem, SubMenu } from 'react-contextmenu';
+import { ContextMenu, MenuItem } from 'react-contextmenu';
 import { connect } from 'react-redux';
 import { selectedThreadSelectors } from '../../reducers/profile-view';
 import { stripFunctionArguments } from '../../profile-logic/function-info';
@@ -176,33 +176,30 @@ class ProfileCallTreeContextMenu extends PureComponent {
 
     return (
       <ContextMenu id={'ProfileCallTreeContextMenu'}>
-        <SubMenu title="Copy" hoverDelay={200}>
-          <MenuItem
-            onClick={this.handleClick}
-            data={{ type: 'copyFunctionName' }}
-          >
-            Function Name
-          </MenuItem>
-          {isJS
-            ? <MenuItem onClick={this.handleClick} data={{ type: 'copyUrl' }}>
-                Script URL
-              </MenuItem>
-            : null}
-          <MenuItem onClick={this.handleClick} data={{ type: 'copyStack' }}>
-            Stack
-          </MenuItem>
-        </SubMenu>
-        <SubMenu title="Transform call tree" hoverDelay={200}>
-          <MenuItem onClick={this.handleClick} data={{ type: 'mergeCallNode' }}>
-            Merge this node into calling function
-          </MenuItem>
-          <MenuItem onClick={this.handleClick} data={{ type: 'mergeSubtree' }}>
-            Merge subtree into calling function
-          </MenuItem>
-          <MenuItem onClick={this.handleClick} data={{ type: 'focusSubtree' }}>
-            Focus on subtree
-          </MenuItem>
-        </SubMenu>
+        <MenuItem onClick={this.handleClick} data={{ type: 'mergeCallNode' }}>
+          Merge node into calling function
+        </MenuItem>
+        <MenuItem onClick={this.handleClick} data={{ type: 'mergeSubtree' }}>
+          Merge subtree into calling function
+        </MenuItem>
+        <MenuItem onClick={this.handleClick} data={{ type: 'focusSubtree' }}>
+          Focus on subtree
+        </MenuItem>
+        <div className="react-contextmenu-separator" />
+        <MenuItem
+          onClick={this.handleClick}
+          data={{ type: 'copyFunctionName' }}
+        >
+          Copy function name
+        </MenuItem>
+        {isJS
+          ? <MenuItem onClick={this.handleClick} data={{ type: 'copyUrl' }}>
+              Copy script URL
+            </MenuItem>
+          : null}
+        <MenuItem onClick={this.handleClick} data={{ type: 'copyStack' }}>
+          Copy stack
+        </MenuItem>
       </ContextMenu>
     );
   }

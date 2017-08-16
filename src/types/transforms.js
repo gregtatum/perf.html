@@ -12,6 +12,22 @@ import type { ThreadIndex, IndexIntoFuncTable } from './profile';
 import type { ImplementationFilter } from './actions';
 
 /**
+ * When working with a call tree, nodes in the graph are not stable across various
+ * transformations of the stacks. It doesn't make sense to generate a single ID for
+ * a node, as the definition of what a node is can change depending on the current
+ * context. In order to get around this, we use the concept of a CallNodeReference.
+ * This reference remains stable across stack inversions, and filtering stacks
+ * by their implementation. The combination of the path of called functions to the call
+ * node, the implementation filter, and whether the stacks were inverted will
+ * provide a stable reference to a call node for a given view into a call tree.
+ */
+export type CallNodeReference = {
+  callNodePath: IndexIntoFuncTable[],
+  implementation: ImplementationFilter,
+  inverted: boolean,
+};
+
+/**
  * FocusSubtreeTransform represents the operation of focusing on a subtree in a call tree.
  * The subtree is referenced by a callNodePath (a list of functions to a particular node),
  * and an implementation filter to filter out certain stacks and nodes that we don't care
@@ -65,27 +81,10 @@ import type { ImplementationFilter } from './actions';
  *                        ↓                               ↓
  *                      A:1,0                           X:1,1
  */
-export type FocusSubtreeTransform = {|
-  type: 'focus-subtree',
-  callNodePath: IndexIntoFuncTable[],
-  implementation: ImplementationFilter,
-  inverted: boolean,
-|};
+export type MergeSubtree = { type: 'merge-subtree' } & CallNodeReference;
+export type MergeCallNode = { type: 'merge-call-node' } & CallNodeReference;
+export type FocusSubtree = { type: 'focus-subtree' } & CallNodeReference;
 
-export type MergeSubtree = {|
-  type: 'merge-subtree',
-  callNodePath: IndexIntoFuncTable[],
-  implementation: ImplementationFilter,
-  inverted: boolean,
-|};
-
-export type MergeCallNode = {|
-  type: 'merge-call-node',
-  callNodePath: IndexIntoFuncTable[],
-  implementation: ImplementationFilter,
-  inverted: boolean,
-|};
-
-export type Transform = FocusSubtreeTransform | MergeSubtree | MergeCallNode;
+export type Transform = FocusSubtree | MergeSubtree | MergeCallNode;
 export type TransformStack = Transform[];
 export type TransformStacksPerThread = { [id: ThreadIndex]: TransformStack };

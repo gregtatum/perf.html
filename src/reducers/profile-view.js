@@ -469,31 +469,37 @@ export const selectorsForThread = (
     const _getRangeAndTransformFilteredThread = createSelector(
       getRangeFilteredThread,
       getTransformStack,
-      (thread, transforms): Thread => {
-        const result = transforms.reduce((t, transform) => {
+      (startingThread, transforms): Thread => {
+        const result = transforms.reduce((thread, transform) => {
           switch (transform.type) {
             case 'focus-subtree':
               return transform.inverted
                 ? ProfileData.filterThreadToPostfixCallNodePath(
-                    t,
+                    thread,
                     transform.callNodePath,
                     transform.implementation
                   )
                 : ProfileData.filterThreadToPrefixCallNodePath(
-                    t,
+                    thread,
                     transform.callNodePath,
                     transform.implementation
                   );
             case 'merge-subtree':
-              console.log('TODO');
               return thread;
             case 'merge-call-node':
               console.log('TODO');
-              return thread;
+              debugger;
+              return transform.inverted
+                ? (console.log('TODO'), thread)
+                : ProfileData.mergeCallNode(
+                    thread,
+                    transform.callNodePath,
+                    transform.implementation
+                  );
             default:
               throw new Error('Unhandled transform.');
           }
-        }, thread);
+        }, startingThread);
         return result;
       }
     );

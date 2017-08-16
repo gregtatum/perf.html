@@ -50,7 +50,7 @@ export function parseTransforms(stringValue: string = '') {
 
       // e.g. "f-js-xFFpUMl-i" or "f-cpp-0KV4KV5KV61KV7KV8K"
       const [, implementation, serializedCallNodePath, inverted] = tuple;
-      const transform: Transform = {
+      const transform = {
         type,
         implementation: toValidImplementationFilter(implementation),
         callNodePath: stringToUintArray(serializedCallNodePath),

@@ -506,7 +506,7 @@ export function filterThreadToPrefixCallNodePath(
 ): Thread {
   return timeCode('filterThreadToPrefixCallNodePath', () => {
     const { stackTable, frameTable, funcTable, samples } = thread;
-    const prefixDepth = prefixCallNodePath.length;
+    const callNodeDepth = prefixCallNodePath.length;
     const stackMatches = new Int32Array(stackTable.length);
     // TODO - Handle any implementation here.
     const matchJSOnly = implementation === 'js';
@@ -522,12 +522,12 @@ export function filterThreadToPrefixCallNodePath(
     };
     for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
       const prefix = stackTable.prefix[stackIndex];
-      const prefixMatchesUpTo = prefix !== null ? stackMatches[prefix] : 0;
+      const prefixMatchesUpTo = prefix === null ? 0 : stackMatches[prefix];
       let stackMatchesUpTo = -1;
       if (prefixMatchesUpTo !== -1) {
         const frame = stackTable.frame[stackIndex];
-        if (prefixMatchesUpTo === prefixDepth) {
-          stackMatchesUpTo = prefixDepth;
+        if (prefixMatchesUpTo === callNodeDepth) {
+          stackMatchesUpTo = callNodeDepth;
         } else {
           const func = frameTable.func[frame];
           if (func === prefixCallNodePath[prefixMatchesUpTo]) {
@@ -536,7 +536,7 @@ export function filterThreadToPrefixCallNodePath(
             stackMatchesUpTo = prefixMatchesUpTo;
           }
         }
-        if (stackMatchesUpTo === prefixDepth) {
+        if (stackMatchesUpTo === callNodeDepth) {
           const newStackIndex = newStackTable.length++;
           const newStackPrefix = oldStackToNewStack.get(prefix);
           newStackTable.prefix[newStackIndex] =
@@ -549,7 +549,7 @@ export function filterThreadToPrefixCallNodePath(
     }
     const newSamples = Object.assign({}, samples, {
       stack: samples.stack.map(oldStack => {
-        if (oldStack === null || stackMatches[oldStack] !== prefixDepth) {
+        if (oldStack === null || stackMatches[oldStack] !== callNodeDepth) {
           return null;
         }
         const newStack = oldStackToNewStack.get(oldStack);
@@ -567,6 +567,131 @@ export function filterThreadToPrefixCallNodePath(
     });
   });
 }
+
+/**
+ * Filter thread to only contain stacks which start with |prefixCallNodePath|, and
+ * only samples with those stacks. The new stacks' roots will be frames whose
+ * func is the last element of the prefix CallNodePath.
+ */
+export function mergeCallNode(
+  thread: Thread,
+  prefixCallNodePath: IndexIntoFuncTable[],
+  implementation: ImplementationFilter
+): Thread {
+  return timeCode('mergeCallNode', () => {
+    const { stackTable, frameTable, samples } = thread;
+    const callNodeDepth = prefixCallNodePath.length - 1;
+    // TODO - Handle any implementation here.
+    const oldStackToNewStack: Map<
+      IndexIntoStackTable | null,
+      IndexIntoStackTable | null
+    > = new Map();
+    oldStackToNewStack.set(null, null);
+    const newStackTable = {
+      length: 0,
+      prefix: [],
+      frame: [],
+    };
+    const stackDepths = [];
+    // TODO - Factor out the stackMatches code.
+    const stackMatches = [];
+    const funcMatchesImplementation = funcMatches[implementation];
+    for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
+      const prefix = stackTable.prefix[stackIndex];
+      const frameIndex = stackTable.frame[stackIndex];
+      const funcIndex = frameTable.func[frameIndex];
+
+      const doesPrefixMatch = prefix === null ? true : stackMatches[prefix];
+      const prefixDepth = prefix === null ? -1 : stackDepths[prefix];
+      const callNodeFunc = prefixCallNodePath[prefixDepth + 1];
+
+      let doMerge = false;
+      let stackDepth = prefixDepth;
+      let doesMatchCallNodePath;
+      if (doesPrefixMatch && stackDepth < callNodeDepth) {
+        // This stack's prefixes were in our CallNodePath.
+        if (callNodeFunc === funcIndex) {
+          // This stack's function matches too!
+          doesMatchCallNodePath = true;
+          if (stackDepth + 1 === callNodeDepth) {
+            // Holy cow, we found a match for our merge operation and can merge this stack.
+            doMerge = true;
+          } else {
+            // Since we found a match, increase the stack depth. This should match
+            // the depth of the implementation filtered stacks.
+            stackDepth++;
+          }
+        } else if (!funcMatchesImplementation(thread, funcIndex)) {
+          // This stack's function does not match the CallNodePath, however it's not part
+          // of the CallNodePath's implementation filter. Go ahead and keep it.
+          doesMatchCallNodePath = true;
+        } else {
+          // While all of the predecessors matched, this stack's function does not :(
+          doesMatchCallNodePath = false;
+        }
+      } else {
+        // This stack is not part of a matching branch of the tree.
+        doesMatchCallNodePath = false;
+      }
+      stackMatches[stackIndex] = doesMatchCallNodePath;
+      stackDepths[stackIndex] = stackDepth;
+
+      // Map the oldStackToNewStack, and only push on the stacks that aren't merged.
+      if (doMerge) {
+        const newStackPrefix = oldStackToNewStack.get(prefix);
+        oldStackToNewStack.set(
+          stackIndex,
+          newStackPrefix === undefined ? null : newStackPrefix
+        );
+      } else {
+        const newStackIndex = newStackTable.length++;
+        const newStackPrefix = oldStackToNewStack.get(prefix);
+        newStackTable.prefix[newStackIndex] =
+          newStackPrefix === undefined ? null : newStackPrefix;
+        newStackTable.frame[newStackIndex] = frameIndex;
+        oldStackToNewStack.set(stackIndex, newStackIndex);
+      }
+    }
+    const newSamples = Object.assign({}, samples, {
+      stack: samples.stack.map(oldStack => {
+        const newStack = oldStackToNewStack.get(oldStack);
+        if (newStack === undefined) {
+          throw new Error(
+            'Converting from the old stack to a new stack cannot be undefined'
+          );
+        }
+        return newStack;
+      }),
+    });
+    return Object.assign({}, thread, {
+      stackTable: newStackTable,
+      samples: newSamples,
+    });
+  });
+}
+
+const funcMatches = {
+  combined: (_thread: Thread, _funcIndex: IndexIntoFuncTable) => true,
+  cpp: (thread: Thread, funcIndex: IndexIntoFuncTable): boolean => {
+    const { funcTable, stringTable } = thread;
+    // Return quickly if this is a JS frame.
+    if (thread.funcTable.isJS[funcIndex]) {
+      return false;
+    }
+
+    // Regular C++ functions are associated with a resource that describes the
+    // shared library that these C++ functions were loaded from. Jitcode is not
+    // loaded from shared libraries but instead generated at runtime, so Jitcode
+    // frames are not associated with a shared library and thus have no resource
+    const locationString = stringTable.getString(funcTable.name[funcIndex]);
+    const isProbablyJitCode =
+      funcTable.resource[funcIndex] === -1 && locationString.startsWith('0x');
+    return !isProbablyJitCode;
+  },
+  js: (thread: Thread, funcIndex: IndexIntoFuncTable): boolean => {
+    return thread.funcTable.isJS[funcIndex];
+  },
+};
 
 /**
  * Filter thread to only contain stacks which end with |postfixCallNodePath|, and
