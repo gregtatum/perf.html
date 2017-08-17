@@ -598,7 +598,7 @@ export function mergeCallNode(
     };
     const stackDepths = [];
     const stackMatches = [];
-    const funcMatchesImplementation = funcMatches[implementation];
+    const funcMatchesImplementation = FUNC_MATCHES[implementation];
     for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
       const prefix = stackTable.prefix[stackIndex];
       const frameIndex = stackTable.frame[stackIndex];
@@ -674,19 +674,57 @@ export function mergeCallNode(
 }
 
 /**
- * Filter thread to only contain stacks which start with |prefixCallNodePath|, and
+ * Filter thread to only contain stacks which end with `postfixCallNodePath`, and
  * only samples with those stacks. The new stacks' roots will be frames whose
  * func is the last element of the prefix CallNodePath.
  */
 export function mergeInvertedCallNode(
   thread: Thread,
-  prefixCallNodePath: IndexIntoFuncTable[],
+  postfixCallNodePath: IndexIntoFuncTable[],
   implementation: ImplementationFilter
 ): Thread {
   return timeCode('mergeCallNode', () => {
     const { stackTable, frameTable, samples } = thread;
-    const depthAtCallNodePathLeaf = prefixCallNodePath.length - 1;
-    // TODO - Handle any implementation here.
+    const postfixDepth = postfixCallNodePath.length;
+    const funcMatchesImplementation = FUNC_MATCHES[implementation];
+
+    const stackNeedsMerging: Array<void | true> = [];
+    const stacksChecked: Array<void | true> = [];
+
+    // Go through each sample and determine if it contains a stack that needs to be
+    // merged.
+    for (let i = 0; i < samples.stack.length; i++) {
+      const leafStackIndex = samples.stack[i];
+      if (leafStackIndex === null || stacksChecked[leafStackIndex]) {
+        continue;
+      }
+      stacksChecked[leafStackIndex] = true;
+
+      let matchesUpToDepth = 0; // counted from the leaf
+      for (
+        let stackIndex = leafStackIndex;
+        stackIndex !== null;
+        stackIndex = stackTable.prefix[stackIndex]
+      ) {
+        const frameIndex = stackTable.frame[stackIndex];
+        const funcIndex = frameTable.func[frameIndex];
+
+        if (funcIndex === postfixCallNodePath[matchesUpToDepth]) {
+          // The CallNodePath matches up to this depth.
+          matchesUpToDepth++;
+          if (matchesUpToDepth === postfixDepth) {
+            // This matches the CallNodePath.
+            stackNeedsMerging[stackIndex] = true;
+            break;
+          }
+        } else if (funcMatchesImplementation(thread, funcIndex)) {
+          // This function didn't match the CallNodePath, and it can't be ignored
+          // because it matches the implementation.
+          break;
+        }
+      }
+    }
+
     const oldStackToNewStack: Map<
       IndexIntoStackTable | null,
       IndexIntoStackTable | null
@@ -697,85 +735,49 @@ export function mergeInvertedCallNode(
       prefix: [],
       frame: [],
     };
-    const stackDepths = [];
-    // TODO - Factor out the stackMatches code.
-    const stackMatches = [];
-    const funcMatchesImplementation = funcMatches[implementation];
-    for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
-      const prefix = stackTable.prefix[stackIndex];
-      const frameIndex = stackTable.frame[stackIndex];
-      const funcIndex = frameTable.func[frameIndex];
 
-      const doesPrefixMatch = prefix === null ? true : stackMatches[prefix];
-      const prefixDepth = prefix === null ? -1 : stackDepths[prefix];
-      const currentFuncOnPath = prefixCallNodePath[prefixDepth + 1];
-
-      let doMerge = false;
-      let stackDepth = prefixDepth;
-      let doesMatchCallNodePath;
-      if (doesPrefixMatch && stackDepth < depthAtCallNodePathLeaf) {
-        // This stack's prefixes were in our CallNodePath.
-        if (currentFuncOnPath === funcIndex) {
-          // This stack's function matches too!
-          doesMatchCallNodePath = true;
-          if (stackDepth + 1 === depthAtCallNodePathLeaf) {
-            // Holy cow, we found a match for our merge operation and can merge this stack.
-            doMerge = true;
-          } else {
-            // Since we found a match, increase the stack depth. This should match
-            // the depth of the implementation filtered stacks.
-            stackDepth++;
-          }
-        } else if (!funcMatchesImplementation(thread, funcIndex)) {
-          // This stack's function does not match the CallNodePath, however it's not part
-          // of the CallNodePath's implementation filter. Go ahead and keep it.
-          doesMatchCallNodePath = true;
-        } else {
-          // While all of the predecessors matched, this stack's function does not :(
-          doesMatchCallNodePath = false;
-        }
-      } else {
-        // This stack is not part of a matching branch of the tree.
-        doesMatchCallNodePath = false;
+    // We have determined which stacks need to be merged, now do the merging in
+    // one pass across all the stacks.
+    for (
+      let oldStackIndex = 0;
+      oldStackIndex < stackTable.length;
+      oldStackIndex++
+    ) {
+      const oldPrefix = stackTable.prefix[oldStackIndex];
+      const newPrefix = oldStackToNewStack.get(oldPrefix);
+      if (newPrefix === undefined) {
+        throw new Error('The stack must not have an undefined prefix.');
       }
-      stackMatches[stackIndex] = doesMatchCallNodePath;
-      stackDepths[stackIndex] = stackDepth;
-
-      // Map the oldStackToNewStack, and only push on the stacks that aren't merged.
-      if (doMerge) {
-        const newStackPrefix = oldStackToNewStack.get(prefix);
-        oldStackToNewStack.set(
-          stackIndex,
-          newStackPrefix === undefined ? null : newStackPrefix
-        );
-      } else {
-        const newStackIndex = newStackTable.length++;
-        const newStackPrefix = oldStackToNewStack.get(prefix);
-        newStackTable.prefix[newStackIndex] =
-          newStackPrefix === undefined ? null : newStackPrefix;
-        newStackTable.frame[newStackIndex] = frameIndex;
-        oldStackToNewStack.set(stackIndex, newStackIndex);
+      // Skip over this stack, since we are merging it.
+      if (stackNeedsMerging[oldStackIndex]) {
+        oldStackToNewStack.set(oldStackIndex, newPrefix);
+        continue;
       }
+
+      const newStackIndex = newStackTable.length++;
+      newStackTable.prefix.push(newPrefix);
+      newStackTable.frame.push(stackTable.frame[oldStackIndex]);
+      oldStackToNewStack.set(oldStackIndex, newStackIndex);
     }
-    const newSamples = Object.assign({}, samples, {
+
+    const newSamplesTable = Object.assign({}, samples, {
       stack: samples.stack.map(oldStack => {
         const newStack = oldStackToNewStack.get(oldStack);
         if (newStack === undefined) {
-          throw new Error(
-            'Converting from the old stack to a new stack cannot be undefined'
-          );
+          throw new Error('The stack must not convert to undefined.');
         }
         return newStack;
       }),
     });
+
     return Object.assign({}, thread, {
       stackTable: newStackTable,
-      samples: newSamples,
+      samples: newSamplesTable,
     });
   });
 }
 
-const funcMatches = {
+const FUNC_MATCHES = {
   combined: (_thread: Thread, _funcIndex: IndexIntoFuncTable) => true,
   cpp: (thread: Thread, funcIndex: IndexIntoFuncTable): boolean => {
     const { funcTable, stringTable } = thread;
@@ -813,6 +815,7 @@ export function filterThreadToPostfixCallNodePath(
     const { stackTable, frameTable, funcTable, samples } = thread;
     // TODO - Match any implementation.
     const matchJSOnly = implementation === 'js';
+
     function convertStack(leaf) {
       let matchesUpToDepth = 0; // counted from the leaf
       for (let stack = leaf; stack !== null; stack = stackTable.prefix[stack]) {
@@ -832,6 +835,7 @@ export function filterThreadToPostfixCallNodePath(
 
     const oldStackToNewStack = new Map();
     oldStackToNewStack.set(null, null);
+
     const newSamples = Object.assign({}, samples, {
       stack: samples.stack.map(stackIndex => {
         let newStackIndex = oldStackToNewStack.get(stackIndex);

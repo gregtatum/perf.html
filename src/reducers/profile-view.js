@@ -487,10 +487,12 @@ export const selectorsForThread = (
             case 'merge-subtree':
               return thread;
             case 'merge-call-node':
-              console.log('TODO');
-
               return transform.inverted
-                ? (console.log('TODO'), thread)
+                ? ProfileData.mergeInvertedCallNode(
+                    thread,
+                    transform.callNodePath,
+                    transform.implementation
+                  )
                 : ProfileData.mergeCallNode(
                     thread,
                     transform.callNodePath,

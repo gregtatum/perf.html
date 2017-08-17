@@ -94,11 +94,11 @@ export function getTransformLabels(
 
     switch (transform.type) {
       case 'focus-subtree':
-        return `Focus Subtree: ${funcName}`;
+        return `Focus: ${funcName}`;
       case 'merge-subtree':
         return `Merge Subtree: ${funcName}`;
       case 'merge-call-node':
-        return `Merge Call Node: ${funcName}`;
+        return `Merge: ${funcName}`;
       default:
         throw new Error('Unexpected transform type');
     }

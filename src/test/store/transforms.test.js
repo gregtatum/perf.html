@@ -8,6 +8,7 @@ import {
   getProfileForInvertedCallTree,
   getProfileWithMixedJSImplementation,
 } from '../fixtures/profiles/profiles-for-call-trees';
+
 import { storeWithProfile } from '../fixtures/stores';
 import {
   addTransformToStack,
@@ -155,7 +156,7 @@ describe('"focus-subtree" transform', function() {
   });
 });
 
-fdescribe('"merge-call-node" transform', function() {
+describe('"merge-call-node" transform', function() {
   describe('on a call tree', function() {
     /**
      * Assert this transformation:
@@ -200,7 +201,7 @@ fdescribe('"merge-call-node" transform', function() {
     });
   });
 
-  fdescribe('on a JS call tree', function() {
+  describe('on a JS call tree', function() {
     const profile = getProfileWithMixedJSImplementation();
     const threadIndex = 0;
 
@@ -218,13 +219,6 @@ fdescribe('"merge-call-node" transform', function() {
       callNodePath: [ON_LOAD, A],
       implementation: 'js',
       inverted: false,
-    };
-
-    const mergeInvertedJSPathAB = {
-      type: 'merge-call-node',
-      callNodePath: [B, A, ION_CANNON],
-      implementation: 'js',
-      inverted: true,
     };
 
     const mergeCombinedPathToA = {
@@ -298,26 +292,23 @@ fdescribe('"merge-call-node" transform', function() {
       ).toMatchSnapshot();
     });
 
-    fit(
-      'can merge a combined CallNodePath, and display a correct JS call tree',
-      function() {
-        /**
+    it('can merge a combined CallNodePath, and display a correct JS call tree', function() {
+      /**
        *    onLoad
        *   ↙      ↘
        *  b        a
        *           ↓
        *           b
        */
-        const { dispatch, getState } = storeWithProfile(profile);
-        dispatch(changeImplementationFilter('js'));
-        dispatch(addTransformToStack(threadIndex, mergeCombinedPathToA));
-        expect(
-          formatTree(selectedThreadSelectors.getCallTree(getState()))
-        ).toMatchSnapshot();
-      }
-    );
+      const { dispatch, getState } = storeWithProfile(profile);
+      dispatch(changeImplementationFilter('js'));
+      dispatch(addTransformToStack(threadIndex, mergeCombinedPathToA));
+      expect(
+        formatTree(selectedThreadSelectors.getCallTree(getState()))
+      ).toMatchSnapshot();
+    });
 
-    xit('starts as an inverted call tree', function() {
+    it('starts as an inverted call tree', function() {
       /**
        *                       b
        *                       ↓
@@ -336,10 +327,8 @@ fdescribe('"merge-call-node" transform', function() {
       ).toMatchSnapshot();
     });
 
-    xit(
-      'can merge path [b, a, js::jit::IonCannon] inverted call tree',
-      function() {
-        /**
+    it('can merge path [b, a, js::jit::IonCannon] on an inverted call tree', function() {
+      /**
        *          b
        *          ↓
        *          a
@@ -348,13 +337,46 @@ fdescribe('"merge-call-node" transform', function() {
        *          ↓
        *    JS::RunScript
        */
-        const { dispatch, getState } = storeWithProfile(profile);
-        dispatch(changeInvertCallstack(true));
-        dispatch(addTransformToStack(threadIndex, mergeInvertedJSPathAB));
-        expect(
-          formatTree(selectedThreadSelectors.getCallTree(getState()))
-        ).toMatchSnapshot();
-      }
-    );
+      const { dispatch, getState } = storeWithProfile(profile);
+      dispatch(changeInvertCallstack(true));
+      dispatch(
+        addTransformToStack(threadIndex, {
+          type: 'merge-call-node',
+          callNodePath: [B, A, ION_CANNON],
+          implementation: 'combined',
+          inverted: true,
+        })
+      );
+
+      expect(
+        formatTree(selectedThreadSelectors.getCallTree(getState()))
+      ).toMatchSnapshot();
+    });
+
+    it('can merge path [b, a, onLoad] on an inverted JS call tree', function() {
+      /**
+       *                       b
+       *                       ↓
+       *                       a
+       *                   ↙       ↘
+       *  js::jit::IonCannon       JS::RunScript
+       *           ↓
+       *    JS::RunScript
+       */
+      const { dispatch, getState } = storeWithProfile(profile);
+      dispatch(changeInvertCallstack(true));
+      dispatch(
+        addTransformToStack(threadIndex, {
+          type: 'merge-call-node',
+          callNodePath: [B, A, ON_LOAD],
+          implementation: 'js',
+          inverted: true,
+        })
+      );
+
+      expect(
+        formatTree(selectedThreadSelectors.getCallTree(getState()))
+      ).toMatchSnapshot();
+    });
   });
 });

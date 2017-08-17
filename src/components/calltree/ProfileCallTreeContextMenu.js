@@ -179,9 +179,9 @@ class ProfileCallTreeContextMenu extends PureComponent {
         <MenuItem onClick={this.handleClick} data={{ type: 'mergeCallNode' }}>
           Merge node into calling function
         </MenuItem>
-        <MenuItem onClick={this.handleClick} data={{ type: 'mergeSubtree' }}>
+        {/* <MenuItem onClick={this.handleClick} data={{ type: 'mergeSubtree' }}>
           Merge subtree into calling function
-        </MenuItem>
+        </MenuItem> */}
         <MenuItem onClick={this.handleClick} data={{ type: 'focusSubtree' }}>
           Focus on subtree
         </MenuItem>
