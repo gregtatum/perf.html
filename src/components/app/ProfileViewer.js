@@ -26,6 +26,7 @@ import ProfileViewerHeader from '../header/ProfileViewerHeader';
 import ProfileCallTreeContextMenu from '../calltree/ProfileCallTreeContextMenu';
 import MarkersContextMenu from '../markers/ContextMenu';
 import ProfileThreadHeaderContextMenu from '../header/ProfileThreadHeaderContextMenu';
+import SplitterLayout from 'react-splitter-layout';
 
 import type { StartEndRange } from '../../types/units';
 import type { Tab } from './TabBar';
@@ -98,32 +99,39 @@ class ProfileViewer extends PureComponent {
           isMounted ? `${className}IsMounted` : null
         )}
       >
-        <div className={`${className}TopBar`}>
-          <ProfileFilterNavigator />
-          <ProfileSharing />
-        </div>
-        <ProfileViewerHeader />
-        <TabBar
-          tabs={this._tabs}
-          selectedTabName={selectedTab}
-          tabOrder={tabOrder}
-          onSelectTab={this._onSelectTab}
-          onChangeTabOrder={changeTabOrder}
-        />
-        {
-          {
-            summary: <ProfileSummaryView />,
-            calltree: <ProfileCallTreeView />,
-            markers: <MarkersView />,
-            tasktracer: (
-              <ProfileTaskTracerView
-                rangeStart={timeRange.start}
-                rangeEnd={timeRange.end}
-              />
-            ),
-            timeline: <TimelineView />,
-          }[selectedTab]
-        }
+        <SplitterLayout vertical={true} primaryIndex={1} secondaryMinSize={24}>
+          <div>
+            <div className={`${className}TopBar`}>
+              <ProfileFilterNavigator />
+              <ProfileSharing />
+            </div>
+            <ProfileViewerHeader />
+          </div>
+          <div>
+            <TabBar
+              tabs={this._tabs}
+              selectedTabName={selectedTab}
+              tabOrder={tabOrder}
+              onSelectTab={this._onSelectTab}
+              onChangeTabOrder={changeTabOrder}
+            />
+            {
+              {
+                summary: <ProfileSummaryView />,
+                calltree: <ProfileCallTreeView />,
+                markers: <MarkersView />,
+                tasktracer: (
+                  <ProfileTaskTracerView
+                    rangeStart={timeRange.start}
+                    rangeEnd={timeRange.end}
+                  />
+                ),
+                timeline: <TimelineView />,
+              }[selectedTab]
+            }
+          </div>
+        </SplitterLayout>
+
         <SymbolicationStatusOverlay />
         <ProfileCallTreeContextMenu />
         <MarkersContextMenu />
