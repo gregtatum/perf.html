@@ -94,7 +94,7 @@ class VirtualListInner extends PureComponent {
       columnIndex,
     } = this.props;
 
-    const chunkSize = 16;
+    const chunkSize = 20;
     const startChunkIndex = Math.floor(visibleRangeStart / chunkSize);
     const endChunkIndex = Math.ceil(visibleRangeEnd / chunkSize);
     const chunks = range(
@@ -201,7 +201,7 @@ class VirtualList extends PureComponent {
     }
     const { outerRect, innerRectY } = this._geometry;
     const overscan = disableOverscan ? 0 : 25;
-    const chunkSize = 16;
+    const chunkSize = 20;
     let visibleRangeStart =
       Math.floor((outerRect.top - innerRectY) / itemHeight) - overscan;
     let visibleRangeEnd =

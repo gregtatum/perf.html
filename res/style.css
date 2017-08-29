@@ -60,7 +60,7 @@ body {
   padding: 1px 0;
   border-bottom: 1px solid #D6D6D6;
   position: relative;
-  height: 16px;
+  height: 20px;
   background: white;
 }
 
@@ -79,7 +79,7 @@ body {
   position: relative;
   outline: 0;
   will-change: scroll-position;
-  line-height: 16px;
+  line-height: 20px;
   z-index: 0;
 }
 
@@ -99,7 +99,6 @@ body {
 }
 
 .treeViewBodyInner {
-  background: white;
   overflow: hidden;
 }
 
@@ -187,11 +186,14 @@ body {
   color: #999;
 }
 
-.treeViewRow.even, .treeViewRow.even > .treeViewFixedColumn {
-  background-color: #FFFFFF;
-}
-.treeViewRow.odd, .treeViewRow.odd > .treeViewFixedColumn {
-  background-color: #F5F5F5;
+.treeViewRow:hover::after {
+  content: "";
+  width: 100%;
+  position: absolute;
+  height: 20px;
+  background-color: #ddd;
+  z-index: -1;
+  border-bottom: 1px solid #bbb;
 }
 .treeViewRow.selected,
 .treeViewRow.selected > .treeViewFixedColumn {
@@ -230,6 +232,8 @@ body {
   overflow: hidden;
   vertical-align: top;
   color: transparent;
+  position: relative;
+  top: 2px;
 }
 
 .treeRowToggleButton {

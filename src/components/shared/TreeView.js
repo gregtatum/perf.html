@@ -95,14 +95,13 @@ class TreeViewRowFixedColumns extends PureComponent {
   }
 
   render() {
-    const { node, columns, index, selected, highlightString } = this.props;
-    const evenOddClassName = index % 2 === 0 ? 'even' : 'odd';
+    const { node, columns, selected, highlightString } = this.props;
     return (
       <div
-        className={`treeViewRow treeViewRowFixedColumns ${evenOddClassName} ${selected
+        className={`treeViewRow treeViewRowFixedColumns ${selected
           ? 'selected'
           : ''}`}
-        style={{ height: '16px' }}
+        style={{ height: '20px' }}
         onMouseDown={this._onClick}
       >
         {columns.map(col => {
@@ -190,14 +189,13 @@ class TreeViewRowScrolledColumns extends PureComponent {
       highlightString,
       appendageButtons,
     } = this.props;
-    const evenOddClassName = index % 2 === 0 ? 'even' : 'odd';
 
     return (
       <div
-        className={`treeViewRow treeViewRowScrolledColumns ${evenOddClassName} ${selected
+        className={`treeViewRow treeViewRowScrolledColumns ${selected
           ? 'selected'
           : ''} ${node.dim ? 'dim' : ''}`}
-        style={{ height: '16px' }}
+        style={{ height: '20px' }}
         onMouseDown={this._onClick}
       >
         <span
@@ -537,7 +535,7 @@ class TreeView extends PureComponent {
             className="treeViewBody"
             items={this._visibleRows}
             renderItem={this._renderRow}
-            itemHeight={16}
+            itemHeight={20}
             columnCount={2}
             focusable={true}
             onKeyDown={this._onKeyDown}
