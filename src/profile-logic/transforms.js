@@ -12,8 +12,13 @@ import { timeCode } from '../utils/time-code';
 
 import type {
   Thread,
+  FrameTable,
+  StackTable,
+  FuncTable,
   IndexIntoFuncTable,
+  IndexIntoFrameTable,
   IndexIntoStackTable,
+  IndexIntoResourceTable,
 } from '../types/profile';
 import type { CallNodePath } from '../types/profile-derived';
 import type { ImplementationFilter } from '../types/actions';
@@ -33,6 +38,7 @@ const TRANSFORM_TO_SHORT_KEY = {
   'merge-subtree': 'ms',
   'merge-call-node': 'mcn',
   'merge-function': 'mf',
+  'collapse-library': 'cl',
 };
 
 const SHORT_KEY_TO_TRANSFORM = {
@@ -41,6 +47,7 @@ const SHORT_KEY_TO_TRANSFORM = {
   ms: 'merge-subtree',
   mcn: 'merge-call-node',
   mf: 'merge-function',
+  cl: 'collapse-library',
 };
 
 /**
@@ -59,6 +66,18 @@ export function parseTransforms(stringValue: string = '') {
       const type = SHORT_KEY_TO_TRANSFORM[shortKey];
 
       switch (type) {
+        case 'collapse-library': {
+          // e.g. "cl-325"
+          const [, libIndexRaw] = tuple;
+          const libIndex = parseInt(libIndexRaw, 10);
+          // Validate that the libIndex makes sense.
+          return !isNaN(libIndex) && libIndex > 0
+            ? {
+                type,
+                libIndex,
+              }
+            : null;
+        }
         case 'merge-function':
         case 'focus-function': {
           // e.g. "mf-325"
@@ -107,6 +126,8 @@ export function stringifyTransforms(transforms: TransformStack = []): string {
           }
           return string;
         }
+        case 'collapse-library':
+          return `${shortKey}-${transform.resourceIndex}`;
         case 'focus-subtree':
         case 'merge-call-node':
         case 'merge-subtree': {
@@ -132,8 +153,20 @@ export function getTransformLabels(
   threadName: string,
   transforms: Transform[]
 ) {
-  const { funcTable, stringTable } = thread;
+  const { funcTable, libs, stringTable, resourceTable } = thread;
   const labels = transforms.map(transform => {
+    // Lookup library information.
+    if (transform.type === 'collapse-library') {
+      const libIndex = resourceTable.lib[transform.resourceIndex];
+      if (libIndex === null) {
+        throw new Error(
+          'Library transforms cannot be created on non-library resources.'
+        );
+      }
+      return `Collapse: ${libs[libIndex].name}`;
+    }
+
+    // Lookup function name.
     let funcIndex;
     switch (transform.type) {
       case 'focus-subtree':
@@ -186,6 +219,11 @@ export function applyTransformToCallNodePath(
       return _mergeNodeInCallNodePath(transform.callNodePath, callNodePath);
     case 'merge-function':
       return _mergeFunctionInCallNodePath(transform.funcIndex, callNodePath);
+    case 'collapse-library':
+      return _collapseLibraryInCallNodePath(
+        transform.resourceIndex,
+        callNodePath
+      );
     default:
       throw new Error(
         'Cannot apply an unknown transform to update the CallNodePath'
@@ -224,6 +262,14 @@ function _mergeFunctionInCallNodePath(
   callNodePath: CallNodePath
 ): CallNodePath {
   return callNodePath.filter(nodeFunc => nodeFunc !== funcIndex);
+}
+
+function _collapseLibraryInCallNodePath(
+  resourceIndex: IndexIntoResourceTable,
+  callNodePath: CallNodePath
+) {
+  // TODO
+  return callNodePath;
 }
 
 function _callNodePathHasPrefixPath(
@@ -395,6 +441,143 @@ export function mergeFunction(
   });
   return Object.assign({}, thread, {
     stackTable: newStackTable,
+    samples: newSamples,
+  });
+}
+
+export function collapseLibrary(
+  thread: Thread,
+  resourceIndexToCollapse: IndexIntoResourceTable
+): Thread {
+  const { stackTable, funcTable, frameTable, resourceTable, samples } = thread;
+  const resourceNameIndex = resourceTable.name[resourceIndexToCollapse];
+  const newFrameTable: FrameTable = {
+    address: frameTable.address.slice(),
+    category: frameTable.category.slice(),
+    func: frameTable.func.slice(),
+    implementation: frameTable.implementation.slice(),
+    line: frameTable.line.slice(),
+    optimizations: frameTable.optimizations.slice(),
+    length: frameTable.length,
+  };
+  const newFuncTable: FuncTable = {
+    address: funcTable.address.slice(),
+    isJS: funcTable.isJS.slice(),
+    name: funcTable.name.slice(),
+    resource: funcTable.resource.slice(),
+    fileName: funcTable.fileName.slice(),
+    lineNumber: funcTable.lineNumber.slice(),
+    length: funcTable.length,
+  };
+  const newStackTable: StackTable = {
+    length: 0,
+    prefix: [],
+    frame: [],
+  };
+  const oldStackToNewStack: Map<
+    IndexIntoStackTable | null,
+    IndexIntoStackTable | null
+  > = new Map();
+  const prefixStackToCollapsedStack: Map<
+    IndexIntoStackTable | null, // prefix stack index
+    IndexIntoStackTable | null // collapsed stack index
+  > = new Map();
+  const stackToCollapsedFrame: Map<
+    IndexIntoStackTable | null,
+    IndexIntoFrameTable | null
+  > = new Map();
+
+  oldStackToNewStack.set(null, null);
+  prefixStackToCollapsedStack.set(null, null);
+  stackToCollapsedFrame.set(null, null);
+
+  for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
+    const prefix = stackTable.prefix[stackIndex];
+    const frameIndex = stackTable.frame[stackIndex];
+    const funcIndex = frameTable.func[frameIndex];
+    const resourceIndex = funcTable.resource[funcIndex];
+    const newStackPrefix = oldStackToNewStack.get(prefix);
+
+    if (newStackPrefix === undefined) {
+      throw new Error('newStackPrefix must not be undefined');
+    }
+    if (resourceIndex === resourceIndexToCollapse) {
+      // The stack matches this resource.
+      const newPrefixFrame = stackToCollapsedFrame.get(newStackPrefix);
+      if (newPrefixFrame === undefined) {
+        // The prefix is not a collapsed stack. Now check for an existing collapsed
+        // stack at this level. If it exists we can use that.
+        const existingCollapsedStack = prefixStackToCollapsedStack.get(prefix);
+        if (existingCollapsedStack === undefined) {
+          // Create a new collapsed frame.
+
+          // Compute the next indexes
+          const newStackIndex = newStackTable.length++;
+          const newFrameIndex = newFrameTable.length++;
+          const newFuncIndex = newFuncTable.length++;
+          stackToCollapsedFrame.set(newStackIndex, newFrameIndex);
+          oldStackToNewStack.set(stackIndex, newStackIndex);
+          prefixStackToCollapsedStack.set(prefix, newStackIndex);
+
+          // Add the collapsed frame
+          newFrameTable.address.push(frameTable.address[frameIndex]);
+          newFrameTable.category.push(frameTable.category[frameIndex]);
+          newFrameTable.func.push(newFuncIndex);
+          newFrameTable.line.push(frameTable.line[frameIndex]);
+          newFrameTable.implementation.push(
+            frameTable.implementation[frameIndex]
+          );
+          newFrameTable.optimizations.push(
+            frameTable.optimizations[frameIndex]
+          );
+
+          // Add the psuedo-func
+          newFuncTable.address.push(funcTable.address[funcIndex]);
+          newFuncTable.isJS.push(funcTable.isJS[funcIndex]);
+          newFuncTable.name.push(resourceNameIndex);
+          newFuncTable.resource.push(funcTable.resource[funcIndex]);
+          newFuncTable.fileName.push(funcTable.fileName[funcIndex]);
+          newFuncTable.lineNumber.push(null);
+
+          // Add the new stack.
+          newStackTable.prefix.push(newStackPrefix);
+          newStackTable.frame.push(newFrameIndex);
+        } else {
+          // A collapsed stack at this level already exists, use that one.
+          if (existingCollapsedStack === null) {
+            throw new Error('existingCollapsedStack cannot be null');
+          }
+          oldStackToNewStack.set(stackIndex, existingCollapsedStack);
+        }
+      } else {
+        // The prefix was already collapsed, use that one.
+        oldStackToNewStack.set(stackIndex, newStackPrefix);
+      }
+    } else {
+      // This stack isn't part of the collapsed resource. Copy over the previous stack.
+      const newStackIndex = newStackTable.length++;
+      newStackTable.prefix.push(newStackPrefix);
+      newStackTable.frame.push(frameIndex);
+      oldStackToNewStack.set(stackIndex, newStackIndex);
+    }
+  }
+
+  const newSamples = Object.assign({}, samples, {
+    stack: samples.stack.map(oldStack => {
+      const newStack = oldStackToNewStack.get(oldStack);
+      if (newStack === undefined) {
+        throw new Error(
+          'Converting from the old stack to a new stack cannot be undefined'
+        );
+      }
+      return newStack;
+    }),
+  });
+
+  return Object.assign({}, thread, {
+    stackTable: newStackTable,
+    frameTable: newFrameTable,
+    funcTable: newFuncTable,
     samples: newSamples,
   });
 }

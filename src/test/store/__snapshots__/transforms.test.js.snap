@@ -1,5 +1,23 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`"collapse-library" transform can collapse the "firefox" library 1`] = `
+"
+- A (total: 2, self:—)
+ - firefox (total: 2, self:—)
+   - D (total: 1, self:1)
+   - F (total: 1, self:1)"
+`;
+
+exports[`"collapse-library" transform starts as an unfiltered call tree 1`] = `
+"
+- A (total: 2, self:—)
+ - B:firefox (total: 1, self:—)
+   - C:firefox (total: 1, self:—)
+     - D (total: 1, self:1)
+ - E:firefox (total: 1, self:—)
+   - F (total: 1, self:1)"
+`;
+
 exports[`"focus-function" transform on a call tree can be focused on a function 1`] = `
 "
 - X (total: 3, self:—)

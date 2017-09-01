@@ -110,6 +110,7 @@ class ProfileCallTreeContextMenu extends PureComponent {
       case 'merge-subtree':
       case 'focus-subtree':
       case 'focus-function':
+      case 'collapse-library':
         this.addTransformToStack(type);
         break;
       default:
@@ -117,20 +118,14 @@ class ProfileCallTreeContextMenu extends PureComponent {
     }
   }
 
-  addTransformToStack(
-    type:
-      | 'focus-subtree'
-      | 'focus-function'
-      | 'merge-subtree'
-      | 'merge-call-node'
-      | 'merge-function'
-  ): void {
+  addTransformToStack(type: string): void {
     const {
       addTransformToStack,
       threadIndex,
       implementation,
       selectedCallNodePath,
       inverted,
+      thread,
     } = this.props;
 
     switch (type) {
@@ -169,9 +164,45 @@ class ProfileCallTreeContextMenu extends PureComponent {
           funcIndex: selectedCallNodePath[selectedCallNodePath.length - 1],
         });
         break;
+      case 'collapse-library': {
+        const { funcTable, resourceTable } = thread;
+        const funcIndex = selectedCallNodePath[selectedCallNodePath.length - 1];
+        const resourceIndex = funcTable.resource[funcIndex];
+        if (resourceIndex !== -1) {
+          const libIndex = resourceTable.lib[resourceIndex];
+          if (libIndex !== null) {
+            addTransformToStack(threadIndex, {
+              type: 'collapse-library',
+              resourceIndex,
+            });
+          }
+        }
+        break;
+      }
       default:
         throw new Error('Type not found.');
     }
+  }
+
+  getLibName(): string | null {
+    const {
+      selectedCallNodePath,
+      thread: { funcTable, resourceTable, libs },
+    } = this.props;
+
+    const funcIndex = selectedCallNodePath[selectedCallNodePath.length - 1];
+    if (funcIndex === undefined) {
+      return null;
+    }
+    const resourceIndex = funcTable.resource[funcIndex];
+    if (resourceIndex === -1) {
+      return null;
+    }
+    const libIndex = resourceTable.lib[resourceIndex];
+    if (libIndex === null) {
+      return null;
+    }
+    return libs[libIndex].name;
   }
 
   render() {
@@ -183,6 +214,7 @@ class ProfileCallTreeContextMenu extends PureComponent {
     } = this.props;
     const funcIndex = callNodeTable.func[selectedCallNodeIndex];
     const isJS = funcTable.isJS[funcIndex];
+    const libName = this.getLibName();
 
     return (
       <ContextMenu id={'ProfileCallTreeContextMenu'}>
@@ -212,6 +244,14 @@ class ProfileCallTreeContextMenu extends PureComponent {
             ? 'Focus on calls made by this function'
             : 'Focus on function'}
         </MenuItem>
+        {libName
+          ? <MenuItem
+              onClick={this.handleClick}
+              data={{ type: 'collapse-library' }}
+            >
+              Collapse functions in <span>{libName}</span>
+            </MenuItem>
+          : null}
         <div className="react-contextmenu-separator" />
         <MenuItem
           onClick={this.handleClick}

@@ -16,7 +16,11 @@
  * This combination of information will provide a stable reference to a call node for a
  * given view into a call tree.
  */
-import type { ThreadIndex, IndexIntoFuncTable } from './profile';
+import type {
+  ThreadIndex,
+  IndexIntoFuncTable,
+  IndexIntoResourceTable,
+} from './profile';
 import type { CallNodePath } from './profile-derived';
 import type { ImplementationFilter } from './actions';
 
@@ -183,6 +187,11 @@ export type MergeFunction = {|
   funcIndex: IndexIntoFuncTable,
 |};
 
+export type CollapseLibrary = {|
+  type: 'collapse-library',
+  resourceIndex: IndexIntoResourceTable,
+|};
+
 /**
  * TODO - Once implemented.
  */
@@ -198,7 +207,8 @@ export type Transform =
   | FocusFunctionSubtree
   | MergeSubtree
   | MergeCallNode
-  | MergeFunction;
+  | MergeFunction
+  | CollapseLibrary;
 
 export type TransformStack = Transform[];
 export type TransformStacksPerThread = { [id: ThreadIndex]: TransformStack };
