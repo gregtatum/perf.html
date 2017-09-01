@@ -498,6 +498,8 @@ export const selectorsForThread = (
           return Transforms.mergeFunction(thread, transform.funcIndex);
         case 'focus-function':
           return Transforms.focusFunction(thread, transform.funcIndex);
+        case 'collapse-library':
+          return Transforms.collapseLibrary(thread, transform.resourceIndex);
         default:
           throw new Error('Unhandled transform.');
       }
@@ -571,7 +573,7 @@ export const selectorsForThread = (
       ProfileData.getThreadProcessDetails
     );
     const getTransformLabels: (state: State) => string[] = createSelector(
-      getThread,
+      _getRangeAndTransformFilteredThread,
       getFriendlyThreadName,
       getTransformStack,
       Transforms.getTransformLabels
