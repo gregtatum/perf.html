@@ -412,6 +412,55 @@ describe('"focus-function" transform', function() {
   });
 });
 
+describe('"collapse-library" transform', function() {
+  /**
+   *               A                                   A
+   *             /   \                                 |
+   *            v     v        Collapse firefox        v
+   *    B:firefox    E:firefox       ->             firefox
+   *        |            |                         /       \
+   *        v            v                        D        F
+   *    C:firefox        F
+   *        |
+   *        v
+   *        D
+   */
+  const { profile } = getProfileFromTextSamples(`
+    A          A
+    B:firefox  E:firefox
+    C:firefox  F
+    D
+  `);
+  const threadIndex = 0;
+  const thread = profile.threads[threadIndex];
+  const firefoxNameIndex = thread.stringTable.indexForString('firefox');
+  const firefoxResourceIndex = thread.resourceTable.name.findIndex(
+    stringIndex => stringIndex === firefoxNameIndex
+  );
+  if (firefoxResourceIndex === -1) {
+    throw new Error('Unable to find the firefox resource');
+  }
+  it('starts as an unfiltered call tree', function() {
+    const { getState } = storeWithProfile(profile);
+    expect(
+      formatTree(selectedThreadSelectors.getCallTree(getState()))
+    ).toMatchSnapshot();
+  });
+
+  it('can collapse the "firefox" library', function() {
+    const { dispatch, getState } = storeWithProfile(profile);
+    dispatch(
+      addTransformToStack(threadIndex, {
+        type: 'collapse-library',
+        resourceIndex: firefoxResourceIndex,
+      })
+    );
+    expect(
+      formatTree(selectedThreadSelectors.getCallTree(getState()))
+    ).toMatchSnapshot();
+  });
+});
+
 describe('expanded and selected CallNodePaths', function() {
   const { profile, funcNames } = getProfileFromTextSamples(`
     A
