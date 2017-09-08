@@ -16,7 +16,6 @@ import type {
   StackTable,
   FuncTable,
   IndexIntoFuncTable,
-  IndexIntoFrameTable,
   IndexIntoStackTable,
   IndexIntoResourceTable,
 } from '../types/profile';
@@ -38,7 +37,7 @@ const TRANSFORM_TO_SHORT_KEY = {
   'merge-subtree': 'ms',
   'merge-call-node': 'mcn',
   'merge-function': 'mf',
-  'collapse-library': 'cl',
+  'collapse-resource': 'cr',
 };
 
 const SHORT_KEY_TO_TRANSFORM = {
@@ -47,7 +46,7 @@ const SHORT_KEY_TO_TRANSFORM = {
   ms: 'merge-subtree',
   mcn: 'merge-call-node',
   mf: 'merge-function',
-  cl: 'collapse-library',
+  cr: 'collapse-resource',
 };
 
 /**
@@ -66,15 +65,15 @@ export function parseTransforms(stringValue: string = '') {
       const type = SHORT_KEY_TO_TRANSFORM[shortKey];
 
       switch (type) {
-        case 'collapse-library': {
-          // e.g. "cl-325"
-          const [, libIndexRaw] = tuple;
-          const libIndex = parseInt(libIndexRaw, 10);
+        case 'collapse-resource': {
+          // e.g. "cr-325"
+          const [, resourceIndexRaw] = tuple;
+          const resourceIndex = parseInt(resourceIndexRaw, 10);
           // Validate that the libIndex makes sense.
-          return !isNaN(libIndex) && libIndex > 0
+          return !isNaN(resourceIndex) && resourceIndex > 0
             ? {
                 type,
-                libIndex,
+                resourceIndex,
               }
             : null;
         }
@@ -126,7 +125,7 @@ export function stringifyTransforms(transforms: TransformStack = []): string {
           }
           return string;
         }
-        case 'collapse-library':
+        case 'collapse-resource':
           return `${shortKey}-${transform.resourceIndex}`;
         case 'focus-subtree':
         case 'merge-call-node':
@@ -156,14 +155,19 @@ export function getTransformLabels(
   const { funcTable, libs, stringTable, resourceTable } = thread;
   const labels = transforms.map(transform => {
     // Lookup library information.
-    if (transform.type === 'collapse-library') {
+    if (transform.type === 'collapse-resource') {
       const libIndex = resourceTable.lib[transform.resourceIndex];
-      if (libIndex === null) {
-        throw new Error(
-          'Library transforms cannot be created on non-library resources.'
-        );
+      let resourceName;
+      if (libIndex === undefined) {
+        const nameIndex = resourceTable.name[transform.resourceIndex];
+        if (nameIndex === -1) {
+          throw new Error('Attempting to collapse a resource without a name');
+        }
+        resourceName = stringTable.getString(nameIndex);
+      } else {
+        resourceName = libs[libIndex].name;
       }
-      return `Collapse: ${libs[libIndex].name}`;
+      return `Collapse: ${resourceName}`;
     }
 
     // Lookup function name.
@@ -205,7 +209,8 @@ export function getTransformLabels(
 
 export function applyTransformToCallNodePath(
   callNodePath: CallNodePath,
-  transform: Transform
+  transform: Transform,
+  thread: Thread
 ): CallNodePath {
   switch (transform.type) {
     case 'focus-subtree':
@@ -219,9 +224,11 @@ export function applyTransformToCallNodePath(
       return _mergeNodeInCallNodePath(transform.callNodePath, callNodePath);
     case 'merge-function':
       return _mergeFunctionInCallNodePath(transform.funcIndex, callNodePath);
-    case 'collapse-library':
-      return _collapseLibraryInCallNodePath(
+    case 'collapse-resource':
+      return _collapseResourceInCallNodePath(
         transform.resourceIndex,
+        transform.collapsedFuncIndex,
+        thread.funcTable,
         callNodePath
       );
     default:
@@ -264,11 +271,29 @@ function _mergeFunctionInCallNodePath(
   return callNodePath.filter(nodeFunc => nodeFunc !== funcIndex);
 }
 
-function _collapseLibraryInCallNodePath(
+function _collapseResourceInCallNodePath(
   resourceIndex: IndexIntoResourceTable,
+  collapsedFuncIndex: IndexIntoFuncTable,
+  funcTable: FuncTable,
   callNodePath: CallNodePath
 ) {
-  // TODO
+  callNodePath
+    // Map any collapsed functions into the collapsedFuncIndex
+    .map(pathFuncIndex => {
+      return funcTable.resource[pathFuncIndex] === resourceIndex
+        ? collapsedFuncIndex
+        : pathFuncIndex;
+    })
+    // De-duplicate contiguous collapsed funcs
+    .filter(
+      (pathFuncIndex, pathIndex, path) =>
+        // This function doesn't match the previous one, so keep it.
+        pathFuncIndex !== path[pathIndex - 1] ||
+        // This function matched the previous, only keep it if doesn't match the
+        // collapsed func.
+        pathFuncIndex !== collapsedFuncIndex
+    );
+
   return callNodePath;
 }
 
@@ -445,7 +470,7 @@ export function mergeFunction(
   });
 }
 
-export function collapseLibrary(
+export function collapseResource(
   thread: Thread,
   resourceIndexToCollapse: IndexIntoResourceTable
 ): Thread {
@@ -482,14 +507,13 @@ export function collapseLibrary(
     IndexIntoStackTable | null, // prefix stack index
     IndexIntoStackTable | null // collapsed stack index
   > = new Map();
-  const stackToCollapsedFrame: Map<
-    IndexIntoStackTable | null,
-    IndexIntoFrameTable | null
-  > = new Map();
+  const collapsedStacks: Set<IndexIntoStackTable | null> = new Set();
 
   oldStackToNewStack.set(null, null);
-  prefixStackToCollapsedStack.set(null, null);
-  stackToCollapsedFrame.set(null, null);
+  // A new func and frame will be created on the first stack that is found that includes
+  // the given resource.
+  let collapsedFrameIndex;
+  let collapsedFuncIndex;
 
   for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
     const prefix = stackTable.prefix[stackIndex];
@@ -503,45 +527,49 @@ export function collapseLibrary(
     }
     if (resourceIndex === resourceIndexToCollapse) {
       // The stack matches this resource.
-      const newPrefixFrame = stackToCollapsedFrame.get(newStackPrefix);
-      if (newPrefixFrame === undefined) {
-        // The prefix is not a collapsed stack. Now check for an existing collapsed
-        // stack at this level. If it exists we can use that.
+      if (!collapsedStacks.has(newStackPrefix)) {
+        // The prefix is not a collapsed stack. So this stack will not collapse into its
+        // prefix stack. But it might collapse into a sibling stack, if there exists a
+        // sibling with the same resource. Check if a collapsed stack with the same
+        // prefix (i.e. a collapsed sibling) exists.
+
         const existingCollapsedStack = prefixStackToCollapsedStack.get(prefix);
         if (existingCollapsedStack === undefined) {
           // Create a new collapsed frame.
 
           // Compute the next indexes
           const newStackIndex = newStackTable.length++;
-          const newFrameIndex = newFrameTable.length++;
-          const newFuncIndex = newFuncTable.length++;
-          stackToCollapsedFrame.set(newStackIndex, newFrameIndex);
+          collapsedStacks.add(newStackIndex);
           oldStackToNewStack.set(stackIndex, newStackIndex);
           prefixStackToCollapsedStack.set(prefix, newStackIndex);
 
-          // Add the collapsed frame
-          newFrameTable.address.push(frameTable.address[frameIndex]);
-          newFrameTable.category.push(frameTable.category[frameIndex]);
-          newFrameTable.func.push(newFuncIndex);
-          newFrameTable.line.push(frameTable.line[frameIndex]);
-          newFrameTable.implementation.push(
-            frameTable.implementation[frameIndex]
-          );
-          newFrameTable.optimizations.push(
-            frameTable.optimizations[frameIndex]
-          );
+          if (collapsedFrameIndex === undefined) {
+            collapsedFrameIndex = newFrameTable.length++;
+            collapsedFuncIndex = newFuncTable.length++;
+            // Add the collapsed frame
+            newFrameTable.address.push(frameTable.address[frameIndex]);
+            newFrameTable.category.push(frameTable.category[frameIndex]);
+            newFrameTable.func.push(collapsedFuncIndex);
+            newFrameTable.line.push(frameTable.line[frameIndex]);
+            newFrameTable.implementation.push(
+              frameTable.implementation[frameIndex]
+            );
+            newFrameTable.optimizations.push(
+              frameTable.optimizations[frameIndex]
+            );
 
-          // Add the psuedo-func
-          newFuncTable.address.push(funcTable.address[funcIndex]);
-          newFuncTable.isJS.push(funcTable.isJS[funcIndex]);
-          newFuncTable.name.push(resourceNameIndex);
-          newFuncTable.resource.push(funcTable.resource[funcIndex]);
-          newFuncTable.fileName.push(funcTable.fileName[funcIndex]);
-          newFuncTable.lineNumber.push(null);
+            // Add the psuedo-func
+            newFuncTable.address.push(funcTable.address[funcIndex]);
+            newFuncTable.isJS.push(funcTable.isJS[funcIndex]);
+            newFuncTable.name.push(resourceNameIndex);
+            newFuncTable.resource.push(funcTable.resource[funcIndex]);
+            newFuncTable.fileName.push(funcTable.fileName[funcIndex]);
+            newFuncTable.lineNumber.push(null);
+          }
 
           // Add the new stack.
           newStackTable.prefix.push(newStackPrefix);
-          newStackTable.frame.push(newFrameIndex);
+          newStackTable.frame.push(collapsedFrameIndex);
         } else {
           // A collapsed stack at this level already exists, use that one.
           if (existingCollapsedStack === null) {

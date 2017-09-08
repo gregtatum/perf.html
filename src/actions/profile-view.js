@@ -3,12 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
+import { selectorsForThread } from '../reducers/profile-view';
+
 import type { ProfileSelection, ImplementationFilter } from '../types/actions';
 import type { Action, ThunkAction } from '../types/store';
 import type { ThreadIndex, IndexIntoMarkersTable } from '../types/profile';
 import type { CallNodePath } from '../types/profile-derived';
 import type { Transform } from '../types/transforms';
-
 /**
  * The actions that pertain to changing the view on the profile, including searching
  * and filtering. Currently the call tree's actions are in this file, but should be
@@ -179,11 +180,18 @@ export function popRangeFiltersAndUnsetSelection(
 export function addTransformToStack(
   threadIndex: ThreadIndex,
   transform: Transform
-): Action {
-  return {
-    type: 'ADD_TRANSFORM_TO_STACK',
-    threadIndex,
-    transform,
+): ThunkAction<void> {
+  return (dispatch, getState) => {
+    const transformedThread = selectorsForThread(
+      threadIndex
+    ).getRangeAndTransformFilteredThread(getState());
+
+    dispatch({
+      type: 'ADD_TRANSFORM_TO_STACK',
+      threadIndex,
+      transform,
+      transformedThread,
+    });
   };
 }
 
