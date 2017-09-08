@@ -185,17 +185,24 @@ function viewOptionsPerThread(state: ThreadViewOptions[] = [], action: Action) {
       ];
     }
     case 'ADD_TRANSFORM_TO_STACK': {
-      const { threadIndex, transform } = action;
+      const { threadIndex, transform, transformedThread } = action;
       const expandedCallNodePaths = uniqWith(
         state[threadIndex].expandedCallNodePaths
-          .map(path => Transforms.applyTransformToCallNodePath(path, transform))
+          .map(path =>
+            Transforms.applyTransformToCallNodePath(
+              path,
+              transform,
+              transformedThread
+            )
+          )
           .filter(path => path.length > 0),
         Transforms.pathsAreEqual
       );
 
       const selectedCallNodePath = Transforms.applyTransformToCallNodePath(
         state[threadIndex].selectedCallNodePath,
-        transform
+        transform,
+        transformedThread
       );
 
       return [
@@ -498,8 +505,8 @@ export const selectorsForThread = (
           return Transforms.mergeFunction(thread, transform.funcIndex);
         case 'focus-function':
           return Transforms.focusFunction(thread, transform.funcIndex);
-        case 'collapse-library':
-          return Transforms.collapseLibrary(thread, transform.resourceIndex);
+        case 'collapse-resource':
+          return Transforms.collapseResource(thread, transform.resourceIndex);
         default:
           throw new Error('Unhandled transform.');
       }
@@ -573,7 +580,7 @@ export const selectorsForThread = (
       ProfileData.getThreadProcessDetails
     );
     const getTransformLabels: (state: State) => string[] = createSelector(
-      _getRangeAndTransformFilteredThread,
+      getRangeAndTransformFilteredThread,
       getFriendlyThreadName,
       getTransformStack,
       Transforms.getTransformLabels

@@ -187,9 +187,27 @@ export type MergeFunction = {|
   funcIndex: IndexIntoFuncTable,
 |};
 
-export type CollapseLibrary = {|
-  type: 'collapse-library',
+/**
+ * Collapse resource takes CallNodes that are of a consecutive library, and collapses
+ * them into a new collapsed pseudo-stack. Given a call tree like below, where each node
+ * is defined by either "function_name" or "function_name:library_name":
+ *
+ *               A                                   A
+ *             /   \                                 |
+ *            v     v        Collapse firefox        v
+ *    B:firefox    E:firefox       ->             firefox
+ *        |            |                         /       \
+ *        v            v                        D        F
+ *    C:firefox        F
+ *        |
+ *        v
+ *        D
+ */
+export type CollapseResource = {|
+  type: 'collapse-resource',
   resourceIndex: IndexIntoResourceTable,
+  // This is the index of the newly created function that represents the collapsed stack.
+  collapsedFuncIndex: IndexIntoFuncTable,
 |};
 
 /**
@@ -208,7 +226,7 @@ export type Transform =
   | MergeSubtree
   | MergeCallNode
   | MergeFunction
-  | CollapseLibrary;
+  | CollapseResource;
 
 export type TransformStack = Transform[];
 export type TransformStacksPerThread = { [id: ThreadIndex]: TransformStack };

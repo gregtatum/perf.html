@@ -412,7 +412,7 @@ describe('"focus-function" transform', function() {
   });
 });
 
-describe('"collapse-library" transform', function() {
+describe('"collapse-resource" transform', function() {
   /**
    *               A                                   A
    *             /   \                                 |
@@ -451,8 +451,9 @@ describe('"collapse-library" transform', function() {
     const { dispatch, getState } = storeWithProfile(profile);
     dispatch(
       addTransformToStack(threadIndex, {
-        type: 'collapse-library',
+        type: 'collapse-resource',
         resourceIndex: firefoxResourceIndex,
+        collapsedFuncIndex: thread.funcTable.length,
       })
     );
     expect(

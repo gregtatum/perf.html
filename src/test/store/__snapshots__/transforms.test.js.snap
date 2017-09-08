@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`"collapse-library" transform can collapse the "firefox" library 1`] = `
+exports[`"collapse-resource" transform can collapse the "firefox" library 1`] = `
 "
 - A (total: 2, self:—)
  - firefox (total: 2, self:—)
@@ -8,7 +8,7 @@ exports[`"collapse-library" transform can collapse the "firefox" library 1`] = `
    - F (total: 1, self:1)"
 `;
 
-exports[`"collapse-library" transform starts as an unfiltered call tree 1`] = `
+exports[`"collapse-resource" transform starts as an unfiltered call tree 1`] = `
 "
 - A (total: 2, self:—)
  - B:firefox (total: 1, self:—)

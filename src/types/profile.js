@@ -108,13 +108,15 @@ export type FuncTable = {
  * sparse arrays. Multiple functions can point to the same resource.
  */
 export type ResourceTable = {
-  addonId: any[], // TODO
-  icon: any[], // TODO
   length: number,
-  lib: Array<IndexIntoLibs | null>,
+  lib: Array<IndexIntoLibs | void>,
   name: Array<IndexIntoStringTable | -1>,
-  host: Array<IndexIntoStringTable | null>,
+  host: Array<IndexIntoStringTable | void>,
   type: resourceTypeEnum[],
+  // These were previously supported by the old Gecko Profiler Addon, but are now
+  // empty arrays.
+  addonId: [],
+  icon: [],
 };
 
 /**
