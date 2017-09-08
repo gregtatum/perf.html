@@ -111,7 +111,7 @@ class ProfileCallTreeContextMenu extends PureComponent {
       case 'merge-subtree':
       case 'focus-subtree':
       case 'focus-function':
-      case 'collapse-library':
+      case 'collapse-resource':
         this.addTransformToStack(type);
         break;
       default:
@@ -128,6 +128,7 @@ class ProfileCallTreeContextMenu extends PureComponent {
       inverted,
       thread,
     } = this.props;
+    const selectedFunc = selectedCallNodePath[selectedCallNodePath.length - 1];
 
     switch (type) {
       case 'focus-subtree':
@@ -141,7 +142,7 @@ class ProfileCallTreeContextMenu extends PureComponent {
       case 'focus-function':
         addTransformToStack(threadIndex, {
           type: 'focus-function',
-          funcIndex: selectedCallNodePath[selectedCallNodePath.length - 1],
+          funcIndex: selectedFunc,
         });
         break;
       case 'merge-subtree':
@@ -162,22 +163,20 @@ class ProfileCallTreeContextMenu extends PureComponent {
       case 'merge-function':
         addTransformToStack(threadIndex, {
           type: 'merge-function',
-          funcIndex: selectedCallNodePath[selectedCallNodePath.length - 1],
+          funcIndex: selectedFunc,
         });
         break;
-      case 'collapse-library': {
-        const { funcTable, resourceTable } = thread;
-        const funcIndex = selectedCallNodePath[selectedCallNodePath.length - 1];
-        const resourceIndex = funcTable.resource[funcIndex];
-        if (resourceIndex !== -1) {
-          const libIndex = resourceTable.lib[resourceIndex];
-          if (libIndex !== null) {
-            addTransformToStack(threadIndex, {
-              type: 'collapse-library',
-              resourceIndex,
-            });
-          }
-        }
+      case 'collapse-resource': {
+        const { funcTable } = thread;
+        const resourceIndex = funcTable.resource[selectedFunc];
+        // A new collapsed func will be inserted into the table at the end. Deduce
+        // the index here.
+        const collapsedFuncIndex = funcTable.length;
+        addTransformToStack(threadIndex, {
+          type: 'collapse-resource',
+          resourceIndex,
+          collapsedFuncIndex,
+        });
         break;
       }
       default:
@@ -185,25 +184,34 @@ class ProfileCallTreeContextMenu extends PureComponent {
     }
   }
 
-  getLibName(): string | null {
+  getNameForResouce(): string | null {
     const {
       selectedCallNodePath,
-      thread: { funcTable, resourceTable, libs },
+      thread: { funcTable, stringTable, resourceTable, libs },
     } = this.props;
 
     const funcIndex = selectedCallNodePath[selectedCallNodePath.length - 1];
     if (funcIndex === undefined) {
       return null;
     }
-    const resourceIndex = funcTable.resource[funcIndex];
-    if (resourceIndex === -1) {
-      return null;
+    const isJS = funcTable.isJS[funcIndex];
+
+    if (isJS) {
+      const fileNameIndex = funcTable.fileName[funcIndex];
+      return fileNameIndex === null
+        ? null
+        : stringTable.getString(fileNameIndex);
+    } else {
+      const resourceIndex = funcTable.resource[funcIndex];
+      if (resourceIndex === -1) {
+        return null;
+      }
+      const libIndex = resourceTable.lib[resourceIndex];
+      if (libIndex === undefined) {
+        return null;
+      }
+      return libs[libIndex].name;
     }
-    const libIndex = resourceTable.lib[resourceIndex];
-    if (libIndex === null) {
-      return null;
-    }
-    return libs[libIndex].name;
   }
 
   render() {
@@ -215,7 +223,8 @@ class ProfileCallTreeContextMenu extends PureComponent {
     } = this.props;
     const funcIndex = callNodeTable.func[selectedCallNodeIndex];
     const isJS = funcTable.isJS[funcIndex];
-    const libName = this.getLibName();
+    // This could be the C++ library, or the JS filename.
+    const nameForResource = this.getNameForResouce();
 
     return (
       <ContextMenu id={'ProfileCallTreeContextMenu'}>
@@ -245,12 +254,12 @@ class ProfileCallTreeContextMenu extends PureComponent {
             ? 'Focus on calls made by this function'
             : 'Focus on function'}
         </MenuItem>
-        {libName
+        {nameForResource
           ? <MenuItem
               onClick={this.handleClick}
-              data={{ type: 'collapse-library' }}
+              data={{ type: 'collapse-resource' }}
             >
-              Collapse functions in <span>{libName}</span>
+              Collapse functions in <span>{nameForResource}</span>
             </MenuItem>
           : null}
         <div className="react-contextmenu-separator" />

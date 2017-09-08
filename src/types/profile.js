@@ -113,6 +113,10 @@ export type ResourceTable = {
   name: Array<IndexIntoStringTable | -1>,
   host: Array<IndexIntoStringTable | void>,
   type: resourceTypeEnum[],
+  // These were previously supported by the old Gecko Profiler Addon, but are now
+  // empty arrays.
+  addonId: [],
+  icon: [],
 };
 
 /**

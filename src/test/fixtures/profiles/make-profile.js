@@ -269,12 +269,10 @@ export function getProfileFromTextSamples(
           breakpadId: '',
         });
         resourceIndex = resourceTable.length++;
-        resourceTable.addonId.push(null);
-        resourceTable.icon.push(null);
         resourceTable.lib.push(libIndex);
         resourceTable.name.push(stringTable.indexForString(libraryName));
-        resourceTable.host.push(null);
         resourceTable.type.push(0);
+        resourceTable.host.push(undefined);
       } else {
         resourceIndex = -1;
       }
