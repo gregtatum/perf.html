@@ -103,6 +103,11 @@ function _cleanFunctionName(functionName: string): string {
   return functionName;
 }
 
+/**
+ * Resources and funcs are not part of the Gecko Profile format. This information is
+ * implicitly defined in the frame tables. This function derives new tables for easily
+ * accessing this information.
+ */
 function _extractFuncsAndResourcesFromFrames(
   geckoFrameStruct: GeckoFrameStruct,
   stringTable: UniqueStringArray,
@@ -122,29 +127,40 @@ function _extractFuncsAndResourcesFromFrames(
     type: [],
     name: [],
     lib: [],
-    icon: [],
-    addonId: [],
     host: [],
   };
-  function addLibResource(name: IndexIntoStringTable, libIndex: number) {
+
+  /**
+   * A lib resource is a systems-level compiled library, for example "XUL", "AppKit",
+   * or "CoreFoundation".
+   */
+  function addLibResource(name: IndexIntoStringTable, libIndex: number | -1) {
     const index = resourceTable.length++;
-    resourceTable.type[index] = resourceTypes.library;
-    resourceTable.name[index] = name;
     resourceTable.lib[index] = libIndex;
+    resourceTable.name[index] = name;
+    resourceTable.host[index] = undefined;
+    resourceTable.type[index] = resourceTypes.library;
   }
+
+  /**
+   *
+   */
   function addWebhostResource(
     origin: IndexIntoStringTable,
     host: IndexIntoStringTable
   ) {
     const index = resourceTable.length++;
-    resourceTable.type[index] = resourceTypes.webhost;
+    resourceTable.lib[index] = undefined;
     resourceTable.name[index] = origin;
     resourceTable.host[index] = host;
+    resourceTable.type[index] = resourceTypes.webhost;
   }
   function addUrlResource(url: IndexIntoStringTable) {
     const index = resourceTable.length++;
-    resourceTable.type[index] = resourceTypes.url;
+    resourceTable.lib[index] = undefined;
     resourceTable.name[index] = url;
+    resourceTable.host[index] = undefined;
+    resourceTable.type[index] = resourceTypes.url;
   }
 
   const libToResourceIndex: Map<Lib, IndexIntoResourceTable> = new Map();
@@ -164,39 +180,63 @@ function _extractFuncsAndResourcesFromFrames(
       return funcIndex;
     }
 
+    // Case 1: Unknown frame - Initialize the values of this sample as being unknown.
+    // Each unknown frame points to its own function, and no resource.
     let funcNameIndex = locationIndex;
     let resourceIndex: IndexIntoResourceTable | -1 = -1;
     let addressRelativeToLib = -1;
     let isJS = false;
     let fileName = null;
     let lineNumber = null;
-    const locationString = stringTable.getString(funcNameIndex);
+    const locationString = stringTable.getString(locationIndex);
+
+    // These nested `if` branches check for 3 cases for constructing function and
+    // resource information.
     if (locationString.startsWith('0x')) {
+      // Case 2: Unsymbolicated memory - Treat a memory address as a single function, and
+      // then look up the library information based on the memory offset.
       const address = parseInt(locationString.substr(2), 16);
+      // Look up to see if it's a known library address.
       const lib = getContainingLibrary(libs, address);
       if (lib) {
+        // This is a known library.
         addressRelativeToLib = address - lib.start;
-        // Flow doesn't understand Map.prototype.has()
         const maybeResourceIndex = libToResourceIndex.get(lib);
         if (maybeResourceIndex === undefined) {
+          // This library doesn't exist in the libs array, insert it.
           resourceIndex = resourceTable.length;
           libToResourceIndex.set(lib, resourceIndex);
           const nameStringIndex = stringTable.indexForString(lib.debugName);
           addLibResource(nameStringIndex, libs.indexOf(lib));
         } else {
+          // This was an existing library.
           resourceIndex = maybeResourceIndex;
         }
       }
     } else {
+      // Check for a C++ location string.
       const cppMatch: RegExpResult =
+        // Given:   "functionName (in library name) + 1234"
+        // Captures: 1^^^^^^^^^^^     2^^^^^^^^^^^    3^^^
         /^(.*) \(in ([^)]*)\) (\+ [0-9]+)$/.exec(locationString) ||
+        // Given:   "functionName (in library name) (1234:1234)"
+        // Captures: 1^^^^^^^^^^^     2^^^^^^^^^^^   3^^^^^^^^
         /^(.*) \(in ([^)]*)\) (\(.*:.*\))$/.exec(locationString) ||
+        // Given:   "functionName (in library name)"
+        // Captures: 1^^^^^^^^^^^     2^^^^^^^^^^^
         /^(.*) \(in ([^)]*)\)$/.exec(locationString);
+
       if (cppMatch) {
+        // Case 3: C++ function - A match was found in the location string in the format
+        // of a C++ function.
+
+        const [, funcName, libraryNameString] = cppMatch;
         funcNameIndex = stringTable.indexForString(
-          _cleanFunctionName(cppMatch[1])
+          _cleanFunctionName(funcName)
         );
-        const libraryNameStringIndex = stringTable.indexForString(cppMatch[2]);
+        const libraryNameStringIndex = stringTable.indexForString(
+          libraryNameString
+        );
         funcIndex = stringTableIndexToNewFuncIndex.get(funcNameIndex);
         if (funcIndex !== undefined) {
           return funcIndex;
@@ -212,12 +252,21 @@ function _extractFuncsAndResourcesFromFrames(
           resourceIndex = maybeResourceIndex;
         }
       } else {
+        // Check for a JS location string.
         const jsMatch: RegExpResult =
+          // Given:   "preamble (anything:1234)"
+          // Captures: 1^^^^^^^  2^^^^^^^ 3^^^
           /^(.*) \((.*):([0-9]+)\)$/.exec(locationString) ||
+          // Given:   "anything:1234"
+          // Captures: 2^^^^^^^ 3^^^
           /^()(.*):([0-9]+)$/.exec(locationString);
+
         if (jsMatch) {
+          // Case 4: JS function - A match was found in the location string in the format
+          // of a JS function.
           isJS = true;
-          const scriptURI = _getRealScriptURI(jsMatch[2]);
+          const [, funcName, rawScriptURI] = jsMatch;
+          const scriptURI = _getRealScriptURI(rawScriptURI);
           let origin, host;
           try {
             const url = new URL(scriptURI);
@@ -246,8 +295,8 @@ function _extractFuncsAndResourcesFromFrames(
             resourceIndex = maybeResourceIndex;
           }
 
-          if (jsMatch[1]) {
-            funcNameIndex = stringTable.indexForString(jsMatch[1]);
+          if (funcName) {
+            funcNameIndex = stringTable.indexForString(funcName);
           } else {
             // Some JS frames don't have a function because they are for the
             // initial evaluation of the whole JS file. In that case, use the
