@@ -106,13 +106,15 @@ function _cleanFunctionName(functionName: string): string {
 /**
  * Resources and funcs are not part of the Gecko Profile format. This information is
  * implicitly defined in the frame tables. This function derives new tables for easily
- * accessing this information.
+ * accessing function and resource information.
  */
 function _extractFuncsAndResourcesFromFrames(
   geckoFrameStruct: GeckoFrameStruct,
   stringTable: UniqueStringArray,
   libs: Lib[]
 ): [FuncTable, ResourceTable, IndexIntoFuncTable[]] {
+  // Explicitely create FuncTable. If Flow complains about these, then all of
+  // the functions below need to be carefully updated to be correct.
   const funcTable: FuncTable = {
     length: 0,
     name: [],
@@ -122,6 +124,8 @@ function _extractFuncsAndResourcesFromFrames(
     fileName: [],
     lineNumber: [],
   };
+  // Explicitely create ResourceTable. If Flow complains about these, then all of
+  // the functions below need to be carefully updated to be correct.
   const resourceTable: ResourceTable = {
     length: 0,
     type: [],
@@ -129,39 +133,6 @@ function _extractFuncsAndResourcesFromFrames(
     lib: [],
     host: [],
   };
-
-  /**
-   * A lib resource is a systems-level compiled library, for example "XUL", "AppKit",
-   * or "CoreFoundation".
-   */
-  function addLibResource(name: IndexIntoStringTable, libIndex: number | -1) {
-    const index = resourceTable.length++;
-    resourceTable.lib[index] = libIndex;
-    resourceTable.name[index] = name;
-    resourceTable.host[index] = undefined;
-    resourceTable.type[index] = resourceTypes.library;
-  }
-
-  /**
-   *
-   */
-  function addWebhostResource(
-    origin: IndexIntoStringTable,
-    host: IndexIntoStringTable
-  ) {
-    const index = resourceTable.length++;
-    resourceTable.lib[index] = undefined;
-    resourceTable.name[index] = origin;
-    resourceTable.host[index] = host;
-    resourceTable.type[index] = resourceTypes.webhost;
-  }
-  function addUrlResource(url: IndexIntoStringTable) {
-    const index = resourceTable.length++;
-    resourceTable.lib[index] = undefined;
-    resourceTable.name[index] = url;
-    resourceTable.host[index] = undefined;
-    resourceTable.type[index] = resourceTypes.url;
-  }
 
   const libToResourceIndex: Map<Lib, IndexIntoResourceTable> = new Map();
   const originToResourceIndex: Map<string, IndexIntoResourceTable> = new Map();
@@ -174,6 +145,18 @@ function _extractFuncsAndResourcesFromFrames(
     IndexIntoFuncTable
   > = new Map();
 
+  // The following functions are all created inline in order to capture all of the above
+  // variables. This avoids really verbose function signatures if the functions
+  // were at the module scope. The other option would be to inline the functions' bodies,
+  // but that creates create deeply nested if/else statements with high cyclomatic
+  // complexity that are hard to reason with.
+
+  /**
+   * Given a location string that looks like a memory address, e.g. "0xfe9a097e0", treat
+   * it as an unsymblicated memory address, add a single function to the function table,
+   * as a single function, and then look up the library information based on the memory
+   * offset obtained from the location string.
+   */
   function extractUnsymbolicatedFrame(
     locationString: string,
     locationIndex: IndexIntoStringTable
@@ -185,24 +168,25 @@ function _extractFuncsAndResourcesFromFrames(
     let resourceIndex = -1;
     let addressRelativeToLib = -1;
 
-    // Case 2: Unsymbolicated memory - Treat a memory address as a single function, and
-    // then look up the library information based on the memory offset.
     const address = parseInt(locationString.substr(2), 16);
     // Look up to see if it's a known library address.
     const lib = getContainingLibrary(libs, address);
     if (lib) {
       // This is a known library.
       addressRelativeToLib = address - lib.start;
-      const maybeResourceIndex = libToResourceIndex.get(lib);
-      if (maybeResourceIndex === undefined) {
-        // This library doesn't exist in the libs array, insert it.
-        resourceIndex = resourceTable.length;
+      resourceIndex = libToResourceIndex.get(lib);
+      if (resourceIndex === undefined) {
+        // This library doesn't exist in the libs array, insert it. This resou
+        // A lib resource is a systems-level compiled library, for example "XUL",
+        // "AppKit", or "CoreFoundation".
+        resourceIndex = resourceTable.length++;
+        resourceTable.lib[resourceIndex] = libs.indexOf(lib);
+        resourceTable.name[resourceIndex] = stringTable.indexForString(
+          lib.debugName
+        );
+        resourceTable.host[resourceIndex] = undefined;
+        resourceTable.type[resourceIndex] = resourceTypes.library;
         libToResourceIndex.set(lib, resourceIndex);
-        const nameStringIndex = stringTable.indexForString(lib.debugName);
-        addLibResource(nameStringIndex, libs.indexOf(lib));
-      } else {
-        // This was an existing library.
-        resourceIndex = maybeResourceIndex;
       }
     }
     // Add the function to the funcTable.
@@ -216,6 +200,12 @@ function _extractFuncsAndResourcesFromFrames(
     return funcIndex;
   }
 
+  /**
+   * Given a location string that looks like a C++ function (by matching various regular
+   * expressions) e.g. "functionName (in library name)", this function will classify it
+   * as a C++ function, and add the library resource information if it's not already
+   * present.
+   */
   function extractCppFunction(
     locationString: string
   ): IndexIntoFuncTable | null {
@@ -249,9 +239,12 @@ function _extractFuncsAndResourcesFromFrames(
     }
     let resourceIndex = libNameToResourceIndex.get(libraryNameStringIndex);
     if (resourceIndex === undefined) {
-      resourceIndex = resourceTable.length;
+      resourceIndex = resourceTable.length++;
       libNameToResourceIndex.set(libraryNameStringIndex, resourceIndex);
-      addLibResource(libraryNameStringIndex, -1);
+      resourceTable.lib[resourceIndex] = -1;
+      resourceTable.name[resourceIndex] = libraryNameStringIndex;
+      resourceTable.host[resourceIndex] = undefined;
+      resourceTable.type[resourceIndex] = resourceTypes.library;
     }
 
     const newFuncIndex = funcTable.length++;
@@ -265,6 +258,11 @@ function _extractFuncsAndResourcesFromFrames(
     return newFuncIndex;
   }
 
+  /**
+   * Given a location string that looks like a JS function (by matching various regular
+   * expressions) e.g. "functionName:134", this function will classify it as a JS
+   * function, and add the resource information if it's not already present.
+   */
   function extractJsFunction(
     locationString: string
   ): IndexIntoFuncTable | null {
@@ -300,9 +298,9 @@ function _extractFuncsAndResourcesFromFrames(
       host = null;
     }
 
-    const resourceIndex = originToResourceIndex.get(origin);
+    let resourceIndex = originToResourceIndex.get(origin);
     if (resourceIndex === undefined) {
-      const resourceIndex = resourceTable.length++;
+      resourceIndex = resourceTable.length++;
       const originStringIndex = stringTable.indexForString(origin);
       originToResourceIndex.set(origin, resourceIndex);
       if (host) {
@@ -361,14 +359,14 @@ function _extractFuncsAndResourcesFromFrames(
     return index;
   }
 
+  // Go through every frame location string, and deduce the function and resource
+  // information by applying various regular expressions.
   const frameFuncs = geckoFrameStruct.location.map(locationIndex => {
     let funcIndex = stringTableIndexToNewFuncIndex.get(locationIndex);
     if (funcIndex !== undefined) {
       return funcIndex;
     }
 
-    // Case 1: Unknown frame - Initialize the values of this sample as being unknown.
-    // Each unknown frame points to its own function, and no resource.
     const locationString = stringTable.getString(locationIndex);
 
     // These nested `if` branches check for 3 cases for constructing function and
@@ -383,6 +381,8 @@ function _extractFuncsAndResourcesFromFrames(
         }
       }
     }
+
+    // Cache the above results.
     stringTableIndexToNewFuncIndex.set(locationIndex, funcIndex);
     return funcIndex;
   });
