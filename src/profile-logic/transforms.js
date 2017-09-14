@@ -210,7 +210,7 @@ export function getTransformLabels(
 export function applyTransformToCallNodePath(
   callNodePath: CallNodePath,
   transform: Transform,
-  thread: Thread
+  transformedThread: Thread
 ): CallNodePath {
   switch (transform.type) {
     case 'focus-subtree':
@@ -228,7 +228,7 @@ export function applyTransformToCallNodePath(
       return _collapseResourceInCallNodePath(
         transform.resourceIndex,
         transform.collapsedFuncIndex,
-        thread.funcTable,
+        transformedThread.funcTable,
         callNodePath
       );
     default:
@@ -277,24 +277,24 @@ function _collapseResourceInCallNodePath(
   funcTable: FuncTable,
   callNodePath: CallNodePath
 ) {
-  callNodePath
-    // Map any collapsed functions into the collapsedFuncIndex
-    .map(pathFuncIndex => {
-      return funcTable.resource[pathFuncIndex] === resourceIndex
-        ? collapsedFuncIndex
-        : pathFuncIndex;
-    })
-    // De-duplicate contiguous collapsed funcs
-    .filter(
-      (pathFuncIndex, pathIndex, path) =>
-        // This function doesn't match the previous one, so keep it.
-        pathFuncIndex !== path[pathIndex - 1] ||
-        // This function matched the previous, only keep it if doesn't match the
-        // collapsed func.
-        pathFuncIndex !== collapsedFuncIndex
-    );
-
-  return callNodePath;
+  return (
+    callNodePath
+      // Map any collapsed functions into the collapsedFuncIndex
+      .map(pathFuncIndex => {
+        return funcTable.resource[pathFuncIndex] === resourceIndex
+          ? collapsedFuncIndex
+          : pathFuncIndex;
+      })
+      // De-duplicate contiguous collapsed funcs
+      .filter(
+        (pathFuncIndex, pathIndex, path) =>
+          // This function doesn't match the previous one, so keep it.
+          pathFuncIndex !== path[pathIndex - 1] ||
+          // This function matched the previous, only keep it if doesn't match the
+          // collapsed func.
+          pathFuncIndex !== collapsedFuncIndex
+      )
+  );
 }
 
 function _callNodePathHasPrefixPath(
@@ -472,7 +472,8 @@ export function mergeFunction(
 
 export function collapseResource(
   thread: Thread,
-  resourceIndexToCollapse: IndexIntoResourceTable
+  resourceIndexToCollapse: IndexIntoResourceTable,
+  implementation: ImplementationFilter
 ): Thread {
   const { stackTable, funcTable, frameTable, resourceTable, samples } = thread;
   const resourceNameIndex = resourceTable.name[resourceIndexToCollapse];
@@ -508,6 +509,7 @@ export function collapseResource(
     IndexIntoStackTable | null // collapsed stack index
   > = new Map();
   const collapsedStacks: Set<IndexIntoStackTable | null> = new Set();
+  const funcMatchesImplementation = FUNC_MATCHES[implementation];
 
   oldStackToNewStack.set(null, null);
   // A new func and frame will be created on the first stack that is found that includes
@@ -582,6 +584,22 @@ export function collapseResource(
         oldStackToNewStack.set(stackIndex, newStackPrefix);
       }
     } else {
+      if (
+        !funcMatchesImplementation(thread, funcIndex) &&
+        newStackPrefix !== null
+      ) {
+        // This function doesn't match the implementation filter.
+        const prefixFrame = newStackTable.frame[newStackPrefix];
+        const prefixFunc = newFrameTable.func[prefixFrame];
+        const prefixResource = newFuncTable.resource[prefixFunc];
+
+        if (prefixResource === resourceIndexToCollapse) {
+          // This stack's prefix did match the collapsed resource, map the stack
+          // to the already collapsed stack and move on.
+          oldStackToNewStack.set(stackIndex, newStackPrefix);
+          continue;
+        }
+      }
       // This stack isn't part of the collapsed resource. Copy over the previous stack.
       const newStackIndex = newStackTable.length++;
       newStackTable.prefix.push(newStackPrefix);

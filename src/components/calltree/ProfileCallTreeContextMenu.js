@@ -175,6 +175,7 @@ class ProfileCallTreeContextMenu extends PureComponent {
           type: 'collapse-resource',
           resourceIndex,
           collapsedFuncIndex,
+          implementation,
         });
         break;
       }
