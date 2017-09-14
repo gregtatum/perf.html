@@ -259,7 +259,11 @@ class ProfileCallTreeContextMenu extends PureComponent {
               onClick={this.handleClick}
               data={{ type: 'collapse-resource' }}
             >
-              Collapse functions in <span>{nameForResource}</span>
+              <span className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconCollapse" />
+              Collapse functions in{' '}
+              <span className="profileCallTreeContextMenuLabel">
+                {nameForResource}
+              </span>
             </MenuItem>
           : null}
         <div className="react-contextmenu-separator" />
