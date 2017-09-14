@@ -208,7 +208,7 @@ class ProfileCallTreeContextMenu extends PureComponent {
         return null;
       }
       const libIndex = resourceTable.lib[resourceIndex];
-      if (libIndex === undefined) {
+      if (libIndex === undefined || libIndex === null) {
         return null;
       }
       return libs[libIndex].name;
