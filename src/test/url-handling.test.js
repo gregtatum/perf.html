@@ -151,7 +151,7 @@ describe('legacy URL serialized call tree filters', function() {
 
 describe('URL serialization of the transform stack', function() {
   const transformString =
-    'f-combined-012~ms-js-123~mcn-combined-234-i~f-js-345-i~mf-6~ff-7';
+    'f-combined-012~ms-js-123~mcn-combined-234~f-js-345-i~mf-6~ff-7~cr-combined-8-9';
   const { getState } = _getStoreFromSearchString(
     '?v=1&transforms=' + transformString
   );
@@ -160,6 +160,7 @@ describe('URL serialization of the transform stack', function() {
     const transformStack = selectedThreadSelectors.getTransformStack(
       getState()
     );
+
     // The indexes don't necessarily map to anything logical in the profile fixture.
     expect(transformStack).toEqual([
       {
@@ -178,7 +179,6 @@ describe('URL serialization of the transform stack', function() {
         type: 'merge-call-node',
         callNodePath: [2, 3, 4],
         implementation: 'combined',
-        inverted: true,
       },
       {
         type: 'focus-subtree',
@@ -193,6 +193,12 @@ describe('URL serialization of the transform stack', function() {
       {
         type: 'focus-function',
         funcIndex: 7,
+      },
+      {
+        type: 'collapse-resource',
+        resourceIndex: 8,
+        collapsedFuncIndex: 9,
+        implementation: 'combined',
       },
     ]);
   });

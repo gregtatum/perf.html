@@ -56,59 +56,119 @@ const SHORT_KEY_TO_TRANSFORM = {
  *
  * e.g "f-js-xFFpUMl-i" or "f-cpp-0KV4KV5KV61KV7KV8K"
  */
-export function parseTransforms(stringValue: string = '') {
-  return stringValue
-    .split('~')
-    .map(s => {
-      const tuple = s.split('-');
-      const shortKey = tuple[0];
-      const type = SHORT_KEY_TO_TRANSFORM[shortKey];
+export function parseTransforms(stringValue: string = ''): TransformStack {
+  // Flow had some trouble with the `Transform | null` type, so use a forEach
+  // rather than a map.
+  const transforms = [];
 
-      switch (type) {
-        case 'collapse-resource': {
-          // e.g. "cr-325"
-          const [, resourceIndexRaw] = tuple;
-          const resourceIndex = parseInt(resourceIndexRaw, 10);
-          // Validate that the libIndex makes sense.
-          return !isNaN(resourceIndex) && resourceIndex > 0
-            ? {
-                type,
-                resourceIndex,
-              }
-            : null;
+  stringValue.split('~').forEach(s => {
+    const tuple = s.split('-');
+    const shortKey = tuple[0];
+    const type = SHORT_KEY_TO_TRANSFORM[shortKey];
+
+    switch (type) {
+      case 'collapse-resource': {
+        // e.g. "cr-js-325-8"
+        const [
+          ,
+          implementation,
+          resourceIndexRaw,
+          collapsedFuncIndexRaw,
+        ] = tuple;
+        const resourceIndex = parseInt(resourceIndexRaw, 10);
+        const collapsedFuncIndex = parseInt(collapsedFuncIndexRaw, 10);
+        if (isNaN(resourceIndex) || isNaN(collapsedFuncIndex)) {
+          break;
         }
-        case 'merge-function':
-        case 'focus-function': {
-          // e.g. "mf-325"
-          const [, funcIndexRaw] = tuple;
-          const funcIndex = parseInt(funcIndexRaw, 10);
-          // Validate that the funcIndex makes sense.
-          return !isNaN(funcIndex) && funcIndex > 0
-            ? {
-                type,
-                funcIndex,
-              }
-            : null;
-        }
-        case 'focus-subtree':
-        case 'merge-call-node':
-        case 'merge-subtree': {
-          // e.g. "f-js-xFFpUMl-i" or "f-cpp-0KV4KV5KV61KV7KV8K"
-          const [, implementation, serializedCallNodePath, inverted] = tuple;
-          return {
+        if (resourceIndex >= 0) {
+          transforms.push({
             type,
+            resourceIndex,
+            collapsedFuncIndex,
             implementation: toValidImplementationFilter(implementation),
-            callNodePath: stringToUintArray(serializedCallNodePath),
-            inverted: Boolean(inverted),
-          };
+          });
         }
-        default:
-          // Do not throw an error, as we don't trust the data coming from a user.
-          console.error('Unrecognized transform was passed to the URL.', type);
-          return null;
+
+        break;
       }
-    })
-    .filter(f => f);
+      case 'merge-function':
+      case 'focus-function': {
+        // e.g. "mf-325"
+        const [, funcIndexRaw] = tuple;
+        const funcIndex = parseInt(funcIndexRaw, 10);
+        // Validate that the funcIndex makes sense.
+        if (!isNaN(funcIndex) && funcIndex >= 0) {
+          switch (type) {
+            case 'merge-function':
+              transforms.push({
+                type: 'merge-function',
+                funcIndex,
+              });
+              break;
+            case 'focus-function':
+              transforms.push({
+                type: 'focus-function',
+                funcIndex,
+              });
+              break;
+            default:
+              throw new Error('Unmatched transform.');
+          }
+        }
+        break;
+      }
+      case 'focus-subtree':
+      case 'merge-call-node':
+      case 'merge-subtree': {
+        // e.g. "f-js-xFFpUMl-i" or "f-cpp-0KV4KV5KV61KV7KV8K"
+        const [
+          ,
+          implementationRaw,
+          serializedCallNodePath,
+          invertedRaw,
+        ] = tuple;
+        const implementation = toValidImplementationFilter(implementationRaw);
+        const callNodePath = stringToUintArray(serializedCallNodePath);
+        const inverted = Boolean(invertedRaw);
+        // Flow requires a switch because it can't deduce the type string correctly.
+        switch (type) {
+          case 'focus-subtree':
+            transforms.push({
+              type: 'focus-subtree',
+              implementation,
+              callNodePath,
+              inverted,
+            });
+            break;
+          case 'merge-call-node':
+            transforms.push({
+              type: 'merge-call-node',
+              implementation,
+              callNodePath,
+            });
+            break;
+          case 'merge-subtree':
+            transforms.push({
+              type: 'merge-subtree',
+              implementation,
+              callNodePath,
+              inverted,
+            });
+            break;
+          default:
+            throw new Error('Unmatched transform.');
+        }
+
+        break;
+      }
+      default:
+        // Do not throw an error, as we don't trust the data coming from a user.
+        console.error('Unrecognized transform was passed to the URL.', type);
+        break;
+    }
+  });
+
+  return transforms;
 }
 
 export function stringifyTransforms(transforms: TransformStack = []): string {
@@ -126,7 +186,7 @@ export function stringifyTransforms(transforms: TransformStack = []): string {
           return string;
         }
         case 'collapse-resource':
-          return `${shortKey}-${transform.resourceIndex}`;
+          return `${shortKey}-${transform.implementation}-${transform.resourceIndex}-${transform.collapsedFuncIndex}`;
         case 'focus-subtree':
         case 'merge-call-node':
         case 'merge-subtree': {
