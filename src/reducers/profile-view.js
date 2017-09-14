@@ -506,7 +506,11 @@ export const selectorsForThread = (
         case 'focus-function':
           return Transforms.focusFunction(thread, transform.funcIndex);
         case 'collapse-resource':
-          return Transforms.collapseResource(thread, transform.resourceIndex);
+          return Transforms.collapseResource(
+            thread,
+            transform.resourceIndex,
+            transform.implementation
+          );
         default:
           throw new Error('Unhandled transform.');
       }

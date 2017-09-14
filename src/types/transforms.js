@@ -208,6 +208,7 @@ export type CollapseResource = {|
   resourceIndex: IndexIntoResourceTable,
   // This is the index of the newly created function that represents the collapsed stack.
   collapsedFuncIndex: IndexIntoFuncTable,
+  implementation: ImplementationFilter,
 |};
 
 /**
