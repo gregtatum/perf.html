@@ -151,7 +151,7 @@ describe('legacy URL serialized call tree filters', function() {
 
 describe('URL serialization of the transform stack', function() {
   const transformString =
-    'f-combined-012~ms-js-123~mcn-combined-234~f-js-345-i~mf-6~ff-7~cr-combined-8-9';
+    'f-combined-012~ms-js-123~mcn-combined-234~f-js-345-i~mf-6~ff-7~cr-combined-8-9~rec-combined-10';
   const { getState } = _getStoreFromSearchString(
     '?v=1&transforms=' + transformString
   );
@@ -198,6 +198,11 @@ describe('URL serialization of the transform stack', function() {
         type: 'collapse-resource',
         resourceIndex: 8,
         collapsedFuncIndex: 9,
+        implementation: 'combined',
+      },
+      {
+        type: 'collapse-recursion',
+        funcIndex: 10,
         implementation: 'combined',
       },
     ]);

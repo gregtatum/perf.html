@@ -212,6 +212,28 @@ export type CollapseResource = {|
 |};
 
 /**
+ * Collapse recursion takes a function that calls itself recursively and collapses it
+ * into a single stack.
+ *
+ *      A                            A
+ *      ↓     Collapse recursion     ↓
+ *      B        function B          B
+ *      ↓            ->              ↓
+ *      B                            C
+ *      ↓
+ *      B
+ *      ↓
+ *      B
+ *      ↓
+ *      C
+ */
+export type CollapseRecursion = {|
+  type: 'collapse-recursion',
+  funcIndex: IndexIntoFuncTable,
+  implementation: ImplementationFilter,
+|};
+
+/**
  * TODO - Once implemented.
  */
 export type MergeSubtree = {|
@@ -227,7 +249,8 @@ export type Transform =
   | MergeSubtree
   | MergeCallNode
   | MergeFunction
-  | CollapseResource;
+  | CollapseResource
+  | CollapseRecursion;
 
 export type TransformStack = Transform[];
 export type TransformStacksPerThread = { [id: ThreadIndex]: TransformStack };
