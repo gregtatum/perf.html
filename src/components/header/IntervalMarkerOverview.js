@@ -72,7 +72,7 @@ class IntervalMarkerOverview extends PureComponent {
       const c = this._canvas;
       if (c) {
         timeCode('IntervalMarkerTimeline render', () => {
-          this.drawCanvas(c);
+          this.drawIntervalMarkerOverviewCanvas(c);
         });
       }
     });
@@ -227,7 +227,7 @@ class IntervalMarkerOverview extends PureComponent {
     ctx.fillRect(x + c, bottom - c, width - 2 * c, c);
   }
 
-  drawCanvas(c: HTMLCanvasElement) {
+  drawIntervalMarkerOverviewCanvas(c: HTMLCanvasElement) {
     const {
       rangeStart,
       rangeEnd,

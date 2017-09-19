@@ -62,15 +62,18 @@ class MarkersTimelineCanvas extends PureComponent {
     hoveredItem: null | number,
   };
 
+  _drawCount: number;
+
   constructor(props: Props) {
     super(props);
     (this: any).onDoubleClickMarker = this.onDoubleClickMarker.bind(this);
     (this: any).getHoveredMarkerInfo = this.getHoveredMarkerInfo.bind(this);
-    (this: any).drawCanvas = this.drawCanvas.bind(this);
+    (this: any).drawMarkerCanvas = this.drawMarkerCanvas.bind(this);
     (this: any).hitTest = this.hitTest.bind(this);
+    this._drawCount = 0;
   }
 
-  drawCanvas(
+  drawMarkerCanvas(
     ctx: CanvasRenderingContext2D,
     hoveredItem: IndexIntoMarkerTiming | null
   ) {
@@ -164,71 +167,96 @@ class MarkersTimelineCanvas extends PureComponent {
       viewportTop,
     } = this.props;
 
+    this._drawCount++;
+
     const rangeLength: Milliseconds = rangeEnd - rangeStart;
     const viewportLength: UnitIntervalOfProfileRange =
       viewportRight - viewportLeft;
 
     ctx.lineWidth = 1;
 
-    // Only draw the stack frames that are vertically within view.
-    for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
-      // Get the timing information for a row of stack frames.
-      const markerTiming = markerTimingRows[rowIndex];
+    let rowIndex = startRow;
+    let markerIndex = null;
 
-      if (!markerTiming) {
-        continue;
-      }
+    const drawMarkersBatch = () => {
+      const startTime = performance.now();
+      // Only draw the stack frames that are vertically within view.
+      for (; rowIndex < endRow; rowIndex++) {
+        // Get the timing information for a row of stack frames.
+        const markerTiming = markerTimingRows[rowIndex];
 
-      // Decide which samples to actually draw
-      const timeAtViewportLeft: Milliseconds =
-        rangeStart + rangeLength * viewportLeft;
-      const timeAtViewportRight: Milliseconds =
-        rangeStart + rangeLength * viewportRight;
+        if (!markerTiming) {
+          continue;
+        }
 
-      let hoveredElement: MarkerDrawingInformation | null = null;
-      for (let i = 0; i < markerTiming.length; i++) {
-        // Only draw samples that are in bounds.
-        if (
-          markerTiming.end[i] > timeAtViewportLeft &&
-          markerTiming.start[i] < timeAtViewportRight
+        // Decide which samples to actually draw
+        const timeAtViewportLeft: Milliseconds =
+          rangeStart + rangeLength * viewportLeft;
+        const timeAtViewportRight: Milliseconds =
+          rangeStart + rangeLength * viewportRight;
+
+        let hoveredElement: MarkerDrawingInformation | null = null;
+        for (
+          let i = markerIndex === null ? 0 : markerIndex;
+          i < markerTiming.length;
+          i++
         ) {
-          const startTime: UnitIntervalOfProfileRange =
-            (markerTiming.start[i] - rangeStart) / rangeLength;
-          const endTime: UnitIntervalOfProfileRange =
-            (markerTiming.end[i] - rangeStart) / rangeLength;
+          markerIndex = i;
+          // Only draw samples that are in bounds.
+          if (
+            markerTiming.end[i] > timeAtViewportLeft &&
+            markerTiming.start[i] < timeAtViewportRight
+          ) {
+            const startTime: UnitIntervalOfProfileRange =
+              (markerTiming.start[i] - rangeStart) / rangeLength;
+            const endTime: UnitIntervalOfProfileRange =
+              (markerTiming.end[i] - rangeStart) / rangeLength;
 
-          const x: CssPixels =
-            (startTime - viewportLeft) * containerWidth / viewportLength;
-          const y: CssPixels = rowIndex * rowHeight - viewportTop;
-          const w: CssPixels = Math.max(
-            10,
-            (endTime - startTime) * containerWidth / viewportLength
-          );
-          const h: CssPixels = rowHeight - 1;
+            const x: CssPixels =
+              (startTime - viewportLeft) * containerWidth / viewportLength;
+            const y: CssPixels = rowIndex * rowHeight - viewportTop;
+            const w: CssPixels = Math.max(
+              10,
+              (endTime - startTime) * containerWidth / viewportLength
+            );
+            const h: CssPixels = rowHeight - 1;
 
-          const tracingMarkerIndex = markerTiming.index[i];
-          const isHovered = hoveredItem === tracingMarkerIndex;
-          const text = markerTiming.label[i];
-          if (isHovered) {
-            hoveredElement = { x, y, w, h, text };
-          } else {
-            this.drawOneMarker(ctx, x, y, w, h, text);
+            const tracingMarkerIndex = markerTiming.index[i];
+            const isHovered = hoveredItem === tracingMarkerIndex;
+            const text = markerTiming.label[i];
+            if (isHovered) {
+              hoveredElement = { x, y, w, h, text };
+            } else {
+              this.drawOneMarker(ctx, x, y, w, h, text);
+            }
+          }
+          if (hoveredElement) {
+            this.drawOneMarker(
+              ctx,
+              hoveredElement.x,
+              hoveredElement.y,
+              hoveredElement.w,
+              hoveredElement.h,
+              hoveredElement.text,
+              'Highlight', //    background color
+              'HighlightText' // foreground color
+            );
+          }
+          if (performance.now() - startTime > 16) {
+            const drawCount = this._drawCount;
+            requestAnimationFrame(() => {
+              if (drawCount === this._drawCount) {
+                drawMarkersBatch();
+              }
+            });
+            return;
           }
         }
-        if (hoveredElement) {
-          this.drawOneMarker(
-            ctx,
-            hoveredElement.x,
-            hoveredElement.y,
-            hoveredElement.w,
-            hoveredElement.h,
-            hoveredElement.text,
-            'Highlight', //    background color
-            'HighlightText' // foreground color
-          );
-        }
+        markerIndex = null;
       }
-    }
+    };
+
+    drawMarkersBatch();
   }
 
   drawSeparatorsAndLabels(
@@ -367,7 +395,7 @@ class MarkersTimelineCanvas extends PureComponent {
         isDragging={isDragging}
         onDoubleClickItem={this.onDoubleClickMarker}
         getHoveredItemInfo={this.getHoveredMarkerInfo}
-        drawCanvas={this.drawCanvas}
+        drawCanvas={this.drawMarkerCanvas}
         hitTest={this.hitTest}
       />
     );
