@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import TimelineMarkerCanvas from './TimelineMarkerCanvas';
 import {
   selectorsForThread,
-  getDisplayRange,
+  getOuterDisplayRange,
   getProfileInterval,
   getProfileViewOptions,
 } from '../../reducers/profile-view';
@@ -192,7 +192,7 @@ export default connect((state, ownProps) => {
     markerTimingRows,
     maxMarkerRows: markerTimingRows.length,
     isSelected: true,
-    timeRange: getDisplayRange(state),
+    timeRange: getOuterDisplayRange(state),
     interval: getProfileInterval(state),
     getCategory: getCategoryColorStrategy(state),
     getLabel: isRowExpanded

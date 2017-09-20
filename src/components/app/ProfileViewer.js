@@ -19,7 +19,7 @@ import TimelineView from '../timeline/TimelineView';
 import actions from '../../actions';
 import {
   getProfileViewOptions,
-  getDisplayRange,
+  getOuterDisplayRange,
 } from '../../reducers/profile-view';
 import { getSelectedTab } from '../../reducers/url-state';
 import ProfileViewerHeader from '../header/ProfileViewerHeader';
@@ -147,7 +147,7 @@ export default connect(
     tabOrder: getProfileViewOptions(state).tabOrder,
     selectedTab: getSelectedTab(state),
     className: 'profileViewer',
-    timeRange: getDisplayRange(state),
+    timeRange: getOuterDisplayRange(state),
   }),
   actions
 )(ProfileViewer);

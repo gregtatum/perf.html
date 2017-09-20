@@ -116,7 +116,7 @@ export function changeImplementationFilter(
   return (dispatch, getState) => {
     const previousImplementation = getImplementationFilter(getState());
     const threadIndex = getSelectedThreadIndex(getState());
-    const transformedThread = selectedThreadSelectors.getRangeAndTransformFilteredThread(
+    const transformedThread = selectedThreadSelectors.getTransformedThread(
       getState()
     );
 
@@ -157,7 +157,7 @@ export function updateProfileSelection(selection: ProfileSelection): Action {
 
 export function addRangeFilter(start: number, end: number): Action {
   return {
-    type: 'ADD_RANGE_FILTER',
+    type: 'ADD_OUTER_RANGE_FILTER',
     start,
     end,
   };
@@ -177,7 +177,7 @@ export function addRangeFilterAndUnsetSelection(
 
 export function popRangeFilters(firstRemovedFilterIndex: number): Action {
   return {
-    type: 'POP_RANGE_FILTERS',
+    type: 'POP_OUTER_RANGE_FILTERS',
     firstRemovedFilterIndex,
   };
 }

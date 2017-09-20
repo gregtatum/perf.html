@@ -10,7 +10,7 @@ import { updateProfileSelection } from '../../actions/profile-view';
 import {
   selectedThreadSelectors,
   getProfileViewOptions,
-  getDisplayRange,
+  getOuterDisplayRange,
 } from '../../reducers/profile-view';
 import copy from 'copy-to-clipboard';
 
@@ -135,7 +135,7 @@ export default connect(
     thread: selectedThreadSelectors.getThread(state),
     markers: selectedThreadSelectors.getSearchFilteredMarkers(state),
     selection: getProfileViewOptions(state).selection,
-    displayRange: getDisplayRange(state),
+    displayRange: getOuterDisplayRange(state),
     selectedMarker: selectedThreadSelectors.getViewOptions(state)
       .selectedMarker,
   }),

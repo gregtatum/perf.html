@@ -8,7 +8,7 @@ import { connect } from 'react-redux';
 import FlameChartCanvas from './FlameChartCanvas';
 import {
   selectorsForThread,
-  getDisplayRange,
+  getOuterDisplayRange,
   getProfileInterval,
   getProfileViewOptions,
 } from '../../reducers/profile-view';
@@ -191,7 +191,7 @@ export default connect((state, ownProps) => {
       : 1,
     stackTimingByDepth,
     isSelected: true,
-    timeRange: getDisplayRange(state),
+    timeRange: getOuterDisplayRange(state),
     interval: getProfileInterval(state),
     getCategory: getCategoryColorStrategy(state),
     getLabel: isRowExpanded

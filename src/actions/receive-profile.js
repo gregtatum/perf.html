@@ -504,7 +504,7 @@ export function retrieveProfileFromStore(
         const zeroAt = getTimeRangeIncludingAllThreads(profile).start;
         window.legacyRangeFilters.forEach(({ start, end }) =>
           dispatch({
-            type: 'ADD_RANGE_FILTER',
+            type: 'ADD_OUTER_RANGE_FILTER',
             start: start - zeroAt,
             end: end - zeroAt,
           })
@@ -541,7 +541,7 @@ export function retrieveProfileFromUrl(
         const zeroAt = getTimeRangeIncludingAllThreads(profile).start;
         window.legacyRangeFilters.forEach(({ start, end }) =>
           dispatch({
-            type: 'ADD_RANGE_FILTER',
+            type: 'ADD_OUTER_RANGE_FILTER',
             start: start - zeroAt,
             end: end - zeroAt,
           })

@@ -174,7 +174,7 @@ MarkersView.propTypes = {
 export default connect(
   state => ({
     threadIndex: getSelectedThreadIndex(state),
-    thread: selectedThreadSelectors.getRangeSelectionFilteredThread(state),
+    thread: selectedThreadSelectors.getOuterRangeSelectionFilteredThread(state),
     markers: selectedThreadSelectors.getSearchFilteredMarkers(state),
     selectedMarker: selectedThreadSelectors.getViewOptions(state)
       .selectedMarker,

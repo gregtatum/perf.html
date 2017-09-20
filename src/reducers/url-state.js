@@ -61,13 +61,13 @@ function selectedTab(state: string = 'calltree', action: Action) {
   }
 }
 
-function rangeFilters(state: StartEndRange[] = [], action: Action) {
+function outerRangeFilters(state: StartEndRange[] = [], action: Action) {
   switch (action.type) {
-    case 'ADD_RANGE_FILTER': {
+    case 'ADD_OUTER_RANGE_FILTER': {
       const { start, end } = action;
       return [...state, { start, end }];
     }
-    case 'POP_RANGE_FILTERS':
+    case 'POP_OUTER_RANGE_FILTERS':
       return state.slice(0, action.firstRemovedFilterIndex);
     default:
       return state;
@@ -256,7 +256,7 @@ const urlStateReducer: Reducer<UrlState> = (regularUrlStateReducer => (
     hash,
     profileUrl,
     selectedTab,
-    rangeFilters,
+    outerRangeFilters,
     selectedThread,
     callTreeSearchString,
     implementation,
@@ -275,8 +275,8 @@ export const getUrlState = (state: State): UrlState => state.urlState;
 export const getDataSource = (state: State) => getUrlState(state).dataSource;
 export const getHash = (state: State) => getUrlState(state).hash;
 export const getProfileUrl = (state: State) => getUrlState(state).profileUrl;
-export const getRangeFilters = (state: State) =>
-  getUrlState(state).rangeFilters;
+export const getOuterRangeFilters = (state: State) =>
+  getUrlState(state).outerRangeFilters;
 export const getImplementationFilter = (state: State) =>
   getUrlState(state).implementation;
 export const getHidePlatformDetails = (state: State) =>
@@ -319,6 +319,6 @@ export const getUrlPredictor = createSelector(
 );
 
 export const getRangeFilterLabels = createSelector(
-  getRangeFilters,
+  getOuterRangeFilters,
   RangeFilters.getRangeFilterLabels
 );

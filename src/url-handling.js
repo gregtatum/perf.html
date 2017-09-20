@@ -83,7 +83,7 @@ export function urlStateToUrlObject(urlState: UrlState): UrlObject {
 
   // Start with the query parameters that are shown regardless of the active tab.
   const query: Object = {
-    range: stringifyRangeFilters(urlState.rangeFilters) || undefined,
+    range: stringifyRangeFilters(urlState.outerRangeFilters) || undefined,
     thread: `${urlState.selectedThread}`,
     threadOrder: urlState.threadOrder.join('-'),
     hiddenThreads: urlState.hiddenThreads.join('-'),
@@ -194,7 +194,7 @@ export function stateFromLocation(location: Location): UrlState {
     hash: hasProfileHash ? pathParts[1] : '',
     profileUrl: hasProfileUrl ? decodeURIComponent(pathParts[1]) : '',
     selectedTab: pathParts[selectedTabPathPart] || 'calltree',
-    rangeFilters: query.range ? parseRangeFilters(query.range) : [],
+    outerRangeFilters: query.range ? parseRangeFilters(query.range) : [],
     selectedThread: selectedThread,
     callTreeSearchString: query.search || '',
     markersSearchString: query.markerSearch || '',

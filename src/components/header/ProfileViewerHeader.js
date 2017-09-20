@@ -13,7 +13,7 @@ import { connect } from 'react-redux';
 import {
   getProfile,
   getProfileViewOptions,
-  getDisplayRange,
+  getOuterDisplayRange,
   getZeroAt,
 } from '../../reducers/profile-view';
 import {
@@ -125,7 +125,7 @@ export default connect(
     visibleThreadOrder: getVisibleThreadOrder(state),
     threadOrder: getThreadOrder(state),
     hiddenThreads: getHiddenThreads(state),
-    timeRange: getDisplayRange(state),
+    timeRange: getOuterDisplayRange(state),
     zeroAt: getZeroAt(state),
   }),
   {

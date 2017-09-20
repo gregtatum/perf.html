@@ -71,7 +71,7 @@ export type UrlState = {
   hash: string,
   profileUrl: string,
   selectedTab: string,
-  rangeFilters: RangeFilterState[],
+  outerRangeFilters: RangeFilterState[],
   selectedThread: ThreadIndex,
   callTreeSearchString: string,
   markersSearchString: string,

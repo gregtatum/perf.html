@@ -381,10 +381,10 @@ export const getZeroAt = createSelector(
   viewOptions => viewOptions.zeroAt
 );
 
-export const getDisplayRange = createSelector(
+export const getOuterDisplayRange = createSelector(
   (state: State) => getProfileViewOptions(state).rootRange,
   (state: State) => getProfileViewOptions(state).zeroAt,
-  UrlState.getRangeFilters,
+  UrlState.getOuterRangeFilters,
   (rootRange, zeroAt, rangeFilters): StartEndRange => {
     if (rangeFilters.length > 0) {
       let { start, end } = rangeFilters[rangeFilters.length - 1];
@@ -420,15 +420,15 @@ export type SelectorsForThread = {
   getViewOptions: State => ThreadViewOptions,
   getTransformStack: State => TransformStack,
   getTransformLabels: State => string[],
-  getRangeFilteredThread: State => Thread,
-  getRangeAndTransformFilteredThread: State => Thread,
+  getOuterRangeFilteredThread: State => Thread,
+  getTransformedThread: State => Thread,
   getJankInstances: State => TracingMarker[],
   getTracingMarkers: State => TracingMarker[],
   getMarkerTiming: State => MarkerTimingRows,
   getRangeSelectionFilteredTracingMarkers: State => TracingMarker[],
   getRangeSelectionFilteredTracingMarkersForHeader: State => TracingMarker[],
   getFilteredThread: State => Thread,
-  getRangeSelectionFilteredThread: State => Thread,
+  getOuterRangeSelectionFilteredThread: State => Thread,
   getCallNodeInfo: State => CallNodeInfo,
   getSelectedCallNodePath: State => CallNodePath,
   getSelectedCallNodeIndex: State => IndexIntoCallNodeTable | null,
@@ -455,18 +455,21 @@ export const selectorsForThread = (
      * The first per-thread selectors filter out and transform a thread based on user's
      * interactions. The transforms are order dependendent.
      *
-     * 1. Unfiltered - The first selector gets the unmodified original thread.
-     * 2. Range - New samples table with only samples in range.
-     * 3. Transform - Apply the transform stack that modifies the stacks and samples.
+     * 1. Thread - The first selector gets the unmodified original thread.
+     * 2. Outer Range Selection - New samples table with only samples in range.
+     * 3. Transfroms - Apply the transform stack that modifies the stacks and samples.
      * 4. Implementation - Modify stacks and samples to only show a single implementation.
      * 5. Search - Exclude samples that don't include some text in the stack.
-     * 6. Range selection - Only include samples that are within a user's sub-selection.
+     * 6. Stack Inversion - The final filtered thread has stack inversion applied.
+     *
+     * Some component like the call tree accept a further refined selection:
+     * 7. Preview range selection - Includes samples only in the preview selection.
      */
     const getThread = (state: State): Thread =>
       getProfile(state).threads[threadIndex];
-    const getRangeFilteredThread = createSelector(
+    const getOuterRangeFilteredThread = createSelector(
       getThread,
-      getDisplayRange,
+      getOuterDisplayRange,
       (thread, range): Thread => {
         const { start, end } = range;
         return ProfileData.filterThreadToRange(thread, start, end);
@@ -513,8 +516,8 @@ export const selectorsForThread = (
     });
     const getTransformStack = (state: State): TransformStack =>
       UrlState.getTransformStack(state, threadIndex);
-    const getRangeAndTransformFilteredThread = createSelector(
-      getRangeFilteredThread,
+    const getTransformedThread = createSelector(
+      getOuterRangeFilteredThread,
       getTransformStack,
       (startingThread, transforms): Thread =>
         transforms.reduce(
@@ -524,11 +527,11 @@ export const selectorsForThread = (
         )
     );
     const _getImplementationFilteredThread = createSelector(
-      getRangeAndTransformFilteredThread,
+      getTransformedThread,
       UrlState.getImplementationFilter,
       ProfileData.filterThreadByImplementation
     );
-    const _getImplementationAndSearchFilteredThread = createSelector(
+    const _getSearchFilteredThread = createSelector(
       _getImplementationFilteredThread,
       UrlState.getSearchString,
       (thread, searchString): Thread => {
@@ -536,7 +539,7 @@ export const selectorsForThread = (
       }
     );
     const getFilteredThread = createSelector(
-      _getImplementationAndSearchFilteredThread,
+      _getSearchFilteredThread,
       UrlState.getInvertCallstack,
       (thread, shouldInvertCallstack): Thread => {
         return shouldInvertCallstack
@@ -544,7 +547,7 @@ export const selectorsForThread = (
           : thread;
       }
     );
-    const getRangeSelectionFilteredThread = createSelector(
+    const getOuterRangeSelectionFilteredThread = createSelector(
       getFilteredThread,
       getProfileViewOptions,
       (thread, viewOptions): Thread => {
@@ -577,12 +580,12 @@ export const selectorsForThread = (
       getTransformStack,
       Transforms.getTransformLabels
     );
-    const _getRangeFilteredThreadSamples = createSelector(
-      getRangeFilteredThread,
+    const _getOuterRangeFilteredThreadSamples = createSelector(
+      getOuterRangeFilteredThread,
       (thread): SamplesTable => thread.samples
     );
     const getJankInstances = createSelector(
-      _getRangeFilteredThreadSamples,
+      _getOuterRangeFilteredThreadSamples,
       (samples): TracingMarker[] => ProfileData.getJankInstances(samples, 50)
     );
     const getTracingMarkers = createSelector(
@@ -595,7 +598,7 @@ export const selectorsForThread = (
     );
     const getRangeSelectionFilteredTracingMarkers = createSelector(
       getTracingMarkers,
-      getDisplayRange,
+      getOuterDisplayRange,
       (markers, range): TracingMarker[] => {
         const { start, end } = range;
         return ProfileData.filterTracingMarkersToRange(markers, start, end);
@@ -644,7 +647,7 @@ export const selectorsForThread = (
       }
     );
     const getCallTree = createSelector(
-      getRangeSelectionFilteredThread,
+      getOuterRangeSelectionFilteredThread,
       getProfileInterval,
       getCallNodeInfo,
       UrlState.getImplementationFilter,
@@ -659,7 +662,7 @@ export const selectorsForThread = (
     // out unneeded detail from stacks in a way that satisfy both the flame
     // chart and the call tree.
     const getFilteredThreadForFlameChart = createSelector(
-      getRangeFilteredThread,
+      getOuterRangeFilteredThread,
       UrlState.getHidePlatformDetails,
       UrlState.getInvertCallstack,
       UrlState.getSearchString,
@@ -712,7 +715,7 @@ export const selectorsForThread = (
       StackTiming.getLeafCategoryStackTiming
     );
     const getSearchFilteredMarkers = createSelector(
-      getRangeSelectionFilteredThread,
+      getOuterRangeSelectionFilteredThread,
       UrlState.getMarkersSearchString,
       ProfileData.getSearchFilteredMarkers
     );
@@ -722,15 +725,15 @@ export const selectorsForThread = (
       getViewOptions,
       getTransformStack,
       getTransformLabels,
-      getRangeFilteredThread,
-      getRangeAndTransformFilteredThread,
+      getOuterRangeFilteredThread,
+      getTransformedThread,
       getJankInstances,
       getTracingMarkers,
       getMarkerTiming,
       getRangeSelectionFilteredTracingMarkers,
       getRangeSelectionFilteredTracingMarkersForHeader,
       getFilteredThread,
-      getRangeSelectionFilteredThread,
+      getOuterRangeSelectionFilteredThread,
       getCallNodeInfo,
       getSelectedCallNodePath,
       getSelectedCallNodeIndex,

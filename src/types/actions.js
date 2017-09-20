@@ -140,8 +140,8 @@ type UrlStateAction =
   | { type: 'WAITING_FOR_PROFILE_FROM_FILE' }
   | { type: 'PROFILE_PUBLISHED', hash: string }
   | { type: 'CHANGE_SELECTED_TAB', selectedTab: string }
-  | { type: 'ADD_RANGE_FILTER', start: number, end: number }
-  | { type: 'POP_RANGE_FILTERS', firstRemovedFilterIndex: number }
+  | { type: 'ADD_OUTER_RANGE_FILTER', start: number, end: number }
+  | { type: 'POP_OUTER_RANGE_FILTERS', firstRemovedFilterIndex: number }
   | { type: 'CHANGE_SELECTED_THREAD', selectedThread: ThreadIndex }
   | { type: 'CHANGE_CALL_TREE_SEARCH_STRING', searchString: string }
   | {
