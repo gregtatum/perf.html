@@ -185,7 +185,7 @@ class ProfileCallTreeContextMenu extends PureComponent {
     }
   }
 
-  getNameForResouce(): string | null {
+  getNameForSelectedResource(): string | null {
     const {
       selectedCallNodePath,
       thread: { funcTable, stringTable, resourceTable, libs },
@@ -202,17 +202,16 @@ class ProfileCallTreeContextMenu extends PureComponent {
       return fileNameIndex === null
         ? null
         : stringTable.getString(fileNameIndex);
-    } else {
-      const resourceIndex = funcTable.resource[funcIndex];
-      if (resourceIndex === -1) {
-        return null;
-      }
-      const libIndex = resourceTable.lib[resourceIndex];
-      if (libIndex === undefined || libIndex === null) {
-        return null;
-      }
-      return libs[libIndex].name;
     }
+    const resourceIndex = funcTable.resource[funcIndex];
+    if (resourceIndex === -1) {
+      return null;
+    }
+    const libIndex = resourceTable.lib[resourceIndex];
+    if (libIndex === undefined || libIndex === null) {
+      return null;
+    }
+    return libs[libIndex].name;
   }
 
   render() {
@@ -225,7 +224,7 @@ class ProfileCallTreeContextMenu extends PureComponent {
     const funcIndex = callNodeTable.func[selectedCallNodeIndex];
     const isJS = funcTable.isJS[funcIndex];
     // This could be the C++ library, or the JS filename.
-    const nameForResource = this.getNameForResouce();
+    const nameForResource = this.getNameForSelectedResource();
 
     return (
       <ContextMenu id={'ProfileCallTreeContextMenu'}>
