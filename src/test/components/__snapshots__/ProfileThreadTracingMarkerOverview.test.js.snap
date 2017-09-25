@@ -5,7 +5,7 @@ exports[`renders ProfileThreadTracingMarkerOverview correctly 1`] = `
   className="profileThreadTrackingMarkerOverview selected"
 >
   <canvas
-    className="profileThreadTrackingMarkerOverviewCanvas intervalMarkerTimelineCanvas"
+    className="profileThreadTrackingMarkerOverviewCanvas intervalMarkerChartCanvas"
     onMouseDown={[Function]}
     onMouseMove={[Function]}
     onMouseOut={[Function]}
