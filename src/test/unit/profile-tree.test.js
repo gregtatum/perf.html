@@ -209,6 +209,37 @@ describe('unfiltered call tree', function() {
         });
       });
     });
+
+    const timing = [];
+    function computeDepth(nodeIndexes, timeOffsetParent = 0, depth = 0) {
+      if (nodeIndexes.length === 0) {
+        return;
+      }
+
+      // Select an existing row, or create a new one.
+      let row = timing[depth];
+      if (row === undefined) {
+        row = {
+          start: [],
+          end: [],
+          callNode: [],
+          length: 0,
+        };
+        timing[depth] = row;
+      }
+
+      // Compute the timing information.
+      let timeOffset = timeOffsetParent;
+      for (let i = 0; i < nodeIndexes.length; i++) {
+        const nodeIndex = nodeIndexes[i];
+        const node = callTree.getNode(nodeIndex);
+        row.start.push(timeOffset);
+        timeOffset += node.totalTime;
+        row.end.push(timeOffset);
+        computeDepth(callTree.getChildren(nodeIndex), timeOffset, depth + 1);
+      }
+    }
+    computeDepth(callTree.getRoots());
   });
 
   /**
