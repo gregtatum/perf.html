@@ -12,8 +12,6 @@ import { BackgroundImageStyleDef } from './StyleDef';
 
 import ContextMenuTrigger from './ContextMenuTrigger';
 
-import type { IndexIntoCallNodeTable, Node } from '../../types/profile-derived';
-import type { CallTree } from '../../profile-logic/call-tree';
 import type { IconWithClassName } from '../../types/reducers';
 
 // This is used for the result of RegExp.prototype.exec because Flow doesn't do it.
@@ -26,10 +24,10 @@ export type Column = {
   component?: React.ComponentType<*>,
 };
 
-type TreeViewHeaderProps = {
-  fixedColumns: Column[],
-  mainColumn: Column,
-};
+type TreeViewHeaderProps = {|
+  +fixedColumns: Column[],
+  +mainColumn: Column,
+|};
 
 const TreeViewHeader = ({ fixedColumns, mainColumn }: TreeViewHeaderProps) =>
   <div className="treeViewHeader">
@@ -80,20 +78,23 @@ function reactStringWithHighlightedSubstrings(
   return highlighted;
 }
 
-type TreeViewRowFixedColumnsProps = {
-  node: Node,
-  nodeId: IndexIntoCallNodeTable,
+type TreeViewRowFixedColumnsProps<NodeIndex: number, DisplayData: Object> = {
+  displayData: DisplayData,
+  nodeId: NodeIndex,
   columns: Column[],
   index: number,
   selected: boolean,
-  onClick: (IndexIntoCallNodeTable, SyntheticMouseEvent<>) => mixed,
+  onClick: (NodeIndex, SyntheticMouseEvent<>) => mixed,
   highlightRegExp: RegExp | null,
 };
 
-class TreeViewRowFixedColumns extends React.PureComponent<
-  TreeViewRowFixedColumnsProps
+class TreeViewRowFixedColumns<
+  NodeIndex: number,
+  DisplayData: Object
+> extends React.PureComponent<
+  TreeViewRowFixedColumnsProps<NodeIndex, DisplayData>
 > {
-  constructor(props: TreeViewRowFixedColumnsProps) {
+  constructor(props: TreeViewRowFixedColumnsProps<NodeIndex, DisplayData>) {
     super(props);
     (this: any)._onClick = this._onClick.bind(this);
   }
@@ -104,7 +105,13 @@ class TreeViewRowFixedColumns extends React.PureComponent<
   }
 
   render() {
-    const { node, columns, index, selected, highlightRegExp } = this.props;
+    const {
+      displayData,
+      columns,
+      index,
+      selected,
+      highlightRegExp,
+    } = this.props;
     const evenOddClassName = index % 2 === 0 ? 'even' : 'odd';
     return (
       <div
@@ -123,9 +130,9 @@ class TreeViewRowFixedColumns extends React.PureComponent<
               key={col.propName}
             >
               {RenderComponent
-                ? <RenderComponent node={node} />
+                ? <RenderComponent displayData={displayData} />
                 : reactStringWithHighlightedSubstrings(
-                    node[col.propName],
+                    displayData[col.propName] || '',
                     highlightRegExp,
                     'treeViewHighlighting'
                   )}
@@ -137,29 +144,33 @@ class TreeViewRowFixedColumns extends React.PureComponent<
   }
 }
 
-type TreeViewRowScrolledColumnsProps = {
-  node: Node,
-  nodeId: IndexIntoCallNodeTable,
-  depth: number,
-  mainColumn: Column,
-  appendageColumn: Column,
-  appendageButtons: string[],
-  index: number,
-  canBeExpanded: boolean,
-  isExpanded: boolean,
-  selected: boolean,
-  onToggle: (IndexIntoCallNodeTable, boolean, boolean) => mixed,
-  onClick: (IndexIntoCallNodeTable, SyntheticMouseEvent<>) => mixed,
-  onAppendageButtonClick:
-    | ((IndexIntoCallNodeTable | null, string) => mixed)
-    | null,
-  highlightRegExp: RegExp | null,
-};
+type TreeViewRowScrolledColumnsProps<
+  NodeIndex: number,
+  DisplayData: Object
+> = {|
+  +displayData: DisplayData,
+  +nodeId: NodeIndex,
+  +depth: number,
+  +mainColumn: Column,
+  +appendageColumn?: Column,
+  +appendageButtons?: string[],
+  +index: number,
+  +canBeExpanded: boolean,
+  +isExpanded: boolean,
+  +selected: boolean,
+  +onToggle: (NodeIndex, boolean, boolean) => mixed,
+  +onClick: (NodeIndex, SyntheticMouseEvent<>) => mixed,
+  +onAppendageButtonClick?: ((NodeIndex | null, string) => mixed) | null,
+  +highlightRegExp: RegExp | null,
+|};
 
-class TreeViewRowScrolledColumns extends React.PureComponent<
-  TreeViewRowScrolledColumnsProps
+class TreeViewRowScrolledColumns<
+  NodeIndex: number,
+  DisplayData: Object
+> extends React.PureComponent<
+  TreeViewRowScrolledColumnsProps<NodeIndex, DisplayData>
 > {
-  constructor(props: TreeViewRowScrolledColumnsProps) {
+  constructor(props: TreeViewRowScrolledColumnsProps<NodeIndex, DisplayData>) {
     super(props);
     (this: any)._onClick = this._onClick.bind(this);
   }
@@ -192,7 +203,7 @@ class TreeViewRowScrolledColumns extends React.PureComponent<
 
   render() {
     const {
-      node,
+      displayData,
       depth,
       mainColumn,
       appendageColumn,
@@ -209,7 +220,7 @@ class TreeViewRowScrolledColumns extends React.PureComponent<
       <div
         className={`treeViewRow treeViewRowScrolledColumns ${evenOddClassName} ${selected
           ? 'selected'
-          : ''} ${node.dim ? 'dim' : ''}`}
+          : ''} ${displayData.dim ? 'dim' : ''}`}
         style={{ height: '16px' }}
         onMouseDown={this._onClick}
       >
@@ -226,7 +237,7 @@ class TreeViewRowScrolledColumns extends React.PureComponent<
           className={`treeViewRowColumn treeViewMainColumn ${mainColumn.propName}`}
         >
           {reactStringWithHighlightedSubstrings(
-            node[mainColumn.propName],
+            displayData[mainColumn.propName],
             highlightRegExp,
             'treeViewHighlighting'
           )}
@@ -236,7 +247,7 @@ class TreeViewRowScrolledColumns extends React.PureComponent<
               className={`treeViewRowColumn treeViewAppendageColumn ${appendageColumn.propName}`}
             >
               {reactStringWithHighlightedSubstrings(
-                node[appendageColumn.propName],
+                displayData[appendageColumn.propName],
                 highlightRegExp,
                 'treeViewHighlighting'
               )}
@@ -258,33 +269,43 @@ class TreeViewRowScrolledColumns extends React.PureComponent<
   }
 }
 
-type TreeViewProps = {|
-  fixedColumns: Column[],
-  mainColumn: Column,
-  tree: CallTree,
-  expandedNodeIds: Array<IndexIntoCallNodeTable | null>,
-  selectedNodeId: IndexIntoCallNodeTable | null,
-  onExpandedNodesChange: PropTypes.func.isRequired,
-  highlightRegExp?: RegExp | null,
-  appendageColumn: Column,
-  appendageButtons: string[],
-  disableOverscan: boolean,
-  icons: IconWithClassName[],
-  contextMenu?: React.Element<any>,
-  contextMenuId?: string,
-  onAppendageButtonClick:
-    | ((IndexIntoCallNodeTable | null, string) => mixed)
-    | null,
-  onSelectionChange: IndexIntoCallNodeTable => mixed,
+interface Tree<NodeIndex: number, DisplayData: Object> {
+  getDepth(NodeIndex): number,
+  getRoots(): NodeIndex[],
+  getDisplayData(NodeIndex): DisplayData,
+  getParent(NodeIndex): NodeIndex,
+  getChildren(NodeIndex): NodeIndex[],
+  hasChildren(NodeIndex): boolean,
+}
+
+type TreeViewProps<NodeIndex, DisplayData> = {|
+  +fixedColumns: Column[],
+  +mainColumn: Column,
+  +tree: Tree<NodeIndex, DisplayData>,
+  +expandedNodeIds: Array<NodeIndex | null>,
+  +selectedNodeId: NodeIndex | null,
+  +onExpandedNodesChange: PropTypes.func.isRequired,
+  +highlightRegExp?: RegExp | null,
+  +appendageColumn?: Column,
+  +appendageButtons?: string[],
+  +disableOverscan?: boolean,
+  +icons?: IconWithClassName[],
+  +contextMenu?: React.Element<any>,
+  +contextMenuId?: string,
+  +onAppendageButtonClick?: ((NodeIndex | null, string) => mixed) | null,
+  +onSelectionChange: NodeIndex => mixed,
 |};
 
-class TreeView extends React.PureComponent<TreeViewProps> {
-  _specialItems: (IndexIntoCallNodeTable | null)[];
-  _visibleRows: IndexIntoCallNodeTable[];
+class TreeView<
+  NodeIndex: number,
+  DisplayData: Object
+> extends React.PureComponent<TreeViewProps<NodeIndex, DisplayData>> {
+  _specialItems: (NodeIndex | null)[];
+  _visibleRows: NodeIndex[];
   _list: VirtualList | null;
   _takeListRef = (list: VirtualList | null) => (this._list = list);
 
-  constructor(props: TreeViewProps) {
+  constructor(props: TreeViewProps<NodeIndex, DisplayData>) {
     super(props);
     (this: any)._renderRow = this._renderRow.bind(this);
     (this: any)._toggle = this._toggle.bind(this);
@@ -306,7 +327,7 @@ class TreeView extends React.PureComponent<TreeViewProps> {
     }
   }
 
-  componentWillReceiveProps(nextProps: TreeViewProps) {
+  componentWillReceiveProps(nextProps: TreeViewProps<NodeIndex, DisplayData>) {
     if (nextProps.selectedNodeId !== this.props.selectedNodeId) {
       this._specialItems = [nextProps.selectedNodeId];
     }
@@ -318,11 +339,7 @@ class TreeView extends React.PureComponent<TreeViewProps> {
     }
   }
 
-  _renderRow(
-    nodeId: IndexIntoCallNodeTable,
-    index: number,
-    columnIndex: number
-  ) {
+  _renderRow(nodeId: NodeIndex, index: number, columnIndex: number) {
     const {
       tree,
       expandedNodeIds,
@@ -334,11 +351,11 @@ class TreeView extends React.PureComponent<TreeViewProps> {
       appendageButtons,
       onAppendageButtonClick,
     } = this.props;
-    const node = tree.getNode(nodeId);
+    const displayData = tree.getDisplayData(nodeId);
     if (columnIndex === 0) {
       return (
         <TreeViewRowFixedColumns
-          node={node}
+          displayData={displayData}
           columns={fixedColumns}
           nodeId={nodeId}
           index={index}
@@ -352,7 +369,7 @@ class TreeView extends React.PureComponent<TreeViewProps> {
     const isExpanded = expandedNodeIds.includes(nodeId);
     return (
       <TreeViewRowScrolledColumns
-        node={node}
+        displayData={displayData}
         mainColumn={mainColumn}
         appendageColumn={appendageColumn}
         appendageButtons={appendageButtons}
@@ -371,9 +388,9 @@ class TreeView extends React.PureComponent<TreeViewProps> {
   }
 
   _addVisibleRowsFromNode(
-    props: TreeViewProps,
-    arr: IndexIntoCallNodeTable[],
-    nodeId: IndexIntoCallNodeTable,
+    props: TreeViewProps<NodeIndex, DisplayData>,
+    arr: NodeIndex[],
+    nodeId: NodeIndex,
     depth: number
   ) {
     arr.push(nodeId);
@@ -386,7 +403,9 @@ class TreeView extends React.PureComponent<TreeViewProps> {
     }
   }
 
-  _getAllVisibleRows(props: TreeViewProps) {
+  _getAllVisibleRows(
+    props: TreeViewProps<NodeIndex, DisplayData>
+  ): NodeIndex[] {
     const roots = props.tree.getRoots();
     const allRows = [];
     for (let i = 0; i < roots.length; i++) {
@@ -395,14 +414,11 @@ class TreeView extends React.PureComponent<TreeViewProps> {
     return allRows;
   }
 
-  _isCollapsed(nodeId: IndexIntoCallNodeTable) {
+  _isCollapsed(nodeId: NodeIndex): boolean {
     return !this.props.expandedNodeIds.includes(nodeId);
   }
 
-  _addAllDescendants(
-    newSet: Set<IndexIntoCallNodeTable | null>,
-    nodeId: IndexIntoCallNodeTable
-  ) {
+  _addAllDescendants(newSet: Set<NodeIndex | null>, nodeId: NodeIndex) {
     this.props.tree.getChildren(nodeId).forEach(childId => {
       newSet.add(childId);
       this._addAllDescendants(newSet, childId);
@@ -410,7 +426,7 @@ class TreeView extends React.PureComponent<TreeViewProps> {
   }
 
   _toggle(
-    nodeId: IndexIntoCallNodeTable,
+    nodeId: NodeIndex,
     newExpanded: boolean = this._isCollapsed(nodeId),
     toggleAll: * = false
   ) {
@@ -427,17 +443,17 @@ class TreeView extends React.PureComponent<TreeViewProps> {
   }
 
   _toggleAll(
-    nodeId: IndexIntoCallNodeTable,
+    nodeId: NodeIndex,
     newExpanded: boolean = this._isCollapsed(nodeId)
   ) {
     this._toggle(nodeId, newExpanded, true);
   }
 
-  _select(nodeId: IndexIntoCallNodeTable) {
+  _select(nodeId: NodeIndex) {
     this.props.onSelectionChange(nodeId);
   }
 
-  _onRowClicked(nodeId: IndexIntoCallNodeTable, event: SyntheticMouseEvent<>) {
+  _onRowClicked(nodeId: NodeIndex, event: SyntheticMouseEvent<>) {
     this._select(nodeId);
     if (event.detail === 2 && event.button === 0) {
       // double click
@@ -445,12 +461,20 @@ class TreeView extends React.PureComponent<TreeViewProps> {
     }
   }
 
-  _onCopy(event: ClipboardEvent) {
+  /**
+   * Flow doesn't yet know about Clipboard events, so infer what's going on with the
+   * event.
+   * See: https://github.com/facebook/flow/issues/1856
+   */
+  _onCopy(event: *) {
     event.preventDefault();
     const { tree, selectedNodeId, mainColumn } = this.props;
     if (selectedNodeId) {
-      const node = tree.getNode(selectedNodeId);
-      event.clipboardData.setData('text/plain', node[mainColumn.propName]);
+      const displayData = tree.getDisplayData(selectedNodeId);
+      event.clipboardData.setData(
+        'text/plain',
+        displayData[mainColumn.propName]
+      );
     }
   }
 
@@ -555,7 +579,7 @@ class TreeView extends React.PureComponent<TreeViewProps> {
             focusable={true}
             onKeyDown={this._onKeyDown}
             specialItems={this._specialItems}
-            disableOverscan={disableOverscan}
+            disableOverscan={!!disableOverscan}
             onCopy={this._onCopy}
             ref={this._takeListRef}
           />
