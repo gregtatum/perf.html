@@ -101,6 +101,10 @@ body, #root, .profileViewer {
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
+  /* Use flex for the layout, but then allow the div to be sized according to its inner content */
+  float: left;
+  clear: left;
+  min-width: 100%;
 }
 
 .treeRowIcon {

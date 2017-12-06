@@ -7,28 +7,45 @@ import * as React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import range from 'array-range';
+import { withSize } from '../shared/WithSize';
 
+import type { SizeProps } from '../shared/WithSize';
 import type { CssPixels } from '../../types/units';
 
 type RenderItem = (*, number, number) => React.Node;
 
-type VirtualListRowProps = {|
+type VirtualListRowProps = SizeProps & {|
   +renderItem: RenderItem,
   +item: *,
   +index: number,
   +columnIndex: number,
   +isSpecial: boolean,
+  +reportRowWidth: (number, CssPixels) => void,
   // Items are not used directly, but are needed for strict equality checks so that
   // the components update correctly.
   +items: *,
 |};
 
-class VirtualListRow extends React.PureComponent<VirtualListRowProps> {
+class VirtualListRowImpl extends React.PureComponent<VirtualListRowProps> {
+  _report() {
+    const { reportRowWidth, columnIndex, width } = this.props;
+    reportRowWidth(columnIndex, width);
+  }
+  componentDidMount() {
+    this._report();
+  }
+
+  componentWillUpdate() {
+    this._report();
+  }
+
   render() {
     const { renderItem, item, index, columnIndex } = this.props;
     return renderItem(item, index, columnIndex);
   }
 }
+
+const VirtualListRow = withSize(VirtualListRowImpl);
 
 type VirtualListInnerChunkProps = {|
   +className: string,
@@ -38,6 +55,7 @@ type VirtualListInnerChunkProps = {|
   +visibleRangeStart: number,
   +visibleRangeEnd: number,
   +columnIndex: number,
+  +reportRowWidth: (number, CssPixels) => void,
 |};
 
 class VirtualListInnerChunk extends React.PureComponent<
@@ -52,6 +70,7 @@ class VirtualListInnerChunk extends React.PureComponent<
       visibleRangeStart,
       visibleRangeEnd,
       columnIndex,
+      reportRowWidth,
     } = this.props;
 
     return (
@@ -70,6 +89,7 @@ class VirtualListInnerChunk extends React.PureComponent<
               item={item}
               items={items}
               isSpecial={specialItems.includes(item)}
+              reportRowWidth={reportRowWidth}
             />
           );
         })}
@@ -89,8 +109,22 @@ type VirtualListInnerProps = {
   columnIndex: number,
 };
 
-class VirtualListInner extends React.PureComponent<VirtualListInnerProps> {
+type VirtualListInnerState = {
+  // Keep a record of the maximum width seen by the list.
+  widthPerColumn: Map<number, CssPixels>,
+  totalWidth: number,
+};
+
+class VirtualListInner extends React.PureComponent<
+  VirtualListInnerProps,
+  VirtualListInnerState
+> {
   _container: ?HTMLElement;
+
+  state = {
+    widthPerColumn: new Map(),
+    totalWidth: 10000,
+  };
 
   _takeContainerRef = (element: ?HTMLDivElement) => {
     this._container = element;
@@ -102,6 +136,23 @@ class VirtualListInner extends React.PureComponent<VirtualListInnerProps> {
     }
     return new window.DOMRect();
   }
+
+  _reportRowWidth = (columnIndex: number, width: CssPixels) => {
+    const { widthPerColumn, totalWidth } = this.state;
+    const existingWidth = widthPerColumn.get(columnIndex) || 0;
+    if (width > existingWidth) {
+      const newWidthPerColumn = new Map(widthPerColumn);
+      let newTotalWidth = 0;
+      for (const [, width] of newWidthPerColumn) {
+        newTotalWidth += width;
+        console.log('!!!', { width, newTotalWidth });
+      }
+      this.setState({
+        widthPerColumn: newWidthPerColumn,
+        totalWidth: Math.max(totalWidth, newTotalWidth),
+      });
+    }
+  };
 
   render() {
     const {
@@ -129,7 +180,7 @@ class VirtualListInner extends React.PureComponent<VirtualListInnerProps> {
         ref={this._takeContainerRef}
         style={{
           height: `${items.length * itemHeight}px`,
-          width: columnIndex === 1 ? '3000px' : undefined,
+          width: columnIndex === 1 ? this.state.totalWidth : undefined,
         }}
       >
         <div
@@ -151,6 +202,7 @@ class VirtualListInner extends React.PureComponent<VirtualListInnerProps> {
               renderItem={renderItem}
               items={items}
               specialItems={specialItems}
+              reportRowWidth={this._reportRowWidth}
             />
           );
         })}
