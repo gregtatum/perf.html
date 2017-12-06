@@ -292,6 +292,7 @@ type TreeViewProps<NodeIndex, DisplayData> = {|
   +icons?: IconWithClassName[],
   +contextMenu?: React.Element<any>,
   +contextMenuId?: string,
+  +maxNodeDepth: number,
   +onAppendageButtonClick?: ((NodeIndex | null, string) => mixed) | null,
   +onSelectionChange: NodeIndex => mixed,
 |};
@@ -554,6 +555,7 @@ class TreeView<
       contextMenu,
       contextMenuId,
       icons,
+      maxNodeDepth,
     } = this.props;
     return (
       <div className="treeView">
@@ -581,6 +583,9 @@ class TreeView<
             specialItems={this._specialItems}
             disableOverscan={!!disableOverscan}
             onCopy={this._onCopy}
+            // If there is a deep call node depth, expand the width, or else keep it
+            // at 3000 wide.
+            containerWidth={Math.max(3000, maxNodeDepth * 10 + 2000)}
             ref={this._takeListRef}
           />
         </ContextMenuTrigger>
