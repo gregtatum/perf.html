@@ -450,6 +450,7 @@ export type SelectorsForThread = {
   getCallNodeMaxDepthForStackChart: State => number,
   getStackTimingByDepthForStackChart: State => StackTiming.StackTimingByDepth,
   getLeafCategoryStackTimingForStackChart: State => StackTiming.StackTimingByDepth,
+  getCallNodeMaxDepthForFlameGraph: State => number,
   getFlameGraphTiming: State => FlameGraph.FlameGraphTiming,
   getFriendlyThreadName: State => string,
   getThreadProcessDetails: State => string,
@@ -737,6 +738,11 @@ export const selectorsForThread = (
       getProfileInterval,
       StackTiming.getStackTimingByDepth
     );
+    const getCallNodeMaxDepthForFlameGraph = createSelector(
+      getRangeSelectionFilteredThread,
+      getCallNodeInfo,
+      FlameGraph.computeCallNodeMaxDepth
+    );
     const getFlameGraphTiming = createSelector(
       getCallTree,
       FlameGraph.getFlameGraphTiming
@@ -780,6 +786,7 @@ export const selectorsForThread = (
       getCallNodeMaxDepthForStackChart,
       getStackTimingByDepthForStackChart,
       getLeafCategoryStackTimingForStackChart,
+      getCallNodeMaxDepthForFlameGraph,
       getFlameGraphTiming,
       getFriendlyThreadName,
       getThreadProcessDetails,

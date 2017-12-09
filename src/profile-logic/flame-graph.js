@@ -3,10 +3,18 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
+import { getSampleCallNodes } from './profile-data';
 import type { UnitIntervalOfProfileRange } from '../types/units';
-import type { IndexIntoCallNodeTable } from '../types/profile-derived';
+import type { Thread } from '../types/profile';
+import type {
+  IndexIntoCallNodeTable,
+  CallNodeInfo,
+} from '../types/profile-derived';
 
 import * as CallTree from './call-tree';
+
+export type FlameGraphDepth = number;
+export type IndexIntoFlameGraphTiming = number;
 
 export type FlameGraphTiming = Array<{
   start: UnitIntervalOfProfileRange[],
@@ -79,4 +87,34 @@ export function getFlameGraphTiming(
     stack.push(...children);
   }
   return timing;
+}
+
+/**
+ * Compute maximum depth of call stack for a given thread.
+ *
+ * Returns the depth of the deepest call node, but with a one-based
+ * depth instead of a zero-based.
+ *
+ * If no samples are found, 0 is returned.
+ *
+ * @param {object} thread
+ * @param {object} callNodeInfo
+ * @return {number} maxDepth
+ */
+export function computeCallNodeMaxDepth(
+  thread: Thread,
+  callNodeInfo: CallNodeInfo
+): number {
+  const { samples } = thread;
+  const { callNodeTable, stackIndexToCallNodeIndex } = callNodeInfo;
+
+  const sampleCallNodes = getSampleCallNodes(
+    samples,
+    stackIndexToCallNodeIndex
+  );
+
+  const depths = sampleCallNodes.map(
+    i => (i === null ? 0 : callNodeTable.depth[i] + 1)
+  );
+  return Math.max(0, ...depths);
 }
