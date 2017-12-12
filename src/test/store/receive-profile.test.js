@@ -321,6 +321,17 @@ describe('actions/receive-profile', function() {
       )).map(state => getView(state));
 
       const steps = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+      console.log([
+        { phase: 'INITIALIZING' },
+        ...steps.map(step => ({
+          phase: 'INITIALIZING',
+          additionalData: {
+            attempt: { count: step, total: 11 },
+            message: errorMessage,
+          },
+        })),
+        { phase: 'FATAL_ERROR', error: expect.any(Error) },
+      ]);
 
       const errorMessage = 'Profile not found on remote server.';
       expect(views).toEqual([
