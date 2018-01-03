@@ -9,6 +9,7 @@ import Root from './components/app/Root';
 import createStore from './create-store';
 import 'photon-colors/colors.css';
 import '../res/style.css';
+import './console-api';
 
 // Mock out Google Analytics for anything that's not production so that we have run-time
 // code coverage in development and testing.

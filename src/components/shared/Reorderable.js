@@ -175,6 +175,7 @@ class Reorderable extends React.PureComponent<Props, State> {
 
     this.setState({
       phase: 'MANIPULATING',
+      foo: 'bar',
       manipulatingIndex: elementIndex,
       manipulationDelta: 0,
       destinationIndex: elementIndex,
