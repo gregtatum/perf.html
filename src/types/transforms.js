@@ -262,5 +262,27 @@ export type Transform =
   | CollapseResource
   | CollapseDirectRecursion;
 
+export type TransformType =
+  | $PropertyType<FocusSubtree, 'type'>
+  | $PropertyType<FocusFunctionSubtree, 'type'>
+  | $PropertyType<MergeCallNode, 'type'>
+  | $PropertyType<MergeFunction, 'type'>
+  | $PropertyType<DropFunction, 'type'>
+  | $PropertyType<CollapseResource, 'type'>
+  | $PropertyType<CollapseDirectRecursion, 'type'>;
+
 export type TransformStack = Transform[];
 export type TransformStacksPerThread = { [id: ThreadIndex]: TransformStack };
+
+export type Props = {
+  foo: 'bar',
+};
+
+export type Foo = $PropertyType<Props, 'foo'>;
+
+function foo(thing: Foo) {
+  console.log(thing);
+}
+foo('bar');
+foo('baz');
+foo(0);

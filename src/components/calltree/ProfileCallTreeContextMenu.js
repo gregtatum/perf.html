@@ -16,6 +16,7 @@ import {
   getImplementationFilter,
   getInvertCallstack,
 } from '../../reducers/url-state';
+import { unexpectedCase } from '../../utils/flow';
 
 import type { ImplementationFilter } from '../../types/actions';
 import type {
@@ -116,7 +117,9 @@ class ProfileCallTreeContextMenu extends PureComponent<Props> {
         this.addTransformToStack(type);
         break;
       default:
-        throw new Error(`Unknown type ${data.type}`);
+        console.log(unexpectedCase);
+        throw new Error('');
+      // unexpectedCase(type);
     }
   }
 

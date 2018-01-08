@@ -21,7 +21,11 @@ import type {
 } from '../types/profile';
 import type { CallNodePath } from '../types/profile-derived';
 import type { ImplementationFilter } from '../types/actions';
-import type { Transform, TransformStack } from '../types/transforms';
+import type {
+  Transform,
+  TransformType,
+  TransformStack,
+} from '../types/transforms';
 
 /**
  * This file contains the functions and logic for working with and applying transforms
@@ -1162,4 +1166,8 @@ export function funcHasRecursiveCall(
     }
   }
   return false;
+}
+
+export function toValidTransformType(_typeName: string): TransformType | null {
+  return 'foo';
 }
