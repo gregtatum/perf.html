@@ -16,7 +16,7 @@ jest.useFakeTimers();
 
 it('renders MarkerChart correctly', () => {
   // Tie the requestAnimationFrame into jest's fake timers.
-  window.requestAnimationFrame = fn => setTimeout(fn, 0);
+  (window: any).requestAnimationFrame = fn => setTimeout(fn, 0);
   window.devicePixelRatio = 1;
   const ctx = mockCanvasContext();
 

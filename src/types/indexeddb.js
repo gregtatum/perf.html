@@ -133,15 +133,15 @@ export interface IDBIndex<K, L, V> extends EventTarget {
 }
 
 export interface IDBKeyRange<K> {
-  static bound<J>(
+  bound<J>(
     lower: J,
     upper: J,
     lowerOpen?: boolean,
     upperOpen?: boolean
   ): IDBKeyRange<J>,
-  static only<J>(value: J): IDBKeyRange<J>,
-  static lowerBound<J>(bound: J, open?: boolean): IDBKeyRange<J>,
-  static upperBound<J>(bound: J, open?: boolean): IDBKeyRange<J>,
+  only<J>(value: J): IDBKeyRange<J>,
+  lowerBound<J>(bound: J, open?: boolean): IDBKeyRange<J>,
+  upperBound<J>(bound: J, open?: boolean): IDBKeyRange<J>,
   lower: K,
   upper: K,
   lowerOpen: boolean,

@@ -5,9 +5,9 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
 import { getProfileViewOptions } from '../../reducers/profile-view';
 import type { RequestedLib } from '../../types/reducers';
+import simpleConnect from '../../utils/connect';
 
 function englishSgPlLibrary(count) {
   return count === 1 ? 'library' : 'libraries';
@@ -58,8 +58,10 @@ class SymbolicationStatusOverlay extends PureComponent<Props> {
     return <div className="symbolicationStatusOverlay hidden" />;
   }
 }
-
-export default connect(state => ({
-  symbolicationStatus: getProfileViewOptions(state).symbolicationStatus,
-  waitingForLibs: getProfileViewOptions(state).waitingForLibs,
-}))(SymbolicationStatusOverlay);
+export default simpleConnect({
+  mapStateToProps: state => ({
+    symbolicationStatus: getProfileViewOptions(state).symbolicationStatus,
+    waitingForLibs: getProfileViewOptions(state).waitingForLibs,
+  }),
+  component: SymbolicationStatusOverlay,
+});

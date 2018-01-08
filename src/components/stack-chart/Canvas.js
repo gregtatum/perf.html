@@ -22,26 +22,18 @@ import type {
 } from '../../profile-logic/stack-timing';
 import type { GetCategory } from '../../profile-logic/color-categories';
 import type { GetLabel } from '../../profile-logic/labeling-strategies';
-import type { Action, ProfileSelection } from '../../types/actions';
+import type { ViewportProps } from '../shared/chart/Viewport';
 
 type Props = {
   thread: Thread,
   interval: Milliseconds,
   rangeStart: Milliseconds,
   rangeEnd: Milliseconds,
-  containerWidth: CssPixels,
-  containerHeight: CssPixels,
-  viewportLeft: UnitIntervalOfProfileRange,
-  viewportRight: UnitIntervalOfProfileRange,
-  viewportTop: CssPixels,
-  viewportBottom: CssPixels,
   stackTimingByDepth: StackTimingByDepth,
   stackFrameHeight: CssPixels,
   getCategory: GetCategory,
   getLabel: GetLabel,
-  updateProfileSelection: ProfileSelection => Action,
-  isDragging: boolean,
-  isRowExpanded: boolean,
+  ...ViewportProps,
 };
 
 type HoveredStackTiming = {
@@ -192,13 +184,7 @@ class StackChartCanvas extends React.PureComponent<Props> {
     depth,
     stackTableIndex,
   }: HoveredStackTiming): React.Node {
-    const {
-      thread,
-      getLabel,
-      getCategory,
-      stackTimingByDepth,
-      isRowExpanded,
-    } = this.props;
+    const { thread, getLabel, getCategory, stackTimingByDepth } = this.props;
     const stackTiming = stackTimingByDepth[depth];
 
     const duration =
@@ -211,36 +197,32 @@ class StackChartCanvas extends React.PureComponent<Props> {
     const funcIndex = thread.frameTable.func[frameIndex];
 
     let resourceOrFileName = null;
-    // Only show resources or filenames if the chart is expanded, as collapsed stacks
-    // would show incorrect details about a group of stacks.
-    if (isRowExpanded) {
-      // Only JavaScript functions have a filename.
-      const fileNameIndex = thread.funcTable.fileName[funcIndex];
-      if (fileNameIndex !== null) {
-        // Because of our use of Grid Layout, all our elements need to be direct
-        // children of the grid parent. That's why we use arrays here, to add
-        // the elements as direct children.
-        resourceOrFileName = [
-          <div className="tooltipLabel" key="file">
-            File:
-          </div>,
-          thread.stringTable.getString(fileNameIndex),
-        ];
-      } else {
-        const resourceIndex = thread.funcTable.resource[funcIndex];
-        if (resourceIndex !== -1) {
-          const resourceNameIndex = thread.resourceTable.name[resourceIndex];
-          if (resourceNameIndex !== -1) {
-            // Because of our use of Grid Layout, all our elements need to be direct
-            // children of the grid parent. That's why we use arrays here, to add
-            // the elements as direct children.
-            resourceOrFileName = [
-              <div className="tooltipLabel" key="resource">
-                Resource:
-              </div>,
-              thread.stringTable.getString(resourceNameIndex),
-            ];
-          }
+    // Only JavaScript functions have a filename.
+    const fileNameIndex = thread.funcTable.fileName[funcIndex];
+    if (fileNameIndex !== null) {
+      // Because of our use of Grid Layout, all our elements need to be direct
+      // children of the grid parent. That's why we use arrays here, to add
+      // the elements as direct children.
+      resourceOrFileName = [
+        <div className="tooltipLabel" key="file">
+          File:
+        </div>,
+        thread.stringTable.getString(fileNameIndex),
+      ];
+    } else {
+      const resourceIndex = thread.funcTable.resource[funcIndex];
+      if (resourceIndex !== -1) {
+        const resourceNameIndex = thread.resourceTable.name[resourceIndex];
+        if (resourceNameIndex !== -1) {
+          // Because of our use of Grid Layout, all our elements need to be direct
+          // children of the grid parent. That's why we use arrays here, to add
+          // the elements as direct children.
+          resourceOrFileName = [
+            <div className="tooltipLabel" key="resource">
+              Resource:
+            </div>,
+            thread.stringTable.getString(resourceNameIndex),
+          ];
         }
       }
     }

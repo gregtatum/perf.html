@@ -131,6 +131,6 @@ export default connect(
   { updateProfileSelection }
 )(StackChartGraph);
 
-function viewportNeedsUpdate(prevProps, newProps) {
+function viewportNeedsUpdate<T: Object>(prevProps: T, newProps: T) {
   return prevProps.stackTimingByDepth !== newProps.stackTimingByDepth;
 }

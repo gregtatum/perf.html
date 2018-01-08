@@ -10,6 +10,7 @@ import { oneLine } from 'common-tags';
 
 import type { Thread } from '../../types/profile';
 import type { Milliseconds, StartEndRange } from '../../types/units';
+import type { SizeProps } from '../shared/WithSize';
 
 import './EmptyThreadIndicator.css';
 
@@ -17,14 +18,13 @@ type SyntheticCssDeclarations = {
   [string]: string | number,
 };
 
-type Props = {|
+type Props = SizeProps & {
   +rangeStart: Milliseconds,
   +rangeEnd: Milliseconds,
-  +width: number,
   +thread: Thread,
   +interval: Milliseconds,
   +unfilteredSamplesRange: StartEndRange | null,
-|};
+};
 
 class EmptyThreadIndicator extends PureComponent<Props> {
   _canvas: HTMLCanvasElement | null;

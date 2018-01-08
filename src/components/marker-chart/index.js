@@ -13,6 +13,7 @@ import {
   getProfileViewOptions,
 } from '../../reducers/profile-view';
 import { updateProfileSelection } from '../../actions/profile-view';
+import { getSelectedThreadIndex } from '../../reducers/url-state';
 
 import type {
   TracingMarker,
@@ -29,7 +30,6 @@ require('./index.css');
 const ROW_HEIGHT = 16;
 
 type Props = {
-  isRowExpanded: boolean,
   maxMarkerRows: number,
   isSelected: boolean,
   timeRange: { start: Milliseconds, end: Milliseconds },
@@ -54,7 +54,6 @@ class MarkerChart extends React.PureComponent<Props> {
 
   render() {
     const {
-      isRowExpanded,
       maxMarkerRows,
       isSelected,
       timeRange,
@@ -81,7 +80,6 @@ class MarkerChart extends React.PureComponent<Props> {
         <MarkerChartCanvas
           key={threadIndex}
           // ChartViewport props
-          isRowExpanded={isRowExpanded}
           isSelected={isSelected}
           timeRange={timeRange}
           maxViewportHeight={maxViewportHeight}
@@ -102,13 +100,12 @@ class MarkerChart extends React.PureComponent<Props> {
   }
 }
 
-function viewportNeedsUpdate(prevProps, newProps) {
+function viewportNeedsUpdate<T: Props>(prevProps: T, newProps: T) {
   return prevProps.markerTimingRows !== newProps.markerTimingRows;
 }
 
 export default connect(
-  (state, ownProps) => {
-    const { threadIndex } = ownProps;
+  state => {
     const markers = selectedThreadSelectors.getTracingMarkers(state);
     const markerTimingRows = selectedThreadSelectors.getMarkerTiming(state);
 
@@ -118,7 +115,7 @@ export default connect(
       maxMarkerRows: markerTimingRows.length,
       timeRange: getDisplayRange(state),
       interval: getProfileInterval(state),
-      threadIndex,
+      threadIndex: getSelectedThreadIndex(state),
       selection: getProfileViewOptions(state).selection,
       threadName: selectedThreadSelectors.getFriendlyThreadName(state),
       processDetails: selectedThreadSelectors.getThreadProcessDetails(state),

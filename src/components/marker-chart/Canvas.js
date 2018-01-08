@@ -21,6 +21,7 @@ import type {
   IndexIntoMarkerTiming,
 } from '../../types/profile-derived';
 import type { Action, ProfileSelection } from '../../types/actions';
+import type { ViewportProps } from '../shared/chart/Viewport';
 
 type MarkerDrawingInformation = {
   x: CssPixels,
@@ -33,17 +34,11 @@ type MarkerDrawingInformation = {
 type Props = {
   rangeStart: Milliseconds,
   rangeEnd: Milliseconds,
-  containerWidth: CssPixels,
-  containerHeight: CssPixels,
-  viewportLeft: UnitIntervalOfProfileRange,
-  viewportRight: UnitIntervalOfProfileRange,
-  viewportTop: CssPixels,
-  viewportBottom: CssPixels,
   markerTimingRows: MarkerTimingRows,
   rowHeight: CssPixels,
   markers: TracingMarker[],
   updateProfileSelection: ProfileSelection => Action,
-  isDragging: boolean,
+  ...ViewportProps,
 };
 
 type State = {
