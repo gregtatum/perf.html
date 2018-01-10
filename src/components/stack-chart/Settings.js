@@ -5,7 +5,7 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import simpleConnect from '../../utils/connect';
 import {
   changeHidePlatformDetails,
   changeInvertCallstack,
@@ -16,13 +16,23 @@ import {
 } from '../../reducers/url-state';
 import StackSearchField from '../shared/StackSearchField';
 
+import type { SimpleConnectOptions } from '../../utils/connect';
+
 import './Settings.css';
 
-type Props = {|
-  +hidePlatformDetails: boolean,
+type StateProps = {|
   +invertCallstack: boolean,
+  +hidePlatformDetails: boolean,
+|};
+
+type DispatchProps = {|
   +changeHidePlatformDetails: boolean => void,
   +changeInvertCallstack: boolean => void,
+|};
+
+type Props = {|
+  ...StateProps,
+  ...DispatchProps,
 |};
 
 class StackChartSettings extends PureComponent<Props> {
@@ -78,13 +88,14 @@ class StackChartSettings extends PureComponent<Props> {
   }
 }
 
-export default connect(
-  state => ({
+export default simpleConnect({
+  mapStateToProps: state => ({
     invertCallstack: getInvertCallstack(state),
     hidePlatformDetails: getHidePlatformDetails(state),
   }),
-  {
+  mapDispatchToProps: {
     changeHidePlatformDetails,
     changeInvertCallstack,
-  }
-)(StackChartSettings);
+  },
+  component: StackChartSettings,
+});

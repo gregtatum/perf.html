@@ -53,7 +53,7 @@ it('renders StackChartGraph correctly', () => {
 
   const stackChart = renderer.create(
     <Provider store={store}>
-      <StackChartGraph threadIndex={0} viewHeight={1000} />
+      <StackChartGraph />
     </Provider>,
     { createNodeMock }
   );

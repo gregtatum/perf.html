@@ -4,7 +4,7 @@
 
 // @flow
 import * as React from 'react';
-import { connect } from 'react-redux';
+import simpleConnect from '../../utils/connect';
 import StackChartCanvas from './Canvas';
 import {
   selectedThreadSelectors,
@@ -28,24 +28,33 @@ import type { StackTimingByDepth } from '../../profile-logic/stack-timing';
 import type { GetCategory } from '../../profile-logic/color-categories';
 import type { GetLabel } from '../../profile-logic/labeling-strategies';
 import type { ProfileSelection } from '../../types/actions';
+import type { SimpleConnectOptions } from '../../utils/connect';
 
 require('./index.css');
 
 const STACK_FRAME_HEIGHT = 16;
 
-type Props = {
-  thread: Thread,
-  maxStackDepth: number,
-  stackTimingByDepth: StackTimingByDepth,
-  timeRange: { start: Milliseconds, end: Milliseconds },
-  interval: Milliseconds,
-  getCategory: GetCategory,
-  getLabel: GetLabel,
+type StateProps = {|
+  +thread: Thread,
+  +maxStackDepth: number,
+  +stackTimingByDepth: StackTimingByDepth,
+  +timeRange: { start: Milliseconds, end: Milliseconds },
+  +interval: Milliseconds,
+  +getCategory: GetCategory,
+  +getLabel: GetLabel,
+  +selection: ProfileSelection,
+  +threadName: string,
+  +processDetails: string,
+|};
+
+type DispatchProps = {|
   updateProfileSelection: typeof updateProfileSelection,
-  selection: ProfileSelection,
-  threadName: string,
-  processDetails: string,
-};
+|};
+
+type Props = {|
+  ...StateProps,
+  ...DispatchProps,
+|};
 
 class StackChartGraph extends React.PureComponent<Props> {
   /**
@@ -107,8 +116,8 @@ class StackChartGraph extends React.PureComponent<Props> {
   }
 }
 
-export default connect(
-  state => {
+export default simpleConnect({
+  mapStateToProps: state => {
     const stackTimingByDepth = selectedThreadSelectors.getStackTimingByDepthForStackChart(
       state
     );
@@ -128,8 +137,9 @@ export default connect(
       processDetails: selectedThreadSelectors.getThreadProcessDetails(state),
     };
   },
-  { updateProfileSelection }
-)(StackChartGraph);
+  mapDispatchToProps: { updateProfileSelection },
+  component: StackChartGraph,
+});
 
 function viewportNeedsUpdate<T: Object>(prevProps: T, newProps: T) {
   return prevProps.stackTimingByDepth !== newProps.stackTimingByDepth;

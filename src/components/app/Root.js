@@ -4,7 +4,8 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import { connect, Provider } from 'react-redux';
+import { Provider } from 'react-redux';
+import simpleConnect from '../../utils/connect';
 
 import {
   retrieveProfileFromAddon,
@@ -13,7 +14,6 @@ import {
 } from '../../actions/receive-profile';
 import ProfileViewer from './ProfileViewer';
 import Home from './Home';
-import { urlFromState, stateFromLocation } from '../../url-handling';
 import { getView } from '../../reducers/app';
 import {
   getDataSource,
@@ -26,6 +26,7 @@ import FooterLinks from './FooterLinks';
 import type { Store } from '../../types/store';
 import type { AppViewState, State } from '../../types/reducers';
 import type { DataSource } from '../../types/actions';
+import type { SimpleConnectOptions } from '../../utils/connect';
 
 require('./Root.css');
 
@@ -66,16 +67,22 @@ function toParagraphs(str: string) {
     );
   });
 }
+type ProfileViewStateProps = {|
+  +view: AppViewState,
+  +dataSource: DataSource,
+  +hash: string,
+  +profileUrl: string,
+|};
 
-type ProfileViewProps = {
-  view: AppViewState,
-  dataSource: DataSource,
-  hash: string,
-  profileUrl: string,
-  retrieveProfileFromAddon: typeof retrieveProfileFromAddon,
-  retrieveProfileFromStore: typeof retrieveProfileFromStore,
-  retrieveProfileFromUrl: typeof retrieveProfileFromUrl,
-};
+type ProfileViewDispatchProps = {|
+  +retrieveProfileFromAddon: typeof retrieveProfileFromAddon,
+  +retrieveProfileFromStore: typeof retrieveProfileFromStore,
+  +retrieveProfileFromUrl: typeof retrieveProfileFromUrl,
+|};
+type ProfileViewProps = {|
+  ...ProfileViewStateProps,
+  ...ProfileViewDispatchProps,
+|};
 
 class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
   componentDidMount() {
@@ -199,15 +206,25 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
   }
 }
 
-const ProfileViewWhenReady = connect(
-  (state: State) => ({
+const options: SimpleConnectOptions<
+  {||},
+  ProfileViewStateProps,
+  ProfileViewDispatchProps
+> = {
+  mapStateToProps: (state: State) => ({
     view: getView(state),
     dataSource: getDataSource(state),
     hash: getHash(state),
     profileUrl: getProfileUrl(state),
   }),
-  { retrieveProfileFromStore, retrieveProfileFromUrl, retrieveProfileFromAddon }
-)(ProfileViewWhenReadyImpl);
+  mapDispatchToProps: {
+    retrieveProfileFromStore,
+    retrieveProfileFromUrl,
+    retrieveProfileFromAddon,
+  },
+  component: ProfileViewWhenReadyImpl,
+};
+const ProfileViewWhenReady = simpleConnect(options);
 
 type RootProps = {
   store: Store,
@@ -218,10 +235,7 @@ export default class Root extends PureComponent<RootProps> {
     const { store } = this.props;
     return (
       <Provider store={store}>
-        <UrlManager
-          urlFromState={urlFromState}
-          stateFromLocation={stateFromLocation}
-        >
+        <UrlManager>
           <ProfileViewWhenReady />
         </UrlManager>
       </Provider>

@@ -5,10 +5,12 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import simpleConnect from '../../utils/connect';
 import { changeMarkersSearchString } from '../../actions/profile-view';
 import { getMarkersSearchString } from '../../reducers/url-state';
 import IdleSearchField from '../shared/IdleSearchField';
+
+import type { SimpleConnectOptions } from '../../utils/connect';
 
 import './Settings.css';
 
@@ -50,9 +52,10 @@ class Settings extends PureComponent<Props> {
   }
 }
 
-export default connect(
-  state => ({
+export default simpleConnect({
+  mapStateToProps: state => ({
     searchString: getMarkersSearchString(state),
   }),
-  { changeMarkersSearchString }
-)(Settings);
+  mapDispatchToProps: { changeMarkersSearchString },
+  component: Settings,
+});

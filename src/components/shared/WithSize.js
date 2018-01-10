@@ -7,10 +7,10 @@ import * as React from 'react';
 import { findDOMNode } from 'react-dom';
 import type { CssPixels } from '../../types/units';
 
-export type SizeProps = {
+export type SizeProps = {|
   width: CssPixels,
   height: CssPixels,
-};
+|};
 
 /**
  * Wraps a React component and makes 'width' and 'height' available in the
@@ -25,7 +25,7 @@ export type SizeProps = {
 export function withSize<
   // The SizeProps act as a bounds on the generic props. This ensures that the props
   // that passed in take into account they are being given the width and height.
-  Props: SizeProps
+  Props: { ...SizeProps }
 >(
   Wrapped: React.ComponentType<Props>
 ): React.ComponentType<

@@ -4,8 +4,7 @@
 
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import actions from '../../actions';
+import simpleConnect from '../../utils/connect';
 import {
   getTasksByThread,
   getProfileTaskTracerData,
@@ -170,10 +169,10 @@ ProfileTaskTracerView.propTypes = {
   rangeEnd: PropTypes.number.isRequired,
 };
 
-export default connect(
-  state => ({
+export default simpleConnect({
+  mapStateToProps: state => ({
     tasktracer: getProfileTaskTracerData(state),
     tasksByThread: getTasksByThread(state),
   }),
-  actions
-)(ProfileTaskTracerView);
+  component: ProfileTaskTracerView,
+});

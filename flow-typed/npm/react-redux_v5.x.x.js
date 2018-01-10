@@ -84,6 +84,7 @@ declare module "react-redux" {
 
   declare type Null = null | void;
 
+  // Only use the monomorphic form of everything filled out:
   declare function connect<S, A, OP, SP, DP, P>(
     mapStateToProps: MapStateToProps<S, OP, SP> | Null,
     mapDispatchToProps: MapDispatchToProps<A, OP, DP> | Null,

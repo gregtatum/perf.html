@@ -6,8 +6,10 @@
 
 import React, { PureComponent } from 'react';
 import { getProfileViewOptions } from '../../reducers/profile-view';
-import type { RequestedLib } from '../../types/reducers';
 import simpleConnect from '../../utils/connect';
+
+import type { RequestedLib } from '../../types/reducers';
+import type { SimpleConnectOptions } from '../../utils/connect';
 
 function englishSgPlLibrary(count) {
   return count === 1 ? 'library' : 'libraries';
@@ -26,10 +28,14 @@ function englishListJoin(list) {
   }
 }
 
-type Props = {
-  symbolicationStatus: string,
-  waitingForLibs: Set<RequestedLib>,
-};
+type StateProps = {|
+  +symbolicationStatus: string,
+  +waitingForLibs: Set<RequestedLib>,
+|};
+
+type Props = {|
+  ...StateProps,
+|};
 
 class SymbolicationStatusOverlay extends PureComponent<Props> {
   render() {
@@ -58,10 +64,12 @@ class SymbolicationStatusOverlay extends PureComponent<Props> {
     return <div className="symbolicationStatusOverlay hidden" />;
   }
 }
-export default simpleConnect({
+
+const options: SimpleConnectOptions<{||}, StateProps, {||}> = {
   mapStateToProps: state => ({
     symbolicationStatus: getProfileViewOptions(state).symbolicationStatus,
     waitingForLibs: getProfileViewOptions(state).waitingForLibs,
   }),
   component: SymbolicationStatusOverlay,
-});
+};
+export default simpleConnect(options);

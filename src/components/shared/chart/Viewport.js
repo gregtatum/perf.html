@@ -5,7 +5,7 @@
 // @flow
 import * as React from 'react';
 import classNames from 'classnames';
-import { connect } from 'react-redux';
+import simpleConnect from '../../../utils/connect';
 import { getHasZoomedViaMousewheel } from '../../../reducers/app';
 import { setHasZoomedViaMousewheel } from '../../../actions/stack-chart';
 
@@ -16,26 +16,30 @@ import type {
 } from '../../../types/units';
 import typeof { updateProfileSelection as UpdateProfileSelection } from '../../../actions/profile-view';
 import type { ProfileSelection } from '../../../types/actions';
+import type { SimpleConnectOptions } from '../../../utils/connect';
 
 const { DOM_DELTA_PAGE, DOM_DELTA_LINE } =
   typeof window === 'object' && window.WheelEvent
     ? new WheelEvent('mouse')
     : { DOM_DELTA_LINE: 1, DOM_DELTA_PAGE: 2 };
 
-// These are the props consumed by this Higher-Order Component (HOC)
+// These are the props consumed by this Higher-Order Component (HOC), but can be
+// optionally used by the wrapped component.
 type InternalViewportProps = {|
-  // These props are really hard to correctly type, so just leave them as objects.
-  viewportNeedsUpdate: (prevProps: Object, nextProps: Object) => boolean,
   timeRange: StartEndRange,
   maxViewportHeight: number,
   maximumZoom: UnitIntervalOfProfileRange,
   updateProfileSelection: UpdateProfileSelection,
   selection: ProfileSelection,
+  // These props are really hard to correctly type, so just leave them as objects:
+  viewportNeedsUpdate: (prevProps: Object, nextProps: Object) => boolean,
   setHasZoomedViaMousewheel?: () => void,
   hasZoomedViaMousewheel?: boolean,
 |};
 
-type InjectedViewportProps = {|
+// These viewport values are computed dynamically by the HOC, and then spread into
+// the props of the wrapped component.
+type ComputedViewport = {|
   containerWidth: CssPixels,
   containerHeight: CssPixels,
   viewportLeft: UnitIntervalOfProfileRange,
@@ -45,10 +49,11 @@ type InjectedViewportProps = {|
   isDragging: boolean,
 |};
 
-// These are the props injected by the HOC to WrappedComponent
+// The combined values can be imported by the wrapped components, and used in their
+// prop definitions.
 export type ViewportProps = {|
   ...InternalViewportProps,
-  ...InjectedViewportProps,
+  ...ComputedViewport,
 |};
 
 type State = {|
@@ -94,38 +99,25 @@ require('./Viewport.css');
  * viewportRight += mouseMoveDelta * unitPixel
  * viewportLeft += mouseMoveDelta * unitPixel
  **/
-/**
- * About the Flow typing:
-!!!!!!!!!!!!!!!!!!!!!!!!FIX THIS DOCUMENTATION!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- *
- * - `Props` are the props for the returned component. It means that they are the
- *   props that the user for this component will need to specify. From the
- *   generic definition `<Props: InternalViewportProps>`, they must include the
- *   properties consumed par this HOC.
- *
- * - The argument, which is the augmented component (the `WrappedComponent`),
- *   needs to accept both the `ViewportProps` and some supertype of `Props`.
- *   A supertype of `Props` is an object will some properties of
- *   `Props` but not all of them.
- *   To understand what this means to Flow, we need, like sometimes, to think
- *   backwards: from the props of `WrappedComponent`, take out `ViewportProps`,
- *   and make it part of `Props`.
- *
- * So `Props` will need to hold both `InternalViewportProps` as said earlier and the
- * props from `WrappedComponent` that aren't `Injectedprops`.
- * This is exactly what we want Flow to check: that the user of this HOC
- * properly passes all these props!
- */
-export default function withChartViewport<WrappedProps: InjectedViewportProps>(
+export default function withChartViewport<
+  // The wrapped component's props should support the ViewportProps, even if they
+  // do not actively use all of them.
+  WrappedProps: ViewportProps
+>(
+  // Convert the WrappedProps from exact to inexact:
   WrappedComponent: React.ComponentType<{ ...WrappedProps }>
 ): React.ComponentType<{
+  // Finally the returned component takes as input the InternalViewportProps, and
+  // the WrappedProps, but NOT the computed viewport:
   ...InternalViewportProps,
-  ...$Diff<WrappedProps, InjectedViewportProps>,
+  ...$Diff<WrappedProps, ComputedViewport>,
 }> {
+  // Repeat the Props definition with a type alias.
   type Props = {
     ...InternalViewportProps,
-    ...$Diff<WrappedProps, InjectedViewportProps>,
+    ...$Diff<WrappedProps, ComputedViewport>,
   };
+
   class ChartViewport extends React.PureComponent<Props, State> {
     shiftScrollId: number;
     zoomRangeSelectionScheduled: boolean;
@@ -483,7 +475,7 @@ export default function withChartViewport<WrappedProps: InjectedViewportProps>(
         hidden: hasZoomedViaMousewheel || !isShiftScrollHintVisible,
       });
 
-      const viewportProps: InjectedViewportProps = {
+      const computedViewport: ComputedViewport = {
         containerWidth,
         containerHeight,
         viewportLeft,
@@ -500,7 +492,7 @@ export default function withChartViewport<WrappedProps: InjectedViewportProps>(
           onMouseDown={this._mouseDownListener}
           ref={this._takeContainerRef}
         >
-          <WrappedComponent {...this.props} {...viewportProps} />
+          <WrappedComponent {...this.props} {...computedViewport} />
           <div className={shiftScrollClassName}>
             Zoom Chart:
             <kbd className="chartViewportShiftScrollKbd">Shift</kbd>
@@ -513,12 +505,13 @@ export default function withChartViewport<WrappedProps: InjectedViewportProps>(
 
   // Connect this component so that it knows whether or not to nag the user to use shift
   // for zooming on range selections.
-  return connect(
-    state => ({
+  return simpleConnect({
+    mapStateToProps: state => ({
       hasZoomedViaMousewheel: getHasZoomedViaMousewheel(state),
     }),
-    { setHasZoomedViaMousewheel }
-  )(ChartViewport);
+    mapDispatchToProps: { setHasZoomedViaMousewheel },
+    component: ChartViewport,
+  });
 }
 
 function clamp(min, max, value) {

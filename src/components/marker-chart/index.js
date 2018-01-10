@@ -4,7 +4,7 @@
 
 // @flow
 import * as React from 'react';
-import { connect } from 'react-redux';
+import simpleConnect from '../../utils/connect';
 import MarkerChartCanvas from './Canvas';
 import {
   selectedThreadSelectors,
@@ -24,6 +24,7 @@ import type {
   UnitIntervalOfProfileRange,
 } from '../../types/units';
 import type { ProfileSelection } from '../../types/actions';
+import type { SimpleConnectOptions } from '../../utils/connect';
 
 require('./index.css');
 
@@ -104,8 +105,8 @@ function viewportNeedsUpdate<T: Props>(prevProps: T, newProps: T) {
   return prevProps.markerTimingRows !== newProps.markerTimingRows;
 }
 
-export default connect(
-  state => {
+export default simpleConnect({
+  mapStateToProps: state => {
     const markers = selectedThreadSelectors.getTracingMarkers(state);
     const markerTimingRows = selectedThreadSelectors.getMarkerTiming(state);
 
@@ -121,5 +122,6 @@ export default connect(
       processDetails: selectedThreadSelectors.getThreadProcessDetails(state),
     };
   },
-  { updateProfileSelection }
-)(MarkerChart);
+  mapDispatchToProps: { updateProfileSelection },
+  component: MarkerChart,
+});

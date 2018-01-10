@@ -3,23 +3,100 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 // @flow
 
+import * as React from 'react';
 import { connect } from 'react-redux';
 import type {} from 'react-redux';
+import type { Dispatch, State } from '../types/store';
+
+type MapStateToProps<OwnProps: Object, StateProps: Object> = (
+  state: State,
+  ownProps: OwnProps
+) => StateProps;
+
+type MapDispatchToProps<OwnProps: Object, DispatchProps: Object> =
+  | ((dispatch: Dispatch, ownProps: OwnProps) => DispatchProps)
+  | DispatchProps;
+
+type MergeProps<
+  StateProps,
+  DispatchProps: Object,
+  OwnProps: Object,
+  Props: Object
+> = (
+  stateProps: StateProps,
+  dispatchProps: DispatchProps,
+  ownProps: OwnProps
+) => Props;
 
 type ConnectOptions = {
-  mapStateToProps?: *,
-  mapDispatchToProps?: *,
-  mergeProps?: *,
-  options?: *,
-  component: *,
+  pure?: boolean,
+  areStatesEqual?: boolean,
+  areOwnPropsEqual?: boolean,
+  areStatePropsEqual?: boolean,
+  areMergedPropsEqual?: boolean,
+  storeKey?: boolean,
+  withRef?: boolean,
 };
+
+export type SimpleConnectOptions<
+  OwnProps: Object,
+  StateProps: Object,
+  DispatchProps: Object
+> = {
+  mapStateToProps?: MapStateToProps<OwnProps, StateProps>,
+  mapDispatchToProps?: MapDispatchToProps<OwnProps, DispatchProps>,
+  mergeProps?: MergeProps<
+    StateProps,
+    DispatchProps,
+    OwnProps,
+    {
+      ...OwnProps,
+      ...StateProps,
+      ...DispatchProps,
+    }
+  >,
+  options?: ConnectOptions,
+  component:
+    | React.ComponentType<{|
+        ...OwnProps,
+        ...StateProps,
+        ...DispatchProps,
+      |}>
+    | React.ComponentType<{
+        ...OwnProps,
+        ...StateProps,
+        ...DispatchProps,
+      }>,
+};
+
+export type ConnectedComponent<
+  OwnProps: Object,
+  StateProps: Object,
+  DispatchProps: Object
+> =
+  | React.ComponentType<{|
+      ...OwnProps,
+      ...StateProps,
+      ...DispatchProps,
+    |}>
+  | React.StatelessFunctionalComponent<{
+      ...OwnProps,
+      ...StateProps,
+      ...DispatchProps,
+    }>;
 
 /**
  * react-redux's connect function is too polymorphic and problematic. This function
  * is a wrapper to simplify the typing of connect and make it more explicit, and
  * less magical.
  */
-export default function simpleConnect(connectOptions: ConnectOptions) {
+export default function simpleConnect<
+  OwnProps: Object,
+  StateProps: Object,
+  DispatchProps: Object
+>(
+  connectOptions: SimpleConnectOptions<OwnProps, StateProps, DispatchProps>
+): React.ComponentType<OwnProps> {
   const {
     mapStateToProps,
     mapDispatchToProps,
@@ -27,7 +104,12 @@ export default function simpleConnect(connectOptions: ConnectOptions) {
     options,
     component,
   } = connectOptions;
-  return connect(mapStateToProps, mapDispatchToProps, mergeProps, options)(
-    component
-  );
+
+  // Opt out of the flow-typed definition of react-redux's connect, and use our own.
+  return (connect: any)(
+    mapStateToProps,
+    mapDispatchToProps,
+    mergeProps,
+    options
+  )(component);
 }

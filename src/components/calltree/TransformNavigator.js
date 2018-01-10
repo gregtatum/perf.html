@@ -4,30 +4,33 @@
 
 // @flow
 
-import { connect } from 'react-redux';
+import simpleConnect from '../../utils/connect';
 import { selectedThreadSelectors } from '../../reducers/profile-view';
-import { getSelectedThreadIndex } from '../../reducers/url-state';
 import FilterNavigatorBar from './FilterNavigatorBar';
-import type { State } from '../../types/reducers';
 import { popTransformsFromStack } from '../../actions/profile-view';
+
+import type { State } from '../../types/reducers';
+import type { SimpleConnectOptions } from '../../utils/connect';
 
 import './TransformNavigator.css';
 
-export default connect(
-  (state: State) => {
+type Props = $PropertyType<FilterNavigatorBar, 'props'>;
+type DispatchProps = {|
+  onPop: $PropertyType<Props, 'onPop'>,
+|};
+type StateProps = $Diff<Props, StateProps>;
+
+const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
+  mapStateToProps: (state: State) => {
     const items = selectedThreadSelectors.getTransformLabels(state);
     return {
       className: 'calltreeTransformNavigator',
       items,
       selectedItem: items.length - 1,
-      threadIndex: getSelectedThreadIndex(state),
     };
   },
-  { popTransformsFromStack },
-  (stateProps, dispatchProps) => ({
-    className: stateProps.className,
-    items: stateProps.items,
-    selectedItem: stateProps.selectedItem,
-    onPop: i => dispatchProps.popTransformsFromStack(stateProps.threadIndex, i),
-  })
-)(FilterNavigatorBar);
+  mapDispatchToProps: { onPop: popTransformsFromStack },
+  component: FilterNavigatorBar,
+};
+
+export default simpleConnect(options);

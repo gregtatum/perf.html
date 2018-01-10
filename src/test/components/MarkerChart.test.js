@@ -67,7 +67,7 @@ it('renders MarkerChart correctly', () => {
 
   const markerChart = renderer.create(
     <Provider store={storeWithProfile(profile)}>
-      <MarkerChart threadIndex={0} viewHeight={1000} />
+      <MarkerChart threadIndex={0} />
     </Provider>,
     { createNodeMock }
   );

@@ -5,7 +5,7 @@
 // @flow
 import React, { PureComponent } from 'react';
 import { ContextMenu, MenuItem } from 'react-contextmenu';
-import { connect } from 'react-redux';
+import simpleConnect from '../../utils/connect';
 import { updateProfileSelection } from '../../actions/profile-view';
 import {
   selectedThreadSelectors,
@@ -21,6 +21,7 @@ import type {
   MarkersTable,
 } from '../../types/profile';
 import type { ProfileSelection } from '../../types/actions';
+import type { SimpleConnectOptions } from '../../utils/connect';
 
 type Props = {
   thread: Thread,
@@ -129,8 +130,8 @@ class MarkersContextMenu extends PureComponent<Props> {
   }
 }
 
-export default connect(
-  state => ({
+export default simpleConnect({
+  mapStateToProps: state => ({
     thread: selectedThreadSelectors.getThread(state),
     markers: selectedThreadSelectors.getSearchFilteredMarkers(state),
     selection: getProfileViewOptions(state).selection,
@@ -138,5 +139,6 @@ export default connect(
     selectedMarker: selectedThreadSelectors.getViewOptions(state)
       .selectedMarker,
   }),
-  { updateProfileSelection }
-)(MarkersContextMenu);
+  mapDispatchToProps: { updateProfileSelection },
+  component: MarkersContextMenu,
+});
