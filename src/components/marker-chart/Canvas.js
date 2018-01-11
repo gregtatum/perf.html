@@ -8,6 +8,7 @@ import withChartViewport from '../shared/chart/Viewport';
 import ChartCanvas from '../shared/chart/Canvas';
 import MarkerTooltipContents from '../shared/MarkerTooltipContents';
 import TextMeasurement from '../../utils/text-measurement';
+import { updateProfileSelection } from '../../actions/profile-view';
 import { BLUE_40 } from '../../utils/colors';
 
 import type {
@@ -36,6 +37,7 @@ export type OwnProps = {|
   +markerTimingRows: MarkerTimingRows,
   +rowHeight: CssPixels,
   +markers: TracingMarker[],
+  +updateProfileSelection: typeof updateProfileSelection,
 |};
 
 type Props = {|
@@ -314,7 +316,7 @@ class MarkerChartCanvas extends React.PureComponent<Props, State> {
     if (markerIndex === null) {
       return;
     }
-    const { markers, viewport: { updateProfileSelection } } = this.props;
+    const { markers, updateProfileSelection } = this.props;
     const marker = markers[markerIndex];
     updateProfileSelection({
       hasSelection: true,

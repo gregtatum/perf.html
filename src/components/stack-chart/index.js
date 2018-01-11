@@ -17,6 +17,7 @@ import {
   getLabelingStrategy,
 } from '../../reducers/stack-chart';
 import StackChartSettings from './Settings';
+import { updateProfileSelection } from '../../actions/profile-view';
 
 import type { Thread } from '../../types/profile';
 import type {
@@ -47,8 +48,13 @@ type StateProps = {|
   +processDetails: string,
 |};
 
+type DispatchProps = {|
+  +updateProfileSelection: typeof updateProfileSelection,
+|};
+
 type Props = {|
   ...StateProps,
+  ...DispatchProps,
 |};
 
 class StackChartGraph extends React.PureComponent<Props> {
@@ -72,6 +78,7 @@ class StackChartGraph extends React.PureComponent<Props> {
       selection,
       threadName,
       processDetails,
+      updateProfileSelection,
     } = this.props;
 
     const maxViewportHeight = maxStackDepth * STACK_FRAME_HEIGHT;
@@ -102,6 +109,7 @@ class StackChartGraph extends React.PureComponent<Props> {
               getCategory: getCategory,
               getLabel: getLabel,
               stackFrameHeight: STACK_FRAME_HEIGHT,
+              updateProfileSelection: updateProfileSelection,
             }}
           />
         </div>
@@ -110,7 +118,7 @@ class StackChartGraph extends React.PureComponent<Props> {
   }
 }
 
-const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => {
     const stackTimingByDepth = selectedThreadSelectors.getStackTimingByDepthForStackChart(
       state
@@ -131,6 +139,7 @@ const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
       processDetails: selectedThreadSelectors.getThreadProcessDetails(state),
     };
   },
+  mapDispatchToProps: { updateProfileSelection },
   component: StackChartGraph,
 };
 export default explicitConnect(options);

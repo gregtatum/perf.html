@@ -23,15 +23,6 @@ const { DOM_DELTA_PAGE, DOM_DELTA_LINE } =
     ? new WheelEvent('mouse')
     : { DOM_DELTA_LINE: 1, DOM_DELTA_PAGE: 2 };
 
-type ViewportStateProps = {|
-  +hasZoomedViaMousewheel?: boolean,
-|};
-
-type ViewportDispatchProps = {|
-  +updateProfileSelection: typeof updateProfileSelection,
-  +setHasZoomedViaMousewheel?: typeof setHasZoomedViaMousewheel,
-|};
-
 // These viewport values are computed dynamically by the HOC, and then passed into
 // the props of the wrapped component.
 export type Viewport = {|
@@ -42,7 +33,15 @@ export type Viewport = {|
   +viewportTop: CssPixels,
   +viewportBottom: CssPixels,
   +isDragging: boolean,
+|};
+
+type ViewportStateProps = {|
+  +hasZoomedViaMousewheel?: boolean,
+|};
+
+type ViewportDispatchProps = {|
   +updateProfileSelection: typeof updateProfileSelection,
+  +setHasZoomedViaMousewheel?: typeof setHasZoomedViaMousewheel,
 |};
 
 // These are the props consumed by this Higher-Order Component (HOC), but can be
@@ -472,11 +471,7 @@ export default function withChartViewport<
     }
 
     render() {
-      const {
-        chartProps,
-        hasZoomedViaMousewheel,
-        updateProfileSelection,
-      } = this.props;
+      const { chartProps, hasZoomedViaMousewheel } = this.props;
 
       const {
         containerWidth,
@@ -507,7 +502,6 @@ export default function withChartViewport<
         viewportTop,
         viewportBottom,
         isDragging,
-        updateProfileSelection,
       };
 
       return (

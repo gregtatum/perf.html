@@ -13,6 +13,7 @@ import {
   getProfileViewOptions,
 } from '../../reducers/profile-view';
 import { getSelectedThreadIndex } from '../../reducers/url-state';
+import { updateProfileSelection } from '../../actions/profile-view';
 
 import type {
   TracingMarker,
@@ -30,7 +31,9 @@ require('./index.css');
 
 const ROW_HEIGHT = 16;
 
-type OwnProps = {||};
+type DispatchProps = {|
+  +updateProfileSelection: typeof updateProfileSelection,
+|};
 
 type StateProps = {|
   +markers: TracingMarker[],
@@ -45,8 +48,8 @@ type StateProps = {|
 |};
 
 type Props = {|
-  ...OwnProps,
   ...StateProps,
+  ...DispatchProps,
 |};
 
 class MarkerChart extends React.PureComponent<Props> {
@@ -68,6 +71,7 @@ class MarkerChart extends React.PureComponent<Props> {
       selection,
       threadName,
       processDetails,
+      updateProfileSelection,
     } = this.props;
 
     // The viewport needs to know about the height of what it's drawing, calculate
@@ -96,6 +100,7 @@ class MarkerChart extends React.PureComponent<Props> {
             markerTimingRows: markerTimingRows,
             markers: markers,
             rowHeight: ROW_HEIGHT,
+            updateProfileSelection: updateProfileSelection,
           }}
         />
       </div>
@@ -110,7 +115,7 @@ function viewportNeedsUpdate(
   return prevProps.markerTimingRows !== newProps.markerTimingRows;
 }
 
-const options: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => {
     const markers = selectedThreadSelectors.getTracingMarkers(state);
     const markerTimingRows = selectedThreadSelectors.getMarkerTiming(state);
@@ -127,6 +132,7 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
       processDetails: selectedThreadSelectors.getThreadProcessDetails(state),
     };
   },
+  mapDispatchToProps: { updateProfileSelection },
   component: MarkerChart,
 };
 export default explicitConnect(options);
