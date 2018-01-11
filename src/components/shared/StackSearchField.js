@@ -4,7 +4,7 @@
 
 // @flow
 import * as React from 'react';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import classNames from 'classnames';
 import IdleSearchField from './IdleSearchField';
 import { changeCallTreeSearchString } from '../../actions/profile-view';
@@ -13,7 +13,7 @@ import {
   getSearchStrings,
 } from '../../reducers/url-state';
 
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 import './StackSearchField.css';
 
@@ -98,7 +98,7 @@ class StackSearchField extends React.PureComponent<Props, State> {
   }
 }
 
-const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     currentSearchString: getCurrentSearchString(state),
     searchStrings: getSearchStrings(state),
@@ -106,4 +106,4 @@ const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapDispatchToProps: { changeCallTreeSearchString },
   component: StackSearchField,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);

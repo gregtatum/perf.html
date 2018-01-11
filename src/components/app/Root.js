@@ -5,7 +5,7 @@
 
 import React, { PureComponent } from 'react';
 import { Provider } from 'react-redux';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 
 import {
   retrieveProfileFromAddon,
@@ -26,7 +26,7 @@ import FooterLinks from './FooterLinks';
 import type { Store } from '../../types/store';
 import type { AppViewState, State } from '../../types/reducers';
 import type { DataSource } from '../../types/actions';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 require('./Root.css');
 
@@ -206,7 +206,7 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
   }
 }
 
-const options: SimpleConnectOptions<
+const options: ExplicitConnectOptions<
   {||},
   ProfileViewStateProps,
   ProfileViewDispatchProps
@@ -224,7 +224,7 @@ const options: SimpleConnectOptions<
   },
   component: ProfileViewWhenReadyImpl,
 };
-const ProfileViewWhenReady = simpleConnect(options);
+const ProfileViewWhenReady = explicitConnect(options);
 
 type RootProps = {
   store: Store,

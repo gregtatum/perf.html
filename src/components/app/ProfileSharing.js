@@ -5,7 +5,7 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import classNames from 'classnames';
 import {
   getProfile,
@@ -29,7 +29,7 @@ import type { StartEndRange } from '../../types/units';
 import type { Profile } from '../../types/profile';
 import type { Action, DataSource } from '../../types/actions';
 import type { SymbolicationStatus } from '../../types/reducers';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 require('./ProfileSharing.css');
 
@@ -475,7 +475,7 @@ const ProfileSharing = ({
     <ProfileDownloadButton profile={profile} rootRange={rootRange} />
   </div>;
 
-const options: SimpleConnectOptions<
+const options: ExplicitConnectOptions<
   {||},
   ProfileSharingStateProps,
   ProfileSharingDispatchProps
@@ -490,4 +490,4 @@ const options: SimpleConnectOptions<
   mapDispatchToProps: { profilePublished: actions.profilePublished },
   component: ProfileSharing,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);

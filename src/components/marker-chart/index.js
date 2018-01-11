@@ -4,7 +4,7 @@
 
 // @flow
 import * as React from 'react';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import MarkerChartCanvas from './Canvas';
 import {
   selectedThreadSelectors,
@@ -23,7 +23,7 @@ import type {
   UnitIntervalOfProfileRange,
 } from '../../types/units';
 import type { ProfileSelection } from '../../types/actions';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 import type { OwnProps as MarkerChartCanvasOwnProps } from './Canvas';
 
 require('./index.css');
@@ -110,7 +110,7 @@ function viewportNeedsUpdate(
   return prevProps.markerTimingRows !== newProps.markerTimingRows;
 }
 
-const options: SimpleConnectOptions<OwnProps, StateProps, {||}> = {
+const options: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
   mapStateToProps: state => {
     const markers = selectedThreadSelectors.getTracingMarkers(state);
     const markerTimingRows = selectedThreadSelectors.getMarkerTiming(state);
@@ -129,4 +129,4 @@ const options: SimpleConnectOptions<OwnProps, StateProps, {||}> = {
   },
   component: MarkerChart,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);

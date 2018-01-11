@@ -5,12 +5,12 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import { changeMarkersSearchString } from '../../actions/profile-view';
 import { getMarkersSearchString } from '../../reducers/url-state';
 import IdleSearchField from '../shared/IdleSearchField';
 
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 import './Settings.css';
 
@@ -60,11 +60,11 @@ class Settings extends PureComponent<Props> {
   }
 }
 
-const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     searchString: getMarkersSearchString(state),
   }),
   mapDispatchToProps: { changeMarkersSearchString },
   component: Settings,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);

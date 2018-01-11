@@ -5,7 +5,7 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import {
   changeHidePlatformDetails,
   changeInvertCallstack,
@@ -16,7 +16,7 @@ import {
 } from '../../reducers/url-state';
 import StackSearchField from '../shared/StackSearchField';
 
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 import './Settings.css';
 
@@ -88,7 +88,7 @@ class StackChartSettings extends PureComponent<Props> {
   }
 }
 
-const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     invertCallstack: getInvertCallstack(state),
     hidePlatformDetails: getHidePlatformDetails(state),
@@ -99,4 +99,4 @@ const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
   },
   component: StackChartSettings,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);

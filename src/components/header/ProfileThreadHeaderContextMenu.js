@@ -10,7 +10,7 @@ import {
   showThread,
   isolateThread,
 } from '../../actions/profile-view';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import {
   getThreads,
   getRightClickedThreadIndex,
@@ -21,7 +21,7 @@ import classNames from 'classnames';
 
 import type { Thread, ThreadIndex } from '../../types/profile';
 import type { State } from '../../types/reducers';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 type OwnProps = {||};
 
@@ -117,7 +117,7 @@ class ProfileThreadHeaderContextMenu extends PureComponent<Props> {
   }
 }
 
-const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: (state: State) => ({
     threads: getThreads(state),
     threadOrder: getThreadOrder(state),
@@ -127,4 +127,4 @@ const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapDispatchToProps: { hideThread, showThread, isolateThread },
   component: ProfileThreadHeaderContextMenu,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);

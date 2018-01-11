@@ -6,7 +6,7 @@
 
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import TabBar from './TabBar';
 import ProfileCallTreeView from '../calltree/ProfileCallTreeView';
 import MarkerTable from '../marker-table';
@@ -31,7 +31,7 @@ import { toValidTabSlug } from '../../utils/flow';
 
 import type { StartEndRange } from '../../types/units';
 import type { Tab } from './TabBar';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 require('./ProfileViewer.css');
 
@@ -144,7 +144,7 @@ ProfileViewer.propTypes = {
   changeTabOrder: PropTypes.func.isRequired,
 };
 
-const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     tabOrder: getProfileViewOptions(state).tabOrder,
     selectedTab: getSelectedTab(state),
@@ -158,4 +158,4 @@ const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
   component: ProfileViewer,
 };
 
-export default simpleConnect(options);
+export default explicitConnect(options);

@@ -5,7 +5,7 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import ThreadStackGraph from './ThreadStackGraph';
 import { selectorsForThread } from '../../reducers/profile-view';
 import { getSelectedThreadIndex } from '../../reducers/url-state';
@@ -32,7 +32,7 @@ import type {
   IndexIntoCallNodeTable,
 } from '../../types/profile-derived';
 import type { State } from '../../types/reducers';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 type OwnProps = {|
   +threadIndex: ThreadIndex,
@@ -258,7 +258,7 @@ export function name(state: State, ownProps: OwnProps): StateProps {
   };
 }
 
-const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: (state: State, ownProps: OwnProps) => {
     const { threadIndex } = ownProps;
     const selectors = selectorsForThread(threadIndex);
@@ -285,4 +285,4 @@ const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
   },
   component: ProfileThreadHeaderBar,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);

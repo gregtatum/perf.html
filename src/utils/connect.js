@@ -38,7 +38,7 @@ type ConnectOptions = {
   withRef?: boolean,
 };
 
-export type SimpleConnectOptions<
+export type ExplicitConnectOptions<
   OwnProps: Object,
   StateProps: Object,
   DispatchProps: Object
@@ -90,12 +90,12 @@ export type ConnectedComponent<
  * is a wrapper to simplify the typing of connect and make it more explicit, and
  * less magical.
  */
-export default function simpleConnect<
+export default function explicitConnect<
   OwnProps: Object,
   StateProps: Object,
   DispatchProps: Object
 >(
-  connectOptions: SimpleConnectOptions<OwnProps, StateProps, DispatchProps>
+  connectOptions: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps>
 ): React.ComponentType<OwnProps> {
   const {
     mapStateToProps,
@@ -113,11 +113,3 @@ export default function simpleConnect<
     options
   )(component);
 }
-
-export type SimpleConnect<
-  OwnProps: Object,
-  StateProps: Object,
-  DispatchProps: Object
-> = (
-  connectOptions: SimpleConnectOptions<OwnProps, StateProps, DispatchProps>
-) => React.ComponentType<OwnProps>;

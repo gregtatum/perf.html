@@ -4,13 +4,13 @@
 
 // @flow
 
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import { selectedThreadSelectors } from '../../reducers/profile-view';
 import FilterNavigatorBar from './FilterNavigatorBar';
 import { popTransformsFromStack } from '../../actions/profile-view';
 
 import type { State } from '../../types/reducers';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 import './TransformNavigator.css';
 
@@ -20,7 +20,7 @@ type DispatchProps = {|
 |};
 type StateProps = $Diff<Props, StateProps>;
 
-const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: (state: State) => {
     const items = selectedThreadSelectors.getTransformLabels(state);
     return {
@@ -33,4 +33,4 @@ const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
   component: FilterNavigatorBar,
 };
 
-export default simpleConnect(options);
+export default explicitConnect(options);

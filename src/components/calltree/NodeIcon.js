@@ -6,12 +6,12 @@
 
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import { getIconClassNameForCallNode } from '../../reducers/icons';
 import { iconStartLoading } from '../../actions/icons';
 
 import type { CallNodeDisplayData } from '../../types/profile-derived';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 type OwnProps = {|
   displayData: CallNodeDisplayData,
@@ -57,7 +57,7 @@ NodeIcon.propTypes = {
   iconStartLoading: PropTypes.func.isRequired,
 };
 
-const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: (state, { displayData }) => ({
     className: getIconClassNameForCallNode(state, displayData),
     icon: displayData.icon,
@@ -65,4 +65,4 @@ const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapDispatchToProps: { iconStartLoading },
   component: NodeIcon,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);

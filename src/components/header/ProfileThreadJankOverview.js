@@ -4,7 +4,7 @@
 
 // @flow
 
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import IntervalMarkerOverview from './IntervalMarkerOverview';
 import { selectorsForThread } from '../../reducers/profile-view';
 import {
@@ -13,10 +13,10 @@ import {
 } from '../../profile-logic/interval-marker-styles';
 import { getSelectedThreadIndex } from '../../reducers/url-state';
 
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 import type { StateProps, OwnProps } from './IntervalMarkerOverview';
 
-const options: SimpleConnectOptions<OwnProps, StateProps, {||}> = {
+const options: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
   mapStateToProps: (state, props) => {
     const { threadIndex } = props;
     const selectors = selectorsForThread(threadIndex);
@@ -32,4 +32,4 @@ const options: SimpleConnectOptions<OwnProps, StateProps, {||}> = {
   },
   component: IntervalMarkerOverview,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);

@@ -5,7 +5,7 @@
 // @flow
 import * as React from 'react';
 import classNames from 'classnames';
-import simpleConnect from '../../../utils/connect';
+import explicitConnect from '../../../utils/connect';
 import { getHasZoomedViaMousewheel } from '../../../reducers/app';
 import { setHasZoomedViaMousewheel } from '../../../actions/stack-chart';
 import { updateProfileSelection } from '../../../actions/profile-view';
@@ -16,7 +16,7 @@ import type {
   StartEndRange,
 } from '../../../types/units';
 import type { ProfileSelection } from '../../../types/actions';
-import type { SimpleConnectOptions } from '../../../utils/connect';
+import type { ExplicitConnectOptions } from '../../../utils/connect';
 
 const { DOM_DELTA_PAGE, DOM_DELTA_LINE } =
   typeof window === 'object' && window.WheelEvent
@@ -530,7 +530,7 @@ export default function withChartViewport<
 
   // Connect this component so that it knows whether or not to nag the user to use shift
   // for zooming on range selections.
-  const options: SimpleConnectOptions<
+  const options: ExplicitConnectOptions<
     ViewportOwnProps<ChartOwnProps>,
     ViewportStateProps,
     ViewportDispatchProps
@@ -541,7 +541,7 @@ export default function withChartViewport<
     mapDispatchToProps: { setHasZoomedViaMousewheel, updateProfileSelection },
     component: ChartViewport,
   };
-  return simpleConnect(options);
+  return explicitConnect(options);
 }
 
 function clamp(min, max, value) {

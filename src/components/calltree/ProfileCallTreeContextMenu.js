@@ -5,7 +5,7 @@
 // @flow
 import React, { PureComponent } from 'react';
 import { ContextMenu, MenuItem } from 'react-contextmenu';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import { selectedThreadSelectors } from '../../reducers/profile-view';
 import { funcHasRecursiveCall } from '../../profile-logic/transforms';
 import { getFunctionName } from '../../profile-logic/function-info';
@@ -24,7 +24,7 @@ import type {
   CallNodePath,
 } from '../../types/profile-derived';
 import type { Thread, ThreadIndex } from '../../types/profile';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 type StateProps = {|
   +thread: Thread,
@@ -355,7 +355,7 @@ class ProfileCallTreeContextMenu extends PureComponent<Props> {
   }
 }
 
-const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     thread: selectedThreadSelectors.getFilteredThread(state),
     threadIndex: getSelectedThreadIndex(state),
@@ -372,4 +372,4 @@ const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
   mapDispatchToProps: { addTransformToStack },
   component: ProfileCallTreeContextMenu,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);

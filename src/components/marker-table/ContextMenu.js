@@ -5,7 +5,7 @@
 // @flow
 import React, { PureComponent } from 'react';
 import { ContextMenu, MenuItem } from 'react-contextmenu';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import { updateProfileSelection } from '../../actions/profile-view';
 import {
   selectedThreadSelectors,
@@ -21,7 +21,7 @@ import type {
   MarkersTable,
 } from '../../types/profile';
 import type { ProfileSelection } from '../../types/actions';
-import type { SimpleConnect } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 type StateProps = {|
   +thread: Thread,
@@ -138,7 +138,7 @@ class MarkersContextMenu extends PureComponent<Props> {
   }
 }
 
-export default (simpleConnect: SimpleConnect<{||}, StateProps, DispatchProps>)({
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     thread: selectedThreadSelectors.getThread(state),
     markers: selectedThreadSelectors.getSearchFilteredMarkers(state),
@@ -149,4 +149,5 @@ export default (simpleConnect: SimpleConnect<{||}, StateProps, DispatchProps>)({
   }),
   mapDispatchToProps: { updateProfileSelection },
   component: MarkersContextMenu,
-});
+};
+export default explicitConnect(options);

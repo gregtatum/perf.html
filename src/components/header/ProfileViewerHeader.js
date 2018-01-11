@@ -9,7 +9,7 @@ import ProfileThreadHeaderBar from './ProfileThreadHeaderBar';
 import Reorderable from '../shared/Reorderable';
 import TimeSelectionScrubber from './TimeSelectionScrubber';
 import OverflowEdgeIndicator from './OverflowEdgeIndicator';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import {
   getProfile,
   getProfileViewOptions,
@@ -27,7 +27,7 @@ import {
 import type { Profile, ThreadIndex } from '../../types/profile';
 import type { ProfileSelection } from '../../types/actions';
 import type { Milliseconds, StartEndRange } from '../../types/units';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 type OwnProps = {||};
 
@@ -114,7 +114,7 @@ class ProfileViewerHeader extends PureComponent<Props> {
   }
 }
 
-const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     profile: getProfile(state),
     selection: getProfileViewOptions(state).selection,
@@ -131,4 +131,4 @@ const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
   component: ProfileViewerHeader,
 };
 
-export default simpleConnect(options);
+export default explicitConnect(options);

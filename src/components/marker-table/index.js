@@ -6,7 +6,7 @@
 
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import TreeView from '../shared/TreeView';
 import {
   getZeroAt,
@@ -26,7 +26,7 @@ import type {
   IndexIntoMarkersTable,
 } from '../../types/profile';
 import type { Milliseconds } from '../../types/units';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 type MarkerDisplayData = {|
   timestamp: string,
@@ -208,7 +208,7 @@ MarkerTable.propTypes = {
   changeSelectedMarker: PropTypes.func.isRequired,
 };
 
-const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     threadIndex: getSelectedThreadIndex(state),
     thread: selectedThreadSelectors.getRangeSelectionFilteredThread(state),
@@ -220,4 +220,4 @@ const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
   mapDispatchToProps: { changeSelectedMarker },
   component: MarkerTable,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);

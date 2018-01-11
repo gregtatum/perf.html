@@ -5,7 +5,7 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import TreeView from '../shared/TreeView';
 import NodeIcon from './NodeIcon';
 import { getCallNodePath } from '../../profile-logic/profile-data';
@@ -38,7 +38,7 @@ import type {
   CallNodeDisplayData,
 } from '../../types/profile-derived';
 import type { Column } from '../shared/TreeView';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 type StateProps = {|
   +threadIndex: ThreadIndex,
@@ -218,7 +218,7 @@ class CallTreeComponent extends PureComponent<Props> {
   }
 }
 
-const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: (state: State) => ({
     threadIndex: getSelectedThreadIndex(state),
     scrollToSelectionGeneration: getScrollToSelectionGeneration(state),
@@ -247,4 +247,4 @@ const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
   component: CallTreeComponent,
 };
 
-export default simpleConnect(options);
+export default explicitConnect(options);

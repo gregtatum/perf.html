@@ -5,14 +5,14 @@
 // @flow
 
 import * as React from 'react';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import classNames from 'classnames';
 import AddonScreenshot from '../../../res/gecko-profiler-screenshot-2016-12-06.png';
 import PerfScreenshot from '../../../res/perf-screenshot-2017-09-08.jpg';
 import { retrieveProfileFromFile } from '../../actions/receive-profile';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import FooterLinks from './FooterLinks';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 require('./Home.css');
 
@@ -402,8 +402,8 @@ function _isFirefox(): boolean {
   return Boolean(navigator.userAgent.match(/Firefox\/\d+\.\d+/));
 }
 
-const options: SimpleConnectOptions<OwnHomeProps, {||}, DispatchHomeProps> = {
+const options: ExplicitConnectOptions<OwnHomeProps, {||}, DispatchHomeProps> = {
   mapDispatchToProps: { retrieveProfileFromFile },
   component: Home,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);

@@ -4,12 +4,12 @@
 
 // @flow
 
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import { popRangeFiltersAndUnsetSelection } from '../../actions/profile-view';
 import { getRangeFilterLabels } from '../../reducers/url-state';
 import FilterNavigatorBar from '../calltree/FilterNavigatorBar';
 
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 type Props = $PropertyType<FilterNavigatorBar, 'props'>;
 type DispatchProps = {|
@@ -17,7 +17,7 @@ type DispatchProps = {|
 |};
 type StateProps = $Diff<Props, StateProps>;
 
-const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => {
     const items = getRangeFilterLabels(state);
     return {
@@ -32,4 +32,4 @@ const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
   component: FilterNavigatorBar,
 };
 
-export default simpleConnect(options);
+export default explicitConnect(options);

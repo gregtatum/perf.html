@@ -4,7 +4,7 @@
 
 // @flow
 import * as React from 'react';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import StackChartCanvas from './Canvas';
 import {
   selectedThreadSelectors,
@@ -27,7 +27,7 @@ import type { StackTimingByDepth } from '../../profile-logic/stack-timing';
 import type { GetCategory } from '../../profile-logic/color-categories';
 import type { GetLabel } from '../../profile-logic/labeling-strategies';
 import type { ProfileSelection } from '../../types/actions';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 import type { OwnProps as StackChartCanvasOwnProps } from './Canvas';
 
 require('./index.css');
@@ -110,7 +110,7 @@ class StackChartGraph extends React.PureComponent<Props> {
   }
 }
 
-const options: SimpleConnectOptions<{||}, StateProps, {||}> = {
+const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
   mapStateToProps: state => {
     const stackTimingByDepth = selectedThreadSelectors.getStackTimingByDepthForStackChart(
       state
@@ -133,7 +133,7 @@ const options: SimpleConnectOptions<{||}, StateProps, {||}> = {
   },
   component: StackChartGraph,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);
 
 // Save an allocation by passing in the raw ChartProps.
 function viewportNeedsUpdate(

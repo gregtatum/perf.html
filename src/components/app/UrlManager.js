@@ -6,12 +6,12 @@
 
 import * as React from 'react';
 import PropTypes from 'prop-types';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 import { getIsUrlSetupDone } from '../../reducers/app';
 import { updateUrlState, urlSetupDone, show404 } from '../../actions/app';
 import { urlFromState, stateFromLocation } from '../../url-handling';
 
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 import type { UrlState } from '../../types/reducers';
 
 type StateProps = {|
@@ -85,7 +85,7 @@ UrlManager.propTypes = {
   show404: PropTypes.func.isRequired,
 };
 
-const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     urlState: state.urlState,
     isUrlSetupDone: getIsUrlSetupDone(state),
@@ -98,4 +98,4 @@ const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
   component: UrlManager,
 };
 
-export default simpleConnect(options);
+export default explicitConnect(options);

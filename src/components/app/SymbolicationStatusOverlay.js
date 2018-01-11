@@ -6,10 +6,10 @@
 
 import React, { PureComponent } from 'react';
 import { getProfileViewOptions } from '../../reducers/profile-view';
-import simpleConnect from '../../utils/connect';
+import explicitConnect from '../../utils/connect';
 
 import type { RequestedLib } from '../../types/reducers';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { ExplicitConnectOptions } from '../../utils/connect';
 
 function englishSgPlLibrary(count) {
   return count === 1 ? 'library' : 'libraries';
@@ -65,11 +65,11 @@ class SymbolicationStatusOverlay extends PureComponent<Props> {
   }
 }
 
-const options: SimpleConnectOptions<{||}, StateProps, {||}> = {
+const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
   mapStateToProps: state => ({
     symbolicationStatus: getProfileViewOptions(state).symbolicationStatus,
     waitingForLibs: getProfileViewOptions(state).waitingForLibs,
   }),
   component: SymbolicationStatusOverlay,
 };
-export default simpleConnect(options);
+export default explicitConnect(options);
