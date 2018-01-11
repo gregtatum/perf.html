@@ -5,47 +5,63 @@
 // @flow
 import * as React from 'react';
 import classNames from 'classnames';
-import { connect } from 'react-redux';
+import explicitConnect from '../../../utils/connect';
 import { getHasZoomedViaMousewheel } from '../../../reducers/app';
 import { setHasZoomedViaMousewheel } from '../../../actions/stack-chart';
+import { updateProfileSelection } from '../../../actions/profile-view';
 
 import type {
   CssPixels,
   UnitIntervalOfProfileRange,
   StartEndRange,
 } from '../../../types/units';
-import typeof { updateProfileSelection as UpdateProfileSelection } from '../../../actions/profile-view';
 import type { ProfileSelection } from '../../../types/actions';
+import type { ExplicitConnectOptions } from '../../../utils/connect';
 
 const { DOM_DELTA_PAGE, DOM_DELTA_LINE } =
   typeof window === 'object' && window.WheelEvent
     ? new WheelEvent('mouse')
     : { DOM_DELTA_LINE: 1, DOM_DELTA_PAGE: 2 };
 
-// These are the props consumed by this Higher-Order Component (HOC)
-type ViewportProps = {
-  viewportNeedsUpdate: (ViewportProps, ViewportProps) => boolean,
-  timeRange: StartEndRange,
-  maxViewportHeight: number,
-  maximumZoom: UnitIntervalOfProfileRange,
-  updateProfileSelection: UpdateProfileSelection,
-  selection: ProfileSelection,
-  setHasZoomedViaMousewheel: () => void,
-  hasZoomedViaMousewheel: boolean,
-};
+// These viewport values are computed dynamically by the HOC, and then passed into
+// the props of the wrapped component.
+export type Viewport = {|
+  +containerWidth: CssPixels,
+  +containerHeight: CssPixels,
+  +viewportLeft: UnitIntervalOfProfileRange,
+  +viewportRight: UnitIntervalOfProfileRange,
+  +viewportTop: CssPixels,
+  +viewportBottom: CssPixels,
+  +isDragging: boolean,
+|};
 
-// These are the props injected by the HOC to WrappedComponent
-type InjectedProps = {
-  containerWidth: CssPixels,
-  containerHeight: CssPixels,
-  viewportLeft: UnitIntervalOfProfileRange,
-  viewportRight: UnitIntervalOfProfileRange,
-  viewportTop: CssPixels,
-  viewportBottom: CssPixels,
-  isDragging: boolean,
-};
+type ViewportStateProps = {|
+  +hasZoomedViaMousewheel?: boolean,
+|};
 
-type State = {
+type ViewportDispatchProps = {|
+  +updateProfileSelection: typeof updateProfileSelection,
+  +setHasZoomedViaMousewheel?: typeof setHasZoomedViaMousewheel,
+|};
+
+// These are the props consumed by this Higher-Order Component (HOC), but can be
+// optionally used by the wrapped component.
+type ViewportOwnProps<ChartProps> = {|
+  +viewportProps: {|
+    +timeRange: StartEndRange,
+    +maxViewportHeight: number,
+    +maximumZoom: UnitIntervalOfProfileRange,
+    +selection: ProfileSelection,
+    // These props are really hard to correctly type, so just leave them as objects:
+    +viewportNeedsUpdate: (
+      prevProps: ChartProps,
+      nextProps: ChartProps
+    ) => boolean,
+  |},
+  +chartProps: ChartProps,
+|};
+
+type State = {|
   containerWidth: CssPixels,
   containerHeight: CssPixels,
   containerLeft: CssPixels,
@@ -57,7 +73,7 @@ type State = {
   dragY: CssPixels,
   isDragging: boolean,
   isShiftScrollHintVisible: boolean,
-};
+|};
 
 require('./Viewport.css');
 
@@ -88,38 +104,37 @@ require('./Viewport.css');
  * viewportRight += mouseMoveDelta * unitPixel
  * viewportLeft += mouseMoveDelta * unitPixel
  **/
-/**
- * About the Flow typing:
- *
- * - `Props` are the props for the returned component. It means that they are the
- *   props that the user for this component will need to specify. From the
- *   generic definition `<Props: ViewportProps>`, they must include the
- *   properties consumed par this HOC.
- *
- * - The argument, which is the augmented component (the `WrappedComponent`),
- *   needs to accept both the `InjectedProps` and some supertype of `Props`.
- *   A supertype of `Props` is an object will some properties of
- *   `Props` but not all of them.
- *   To understand what this means to Flow, we need, like sometimes, to think
- *   backwards: from the props of `WrappedComponent`, take out `InjectedProps`,
- *   and make it part of `Props`.
- *
- * So `Props` will need to hold both `ViewportProps` as said earlier and the
- * props from `WrappedComponent` that aren't `Injectedprops`.
- * This is exactly what we want Flow to check: that the user of this HOC
- * properly passes all these props!
- */
-export default function withChartViewport<Props: ViewportProps>(
-  WrappedComponent: React.ComponentType<InjectedProps & $Supertype<Props>>
-): React.ComponentType<Props> {
-  class ChartViewport extends React.PureComponent<Props, State> {
+export default function withChartViewport<
+  ChartOwnProps: Object,
+  // The chart component's props are given the viewport object, as well as the original
+  // ChartOwnProps.
+  ChartProps: {|
+    ...ChartOwnProps,
+    +viewport: Viewport,
+  |}
+>(
+  // Take as input the component class that supports the the ViewportProps. The ChartProps
+  // also contain other things.
+  ChartComponent: React.ComponentType<ChartProps>
+): React.ComponentType<
+  // Finally the returned component takes as input the InternalViewportProps, and
+  // the ChartProps, but NOT the ViewportProps.
+  ViewportOwnProps<ChartOwnProps>
+> {
+  type ViewportProps = {|
+    ...ViewportOwnProps<ChartOwnProps>,
+    ...ViewportStateProps,
+    ...ViewportDispatchProps,
+  |};
+
+  class ChartViewport extends React.PureComponent<ViewportProps, State> {
     shiftScrollId: number;
     zoomRangeSelectionScheduled: boolean;
     zoomRangeSelectionScrollDelta: number;
     _container: HTMLElement | null;
     _takeContainerRef = container => (this._container = container);
 
-    constructor(props: Props) {
+    constructor(props: ViewportProps) {
       super(props);
       (this: any)._mouseWheelListener = this._mouseWheelListener.bind(this);
       (this: any)._mouseDownListener = this._mouseDownListener.bind(this);
@@ -137,7 +152,8 @@ export default function withChartViewport<Props: ViewportProps>(
       this.state = this.getDefaultState(props);
     }
 
-    getHorizontalViewport({ selection, timeRange }: ViewportProps) {
+    getHorizontalViewport(props: ViewportProps) {
+      const { selection, timeRange } = props.viewportProps;
       if (selection.hasSelection) {
         const { selectionStart, selectionEnd } = selection;
         const timeRangeLength = timeRange.end - timeRange.start;
@@ -174,7 +190,7 @@ export default function withChartViewport<Props: ViewportProps>(
      */
     showShiftScrollingHint() {
       // Only show this message if we haven't shift zoomed yet.
-      if (this.props.hasZoomedViaMousewheel) {
+      if (this.props.viewportProps.hasZoomedViaMousewheel) {
         return;
       }
 
@@ -189,13 +205,19 @@ export default function withChartViewport<Props: ViewportProps>(
       }, 1000);
     }
 
-    componentWillReceiveProps(newProps: Props) {
-      if (this.props.viewportNeedsUpdate(this.props, newProps)) {
+    componentWillReceiveProps(newProps: ViewportProps) {
+      if (
+        this.props.viewportProps.viewportNeedsUpdate(
+          this.props.chartProps,
+          newProps.chartProps
+        )
+      ) {
         this.setState(this.getDefaultState(newProps));
         this._setSizeNextFrame();
       } else if (
-        this.props.selection !== newProps.selection ||
-        this.props.timeRange !== newProps.timeRange
+        this.props.viewportProps.selection !==
+          newProps.viewportProps.selection ||
+        this.props.viewportPropstimeRange !== newProps.viewportProps.timeRange
       ) {
         this.setState(this.getHorizontalViewport(newProps));
       }
@@ -240,8 +262,9 @@ export default function withChartViewport<Props: ViewportProps>(
     }
 
     zoomRangeSelection(event: SyntheticWheelEvent<>) {
-      if (!this.props.hasZoomedViaMousewheel) {
-        this.props.setHasZoomedViaMousewheel();
+      const { hasZoomedViaMousewheel, setHasZoomedViaMousewheel } = this.props;
+      if (!hasZoomedViaMousewheel && setHasZoomedViaMousewheel) {
+        setHasZoomedViaMousewheel();
       }
       event.preventDefault();
 
@@ -268,7 +291,7 @@ export default function withChartViewport<Props: ViewportProps>(
           this.zoomRangeSelectionScrollDelta = 0;
           this.zoomRangeSelectionScheduled = false;
 
-          const { maximumZoom } = this.props;
+          const { maximumZoom } = this.props.viewportProps;
           const {
             containerLeft,
             containerWidth,
@@ -296,7 +319,10 @@ export default function withChartViewport<Props: ViewportProps>(
             newViewportRight = newViewportMiddle + maximumZoom * 0.5;
           }
 
-          const { updateProfileSelection, timeRange } = this.props;
+          const {
+            updateProfileSelection,
+            viewportProps: { timeRange },
+          } = this.props;
           if (newViewportLeft === 0 && newViewportRight === 1) {
             if (viewportLeft === 0 && viewportRight === 1) {
               // Do not update if at the maximum bounds.
@@ -352,9 +378,8 @@ export default function withChartViewport<Props: ViewportProps>(
 
     moveViewport(offsetX: CssPixels, offsetY: CssPixels): boolean {
       const {
-        maxViewportHeight,
-        timeRange,
         updateProfileSelection,
+        viewportProps: { maxViewportHeight, timeRange },
       } = this.props;
       const {
         containerWidth,
@@ -445,7 +470,7 @@ export default function withChartViewport<Props: ViewportProps>(
     }
 
     render() {
-      const { hasZoomedViaMousewheel } = this.props;
+      const { chartProps, hasZoomedViaMousewheel } = this.props;
 
       const {
         containerWidth,
@@ -468,6 +493,16 @@ export default function withChartViewport<Props: ViewportProps>(
         hidden: hasZoomedViaMousewheel || !isShiftScrollHintVisible,
       });
 
+      const viewport: Viewport = {
+        containerWidth,
+        containerHeight,
+        viewportLeft,
+        viewportRight,
+        viewportTop,
+        viewportBottom,
+        isDragging,
+      };
+
       return (
         <div
           className={viewportClassName}
@@ -475,16 +510,7 @@ export default function withChartViewport<Props: ViewportProps>(
           onMouseDown={this._mouseDownListener}
           ref={this._takeContainerRef}
         >
-          <WrappedComponent
-            {...this.props}
-            containerWidth={containerWidth}
-            containerHeight={containerHeight}
-            viewportLeft={viewportLeft}
-            viewportRight={viewportRight}
-            viewportTop={viewportTop}
-            viewportBottom={viewportBottom}
-            isDragging={isDragging}
-          />
+          <ChartComponent {...chartProps} viewport={viewport} />
           <div className={shiftScrollClassName}>
             Zoom Chart:
             <kbd className="chartViewportShiftScrollKbd">Shift</kbd>
@@ -497,12 +523,18 @@ export default function withChartViewport<Props: ViewportProps>(
 
   // Connect this component so that it knows whether or not to nag the user to use shift
   // for zooming on range selections.
-  return connect(
-    state => ({
+  const options: ExplicitConnectOptions<
+    ViewportOwnProps<ChartOwnProps>,
+    ViewportStateProps,
+    ViewportDispatchProps
+  > = {
+    mapStateToProps: state => ({
       hasZoomedViaMousewheel: getHasZoomedViaMousewheel(state),
     }),
-    { setHasZoomedViaMousewheel }
-  )(ChartViewport);
+    mapDispatchToProps: { setHasZoomedViaMousewheel, updateProfileSelection },
+    component: ChartViewport,
+  };
+  return explicitConnect(options);
 }
 
 function clamp(min, max, value) {

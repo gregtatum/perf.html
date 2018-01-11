@@ -16,21 +16,31 @@ import type { SizeProps } from '../shared/WithSize';
 
 type MarkerState = 'PRESSED' | 'HOVERED' | 'NONE';
 
-type Props = SizeProps & {|
-  className: string,
-  rangeStart: Milliseconds,
-  rangeEnd: Milliseconds,
-  intervalMarkers: TracingMarker[],
-  threadIndex: number,
-  threadName: string,
-  onSelect: any,
-  styles: any,
-  isSelected: boolean,
-  isModifyingSelection: boolean,
-  overlayFills: {
-    HOVERED: string,
-    PRESSED: string,
+// Typically this component is wrapped in a connect function, but in other files.
+export type OwnProps = {|
+  +className: string,
+  +rangeStart: Milliseconds,
+  +rangeEnd: Milliseconds,
+  +threadIndex: number,
+  +onSelect: any,
+  +isModifyingSelection: boolean,
+|};
+
+export type StateProps = {|
+  +intervalMarkers: TracingMarker[],
+  +isSelected: boolean,
+  +threadName: string,
+  +styles: any,
+  +overlayFills: {
+    +HOVERED: string,
+    +PRESSED: string,
   },
+|};
+
+type Props = {|
+  ...SizeProps,
+  ...OwnProps,
+  ...StateProps,
 |};
 
 type State = {
