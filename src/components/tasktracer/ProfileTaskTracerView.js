@@ -169,6 +169,8 @@ ProfileTaskTracerView.propTypes = {
   rangeEnd: PropTypes.number.isRequired,
 };
 
+// There is no type coverage for this connect function as it needs
+// type annotations with SimpleConnectOptions.
 export default simpleConnect({
   mapStateToProps: state => ({
     tasktracer: getProfileTaskTracerData(state),

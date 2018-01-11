@@ -208,7 +208,7 @@ MarkerTable.propTypes = {
   changeSelectedMarker: PropTypes.func.isRequired,
 };
 
-export default simpleConnect({
+const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     threadIndex: getSelectedThreadIndex(state),
     thread: selectedThreadSelectors.getRangeSelectionFilteredThread(state),
@@ -219,4 +219,5 @@ export default simpleConnect({
   }),
   mapDispatchToProps: { changeSelectedMarker },
   component: MarkerTable,
-});
+};
+export default simpleConnect(options);

@@ -14,10 +14,18 @@ import type { SimpleConnectOptions } from '../../utils/connect';
 
 import './Settings.css';
 
-type Props = {
-  searchString: string,
-  changeMarkersSearchString: string => void,
-};
+type StateProps = {|
+  +searchString: string,
+|};
+
+type DispatchProps = {|
+  +changeMarkersSearchString: typeof changeMarkersSearchString,
+|};
+
+type Props = {|
+  ...StateProps,
+  ...DispatchProps,
+|};
 
 class Settings extends PureComponent<Props> {
   constructor(props: Props) {
@@ -52,10 +60,11 @@ class Settings extends PureComponent<Props> {
   }
 }
 
-export default simpleConnect({
+const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     searchString: getMarkersSearchString(state),
   }),
   mapDispatchToProps: { changeMarkersSearchString },
   component: Settings,
-});
+};
+export default simpleConnect(options);

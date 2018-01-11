@@ -21,16 +21,25 @@ import type {
   MarkersTable,
 } from '../../types/profile';
 import type { ProfileSelection } from '../../types/actions';
-import type { SimpleConnectOptions } from '../../utils/connect';
+import type { SimpleConnect } from '../../utils/connect';
+import type { State, Action } from '../../types/store';
 
-type Props = {
-  thread: Thread,
-  selectedMarker: IndexIntoMarkersTable,
-  markers: MarkersTable,
-  updateProfileSelection: typeof updateProfileSelection,
-  displayRange: StartEndRange,
-  selection: ProfileSelection,
-};
+type StateProps = {|
+  +thread: Thread,
+  +markers: MarkersTable,
+  +selection: ProfileSelection,
+  +displayRange: StartEndRange,
+  +selectedMarker: IndexIntoMarkersTable,
+|};
+
+type DispatchProps = {|
+  +updateProfileSelection: typeof updateProfileSelection,
+|};
+
+type Props = {|
+  ...StateProps,
+  ...DispatchProps,
+|};
 
 class MarkersContextMenu extends PureComponent<Props> {
   constructor(props: Props) {
@@ -130,7 +139,7 @@ class MarkersContextMenu extends PureComponent<Props> {
   }
 }
 
-export default simpleConnect({
+export default (simpleConnect: SimpleConnect<{||}, StateProps, DispatchProps>)({
   mapStateToProps: state => ({
     thread: selectedThreadSelectors.getThread(state),
     markers: selectedThreadSelectors.getSearchFilteredMarkers(state),

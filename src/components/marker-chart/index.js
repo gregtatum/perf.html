@@ -30,19 +30,29 @@ require('./index.css');
 
 const ROW_HEIGHT = 16;
 
-type Props = {
-  maxMarkerRows: number,
-  isSelected: boolean,
-  timeRange: { start: Milliseconds, end: Milliseconds },
-  threadIndex: number,
-  interval: Milliseconds,
-  updateProfileSelection: typeof updateProfileSelection,
-  selection: ProfileSelection,
-  threadName: string,
-  processDetails: string,
-  markerTimingRows: MarkerTimingRows,
-  markers: TracingMarker[],
-};
+type OwnProps = {||};
+
+type StateProps = {|
+  +markers: TracingMarker[],
+  +markerTimingRows: MarkerTimingRows,
+  +maxMarkerRows: number,
+  +timeRange: { start: Milliseconds, end: Milliseconds },
+  +interval: Milliseconds,
+  +threadIndex: number,
+  +selection: ProfileSelection,
+  +threadName: string,
+  +processDetails: string,
+|};
+
+type DispatchProps = {|
+  +updateProfileSelection: typeof updateProfileSelection,
+|};
+
+type Props = {|
+  ...OwnProps,
+  ...StateProps,
+  ...DispatchProps,
+|};
 
 class MarkerChart extends React.PureComponent<Props> {
   /**
@@ -56,7 +66,6 @@ class MarkerChart extends React.PureComponent<Props> {
   render() {
     const {
       maxMarkerRows,
-      isSelected,
       timeRange,
       threadIndex,
       markerTimingRows,
@@ -81,7 +90,6 @@ class MarkerChart extends React.PureComponent<Props> {
         <MarkerChartCanvas
           key={threadIndex}
           // ChartViewport props
-          isSelected={isSelected}
           timeRange={timeRange}
           maxViewportHeight={maxViewportHeight}
           maximumZoom={this.getMaximumZoom()}
@@ -105,7 +113,7 @@ function viewportNeedsUpdate<T: Props>(prevProps: T, newProps: T) {
   return prevProps.markerTimingRows !== newProps.markerTimingRows;
 }
 
-export default simpleConnect({
+const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: state => {
     const markers = selectedThreadSelectors.getTracingMarkers(state);
     const markerTimingRows = selectedThreadSelectors.getMarkerTiming(state);
@@ -124,4 +132,5 @@ export default simpleConnect({
   },
   mapDispatchToProps: { updateProfileSelection },
   component: MarkerChart,
-});
+};
+export default simpleConnect(options);

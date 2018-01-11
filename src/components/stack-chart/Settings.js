@@ -26,8 +26,8 @@ type StateProps = {|
 |};
 
 type DispatchProps = {|
-  +changeHidePlatformDetails: boolean => void,
-  +changeInvertCallstack: boolean => void,
+  +changeHidePlatformDetails: typeof changeHidePlatformDetails,
+  +changeInvertCallstack: typeof changeInvertCallstack,
 |};
 
 type Props = {|
@@ -88,7 +88,7 @@ class StackChartSettings extends PureComponent<Props> {
   }
 }
 
-export default simpleConnect({
+const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     invertCallstack: getInvertCallstack(state),
     hidePlatformDetails: getHidePlatformDetails(state),
@@ -98,4 +98,5 @@ export default simpleConnect({
     changeInvertCallstack,
   },
   component: StackChartSettings,
-});
+};
+export default simpleConnect(options);

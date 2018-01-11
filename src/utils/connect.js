@@ -113,3 +113,11 @@ export default function simpleConnect<
     options
   )(component);
 }
+
+export type SimpleConnect<
+  OwnProps: Object,
+  StateProps: Object,
+  DispatchProps: Object
+> = (
+  connectOptions: SimpleConnectOptions<OwnProps, StateProps, DispatchProps>
+) => React.ComponentType<OwnProps>;

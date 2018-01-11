@@ -116,7 +116,7 @@ class StackChartGraph extends React.PureComponent<Props> {
   }
 }
 
-export default simpleConnect({
+const options: SimpleConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => {
     const stackTimingByDepth = selectedThreadSelectors.getStackTimingByDepthForStackChart(
       state
@@ -139,7 +139,8 @@ export default simpleConnect({
   },
   mapDispatchToProps: { updateProfileSelection },
   component: StackChartGraph,
-});
+};
+export default simpleConnect(options);
 
 function viewportNeedsUpdate<T: Object>(prevProps: T, newProps: T) {
   return prevProps.stackTimingByDepth !== newProps.stackTimingByDepth;

@@ -23,30 +23,42 @@ const { DOM_DELTA_PAGE, DOM_DELTA_LINE } =
     ? new WheelEvent('mouse')
     : { DOM_DELTA_LINE: 1, DOM_DELTA_PAGE: 2 };
 
+type InternalViewportStateProps = {|
+  +hasZoomedViaMousewheel?: boolean,
+|};
+
+type InternalViewportDispatchProps = {|
+  +setHasZoomedViaMousewheel?: typeof setHasZoomedViaMousewheel,
+|};
+
 // These are the props consumed by this Higher-Order Component (HOC), but can be
 // optionally used by the wrapped component.
-type InternalViewportProps = {|
-  timeRange: StartEndRange,
-  maxViewportHeight: number,
-  maximumZoom: UnitIntervalOfProfileRange,
-  updateProfileSelection: UpdateProfileSelection,
-  selection: ProfileSelection,
+type InternalViewportOwnProps = {|
+  +timeRange: StartEndRange,
+  +maxViewportHeight: number,
+  +maximumZoom: UnitIntervalOfProfileRange,
+  +updateProfileSelection: UpdateProfileSelection,
+  +selection: ProfileSelection,
   // These props are really hard to correctly type, so just leave them as objects:
-  viewportNeedsUpdate: (prevProps: Object, nextProps: Object) => boolean,
-  setHasZoomedViaMousewheel?: () => void,
-  hasZoomedViaMousewheel?: boolean,
+  +viewportNeedsUpdate: (prevProps: Object, nextProps: Object) => boolean,
+|};
+
+type InternalViewportProps = {|
+  ...InternalViewportStateProps,
+  ...InternalViewportDispatchProps,
+  ...InternalViewportOwnProps,
 |};
 
 // These viewport values are computed dynamically by the HOC, and then spread into
 // the props of the wrapped component.
 type ComputedViewport = {|
-  containerWidth: CssPixels,
-  containerHeight: CssPixels,
-  viewportLeft: UnitIntervalOfProfileRange,
-  viewportRight: UnitIntervalOfProfileRange,
-  viewportTop: CssPixels,
-  viewportBottom: CssPixels,
-  isDragging: boolean,
+  +containerWidth: CssPixels,
+  +containerHeight: CssPixels,
+  +viewportLeft: UnitIntervalOfProfileRange,
+  +viewportRight: UnitIntervalOfProfileRange,
+  +viewportTop: CssPixels,
+  +viewportBottom: CssPixels,
+  +isDragging: boolean,
 |};
 
 // The combined values can be imported by the wrapped components, and used in their
@@ -100,23 +112,30 @@ require('./Viewport.css');
  * viewportLeft += mouseMoveDelta * unitPixel
  **/
 export default function withChartViewport<
-  // The wrapped component's props should support the ViewportProps, even if they
-  // do not actively use all of them.
-  WrappedProps: ViewportProps
+  // The child component's props MUST take the ViewportProps, even if they
+  // do not actively use all of them. Convert the props to inexact so the ChildProps
+  // can also contain other properties, so make the object inexact.
+  ChildProps: { ...ViewportProps }
 >(
-  // Convert the WrappedProps from exact to inexact:
-  WrappedComponent: React.ComponentType<{ ...WrappedProps }>
+  // Take as input the component class that supports the the ViewportProps. The ChildProps
+  // also contain other things.
+  ChildComponent: React.ComponentType<ChildProps>
 ): React.ComponentType<{
   // Finally the returned component takes as input the InternalViewportProps, and
-  // the WrappedProps, but NOT the computed viewport:
-  ...InternalViewportProps,
-  ...$Diff<WrappedProps, ComputedViewport>,
+  // the ChildProps, but NOT the ViewportProps.
+  ...InternalViewportOwnProps,
+  ...$Diff<ChildProps, ComputedViewport>,
 }> {
   // Repeat the Props definition with a type alias.
   type Props = {
     ...InternalViewportProps,
-    ...$Diff<WrappedProps, ComputedViewport>,
+    ...$Diff<ChildProps, ComputedViewport>,
   };
+
+  type OwnProps = $Diff<
+    $Diff<Props, InternalViewportStateProps>,
+    InternalViewportDispatchProps
+  >;
 
   class ChartViewport extends React.PureComponent<Props, State> {
     shiftScrollId: number;
@@ -492,7 +511,7 @@ export default function withChartViewport<
           onMouseDown={this._mouseDownListener}
           ref={this._takeContainerRef}
         >
-          <WrappedComponent {...this.props} {...computedViewport} />
+          <ChildComponent {...this.props} {...computedViewport} />
           <div className={shiftScrollClassName}>
             Zoom Chart:
             <kbd className="chartViewportShiftScrollKbd">Shift</kbd>
@@ -505,13 +524,18 @@ export default function withChartViewport<
 
   // Connect this component so that it knows whether or not to nag the user to use shift
   // for zooming on range selections.
-  return simpleConnect({
+  const options: SimpleConnectOptions<
+    OwnProps,
+    InternalViewportStateProps,
+    InternalViewportDispatchProps
+  > = {
     mapStateToProps: state => ({
       hasZoomedViaMousewheel: getHasZoomedViaMousewheel(state),
     }),
     mapDispatchToProps: { setHasZoomedViaMousewheel },
     component: ChartViewport,
-  });
+  };
+  return simpleConnect(options);
 }
 
 function clamp(min, max, value) {

@@ -98,11 +98,12 @@ class StackSearchField extends React.PureComponent<Props, State> {
   }
 }
 
-export default simpleConnect({
+const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     currentSearchString: getCurrentSearchString(state),
     searchStrings: getSearchStrings(state),
   }),
   mapDispatchToProps: { changeCallTreeSearchString },
   component: StackSearchField,
-});
+};
+export default simpleConnect(options);

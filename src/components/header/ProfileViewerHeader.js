@@ -114,11 +114,7 @@ class ProfileViewerHeader extends PureComponent<Props> {
   }
 }
 
-const connectOptions: SimpleConnectOptions<
-  OwnProps,
-  StateProps,
-  DispatchProps
-> = {
+const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     profile: getProfile(state),
     selection: getProfileViewOptions(state).selection,
@@ -135,4 +131,4 @@ const connectOptions: SimpleConnectOptions<
   component: ProfileViewerHeader,
 };
 
-export default simpleConnect(connectOptions);
+export default simpleConnect(options);

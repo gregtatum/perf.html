@@ -1,0 +1,14 @@
+type OwnProps = {||};
+
+type StateProps = {||};
+
+type DispatchProps = {||};
+
+type Props = {|
+  ...OwnProps,
+  ...StateProps,
+  ...DispatchProps,
+|};
+
+const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {};
+export default simpleConnect(options);
