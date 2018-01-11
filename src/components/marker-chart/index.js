@@ -12,7 +12,6 @@ import {
   getProfileInterval,
   getProfileViewOptions,
 } from '../../reducers/profile-view';
-import { updateProfileSelection } from '../../actions/profile-view';
 import { getSelectedThreadIndex } from '../../reducers/url-state';
 
 import type {
@@ -25,6 +24,7 @@ import type {
 } from '../../types/units';
 import type { ProfileSelection } from '../../types/actions';
 import type { SimpleConnectOptions } from '../../utils/connect';
+import type { OwnProps as MarkerChartCanvasOwnProps } from './Canvas';
 
 require('./index.css');
 
@@ -44,14 +44,9 @@ type StateProps = {|
   +processDetails: string,
 |};
 
-type DispatchProps = {|
-  +updateProfileSelection: typeof updateProfileSelection,
-|};
-
 type Props = {|
   ...OwnProps,
   ...StateProps,
-  ...DispatchProps,
 |};
 
 class MarkerChart extends React.PureComponent<Props> {
@@ -70,7 +65,6 @@ class MarkerChart extends React.PureComponent<Props> {
       threadIndex,
       markerTimingRows,
       markers,
-      updateProfileSelection,
       selection,
       threadName,
       processDetails,
@@ -89,31 +83,34 @@ class MarkerChart extends React.PureComponent<Props> {
         </div>
         <MarkerChartCanvas
           key={threadIndex}
-          // ChartViewport props
-          timeRange={timeRange}
-          maxViewportHeight={maxViewportHeight}
-          maximumZoom={this.getMaximumZoom()}
-          selection={selection}
-          updateProfileSelection={updateProfileSelection}
-          viewportNeedsUpdate={viewportNeedsUpdate}
-          // MarkerChartCanvas props
-          rangeStart={timeRange.start}
-          rangeEnd={timeRange.end}
-          markerTimingRows={markerTimingRows}
-          maxMarkerRows={maxMarkerRows}
-          markers={markers}
-          rowHeight={ROW_HEIGHT}
+          viewportProps={{
+            timeRange: timeRange,
+            maxViewportHeight: maxViewportHeight,
+            maximumZoom: this.getMaximumZoom(),
+            selection: selection,
+            viewportNeedsUpdate: viewportNeedsUpdate,
+          }}
+          chartProps={{
+            rangeStart: timeRange.start,
+            rangeEnd: timeRange.end,
+            markerTimingRows: markerTimingRows,
+            markers: markers,
+            rowHeight: ROW_HEIGHT,
+          }}
         />
       </div>
     );
   }
 }
 
-function viewportNeedsUpdate<T: Props>(prevProps: T, newProps: T) {
+function viewportNeedsUpdate(
+  prevProps: MarkerChartCanvasOwnProps,
+  newProps: MarkerChartCanvasOwnProps
+) {
   return prevProps.markerTimingRows !== newProps.markerTimingRows;
 }
 
-const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
+const options: SimpleConnectOptions<OwnProps, StateProps, {||}> = {
   mapStateToProps: state => {
     const markers = selectedThreadSelectors.getTracingMarkers(state);
     const markerTimingRows = selectedThreadSelectors.getMarkerTiming(state);
@@ -130,7 +127,6 @@ const options: SimpleConnectOptions<OwnProps, StateProps, DispatchProps> = {
       processDetails: selectedThreadSelectors.getThreadProcessDetails(state),
     };
   },
-  mapDispatchToProps: { updateProfileSelection },
   component: MarkerChart,
 };
 export default simpleConnect(options);

@@ -22,24 +22,28 @@ import type {
 } from '../../profile-logic/stack-timing';
 import type { GetCategory } from '../../profile-logic/color-categories';
 import type { GetLabel } from '../../profile-logic/labeling-strategies';
-import type { ViewportProps } from '../shared/chart/Viewport';
+import type { Viewport } from '../shared/chart/Viewport';
 
-type Props = {
-  thread: Thread,
-  interval: Milliseconds,
-  rangeStart: Milliseconds,
-  rangeEnd: Milliseconds,
-  stackTimingByDepth: StackTimingByDepth,
-  stackFrameHeight: CssPixels,
-  getCategory: GetCategory,
-  getLabel: GetLabel,
-  ...ViewportProps,
-};
+export type OwnProps = {|
+  +thread: Thread,
+  +interval: Milliseconds,
+  +rangeStart: Milliseconds,
+  +rangeEnd: Milliseconds,
+  +stackTimingByDepth: StackTimingByDepth,
+  +stackFrameHeight: CssPixels,
+  +getCategory: GetCategory,
+  +getLabel: GetLabel,
+|};
 
-type HoveredStackTiming = {
-  depth: StackTimingDepth,
-  stackTableIndex: IndexIntoStackTiming,
-};
+type Props = {|
+  ...OwnProps,
+  +viewport: Viewport,
+|};
+
+type HoveredStackTiming = {|
+  +depth: StackTimingDepth,
+  +stackTableIndex: IndexIntoStackTiming,
+|};
 
 require('./Canvas.css');
 
@@ -75,16 +79,18 @@ class StackChartCanvas extends React.PureComponent<Props> {
       thread,
       rangeStart,
       rangeEnd,
-      containerWidth,
       getLabel,
-      containerHeight,
       stackTimingByDepth,
       stackFrameHeight,
       getCategory,
-      viewportLeft,
-      viewportRight,
-      viewportTop,
-      viewportBottom,
+      viewport: {
+        containerWidth,
+        containerHeight,
+        viewportLeft,
+        viewportRight,
+        viewportTop,
+        viewportBottom,
+      },
     } = this.props;
 
     // Ensure the text measurement tool is created, since this is the first time
@@ -257,7 +263,10 @@ class StackChartCanvas extends React.PureComponent<Props> {
       return;
     }
     const { depth, stackTableIndex } = hoveredItem;
-    const { stackTimingByDepth, updateProfileSelection } = this.props;
+    const {
+      stackTimingByDepth,
+      viewport: { updateProfileSelection },
+    } = this.props;
     updateProfileSelection({
       hasSelection: true,
       isModifying: false,
@@ -270,11 +279,8 @@ class StackChartCanvas extends React.PureComponent<Props> {
     const {
       rangeStart,
       rangeEnd,
-      viewportLeft,
-      viewportRight,
-      viewportTop,
-      containerWidth,
       stackTimingByDepth,
+      viewport: { viewportLeft, viewportRight, viewportTop, containerWidth },
     } = this.props;
 
     const rangeLength: Milliseconds = rangeEnd - rangeStart;
@@ -302,7 +308,7 @@ class StackChartCanvas extends React.PureComponent<Props> {
   }
 
   render() {
-    const { containerWidth, containerHeight, isDragging } = this.props;
+    const { containerWidth, containerHeight, isDragging } = this.props.viewport;
 
     return (
       <ChartCanvas

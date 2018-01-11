@@ -22,7 +22,6 @@ import type {
 } from '../../types/profile';
 import type { ProfileSelection } from '../../types/actions';
 import type { SimpleConnect } from '../../utils/connect';
-import type { State, Action } from '../../types/store';
 
 type StateProps = {|
   +thread: Thread,
