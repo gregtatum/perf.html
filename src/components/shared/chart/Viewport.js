@@ -16,7 +16,10 @@ import type {
   StartEndRange,
 } from '../../../types/units';
 import type { ProfileSelection } from '../../../types/actions';
-import type { ExplicitConnectOptions } from '../../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../../utils/connect';
 
 const { DOM_DELTA_PAGE, DOM_DELTA_LINE } =
   typeof window === 'object' && window.WheelEvent
@@ -108,10 +111,10 @@ export default function withChartViewport<
   ChartOwnProps: Object,
   // The chart component's props are given the viewport object, as well as the original
   // ChartOwnProps.
-  ChartProps: {|
+  ChartProps: $ReadOnly<{|
     ...ChartOwnProps,
     +viewport: Viewport,
-  |}
+  |}>
 >(
   // Take as input the component class that supports the the ViewportProps. The ChartProps
   // also contain other things.
@@ -121,11 +124,11 @@ export default function withChartViewport<
   // the ChartProps, but NOT the ViewportProps.
   ViewportOwnProps<ChartOwnProps>
 > {
-  type ViewportProps = {|
-    ...ViewportOwnProps<ChartOwnProps>,
-    ...ViewportStateProps,
-    ...ViewportDispatchProps,
-  |};
+  type ViewportProps = ConnectedProps<
+    ViewportOwnProps<ChartOwnProps>,
+    ViewportStateProps,
+    ViewportDispatchProps
+  >;
 
   class ChartViewport extends React.PureComponent<ViewportProps, State> {
     shiftScrollId: number;

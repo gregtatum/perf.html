@@ -32,7 +32,10 @@ import type {
   IndexIntoCallNodeTable,
 } from '../../types/profile-derived';
 import type { State } from '../../types/reducers';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 type OwnProps = {|
   +threadIndex: ThreadIndex,
@@ -61,11 +64,7 @@ type DispatchProps = {|
   +focusCallTree: typeof focusCallTree,
 |};
 
-type Props = {|
-  ...OwnProps,
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
 
 class ProfileThreadHeaderBar extends PureComponent<Props> {
   constructor(props) {

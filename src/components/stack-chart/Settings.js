@@ -16,7 +16,10 @@ import {
 } from '../../reducers/url-state';
 import StackSearchField from '../shared/StackSearchField';
 
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 import './Settings.css';
 
@@ -30,10 +33,7 @@ type DispatchProps = {|
   +changeInvertCallstack: typeof changeInvertCallstack,
 |};
 
-type Props = {|
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 class StackChartSettings extends PureComponent<Props> {
   constructor(props) {

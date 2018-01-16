@@ -11,7 +11,10 @@ import { getIsUrlSetupDone } from '../../reducers/app';
 import { updateUrlState, urlSetupDone, show404 } from '../../actions/app';
 import { urlFromState, stateFromLocation } from '../../url-handling';
 
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 import type { UrlState } from '../../types/reducers';
 
 type StateProps = {|
@@ -29,11 +32,7 @@ type OwnProps = {|
   +children: React.Node,
 |};
 
-type Props = {|
-  ...OwnProps,
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
 
 class UrlManager extends React.PureComponent<Props> {
   _updateState() {

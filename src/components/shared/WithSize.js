@@ -7,10 +7,12 @@ import * as React from 'react';
 import { findDOMNode } from 'react-dom';
 import type { CssPixels } from '../../types/units';
 
-export type SizeProps = {|
+type State = {|
   width: CssPixels,
   height: CssPixels,
 |};
+
+export type SizeProps = $ReadOnly<State>;
 
 /**
  * Wraps a React component and makes 'width' and 'height' available in the
@@ -25,15 +27,15 @@ export type SizeProps = {|
 export function withSize<
   // The SizeProps act as a bounds on the generic props. This ensures that the props
   // that passed in take into account they are being given the width and height.
-  Props: { ...SizeProps }
+  Props: $ReadOnly<{ ...SizeProps }>
 >(
   Wrapped: React.ComponentType<Props>
 ): React.ComponentType<
   // The component that is returned does not accept width and height parameters, as
   // they are injected by this higher order component.
-  $Diff<Props, SizeProps>
+  $ReadOnly<$Diff<Props, SizeProps>>
 > {
-  return class WithSizeWrapper extends React.PureComponent<*, SizeProps> {
+  return class WithSizeWrapper extends React.PureComponent<*, State> {
     _resizeListener: Event => void;
     state = { width: 0, height: 0 };
 

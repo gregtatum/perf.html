@@ -28,7 +28,10 @@ import type { StackTimingByDepth } from '../../profile-logic/stack-timing';
 import type { GetCategory } from '../../profile-logic/color-categories';
 import type { GetLabel } from '../../profile-logic/labeling-strategies';
 import type { ProfileSelection } from '../../types/actions';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 import type { OwnProps as StackChartCanvasOwnProps } from './Canvas';
 
 require('./index.css');
@@ -52,10 +55,7 @@ type DispatchProps = {|
   +updateProfileSelection: typeof updateProfileSelection,
 |};
 
-type Props = {|
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 class StackChartGraph extends React.PureComponent<Props> {
   /**

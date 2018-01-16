@@ -12,7 +12,10 @@ import PerfScreenshot from '../../../res/perf-screenshot-2017-09-08.jpg';
 import { retrieveProfileFromFile } from '../../actions/receive-profile';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import FooterLinks from './FooterLinks';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 require('./Home.css');
 
@@ -106,10 +109,7 @@ type DispatchHomeProps = {|
   +retrieveProfileFromFile: typeof retrieveProfileFromFile,
 |};
 
-type HomeProps = {|
-  ...OwnHomeProps,
-  ...DispatchHomeProps,
-|};
+type HomeProps = ConnectedProps<OwnHomeProps, {||}, DispatchHomeProps>;
 
 type HomeState = {
   isDragging: boolean,

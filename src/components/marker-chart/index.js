@@ -24,7 +24,10 @@ import type {
   UnitIntervalOfProfileRange,
 } from '../../types/units';
 import type { ProfileSelection } from '../../types/actions';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 import type { OwnProps as MarkerChartCanvasOwnProps } from './Canvas';
 
 require('./index.css');
@@ -47,10 +50,7 @@ type StateProps = {|
   +processDetails: string,
 |};
 
-type Props = {|
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 class MarkerChart extends React.PureComponent<Props> {
   /**

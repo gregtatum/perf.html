@@ -38,7 +38,10 @@ import type {
   CallNodeDisplayData,
 } from '../../types/profile-derived';
 import type { Column } from '../shared/TreeView';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 type StateProps = {|
   +threadIndex: ThreadIndex,
@@ -62,10 +65,7 @@ type DispatchProps = {|
   +addTransformToStack: typeof addTransformToStack,
 |};
 
-type Props = {|
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 class CallTreeComponent extends PureComponent<Props> {
   _fixedColumns: Column[];

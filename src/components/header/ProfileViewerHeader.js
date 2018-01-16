@@ -27,7 +27,10 @@ import {
 import type { Profile, ThreadIndex } from '../../types/profile';
 import type { ProfileSelection } from '../../types/actions';
 import type { Milliseconds, StartEndRange } from '../../types/units';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 type StateProps = {|
   +profile: Profile,
@@ -44,10 +47,7 @@ type DispatchProps = {|
   +updateProfileSelection: typeof updateProfileSelection,
 |};
 
-type Props = {|
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 class ProfileViewerHeader extends PureComponent<Props> {
   constructor(props: Props) {

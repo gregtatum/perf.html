@@ -21,9 +21,10 @@ import classNames from 'classnames';
 
 import type { Thread, ThreadIndex } from '../../types/profile';
 import type { State } from '../../types/reducers';
-import type { ExplicitConnectOptions } from '../../utils/connect';
-
-type OwnProps = {||};
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 type StateProps = {|
   +threads: Thread[],
@@ -38,11 +39,7 @@ type DispatchProps = {|
   +isolateThread: typeof isolateThread,
 |};
 
-type Props = {|
-  ...OwnProps,
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 class ProfileThreadHeaderContextMenu extends PureComponent<Props> {
   constructor(props: Props) {
@@ -117,7 +114,7 @@ class ProfileThreadHeaderContextMenu extends PureComponent<Props> {
   }
 }
 
-const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: (state: State) => ({
     threads: getThreads(state),
     threadOrder: getThreadOrder(state),

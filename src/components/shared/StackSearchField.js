@@ -13,7 +13,10 @@ import {
   getSearchStrings,
 } from '../../reducers/url-state';
 
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 import './StackSearchField.css';
 
@@ -30,11 +33,7 @@ type DispatchProps = {|
   +changeCallTreeSearchString: typeof changeCallTreeSearchString,
 |};
 
-type Props = {|
-  ...OwnProps,
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
 
 type State = {| searchFieldFocused: boolean |};
 

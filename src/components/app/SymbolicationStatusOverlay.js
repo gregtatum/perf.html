@@ -9,7 +9,10 @@ import { getProfileViewOptions } from '../../reducers/profile-view';
 import explicitConnect from '../../utils/connect';
 
 import type { RequestedLib } from '../../types/reducers';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 function englishSgPlLibrary(count) {
   return count === 1 ? 'library' : 'libraries';
@@ -33,9 +36,7 @@ type StateProps = {|
   +waitingForLibs: Set<RequestedLib>,
 |};
 
-type Props = {|
-  ...StateProps,
-|};
+type Props = ConnectedProps<{||}, StateProps, {||}>;
 
 class SymbolicationStatusOverlay extends PureComponent<Props> {
   render() {

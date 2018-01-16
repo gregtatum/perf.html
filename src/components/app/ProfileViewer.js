@@ -31,7 +31,10 @@ import { toValidTabSlug } from '../../utils/flow';
 
 import type { StartEndRange } from '../../types/units';
 import type { Tab } from './TabBar';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 require('./ProfileViewer.css');
 
@@ -47,10 +50,7 @@ type DispatchProps = {|
   +changeTabOrder: typeof changeTabOrder,
 |};
 
-type Props = {|
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 class ProfileViewer extends PureComponent<Props> {
   _tabs: Tab[];

@@ -24,7 +24,10 @@ import type {
   CallNodePath,
 } from '../../types/profile-derived';
 import type { Thread, ThreadIndex } from '../../types/profile';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 type StateProps = {|
   +thread: Thread,
@@ -40,10 +43,7 @@ type DispatchProps = {|
   +addTransformToStack: typeof addTransformToStack,
 |};
 
-type Props = {|
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 require('./ProfileCallTreeContextMenu.css');
 

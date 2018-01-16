@@ -10,7 +10,10 @@ import { changeMarkersSearchString } from '../../actions/profile-view';
 import { getMarkersSearchString } from '../../reducers/url-state';
 import IdleSearchField from '../shared/IdleSearchField';
 
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 import './Settings.css';
 
@@ -22,10 +25,7 @@ type DispatchProps = {|
   +changeMarkersSearchString: typeof changeMarkersSearchString,
 |};
 
-type Props = {|
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 class Settings extends PureComponent<Props> {
   constructor(props: Props) {

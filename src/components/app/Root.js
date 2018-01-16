@@ -26,7 +26,10 @@ import FooterLinks from './FooterLinks';
 import type { Store } from '../../types/store';
 import type { AppViewState, State } from '../../types/reducers';
 import type { DataSource } from '../../types/actions';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 require('./Root.css');
 
@@ -79,10 +82,12 @@ type ProfileViewDispatchProps = {|
   +retrieveProfileFromStore: typeof retrieveProfileFromStore,
   +retrieveProfileFromUrl: typeof retrieveProfileFromUrl,
 |};
-type ProfileViewProps = {|
-  ...ProfileViewStateProps,
-  ...ProfileViewDispatchProps,
-|};
+
+type ProfileViewProps = ConnectedProps<
+  {||},
+  ProfileViewStateProps,
+  ProfileViewDispatchProps
+>;
 
 class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
   componentDidMount() {

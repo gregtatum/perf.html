@@ -29,7 +29,10 @@ import type { StartEndRange } from '../../types/units';
 import type { Profile } from '../../types/profile';
 import type { Action, DataSource } from '../../types/actions';
 import type { SymbolicationStatus } from '../../types/reducers';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 require('./ProfileSharing.css');
 
@@ -451,10 +454,11 @@ type ProfileSharingDispatchProps = {|
   +profilePublished: typeof actions.profilePublished,
 |};
 
-type ProfileSharingProps = {|
-  ...ProfileSharingStateProps,
-  ...ProfileSharingDispatchProps,
-|};
+type ProfileSharingProps = ConnectedProps<
+  {||},
+  ProfileSharingStateProps,
+  ProfileSharingDispatchProps
+>;
 
 const ProfileSharing = ({
   profile,

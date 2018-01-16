@@ -11,7 +11,10 @@ import { getIconClassNameForCallNode } from '../../reducers/icons';
 import { iconStartLoading } from '../../actions/icons';
 
 import type { CallNodeDisplayData } from '../../types/profile-derived';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 type OwnProps = {|
   displayData: CallNodeDisplayData,
@@ -26,11 +29,7 @@ type DispatchProps = {|
   +iconStartLoading: typeof iconStartLoading,
 |};
 
-type Props = {|
-  ...OwnProps,
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
 
 class NodeIcon extends PureComponent<Props> {
   constructor(props: Props) {

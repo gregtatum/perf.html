@@ -49,41 +49,33 @@ export type ExplicitConnectOptions<
     StateProps,
     DispatchProps,
     OwnProps,
-    {
-      ...OwnProps,
-      ...StateProps,
-      ...DispatchProps,
-    }
+    ConnectedProps<OwnProps, StateProps, DispatchProps>
   >,
   options?: ConnectOptions,
-  component:
-    | React.ComponentType<{|
-        ...OwnProps,
-        ...StateProps,
-        ...DispatchProps,
-      |}>
-    | React.ComponentType<{
-        ...OwnProps,
-        ...StateProps,
-        ...DispatchProps,
-      }>,
+  component: React.ComponentType<
+    ConnectedProps<OwnProps, StateProps, DispatchProps>
+  >,
 };
+
+export type ConnectedProps<
+  OwnProps: Object,
+  StateProps: Object,
+  DispatchProps: Object
+> = $ReadOnly<{|
+  ...OwnProps,
+  ...StateProps,
+  ...DispatchProps,
+|}>;
 
 export type ConnectedComponent<
   OwnProps: Object,
   StateProps: Object,
   DispatchProps: Object
 > =
-  | React.ComponentType<{|
-      ...OwnProps,
-      ...StateProps,
-      ...DispatchProps,
-    |}>
-  | React.StatelessFunctionalComponent<{
-      ...OwnProps,
-      ...StateProps,
-      ...DispatchProps,
-    }>;
+  | React.ComponentType<ConnectedProps<OwnProps, StateProps, DispatchProps>>
+  | React.StatelessFunctionalComponent<
+      ConnectedProps<OwnProps, StateProps, DispatchProps>
+    >;
 
 /**
  * react-redux's connect function is too polymorphic and problematic. This function

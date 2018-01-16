@@ -26,7 +26,10 @@ import type {
   IndexIntoMarkersTable,
 } from '../../types/profile';
 import type { Milliseconds } from '../../types/units';
-import type { ExplicitConnectOptions } from '../../utils/connect';
+import type {
+  ExplicitConnectOptions,
+  ConnectedProps,
+} from '../../utils/connect';
 
 type MarkerDisplayData = {|
   timestamp: string,
@@ -144,10 +147,7 @@ type DispatchProps = {|
   +changeSelectedMarker: typeof changeSelectedMarker,
 |};
 
-type Props = {|
-  ...StateProps,
-  ...DispatchProps,
-|};
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 class MarkerTable extends PureComponent<Props> {
   _fixedColumns = [
