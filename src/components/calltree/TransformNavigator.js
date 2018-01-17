@@ -11,14 +11,15 @@ import { popTransformsFromStack } from '../../actions/profile-view';
 
 import type { State } from '../../types/reducers';
 import type { ExplicitConnectOptions } from '../../utils/connect';
+import type { ElementProps } from 'react';
 
 import './TransformNavigator.css';
 
-type Props = $PropertyType<FilterNavigatorBar, 'props'>;
+type Props = ElementProps<typeof FilterNavigatorBar>;
 type DispatchProps = {|
-  onPop: $PropertyType<Props, 'onPop'>,
+  +onPop: $PropertyType<Props, 'onPop'>,
 |};
-type StateProps = $Diff<Props, StateProps>;
+type StateProps = $Diff<Props, DispatchProps>;
 
 const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: (state: State) => {

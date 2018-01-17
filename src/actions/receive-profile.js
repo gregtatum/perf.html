@@ -77,22 +77,15 @@ export function coalescedFunctionsUpdate(
   };
 }
 
-// This polyfill looks crazy, but it's mainly to satisfy the type signature for Flow.
-// It's essentially a setTimout(callback, 0).
-let requestIdleCallbackPolyfill = (
-  callback: (deadline: {
-    didTimeout: boolean,
-    timeRemaining: () => number,
-  }) => void,
+let requestIdleCallbackPolyfill: (
+  callback: () => void,
   _opts?: { timeout: number }
-) => {
-  setTimeout(() => {
-    callback({ didTimeout: false, timeRemaining: () => 0 });
-  }, 0);
-};
+) => mixed;
 
 if (typeof window === 'object' && window.requestIdleCallback) {
   requestIdleCallbackPolyfill = window.requestIdleCallback;
+} else {
+  requestIdleCallbackPolyfill = callback => setTimeout(callback, 0);
 }
 
 class ColascedFunctionsUpdateDispatcher {

@@ -239,24 +239,6 @@ class ProfileThreadHeaderBar extends PureComponent<Props> {
   }
 }
 
-export function name(state: State, ownProps: OwnProps): StateProps {
-  const { threadIndex } = ownProps;
-  const selectors = selectorsForThread(threadIndex);
-  const selectedThread = getSelectedThreadIndex(state);
-  return {
-    thread: selectors.getFilteredThread(state),
-    threadName: selectors.getFriendlyThreadName(state),
-    processDetails: selectors.getThreadProcessDetails(state),
-    callNodeInfo: selectors.getCallNodeInfo(state),
-    selectedCallNodeIndex:
-      threadIndex === selectedThread
-        ? selectors.getSelectedCallNodeIndex(state)
-        : -1,
-    isSelected: threadIndex === selectedThread,
-    unfilteredSamplesRange: selectors.unfilteredSamplesRange(state),
-  };
-}
-
 const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: (state: State, ownProps: OwnProps) => {
     const { threadIndex } = ownProps;

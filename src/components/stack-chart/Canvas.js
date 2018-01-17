@@ -4,7 +4,10 @@
 
 // @flow
 import * as React from 'react';
-import withChartViewport from '../shared/chart/Viewport';
+import {
+  withChartViewport,
+  type WithChartViewport,
+} from '../shared/chart/Viewport';
 import ChartCanvas from '../shared/chart/Canvas';
 import TextMeasurement from '../../utils/text-measurement';
 import { formatNumber } from '../../utils/format-numbers';
@@ -37,10 +40,10 @@ export type OwnProps = {|
   +updateProfileSelection: typeof updateProfileSelection,
 |};
 
-type Props = {|
+type Props = $ReadOnly<{|
   ...OwnProps,
   +viewport: Viewport,
-|};
+|}>;
 
 type HoveredStackTiming = {|
   +depth: StackTimingDepth,
@@ -324,4 +327,7 @@ class StackChartCanvas extends React.PureComponent<Props> {
   }
 }
 
-export default withChartViewport(StackChartCanvas);
+//
+export default (withChartViewport: WithChartViewport<OwnProps, Props>)(
+  StackChartCanvas
+);

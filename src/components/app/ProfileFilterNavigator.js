@@ -10,12 +10,13 @@ import { getRangeFilterLabels } from '../../reducers/url-state';
 import FilterNavigatorBar from '../calltree/FilterNavigatorBar';
 
 import type { ExplicitConnectOptions } from '../../utils/connect';
+import type { ElementProps } from 'react';
 
-type Props = $PropertyType<FilterNavigatorBar, 'props'>;
+type Props = ElementProps<typeof FilterNavigatorBar>;
 type DispatchProps = {|
-  onPop: $PropertyType<Props, 'onPop'>,
+  +onPop: $PropertyType<Props, 'onPop'>,
 |};
-type StateProps = $Diff<Props, StateProps>;
+type StateProps = $Exact<$Diff<Props, DispatchProps>>;
 
 const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => {

@@ -4,7 +4,10 @@
 
 // @flow
 import * as React from 'react';
-import withChartViewport from '../shared/chart/Viewport';
+import {
+  withChartViewport,
+  type WithChartViewport,
+} from '../shared/chart/Viewport';
 import ChartCanvas from '../shared/chart/Canvas';
 import MarkerTooltipContents from '../shared/MarkerTooltipContents';
 import TextMeasurement from '../../utils/text-measurement';
@@ -42,6 +45,7 @@ export type OwnProps = {|
 
 type Props = {|
   ...OwnProps,
+  // Bring in the viewport props from the higher order Viewport component.
   +viewport: Viewport,
 |};
 
@@ -369,4 +373,6 @@ class MarkerChartCanvas extends React.PureComponent<Props, State> {
   }
 }
 
-export default withChartViewport(MarkerChartCanvas);
+export default (withChartViewport: WithChartViewport<OwnProps, Props>)(
+  MarkerChartCanvas
+);

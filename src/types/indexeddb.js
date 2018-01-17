@@ -132,6 +132,8 @@ export interface IDBIndex<K, L, V> extends EventTarget {
   unique: boolean,
 }
 
+// TODO - Investigate for correctness, see:
+// https://github.com/devtools-html/perf.html/issues/718
 export interface IDBKeyRange<K> {
   bound<J>(
     lower: J,

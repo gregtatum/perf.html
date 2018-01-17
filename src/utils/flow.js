@@ -32,6 +32,10 @@ export function immutableUpdate<T: Object>(object: T, ...rest: Object[]): T {
   return Object.assign({}, object, ...rest);
 }
 
+/**
+ * This function takes a string and returns either a valid TabSlug or null, this doesn't
+ * throw an error so that any arbitrary string can be converted, e.g. from a URL.
+ */
 export function toValidTabSlug(tabSlug: string): TabSlug | null {
   switch (tabSlug) {
     case 'calltree':

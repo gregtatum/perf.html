@@ -17,7 +17,7 @@ import type {
 } from '../../utils/connect';
 
 type OwnProps = {|
-  displayData: CallNodeDisplayData,
+  +displayData: CallNodeDisplayData,
 |};
 
 type StateProps = {|

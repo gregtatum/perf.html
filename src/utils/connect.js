@@ -5,7 +5,6 @@
 
 import * as React from 'react';
 import { connect } from 'react-redux';
-import type {} from 'react-redux';
 import type { Dispatch, State } from '../types/store';
 
 type MapStateToProps<OwnProps: Object, StateProps: Object> = (
