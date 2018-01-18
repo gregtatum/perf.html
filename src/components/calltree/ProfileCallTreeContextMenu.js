@@ -16,7 +16,12 @@ import {
   getImplementationFilter,
   getInvertCallstack,
 } from '../../reducers/url-state';
+import {
+  convertToTransformType,
+  assertExhaustiveCheck,
+} from '../../utils/flow';
 
+import type { TransformType } from '../../types/transforms';
 import type { ImplementationFilter } from '../../types/actions';
 import type {
   IndexIntoCallNodeTable,
@@ -123,6 +128,12 @@ class ProfileCallTreeContextMenu extends PureComponent<Props> {
 
   handleClick(event: SyntheticEvent<>, data: { type: string }): void {
     const { type } = data;
+
+    const transformType = convertToTransformType(type);
+    if (transformType) {
+      this.addTransformToStack(transformType);
+    }
+
     switch (type) {
       case 'copy-function-name':
         this.copyFunctionName();
@@ -133,21 +144,12 @@ class ProfileCallTreeContextMenu extends PureComponent<Props> {
       case 'copy-stack':
         this.copyStack();
         break;
-      case 'merge-call-node':
-      case 'merge-function':
-      case 'focus-subtree':
-      case 'focus-function':
-      case 'collapse-resource':
-      case 'collapse-direct-recursion':
-      case 'drop-function':
-        this.addTransformToStack(type);
-        break;
       default:
-        throw new Error(`Unknown type ${data.type}`);
+        throw new Error(`Unknown type ${type}`);
     }
   }
 
-  addTransformToStack(type: string): void {
+  addTransformToStack(type: TransformType): void {
     const {
       addTransformToStack,
       threadIndex,
@@ -215,7 +217,7 @@ class ProfileCallTreeContextMenu extends PureComponent<Props> {
         break;
       }
       default:
-        throw new Error('Type not found.');
+        assertExhaustiveCheck(type);
     }
   }
 
