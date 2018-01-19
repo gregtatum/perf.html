@@ -34,7 +34,7 @@ type MarkerDrawingInformation = {
   text: string,
 };
 
-export type OwnProps = {|
+type OwnProps = {|
   +rangeStart: Milliseconds,
   +rangeEnd: Milliseconds,
   +markerTimingRows: MarkerTimingRows,

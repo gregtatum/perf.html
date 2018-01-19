@@ -39,7 +39,7 @@ export function withSize<
     _resizeListener: Event => void;
     state = { width: 0, height: 0 };
 
-    _observeSize = (wrappedComponent: React.Component<SizeProps>) => {
+    _observeSize = (wrappedComponent: React.Component<any> | null) => {
       if (!wrappedComponent) {
         return;
       }

@@ -28,7 +28,7 @@ import type { GetCategory } from '../../profile-logic/color-categories';
 import type { GetLabel } from '../../profile-logic/labeling-strategies';
 import type { Viewport } from '../shared/chart/Viewport';
 
-export type OwnProps = {|
+type OwnProps = {|
   +thread: Thread,
   +interval: Milliseconds,
   +rangeStart: Milliseconds,

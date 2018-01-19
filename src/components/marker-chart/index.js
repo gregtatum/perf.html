@@ -28,7 +28,6 @@ import type {
   ExplicitConnectOptions,
   ConnectedProps,
 } from '../../utils/connect';
-import type { OwnProps as MarkerChartCanvasOwnProps } from './Canvas';
 
 require('./index.css');
 
@@ -88,19 +87,19 @@ class MarkerChart extends React.PureComponent<Props> {
         <MarkerChartCanvas
           key={threadIndex}
           viewportProps={{
-            timeRange: timeRange,
-            maxViewportHeight: maxViewportHeight,
+            timeRange,
+            selection,
+            maxViewportHeight,
+            viewportNeedsUpdate,
             maximumZoom: this.getMaximumZoom(),
-            selection: selection,
-            viewportNeedsUpdate: viewportNeedsUpdate,
           }}
           chartProps={{
+            markerTimingRows,
+            markers,
+            updateProfileSelection,
             rangeStart: timeRange.start,
             rangeEnd: timeRange.end,
-            markerTimingRows: markerTimingRows,
-            markers: markers,
             rowHeight: ROW_HEIGHT,
-            updateProfileSelection: updateProfileSelection,
           }}
         />
       </div>
@@ -108,9 +107,10 @@ class MarkerChart extends React.PureComponent<Props> {
   }
 }
 
+// This function is given the MarkerChartCanvas's chartProps.
 function viewportNeedsUpdate(
-  prevProps: MarkerChartCanvasOwnProps,
-  newProps: MarkerChartCanvasOwnProps
+  prevProps: { +markerTimingRows: MarkerTimingRows },
+  newProps: { +markerTimingRows: MarkerTimingRows }
 ) {
   return prevProps.markerTimingRows !== newProps.markerTimingRows;
 }

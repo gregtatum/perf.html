@@ -32,7 +32,6 @@ import type {
   ExplicitConnectOptions,
   ConnectedProps,
 } from '../../utils/connect';
-import type { OwnProps as StackChartCanvasOwnProps } from './Canvas';
 
 require('./index.css');
 
@@ -94,22 +93,22 @@ class StackChartGraph extends React.PureComponent<Props> {
           </div>
           <StackChartCanvas
             viewportProps={{
-              timeRange: timeRange,
-              maxViewportHeight: maxViewportHeight,
+              selection,
+              timeRange,
+              maxViewportHeight,
+              viewportNeedsUpdate,
               maximumZoom: this.getMaximumZoom(),
-              selection: selection,
-              viewportNeedsUpdate: viewportNeedsUpdate,
             }}
             chartProps={{
-              interval: interval,
-              thread: thread,
+              interval,
+              thread,
+              getCategory,
+              getLabel,
+              stackTimingByDepth,
+              updateProfileSelection,
               rangeStart: timeRange.start,
               rangeEnd: timeRange.end,
-              stackTimingByDepth: stackTimingByDepth,
-              getCategory: getCategory,
-              getLabel: getLabel,
               stackFrameHeight: STACK_FRAME_HEIGHT,
-              updateProfileSelection: updateProfileSelection,
             }}
           />
         </div>
@@ -144,10 +143,10 @@ const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
 };
 export default explicitConnect(options);
 
-// Save an allocation by passing in the raw ChartProps.
+// This function is given the StackChartCanvas's chartProps.
 function viewportNeedsUpdate(
-  prevProps: StackChartCanvasOwnProps,
-  newProps: StackChartCanvasOwnProps
+  prevProps: { +stackTimingByDepth: StackTimingByDepth },
+  newProps: { +stackTimingByDepth: StackTimingByDepth }
 ) {
   return prevProps.stackTimingByDepth !== newProps.stackTimingByDepth;
 }

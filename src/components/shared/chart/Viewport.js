@@ -124,7 +124,7 @@ export type WithChartViewport<
   // ChartOwnProps.
   ChartProps: $ReadOnly<{|
     ...ChartOwnProps,
-    +viewport: Viewport,
+    viewport: Viewport,
   |}>
 > = (
   // Take as input the component class that supports the the ViewportProps. The ChartProps
@@ -141,7 +141,9 @@ export type WithChartViewport<
 export const withChartViewport: WithChartViewport<*, *> =
   // ChartOwnProps is the only generic actually used in the implementation. Infer
   // the type signature of the arguments as the WithChartViewport will apply them.
-  <ChartOwnProps>(ChartComponent: *): * => {
+  <ChartOwnProps>(
+    ChartComponent: React.ComponentType<$Subtype<{ +viewport: Viewport }>>
+  ): * => {
     type ViewportProps = ConnectedProps<
       ViewportOwnProps<ChartOwnProps>,
       ViewportStateProps,
