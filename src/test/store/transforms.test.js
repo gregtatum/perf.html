@@ -728,6 +728,40 @@ describe('"collapse-function-subtree" transform', function() {
       ['A', 'B', 'C'].map(name => funcNames.indexOf(name))
     );
   });
+
+  it('can update apply the transform to the expanded CallNodePaths', function() {
+    const { dispatch, getState } = storeWithProfile(profile);
+    const toIds = (paths: Array<string[]>) =>
+      paths.map(path => path.map(name => funcNames.indexOf(name)));
+    dispatch(
+      changeSelectedCallNode(
+        threadIndex,
+        ['A', 'B', 'C', 'D', 'E'].map(name => funcNames.indexOf(name))
+      )
+    );
+    expect(
+      selectedThreadSelectors.getExpandedCallNodePaths(getState())
+    ).toEqual(
+      toIds([
+        // Force Prettier to make this readable:
+        ['A'],
+        ['A', 'B'],
+        ['A', 'B', 'C'],
+        ['A', 'B', 'C', 'D'],
+      ])
+    );
+    dispatch(addTransformToStack(threadIndex, collapseTransform));
+    expect(
+      selectedThreadSelectors.getExpandedCallNodePaths(getState())
+    ).toEqual(
+      toIds([
+        // Force Prettier to make this readable:
+        ['A'],
+        ['A', 'B'],
+        ['A', 'B', 'C'],
+      ])
+    );
+  });
 });
 
 describe('"collapse-direct-recursion" transform', function() {

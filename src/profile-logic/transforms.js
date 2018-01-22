@@ -34,8 +34,8 @@ import type {
  */
 
 // Create mappings from a transform name, to a url-friendly short name.
-export const TRANSFORM_TO_SHORT_KEY: { [TransformType]: string } = {};
-export const SHORT_KEY_TO_TRANSFORM: { [string]: TransformType } = {};
+const TRANSFORM_TO_SHORT_KEY: { [TransformType]: string } = {};
+const SHORT_KEY_TO_TRANSFORM: { [string]: TransformType } = {};
 [
   'focus-subtree',
   'focus-function',
@@ -145,10 +145,10 @@ export function parseTransforms(stringValue: string = ''): TransformStack {
         });
         break;
       }
-      case 'collapse-function-subtree':
       case 'merge-function':
+      case 'focus-function':
       case 'drop-function':
-      case 'focus-function': {
+      case 'collapse-function-subtree': {
         // e.g. "mf-325"
         const [, funcIndexRaw] = tuple;
         const funcIndex = parseInt(funcIndexRaw, 10);
@@ -237,6 +237,11 @@ export function stringifyTransforms(transforms: TransformStack = []): string {
           'Expected to be able to convert a transform into its short key.'
         );
       }
+      // This switch breaks down each transform down into shared groups of what data
+      // they need as defined in src/types/transforms.js. For instance some transforms
+      // need only a funcIndex, while some care about the current implemention, or
+      // other pieces of data. The only reason why they are grouped together is to
+      // not repeat the same line of code.
       switch (transform.type) {
         case 'merge-function':
         case 'drop-function':
@@ -502,6 +507,8 @@ export function mergeCallNode(
       IndexIntoStackTable | null,
       IndexIntoStackTable | null
     > = new Map();
+    // A root stack's prefix will be null. Maintain that relationship from old to new
+    // stacks by mapping from null to null.
     oldStackToNewStack.set(null, null);
     const newStackTable = {
       length: 0,
@@ -600,6 +607,8 @@ export function mergeFunction(
     IndexIntoStackTable | null,
     IndexIntoStackTable | null
   > = new Map();
+  // A root stack's prefix will be null. Maintain that relationship from old to new
+  // stacks by mapping from null to null.
   oldStackToNewStack.set(null, null);
   const newStackTable = {
     length: 0,
@@ -720,6 +729,8 @@ export function collapseResource(
   const collapsedStacks: Set<IndexIntoStackTable | null> = new Set();
   const funcMatchesImplementation = FUNC_MATCHES[implementation];
 
+  // A root stack's prefix will be null. Maintain that relationship from old to new
+  // stacks by mapping from null to null.
   oldStackToNewStack.set(null, null);
   // A new func and frame will be created on the first stack that is found that includes
   // the given resource.
@@ -847,6 +858,8 @@ export function collapseDirectRecursion(
     IndexIntoStackTable | null,
     IndexIntoStackTable | null
   > = new Map();
+  // A root stack's prefix will be null. Maintain that relationship from old to new
+  // stacks by mapping from null to null.
   oldStackToNewStack.set(null, null);
   const recursiveStacks = new Set();
   const newStackTable = {
@@ -946,6 +959,8 @@ export function collapseFunctionSubtree(
     IndexIntoStackTable | null,
     IndexIntoStackTable | null
   > = new Map();
+  // A root stack's prefix will be null. Maintain that relationship from old to new
+  // stacks by mapping from null to null.
   oldStackToNewStack.set(null, null);
   const collapsedStacks = new Set();
   const newStackTable = {
@@ -956,9 +971,6 @@ export function collapseFunctionSubtree(
 
   for (let stackIndex = 0; stackIndex < stackTable.length; stackIndex++) {
     const prefix = stackTable.prefix[stackIndex];
-    const frameIndex = stackTable.frame[stackIndex];
-    const funcIndex = frameTable.func[frameIndex];
-
     if (
       // The previous stack was collapsed, this one is collapsed too.
       collapsedStacks.has(prefix)
@@ -968,6 +980,9 @@ export function collapseFunctionSubtree(
       if (newPrefixStackIndex === undefined) {
         throw new Error('newPrefixStackIndex cannot be undefined');
       }
+      // Many collapsed stacks will potentially all point to the first stack that used the
+      // funcToCollapse, so newPrefixStackIndex will potentially be assigned to many
+      // stacks. This is what actually "collapses" a stack.
       oldStackToNewStack.set(stackIndex, newPrefixStackIndex);
       collapsedStacks.add(stackIndex);
     } else {
@@ -979,12 +994,15 @@ export function collapseFunctionSubtree(
           'The newStackPrefix must exist because prefix < stackIndex as the StackTable is ordered.'
         );
       }
+
+      const frameIndex = stackTable.frame[stackIndex];
       newStackTable.prefix[newStackIndex] = newStackPrefix;
       newStackTable.frame[newStackIndex] = frameIndex;
       oldStackToNewStack.set(stackIndex, newStackIndex);
 
       // If this is the function to collapse, keep the stack, but note that its children
       // should be discarded.
+      const funcIndex = frameTable.func[frameIndex];
       if (funcToCollapse === funcIndex) {
         collapsedStacks.add(stackIndex);
       }
@@ -1026,6 +1044,8 @@ export function focusSubtree(
       IndexIntoStackTable | null,
       IndexIntoStackTable | null
     > = new Map();
+    // A root stack's prefix will be null. Maintain that relationship from old to new
+    // stacks by mapping from null to null.
     oldStackToNewStack.set(null, null);
     const newStackTable = {
       length: 0,
@@ -1112,6 +1132,8 @@ export function focusInvertedSubtree(
     }
 
     const oldStackToNewStack = new Map();
+    // A root stack's prefix will be null. Maintain that relationship from old to new
+    // stacks by mapping from null to null.
     oldStackToNewStack.set(null, null);
     const newSamples = Object.assign({}, samples, {
       stack: samples.stack.map(stackIndex => {
@@ -1138,6 +1160,8 @@ export function focusFunction(
       IndexIntoStackTable | null,
       IndexIntoStackTable | null
     > = new Map();
+    // A root stack's prefix will be null. Maintain that relationship from old to new
+    // stacks by mapping from null to null.
     oldStackToNewStack.set(null, null);
     const newStackTable = {
       length: 0,
