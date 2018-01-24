@@ -7,8 +7,12 @@ import {
   uintArrayToString,
   stringToUintArray,
 } from '../utils/uintarray-encoding';
-import { toValidImplementationFilter } from './profile-data';
+import {
+  toValidImplementationFilter,
+  getCallNodeFromPath,
+} from './profile-data';
 import { timeCode } from '../utils/time-code';
+import { CallTree } from '../profile-logic/call-tree';
 
 import type {
   Thread,
@@ -19,7 +23,7 @@ import type {
   IndexIntoStackTable,
   IndexIntoResourceTable,
 } from '../types/profile';
-import type { CallNodePath } from '../types/profile-derived';
+import type { CallNodePath, CallNodeTable } from '../types/profile-derived';
 import type { ImplementationFilter } from '../types/actions';
 import type { Transform, TransformStack } from '../types/transforms';
 
@@ -414,6 +418,44 @@ function _callNodePathHasPrefixPath(
   return (
     prefixPath.length <= callNodePath.length &&
     prefixPath.every((prefixFunc, i) => prefixFunc === callNodePath[i])
+  );
+}
+
+/**
+ * Take a CallNodePath, and invert it given a CallTree. Note that if the CallTree
+ * is itself inverted, you will get back the uninverted CallNodePath to the regular
+ * CallTree.
+ *
+ * e.g:
+ *   (invertedPath, invertedCallTree) => path
+ *   (path, callTree) => invertedPath
+ */
+export function invertCallNodePath(
+  path: CallNodePath,
+  callTree: CallTree,
+  callNodeTable: CallNodeTable
+): CallNodePath {
+  let callNodeIndex = getCallNodeFromPath(path, callNodeTable);
+  if (callNodeIndex === null) {
+    // No path was found, return an empty CallNodePath.
+    return [];
+  }
+  let children = [callNodeIndex];
+  const pathToLeaf = [];
+  do {
+    // Walk down the tree's depth to construct a path to the leaf node, this should
+    // be the heaviest branch of the tree.
+    callNodeIndex = children[0];
+    pathToLeaf.push(callNodeIndex);
+    children = callTree.getChildren(callNodeIndex);
+  } while (children && children.length > 0);
+
+  return (
+    pathToLeaf
+      // Map the CallNodeIndex to FuncIndex.
+      .map(index => callNodeTable.func[index])
+      // Reverse it so that it's in the proper inverted order.
+      .reverse()
   );
 }
 

@@ -611,7 +611,8 @@ export function getCallNodeFromPath(
     }
     fs = nextFS;
   }
-  return fs;
+  // The fs could still be -1 here, so ensure we return null if that is the case.
+  return fs === -1 ? null : fs;
 }
 
 export function getCallNodePath(
