@@ -398,7 +398,8 @@ export const getProfileViewOptions = (state: State) =>
   getProfileView(state).viewOptions;
 export const getProfileRootRange = (state: State) =>
   getProfileViewOptions(state).rootRange;
-
+export const getSymbolicationStatus = (state: State) =>
+  getProfileViewOptions(state).symbolicationStatus;
 export const getScrollToSelectionGeneration = createSelector(
   getProfileViewOptions,
   viewOptions => viewOptions.scrollToSelectionGeneration

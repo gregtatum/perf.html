@@ -14,15 +14,23 @@ import {
   changeExpandedCallNodes,
 } from '../../actions/profile-view';
 import { formatTree } from '../fixtures/utils';
-import fakeIndexedDB from 'fake-indexeddb';
-import FDBKeyRange from 'fake-indexeddb/lib/FDBKeyRange';
-import { TextDecoder } from 'text-encoding';
+import withMockDatabase from '../fixtures/mocks/indexeddb';
+import withMockTextDecoder from '../fixtures/mocks/text-decoder';
 
 /**
  * Symbolication happens across actions and reducers, so test this functionality in
  * its own file.
  */
 describe('doSymbolicateProfile', function() {
+  const symbolStoreName = 'test-db';
+  // Compose the mock functions.
+  const withMocks = fn => {
+    return withMockTextDecoder(() => {
+      return withMockDatabase(`${symbolStoreName}-symbol-tables`, fn);
+    });
+  };
+
+  // Initialize a store, an unsymbolicated profile, and helper functions.
   function init() {
     const profile = _createUnsymbolicatedProfile();
     const store = storeWithProfile(profile);
@@ -30,15 +38,17 @@ describe('doSymbolicateProfile', function() {
     return {
       profile,
       store,
-      namesAsFuncIndexes: (names: string[]) =>
+      // Provide an easy way to turn func names to current func indexes.
+      funcNamesToFuncIndexes: (names: string[]) =>
         names.map(name => {
-          // Get the current thread for every invocation in order to make the tests
-          // easier to read.
+          // Get the current thread in the store every time this is called, so it
+          // is always up to date for the latest store changes. This is a convenience
+          // to make the tests easier to read.
           const thread = getThread(store.getState());
           const stringIndex = thread.stringTable.indexForString(name);
           return thread.funcTable.name.indexOf(stringIndex);
         }),
-      symbolStore: new SymbolStore('test-db', {
+      symbolStore: new SymbolStore(symbolStoreName, {
         requestSymbolTable: () => Promise.resolve(exampleSymbolTable),
       }),
     };
@@ -51,51 +61,58 @@ describe('doSymbolicateProfile', function() {
     getCallTree,
   } = ProfileViewSelectors.selectedThreadSelectors;
 
-  beforeAll(function() {
-    window.indexedDB = fakeIndexedDB;
-    window.IDBKeyRange = FDBKeyRange;
-    window.TextDecoder = TextDecoder;
-  });
-
-  afterAll(function() {
-    delete window.indexedDB;
-    delete window.IDBKeyRange;
-    delete window.TextDecoder;
-  });
-
   describe('doSymbolicateProfile', function() {
-    it('can symbolicate a profile', async () => {
-      const { store: { dispatch, getState }, profile, symbolStore } = init();
-      expect(formatTree(getCallTree(getState()))).toEqual([
-        '- 0x000a (total: 1, self: —)',
-        '  - 0x2000 (total: 1, self: 1)',
-        '- 0x0000 (total: 1, self: —)',
-        '  - 0x2000 (total: 1, self: 1)',
-        '- 0x1a0f (total: 1, self: 1)',
-        '- 0x0f0f (total: 1, self: 1)',
-      ]);
+    it(
+      'can symbolicate a profile',
+      withMocks(async () => {
+        const { store: { dispatch, getState }, profile, symbolStore } = init();
+        expect(formatTree(getCallTree(getState()))).toEqual([
+          '- 0x000a (total: 1, self: —)',
+          '  - 0x2000 (total: 1, self: 1)',
+          '- 0x0000 (total: 1, self: —)',
+          '  - 0x2000 (total: 1, self: 1)',
+          '- 0x1a0f (total: 1, self: 1)',
+          '- 0x0f0f (total: 1, self: 1)',
+        ]);
 
-      await doSymbolicateProfile(dispatch, profile, symbolStore);
-      expect(formatTree(getCallTree(getState()))).toEqual([
-        // 0x0000 and 0x000a get merged together.
-        '- first symbol (total: 2, self: —)',
-        '  - last symbol (total: 2, self: 2)',
-        '- third symbol (total: 1, self: 1)',
-        '- second symbol (total: 1, self: 1)',
-      ]);
-    });
+        await doSymbolicateProfile(dispatch, profile, symbolStore);
+        expect(formatTree(getCallTree(getState()))).toEqual([
+          // 0x0000 and 0x000a get merged together.
+          '- first symbol (total: 2, self: —)',
+          '  - last symbol (total: 2, self: 2)',
+          '- third symbol (total: 1, self: 1)',
+          '- second symbol (total: 1, self: 1)',
+        ]);
+      })
+    );
+
+    it(
+      'updates the symbolication status',
+      withMocks(async () => {
+        const { store: { dispatch, getState }, profile, symbolStore } = init();
+
+        expect(ProfileViewSelectors.getSymbolicationStatus(getState())).toEqual(
+          'SYMBOLICATING'
+        );
+        await doSymbolicateProfile(dispatch, profile, symbolStore);
+        expect(ProfileViewSelectors.getSymbolicationStatus(getState())).toEqual(
+          'DONE'
+        );
+      })
+    );
   });
 
   describe('merging of functions with different memory addresses, but in the same function', () => {
     it('starts with expanded call nodes of multiple memory addresses', async function() {
-      const { store: { dispatch, getState }, namesAsFuncIndexes } = init();
+      // Don't use the mocks on this test, as no SymbolStore database is needed.
+      const { store: { dispatch, getState }, funcNamesToFuncIndexes } = init();
 
       const threadIndex = 0;
-      const selectedCallNodePath = namesAsFuncIndexes(['0x000a', '0x2000']);
+      const selectedCallNodePath = funcNamesToFuncIndexes(['0x000a', '0x2000']);
       // Both of these expanded nodes are actually in the same function, but
       // they are different memory addresses.
       const expandedCallNodePaths = [['0x000a'], ['0x0000']].map(
-        namesAsFuncIndexes
+        funcNamesToFuncIndexes
       );
 
       dispatch(changeSelectedCallNode(threadIndex, selectedCallNodePath));
@@ -107,44 +124,50 @@ describe('doSymbolicateProfile', function() {
       );
     });
 
-    it('symbolicates and merges functions in the stored call node paths', async function() {
-      const {
-        store: { dispatch, getState },
-        profile,
-        symbolStore,
-        namesAsFuncIndexes,
-      } = init();
+    it(
+      'symbolicates and merges functions in the stored call node paths',
+      withMocks(async function() {
+        const {
+          store: { dispatch, getState },
+          profile,
+          symbolStore,
+          funcNamesToFuncIndexes,
+        } = init();
 
-      const threadIndex = 0;
+        const threadIndex = 0;
+        const selectedCallNodePath = funcNamesToFuncIndexes([
+          '0x000a',
+          '0x2000',
+        ]);
+        const expandedCallNodePaths = [['0x000a'], ['0x0000']].map(
+          funcNamesToFuncIndexes
+        );
 
-      dispatch(
-        changeSelectedCallNode(
-          threadIndex,
-          namesAsFuncIndexes(['0x000a', '0x2000'])
-        )
-      );
-      // Both of these expanded nodes are actually in the same function, but
-      // they are different memory addresses. See exampleSymbolTable and
-      // _createUnsymbolicatedProfile().
-      dispatch(
-        changeExpandedCallNodes(
-          threadIndex,
-          [['0x000a'], ['0x0000']].map(namesAsFuncIndexes)
-        )
-      );
+        dispatch(changeSelectedCallNode(threadIndex, selectedCallNodePath));
+        // Both of these expanded nodes are actually in the same function, but
+        // they are different memory addresses. See exampleSymbolTable and
+        // _createUnsymbolicatedProfile().
+        dispatch(changeExpandedCallNodes(threadIndex, expandedCallNodePaths));
+        expect(getSelectedCallNodePath(getState())).toEqual(
+          selectedCallNodePath
+        );
+        expect(getExpandedCallNodePaths(getState())).toEqual(
+          expandedCallNodePaths
+        );
 
-      await doSymbolicateProfile(dispatch, profile, symbolStore);
-      expect(getSelectedCallNodePath(getState())).toEqual(
-        // The CallNodePath is now symbolicated.
-        namesAsFuncIndexes(['first symbol', 'last symbol'])
-      );
+        await doSymbolicateProfile(dispatch, profile, symbolStore);
+        expect(getSelectedCallNodePath(getState())).toEqual(
+          // The CallNodePath is now symbolicated.
+          funcNamesToFuncIndexes(['first symbol', 'last symbol'])
+        );
 
-      expect(getExpandedCallNodePaths(getState())).toEqual(
-        // Notice how these are duplicated, however they are equivalent.
-        // See: https://github.com/devtools-html/perf.html/issues/270
-        [['first symbol'], ['first symbol']].map(namesAsFuncIndexes)
-      );
-    });
+        expect(getExpandedCallNodePaths(getState())).toEqual(
+          // Notice how these are duplicated, however they are equivalent.
+          // See: https://github.com/devtools-html/perf.html/issues/270
+          [['first symbol'], ['first symbol']].map(funcNamesToFuncIndexes)
+        );
+      })
+    );
   });
 });
 
