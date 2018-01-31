@@ -7,7 +7,7 @@ import TextDecoder from 'text-encoding';
 /**
  * This function mocks out the indexedDB as an in-memory database while fn is running.
  */
-export default function withMockTextDecoder<T: Function>(fn: T) {
+export default async function withMockTextDecoder<T: Function>(fn: T) {
   return async () => {
     if (window.TextDecoder) {
       throw new Error(
@@ -16,9 +16,11 @@ export default function withMockTextDecoder<T: Function>(fn: T) {
     }
     window.TextDecoder = TextDecoder;
 
-    const response = await fn();
+    const response = Promise.resolve(fn());
 
-    delete window.TextDecoder;
-    return response;
+    return response.catch().then(() => {
+      delete window.TextDecoder;
+      return response;
+    });
   };
 }

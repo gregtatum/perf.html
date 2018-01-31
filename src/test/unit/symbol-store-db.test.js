@@ -5,89 +5,92 @@
 import 'babel-polyfill';
 import { SymbolStoreDB } from '../../profile-logic/symbol-store-db';
 import exampleSymbolTable from '../fixtures/example-symbol-table';
-import fakeIndexedDB from 'fake-indexeddb';
-import FDBKeyRange from 'fake-indexeddb/lib/FDBKeyRange';
+import withMockDatabase from '../fixtures/mocks/indexeddb';
 
 describe('SymbolStoreDB', function() {
+  const symbolStoreName = 'testing-symbol-tables';
+  const withMocks = fn =>
+    // Pre-configure the database mock
+    withMockDatabase(`${symbolStoreName}-symbol-tables`, fn);
+
   const libs = Array.from({ length: 10 }).map((_, i) => ({
     debugName: `firefox${i}`,
     breakpadId: `breakpadId${i}`,
   }));
 
-  beforeAll(function() {
-    window.indexedDB = fakeIndexedDB;
-    window.IDBKeyRange = FDBKeyRange;
-  });
+  it(
+    'should respect the maximum number of tables limit',
+    withMocks(async function() {
+      const symbolStoreDB = new SymbolStoreDB(symbolStoreName, 5); // maximum 5
 
-  afterAll(function() {
-    delete window.indexedDB;
-    delete window.IDBKeyRange;
-  });
+      // Try to store 10 symbol tables in a database that only allows 5.
+      // All stores should succeed but the first 5 should be evicted again.
+      for (const lib of libs) {
+        await symbolStoreDB.storeSymbolTable(
+          lib.debugName,
+          lib.breakpadId,
+          exampleSymbolTable
+        );
+      }
 
-  it('should respect the maximum number of tables limit', async function() {
-    const symbolStoreDB = new SymbolStoreDB('testing-symbol-tables', 5); // maximum 5
+      for (let i = 0; i < 5; i++) {
+        await expect(
+          symbolStoreDB.getSymbolTable(libs[i].debugName, libs[i].breakpadId)
+        ).rejects.toBeInstanceOf(Error);
+        //        .rejects.toMatch('does not exist in the database'); // TODO Some future verison of jest should make this work
+      }
 
-    // Try to store 10 symbol tables in a database that only allows 5.
-    // All stores should succeed but the first 5 should be evicted again.
-    for (const lib of libs) {
-      await symbolStoreDB.storeSymbolTable(
-        lib.debugName,
-        lib.breakpadId,
-        exampleSymbolTable
-      );
-    }
+      for (let i = 5; i < 10; i++) {
+        // We should be able to retrieve all last 5 tables
+        await expect(
+          symbolStoreDB.getSymbolTable(libs[i].debugName, libs[i].breakpadId)
+        ).resolves.toBeInstanceOf(Array);
+      }
 
-    for (let i = 0; i < 5; i++) {
-      await expect(
-        symbolStoreDB.getSymbolTable(libs[i].debugName, libs[i].breakpadId)
-      ).rejects.toBeInstanceOf(Error);
-      //        .rejects.toMatch('does not exist in the database'); // TODO Some future verison of jest should make this work
-    }
+      await symbolStoreDB.close();
+    })
+  );
 
-    for (let i = 5; i < 10; i++) {
-      // We should be able to retrieve all last 5 tables
-      await expect(
-        symbolStoreDB.getSymbolTable(libs[i].debugName, libs[i].breakpadId)
-      ).resolves.toBeInstanceOf(Array);
-    }
+  it(
+    'should still contain those five symbol tables after opening the database a second time',
+    withMocks(async function() {
+      const symbolStoreDB = new SymbolStoreDB(symbolStoreName, 5); // maximum 5
 
-    await symbolStoreDB.close();
-  });
+      for (let i = 0; i < 5; i++) {
+        await expect(
+          symbolStoreDB.getSymbolTable(libs[i].debugName, libs[i].breakpadId)
+        ).rejects.toBeInstanceOf(Error);
+        //        .rejects.toMatch('does not exist in the database'); // TODO Some future verison of jest should make this work
+      }
 
-  it('should still contain those five symbol tables after opening the database a second time', async function() {
-    const symbolStoreDB = new SymbolStoreDB('testing-symbol-tables', 5); // maximum 5
+      for (let i = 5; i < 10; i++) {
+        // We should be able to retrieve all last 5 tables
+        await expect(
+          symbolStoreDB.getSymbolTable(libs[i].debugName, libs[i].breakpadId)
+        ).resolves.toBeInstanceOf(Array);
+      }
 
-    for (let i = 0; i < 5; i++) {
-      await expect(
-        symbolStoreDB.getSymbolTable(libs[i].debugName, libs[i].breakpadId)
-      ).rejects.toBeInstanceOf(Error);
-      //        .rejects.toMatch('does not exist in the database'); // TODO Some future verison of jest should make this work
-    }
+      await symbolStoreDB.close();
+    })
+  );
 
-    for (let i = 5; i < 10; i++) {
-      // We should be able to retrieve all last 5 tables
-      await expect(
-        symbolStoreDB.getSymbolTable(libs[i].debugName, libs[i].breakpadId)
-      ).resolves.toBeInstanceOf(Array);
-    }
+  it(
+    'should still evict all tables when opening with the age limit set to 0ms',
+    withMocks(async function() {
+      // maximum count 10, maximum age -1
+      // Note we use -1 to force an eviction. With 0 in some platforms (cough cough
+      // Windows) we don't get an eviction because Date.now() isn't updated often
+      // enough.
+      const symbolStoreDB = new SymbolStoreDB(symbolStoreName, 10, -1);
 
-    await symbolStoreDB.close();
-  });
+      for (let i = 0; i < 10; i++) {
+        await expect(
+          symbolStoreDB.getSymbolTable(libs[i].debugName, libs[i].breakpadId)
+        ).rejects.toBeInstanceOf(Error);
+        //        .rejects.toMatch('does not exist in the database'); // TODO Some future verison of jest should make this work
+      }
 
-  it('should still evict all tables when opening with the age limit set to 0ms', async function() {
-    // maximum count 10, maximum age -1
-    // Note we use -1 to force an eviction. With 0 in some platforms (cough cough
-    // Windows) we don't get an eviction because Date.now() isn't updated often
-    // enough.
-    const symbolStoreDB = new SymbolStoreDB('testing-symbol-tables', 10, -1);
-
-    for (let i = 0; i < 10; i++) {
-      await expect(
-        symbolStoreDB.getSymbolTable(libs[i].debugName, libs[i].breakpadId)
-      ).rejects.toBeInstanceOf(Error);
-      //        .rejects.toMatch('does not exist in the database'); // TODO Some future verison of jest should make this work
-    }
-
-    await symbolStoreDB.close();
-  });
+      await symbolStoreDB.close();
+    })
+  );
 });

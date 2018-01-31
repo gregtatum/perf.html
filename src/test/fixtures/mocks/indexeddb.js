@@ -17,7 +17,9 @@ function _deleteDatabase(dbName: string) {
  * This function mocks out the indexedDB as an in-memory database while fn is running.
  */
 export default function withMockDatabase<T: Function>(dbName: string, fn: T) {
+  console.log('Returning db mocker');
   return async () => {
+    console.log('Setting up the DB');
     if (window.indexedDB) {
       throw new Error(
         'Attempting to mock indexedDB, but found an existing value on window.indexedDB.'
@@ -31,12 +33,21 @@ export default function withMockDatabase<T: Function>(dbName: string, fn: T) {
     }
     window.IDBKeyRange = FDBKeyRange;
 
-    const response = await fn();
+    console.log('Running the test');
+    // Run the function, but ensure it returns a promise.
+    const response = Promise.resolve(fn());
 
-    delete window.indexedDB;
-    delete window.IDBKeyRange;
-    await _deleteDatabase(dbName);
+    // Wait until the response is done or has failed.
+    return response.catch().then(async () => {
+      console.log('Cleaning up');
+      // Clean up.
+      delete window.indexedDB;
+      delete window.IDBKeyRange;
+      await _deleteDatabase(dbName);
 
-    return response;
+      console.log(response);
+      // Return the original response.
+      return response;
+    });
   };
 }

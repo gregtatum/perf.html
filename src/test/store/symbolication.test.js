@@ -25,8 +25,10 @@ describe('doSymbolicateProfile', function() {
   const symbolStoreName = 'test-db';
   // Compose the mock functions.
   const withMocks = fn => {
-    return withMockTextDecoder(() => {
-      return withMockDatabase(`${symbolStoreName}-symbol-tables`, fn);
+    console.log('withMocks');
+    return withMockTextDecoder(async () => {
+      console.log('withMockTextDecoder');
+      return (await withMockDatabase(`${symbolStoreName}-symbol-tables`, fn))();
     });
   };
 
@@ -61,10 +63,19 @@ describe('doSymbolicateProfile', function() {
     getCallTree,
   } = ProfileViewSelectors.selectedThreadSelectors;
 
-  describe('doSymbolicateProfile', function() {
-    it(
+  fdescribe('doSymbolicateProfile', function() {
+    const mockFn = withMocks(async () => {
+      console.log('hello');
+    });
+    console.log(mockFn);
+    mockFn();
+    it('asdf', function() {});
+    return;
+    fit(
       'can symbolicate a profile',
       withMocks(async () => {
+        console.log('about to break');
+        // asdf;
         const { store: { dispatch, getState }, profile, symbolStore } = init();
         expect(formatTree(getCallTree(getState()))).toEqual([
           '- 0x000a (total: 1, self: —)',
@@ -101,7 +112,7 @@ describe('doSymbolicateProfile', function() {
       })
     );
   });
-
+  return;
   describe('merging of functions with different memory addresses, but in the same function', () => {
     it('starts with expanded call nodes of multiple memory addresses', async function() {
       // Don't use the mocks on this test, as no SymbolStore database is needed.
