@@ -5,10 +5,12 @@
 // @flow
 import { getSelectedTab, getDataSource } from '../reducers/url-state';
 import { sendAnalytics } from '../utils/analytics';
-
+import { getZipFileTable } from '../reducers/app';
+import { unserializeProfileOfArbitraryFormat } from '../profile-logic/process-profile';
 import type { Action, ThunkAction } from '../types/store';
 import type { TabSlug } from '../types/actions';
 import type { UrlState } from '../types/reducers';
+import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
 
 export function changeSelectedTab(selectedTab: TabSlug): ThunkAction<void> {
   return (dispatch, getState) => {
@@ -59,10 +61,60 @@ export function urlSetupDone(): ThunkAction<void> {
   };
 }
 
+export function changeSelectedZipFile(
+  selectedZipFileIndex: IndexIntoZipFileTable
+): Action {
+  return {
+    type: 'CHANGE_SELECTED_ZIP_FILE',
+    selectedZipFileIndex,
+  };
+}
+
+export function changeExpandedZipFile(
+  expandedZipFileIndexes: Array<IndexIntoZipFileTable | null>
+): Action {
+  return {
+    type: 'CHANGE_EXPANDED_ZIP_FILES',
+    expandedZipFileIndexes,
+  };
+}
+
 export function show404(url: string): Action {
   return { type: 'ROUTE_NOT_FOUND', url };
 }
 
 export function updateUrlState(urlState: UrlState): Action {
   return { type: '@@urlenhancer/updateUrlState', urlState };
+}
+
+export function viewProfileFromZip(
+  zipFileIndex: IndexIntoZipFileTable
+): ThunkAction<Promise<void>> {
+  return async (dispatch, getState) => {
+    const zipFileTable = getZipFileTable(getState());
+    if (!zipFileTable) {
+      throw new Error(
+        'Attempted to view a profile from a zip, when there is no zip file loaded.'
+      );
+    }
+    const zipFilePath = zipFileTable.path[zipFileIndex];
+    const file = zipFileTable.file[zipFileIndex];
+    if (!file) {
+      throw new Error(
+        'Attempted to load a zip file that did not exist or was a directory.'
+      );
+    }
+    dispatch({ type: 'PROCESS_PROFILE_FROM_ZIP_FILE' });
+    try {
+      dispatch({
+        type: 'VIEW_PROFILE',
+        profile: unserializeProfileOfArbitraryFormat(
+          await file.async('string')
+        ),
+        zipFilePath,
+      });
+    } catch (error) {
+      dispatch({ type: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE', error });
+    }
+  };
 }
