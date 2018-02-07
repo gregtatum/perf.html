@@ -9,6 +9,7 @@ import { sendAnalytics } from '../utils/analytics';
 import type { Action, ThunkAction } from '../types/store';
 import type { TabSlug } from '../types/actions';
 import type { UrlState } from '../types/reducers';
+import type { IndexIntoZipFileTable } from '../reducers/app';
 
 export function changeSelectedTab(selectedTab: TabSlug): ThunkAction<void> {
   return (dispatch, getState) => {
@@ -56,6 +57,24 @@ export function urlSetupDone(): ThunkAction<void> {
       eventCategory: 'datasource',
       eventAction: dataSource,
     });
+  };
+}
+
+export function changeSelectedZipFile(
+  selectedZipFileIndex: IndexIntoZipFileTable
+): Action {
+  return {
+    type: 'CHANGE_SELECTED_ZIP_FILE',
+    selectedZipFileIndex,
+  };
+}
+
+export function changeExpandedZipFile(
+  expandedZipFileIndexes: Array<IndexIntoZipFileTable | null>
+): Action {
+  return {
+    type: 'CHANGE_EXPANDED_ZIP_FILES',
+    expandedZipFileIndexes,
   };
 }
 

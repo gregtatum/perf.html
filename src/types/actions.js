@@ -16,6 +16,8 @@ import type { GetLabel } from '../profile-logic/labeling-strategies';
 import type { GetCategory } from '../profile-logic/color-categories';
 import type { TemporaryError } from '../utils/errors';
 import type { Transform } from './transforms';
+import type { ZipEntries } from 'jszip';
+import type { IndexIntoZipFileTable } from '../reducers/app';
 
 export type DataSource =
   | 'none'
@@ -88,7 +90,15 @@ type ProfileAction =
       selectedMarker: IndexIntoMarkersTable | -1,
     }
   | { type: 'UPDATE_PROFILE_SELECTION', selection: ProfileSelection }
-  | { type: 'CHANGE_TAB_ORDER', tabOrder: number[] };
+  | { type: 'CHANGE_TAB_ORDER', tabOrder: number[] }
+  | {
+      type: 'CHANGE_SELECTED_ZIP_FILE',
+      selectedZipFileIndex: IndexIntoZipFileTable | null,
+    }
+  | {
+      type: 'CHANGE_EXPANDED_ZIP_FILES',
+      expandedZipFileIndexes: Array<IndexIntoZipFileTable | null>,
+    };
 
 type ReceiveProfileAction =
   | {
@@ -116,6 +126,7 @@ type ReceiveProfileAction =
   | { type: 'RECEIVE_PROFILE_FROM_FILE', profile: Profile }
   | { type: 'RECEIVE_PROFILE_FROM_STORE', profile: Profile }
   | { type: 'RECEIVE_PROFILE_FROM_URL', profile: Profile }
+  | { type: 'RECEIVE_ZIP_FILE', zip: ZipEntries }
   | { type: 'REQUESTING_SYMBOL_TABLE', requestedLib: RequestedLib }
   | { type: 'RECEIVED_SYMBOL_TABLE_REPLY', requestedLib: RequestedLib }
   | { type: 'START_SYMBOLICATING' }

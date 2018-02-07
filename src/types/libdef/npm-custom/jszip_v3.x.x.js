@@ -20,15 +20,16 @@
  * const zip = (JSZip: InitJSZip)();
  * const zip = (JSZip: StaticJSZip).loadAsync();
  */
-type ZipFile = {
-  async: (key: 'string') => Promise<string>,
-};
-
-type ZipEntries = {
-  files: {| [fileName: string]: ZipFile |},
-};
 
 declare module 'jszip' {
+  declare type FileFromZip = {
+    async: (key: 'string') => Promise<string>,
+  };
+
+  declare type ZipEntries = {
+    files: {| [fileName: string]: FileFromZip |},
+  };
+
   declare type InitJSZip = () => {
     file: (fileName: string, contents: string) => void,
     generateAsync: ({ type: 'uint8array' }) => Promise<Uint8Array>,

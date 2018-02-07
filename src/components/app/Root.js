@@ -10,9 +10,10 @@ import explicitConnect from '../../utils/connect';
 import {
   retrieveProfileFromAddon,
   retrieveProfileFromStore,
-  retrieveProfileFromUrl,
+  retrieveProfileOrZipFromUrl,
 } from '../../actions/receive-profile';
 import ProfileViewer from './ProfileViewer';
+import ZipFileViewer from './ZipFileViewer';
 import Home from './Home';
 import { getView } from '../../reducers/app';
 import {
@@ -80,7 +81,7 @@ type ProfileViewStateProps = {|
 type ProfileViewDispatchProps = {|
   +retrieveProfileFromAddon: typeof retrieveProfileFromAddon,
   +retrieveProfileFromStore: typeof retrieveProfileFromStore,
-  +retrieveProfileFromUrl: typeof retrieveProfileFromUrl,
+  +retrieveProfileOrZipFromUrl: typeof retrieveProfileOrZipFromUrl,
 |};
 
 type ProfileViewProps = ConnectedProps<
@@ -97,7 +98,7 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
       profileUrl,
       retrieveProfileFromAddon,
       retrieveProfileFromStore,
-      retrieveProfileFromUrl,
+      retrieveProfileOrZipFromUrl,
     } = this.props;
     switch (dataSource) {
       case 'from-addon':
@@ -112,7 +113,7 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
         retrieveProfileFromStore(hash);
         break;
       case 'from-url':
-        retrieveProfileFromUrl(profileUrl);
+        retrieveProfileOrZipFromUrl(profileUrl);
         break;
       case 'none':
         // nothing to do
@@ -200,6 +201,8 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
 
         return this.renderMessage(message, additionalMessage, false);
       }
+      case 'ZIP':
+        return <ZipFileViewer />;
       case 'PROFILE':
         return <ProfileViewer />;
       case 'ROUTE_NOT_FOUND':
@@ -224,7 +227,7 @@ const options: ExplicitConnectOptions<
   }),
   mapDispatchToProps: {
     retrieveProfileFromStore,
-    retrieveProfileFromUrl,
+    retrieveProfileOrZipFromUrl,
     retrieveProfileFromAddon,
   },
   component: ProfileViewWhenReadyImpl,

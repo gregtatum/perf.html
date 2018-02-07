@@ -13,9 +13,7 @@ import { symbolicateProfile } from '../profile-logic/symbolication';
 import { decompress } from '../utils/gz';
 import { getTimeRangeIncludingAllThreads } from '../profile-logic/profile-data';
 import { TemporaryError } from '../utils/errors';
-import { objectValues } from '../utils/flow';
-import JSZip from 'jszip';
-import type { StaticJSZip } from 'jszip';
+import JSZip, { type StaticJSZip, type ZipEntries } from 'jszip';
 
 import type {
   FunctionsUpdatePerThread,
@@ -342,6 +340,13 @@ export function receiveProfileFromUrl(profile: Profile): Action {
   };
 }
 
+export function receiveZipFile(zip: ZipEntries): Action {
+  return {
+    type: 'RECEIVE_ZIP_FILE',
+    zip,
+  };
+}
+
 export function temporaryErrorReceivingProfileFromStore(
   error: TemporaryError
 ): Action {
@@ -392,7 +397,12 @@ type FetchProfileArgs = {
  * If we can retrieve the profile properly, the returned promise is resolved
  * with the JSON.parsed profile.
  */
-export async function _fetchProfile(args: FetchProfileArgs) {
+export async function _fetchProfile(
+  args: FetchProfileArgs
+): Promise<{
+  profile?: any,
+  zip?: ZipEntries,
+}> {
   const MAX_WAIT_SECONDS = 10;
   let i = 0;
   const { url, onTemporaryError } = args;
@@ -418,38 +428,16 @@ export async function _fetchProfile(args: FetchProfileArgs) {
       if (isZipContentType || (isUnknownContentType && hasZipEnding)) {
         // Probably a zip file.
         const buffer = await response.arrayBuffer();
-        let zip;
         try {
-          zip = await (JSZip: StaticJSZip).loadAsync(buffer);
+          return {
+            zip: await (JSZip: StaticJSZip).loadAsync(buffer),
+          };
         } catch (error) {
           const message = 'Unable to unzip the zip file.';
           reportError(message);
           reportError('Error:', error);
           reportError('Fetch response:', response);
           throw new Error(`${message} ${moreInfoMessage}`);
-        }
-
-        // Only pull out the first file.
-        const firstFile = objectValues(zip.files)[0];
-        if (!firstFile) {
-          const message = 'The zip file did not contain any profiles.';
-          reportError(message);
-          reportError('Zip file:', zip);
-          reportError('Fetch response:', response);
-          throw new Error(`${message} ${moreInfoMessage}`);
-        }
-
-        const text = await firstFile.async('string');
-        try {
-          return JSON.parse(text);
-        } catch (error) {
-          const message = 'The profile’s JSON could not be decoded.';
-
-          // Provide helpful debugging information to the console.
-          reportError(message);
-          reportError('JSON parsing error:', error);
-          reportError('Fetch response:', response);
-          reportError('Zip file:', zip);
         }
       } else {
         try {
@@ -552,37 +540,51 @@ export function retrieveProfileFromStore(
   };
 }
 
-export function retrieveProfileFromUrl(
+/**
+ * Runs a fetch on a URL, and downloads the file. If it's JSON, then it attempts
+ * to process the profile. If it's a zip file, it tries to unzip it, and save it
+ * into the store so that the user can then choose which file to load.
+ */
+export function retrieveProfileOrZipFromUrl(
   profileUrl: string
 ): ThunkAction<Promise<void>> {
   return async function(dispatch) {
     dispatch(waitingForProfileFromUrl());
 
     try {
-      const serializedProfile = await _fetchProfile({
+      const response = await _fetchProfile({
         url: profileUrl,
         onTemporaryError: (e: TemporaryError) => {
           dispatch(temporaryErrorReceivingProfileFromUrl(e));
         },
       });
+      const serializedProfile = response.profile;
+      const zip = response.zip;
 
-      const profile = unserializeProfileOfArbitraryFormat(serializedProfile);
-      if (profile === undefined) {
-        throw new Error('Unable to parse the profile.');
-      }
+      if (serializedProfile) {
+        const profile = unserializeProfileOfArbitraryFormat(serializedProfile);
+        if (profile === undefined) {
+          throw new Error('Unable to parse the profile.');
+        }
 
-      if (typeof window !== 'undefined' && window.legacyRangeFilters) {
-        const zeroAt = getTimeRangeIncludingAllThreads(profile).start;
-        window.legacyRangeFilters.forEach(({ start, end }) =>
-          dispatch({
-            type: 'ADD_RANGE_FILTER',
-            start: start - zeroAt,
-            end: end - zeroAt,
-          })
+        if (typeof window !== 'undefined' && window.legacyRangeFilters) {
+          const zeroAt = getTimeRangeIncludingAllThreads(profile).start;
+          window.legacyRangeFilters.forEach(({ start, end }) =>
+            dispatch({
+              type: 'ADD_RANGE_FILTER',
+              start: start - zeroAt,
+              end: end - zeroAt,
+            })
+          );
+        }
+        dispatch(receiveProfileFromUrl(profile));
+      } else if (zip) {
+        dispatch(receiveZipFile(zip));
+      } else {
+        throw new Error(
+          'Expected to receive a zip file or profile from _fetchProfile.'
         );
       }
-
-      dispatch(receiveProfileFromUrl(profile));
     } catch (error) {
       dispatch(fatalErrorReceivingProfileFromUrl(error));
     }
