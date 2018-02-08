@@ -18,8 +18,8 @@ import type { Attempt } from '../utils/errors';
 import type { GetLabel } from '../profile-logic/labeling-strategies';
 import type { GetCategory } from '../profile-logic/color-categories';
 import type { TransformStacksPerThread } from './transforms';
-import type { ZipEntries } from 'jszip';
-import type { IndexIntoZipFileTable } from '../reducers/app';
+import JSZip from 'jszip';
+import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
 
 export type Reducer<T> = (T, Action) => T;
 
@@ -51,16 +51,16 @@ export type AppViewState =
   | {| +phase: 'ROUTE_NOT_FOUND' |}
   | {| +phase: 'PROFILE' |}
   | {| +phase: 'FATAL_ERROR', +error: Error |}
-  | {
+  | {|
       +phase: 'INITIALIZING',
       +additionalData?: {| +attempt: Attempt | null, +message: string |},
-    };
+    |};
 
 export type AppState = {
   view: AppViewState,
   isUrlSetupDone: boolean,
   hasZoomedViaMousewheel: boolean,
-  zipFile: ZipEntries | null,
+  zipFile: JSZip | null,
   selectedZipFileIndex: IndexIntoZipFileTable | null,
   // In practice this should never contain null, but needs to support the
   // TreeView interface.

@@ -9,7 +9,7 @@ import { sendAnalytics } from '../utils/analytics';
 import type { Action, ThunkAction } from '../types/store';
 import type { TabSlug } from '../types/actions';
 import type { UrlState } from '../types/reducers';
-import type { IndexIntoZipFileTable } from '../reducers/app';
+import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
 
 export function changeSelectedTab(selectedTab: TabSlug): ThunkAction<void> {
   return (dispatch, getState) => {

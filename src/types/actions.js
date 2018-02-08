@@ -4,6 +4,7 @@
 
 // @flow
 import { CallTree } from '../profile-logic/call-tree';
+import JSZip from 'jszip';
 import type {
   Profile,
   Thread,
@@ -16,8 +17,7 @@ import type { GetLabel } from '../profile-logic/labeling-strategies';
 import type { GetCategory } from '../profile-logic/color-categories';
 import type { TemporaryError } from '../utils/errors';
 import type { Transform } from './transforms';
-import type { ZipEntries } from 'jszip';
-import type { IndexIntoZipFileTable } from '../reducers/app';
+import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
 
 export type DataSource =
   | 'none'
@@ -126,7 +126,7 @@ type ReceiveProfileAction =
   | { type: 'RECEIVE_PROFILE_FROM_FILE', profile: Profile }
   | { type: 'RECEIVE_PROFILE_FROM_STORE', profile: Profile }
   | { type: 'RECEIVE_PROFILE_FROM_URL', profile: Profile }
-  | { type: 'RECEIVE_ZIP_FILE', zip: ZipEntries }
+  | { type: 'RECEIVE_ZIP_FILE', zip: JSZip }
   | { type: 'REQUESTING_SYMBOL_TABLE', requestedLib: RequestedLib }
   | { type: 'RECEIVED_SYMBOL_TABLE_REPLY', requestedLib: RequestedLib }
   | { type: 'START_SYMBOLICATING' }

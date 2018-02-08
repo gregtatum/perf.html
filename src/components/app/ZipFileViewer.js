@@ -14,18 +14,20 @@ import {
   changeExpandedZipFile,
 } from '../../actions/app';
 import {
-  getZipFileTable,
+  getZipFileTree,
   getZipFileMaxDepth,
   getSelectedZipFileIndex,
   getExpandedZipFileIndexes,
-  type ZipFileTable,
-  type IndexIntoZipFileTable,
 } from '../../reducers/app';
+import type {
+  ZipFileTree,
+  IndexIntoZipFileTable,
+} from '../../profile-logic/zip-files';
+
 import TreeView from '../shared/TreeView';
-// import type { ZipEntries } from 'jszip';
 
 type StateProps = {|
-  zipFileTable: ZipFileTable | null,
+  zipFileTree: ZipFileTree | null,
   zipFileMaxDepth: number,
   selectedZipFileIndex: IndexIntoZipFileTable | null,
   // In practice this should never contain null, but needs to support the
@@ -44,72 +46,6 @@ type ZipDisplayData = {|
   name: string,
 |};
 
-class ZipFileTree {
-  _zipFileTable: ZipFileTable;
-  _displayDataByIndex: Map<IndexIntoZipFileTable, ZipDisplayData>;
-
-  constructor(zipFileTable: ZipFileTable) {
-    this._zipFileTable = zipFileTable;
-    this._displayDataByIndex = new Map();
-  }
-
-  getRoots(): IndexIntoZipFileTable[] {
-    const indexes = [];
-    for (let index = 0; index < this._zipFileTable.length; index++) {
-      if (this._zipFileTable.prefix[index] === null) {
-        indexes.push(index);
-      }
-    }
-    return indexes;
-  }
-
-  getChildren(zipTableIndex: IndexIntoZipFileTable): IndexIntoZipFileTable[] {
-    return zipTableIndex === -1 ? this.getRoots() : [];
-  }
-
-  hasChildren(zipTableIndex: IndexIntoZipFileTable): boolean {
-    return this._zipFileTable.file[zipTableIndex] !== null;
-  }
-
-  getAllDescendants(
-    zipTableIndex: IndexIntoZipFileTable
-  ): Set<IndexIntoZipFileTable> {
-    const result = new Set([]);
-    for (const child of this.getChildren(zipTableIndex)) {
-      result.add(child);
-      for (const descendant of this.getAllDescendants(child)) {
-        result.add(descendant);
-      }
-    }
-    return result;
-  }
-
-  getParent(zipTableIndex: IndexIntoZipFileTable): IndexIntoZipFileTable {
-    // This returns -1 to support the CallTree interface.
-    return this._zipFileTable.prefix[zipTableIndex] || -1;
-  }
-
-  getDepth(zipTableIndex: IndexIntoZipFileTable): number {
-    return this._zipFileTable.depth[zipTableIndex];
-  }
-
-  hasSameNodeIds(tree: ZipFileTree) {
-    return this._zipFileTable === tree._zipFileTable;
-  }
-
-  getDisplayData(zipTableIndex: IndexIntoZipFileTable): ZipDisplayData {
-    let displayData = this._displayDataByIndex.get(zipTableIndex);
-    if (displayData === undefined) {
-      displayData = {
-        name: this._zipFileTable.partName[zipTableIndex],
-      };
-      this._displayDataByIndex.set(zipTableIndex, displayData);
-    }
-    return displayData;
-  }
-}
-
-/* eslint-disable react/prefer-stateless-function */
 class ZipFileViewer extends PureComponent<Props> {
   _fixedColumns = [];
   _mainColumn = { propName: 'name', title: '' };
@@ -142,17 +78,17 @@ class ZipFileViewer extends PureComponent<Props> {
 
   render() {
     const {
-      zipFileTable,
+      zipFileTree,
       zipFileMaxDepth,
       selectedZipFileIndex,
       expandedZipFileIndexes,
       changeSelectedZipFile,
       changeExpandedZipFile,
     } = this.props;
-    if (!zipFileTable) {
+
+    if (!zipFileTree) {
       return null;
     }
-    const tree = new ZipFileTree(zipFileTable);
 
     return (
       <section className="zipFileViewer">
@@ -163,7 +99,7 @@ class ZipFileViewer extends PureComponent<Props> {
           </header>
           <TreeView
             maxNodeDepth={zipFileMaxDepth}
-            tree={tree}
+            tree={zipFileTree}
             fixedColumns={this._fixedColumns}
             mainColumn={this._mainColumn}
             onSelectionChange={changeSelectedZipFile}
@@ -181,7 +117,7 @@ class ZipFileViewer extends PureComponent<Props> {
 
 const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
-    zipFileTable: getZipFileTable(state),
+    zipFileTree: getZipFileTree(state),
     zipFileMaxDepth: getZipFileMaxDepth(state),
     selectedZipFileIndex: getSelectedZipFileIndex(state),
     expandedZipFileIndexes: getExpandedZipFileIndexes(state),

@@ -10,35 +10,21 @@
  * - And observing the console.
  *
  * It is not meant to be exhaustive, but just enough to be useful for how the unzipping
- * functionality is used. The interface is really funky with a function that is also
- * an object, so just export a function, and an object, then coerce the usage into
- * the proper version.
- *
- * e.g.
- *
- * import JSZip from 'jszip';
- * const zip = (JSZip: InitJSZip)();
- * const zip = (JSZip: StaticJSZip).loadAsync();
+ * functionality is used.
  */
 
 declare module 'jszip' {
-  declare type FileFromZip = {
+  declare type JSZipFile = {
     async: (key: 'string') => Promise<string>,
   };
 
-  declare type ZipEntries = {
-    files: {| [fileName: string]: FileFromZip |},
-  };
-
-  declare type InitJSZip = () => {
+  declare class JSZip {
+    constructor(): JSZip,
+    files: {| [fileName: string]: JSZipFile |},
     file: (fileName: string, contents: string) => void,
-    generateAsync: ({ type: 'uint8array' }) => Promise<Uint8Array>,
-  };
+    generateAsync({ type: 'uint8array' }): Promise<Uint8Array>,
+    static loadAsync: (data: ArrayBuffer) => Promise<JSZip>,
+  }
 
-  declare type StaticJSZip = {
-    loadAsync: (data: ArrayBuffer) => Promise<ZipEntries>,
-  };
-
-  // Coerce the imported value.
-  declare module.exports: any;
+  declare module.exports: typeof JSZip;
 }

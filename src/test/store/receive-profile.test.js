@@ -21,7 +21,6 @@ import getGeckoProfile from '../fixtures/profiles/gecko-profile';
 import { getEmptyProfile } from '../../profile-logic/profile-data';
 import JSZip from 'jszip';
 import { serializeProfile } from '../../profile-logic/process-profile';
-import type { InitJSZip } from 'jszip';
 
 describe('actions/receive-profile', function() {
   /**
@@ -396,7 +395,7 @@ describe('actions/receive-profile', function() {
       let json = obj.json;
 
       if (isZipped) {
-        const zip = new (JSZip: InitJSZip)();
+        const zip = new JSZip();
         zip.file('profile.json', serializeProfile(profile));
         const buffer = await zip.generateAsync({ type: 'uint8array' });
         arrayBuffer = () => buffer;

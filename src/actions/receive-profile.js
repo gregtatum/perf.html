@@ -13,7 +13,7 @@ import { symbolicateProfile } from '../profile-logic/symbolication';
 import { decompress } from '../utils/gz';
 import { getTimeRangeIncludingAllThreads } from '../profile-logic/profile-data';
 import { TemporaryError } from '../utils/errors';
-import JSZip, { type StaticJSZip, type ZipEntries } from 'jszip';
+import JSZip from 'jszip';
 
 import type {
   FunctionsUpdatePerThread,
@@ -340,7 +340,7 @@ export function receiveProfileFromUrl(profile: Profile): Action {
   };
 }
 
-export function receiveZipFile(zip: ZipEntries): Action {
+export function receiveZipFile(zip: JSZip): Action {
   return {
     type: 'RECEIVE_ZIP_FILE',
     zip,
@@ -401,7 +401,7 @@ export async function _fetchProfile(
   args: FetchProfileArgs
 ): Promise<{
   profile?: any,
-  zip?: ZipEntries,
+  zip?: JSZip,
 }> {
   const MAX_WAIT_SECONDS = 10;
   let i = 0;
@@ -430,7 +430,7 @@ export async function _fetchProfile(
         const buffer = await response.arrayBuffer();
         try {
           return {
-            zip: await (JSZip: StaticJSZip).loadAsync(buffer),
+            zip: await JSZip.loadAsync(buffer),
           };
         } catch (error) {
           const message = 'Unable to unzip the zip file.';
