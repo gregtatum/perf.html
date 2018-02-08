@@ -8,10 +8,15 @@ import explicitConnect, {
   type ExplicitConnectOptions,
   type ConnectedProps,
 } from '../../utils/connect';
-import './ZipFileViewer.css';
+import {
+  procureInitialInterestingExpandedNodes,
+  type ZipFileTree,
+  type IndexIntoZipFileTable,
+} from '../../profile-logic/zip-files';
 import {
   changeSelectedZipFile,
   changeExpandedZipFile,
+  viewProfileFromZip,
 } from '../../actions/app';
 import {
   getZipFileTree,
@@ -19,40 +24,50 @@ import {
   getSelectedZipFileIndex,
   getExpandedZipFileIndexes,
 } from '../../reducers/app';
-import type {
-  ZipFileTree,
-  IndexIntoZipFileTable,
-} from '../../profile-logic/zip-files';
-
 import TreeView from '../shared/TreeView';
 
+import './ZipFileViewer.css';
+
 type StateProps = {|
-  zipFileTree: ZipFileTree | null,
-  zipFileMaxDepth: number,
-  selectedZipFileIndex: IndexIntoZipFileTable | null,
+  +zipFileTree: ZipFileTree | null,
+  +zipFileMaxDepth: number,
+  +selectedZipFileIndex: IndexIntoZipFileTable | null,
   // In practice this should never contain null, but needs to support the
   // TreeView interface.
   expandedZipFileIndexes: Array<IndexIntoZipFileTable | null>,
 |};
 type DispatchProps = {|
-  changeSelectedZipFile: typeof changeSelectedZipFile,
-  changeExpandedZipFile: typeof changeExpandedZipFile,
+  +changeSelectedZipFile: typeof changeSelectedZipFile,
+  +changeExpandedZipFile: typeof changeExpandedZipFile,
+  +viewProfileFromZip: typeof viewProfileFromZip,
 |};
 type OwnProps = {||};
 
 type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
 
 type ZipDisplayData = {|
-  name: string,
+  +name: string,
 |};
 
 class ZipFileViewer extends PureComponent<Props> {
   _fixedColumns = [];
   _mainColumn = { propName: 'name', title: '' };
-
-  _expandedNodeIds: Array<IndexIntoZipFileTable | null> = [];
+  _appendageButtons = ['focusCallstackButton'];
   _treeView: ?TreeView<IndexIntoZipFileTable, ZipDisplayData>;
   _takeTreeViewRef = treeView => (this._treeView = treeView);
+
+  componentWillMount() {
+    const {
+      expandedZipFileIndexes,
+      zipFileTree,
+      changeExpandedZipFile,
+    } = this.props;
+    if (expandedZipFileIndexes.length === 0 && zipFileTree) {
+      changeExpandedZipFile(
+        procureInitialInterestingExpandedNodes(zipFileTree)
+      );
+    }
+  }
 
   componentDidMount() {
     this.focus();
@@ -64,6 +79,12 @@ class ZipFileViewer extends PureComponent<Props> {
       treeView.focus();
     }
   }
+
+  _onAppendageButtonClick = (zipFileIndex: IndexIntoZipFileTable | null) => {
+    if (zipFileIndex !== null) {
+      this.props.viewProfileFromZip(zipFileIndex);
+    }
+  };
 
   _onExpandedCallNodesChange(
     newExpandedZipFileIndexes: Array<IndexIntoZipFileTable | null>
@@ -106,8 +127,12 @@ class ZipFileViewer extends PureComponent<Props> {
             onExpandedNodesChange={changeExpandedZipFile}
             selectedNodeId={selectedZipFileIndex}
             expandedNodeIds={expandedZipFileIndexes}
+            appendageButtons={this._appendageButtons}
+            onAppendageButtonClick={this._onAppendageButtonClick}
             ref={this._takeTreeViewRef}
             contextMenuId={'MarkersContextMenu'}
+            rowHeight={30}
+            indentWidth={15}
           />
         </div>
       </section>
@@ -122,7 +147,11 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
     selectedZipFileIndex: getSelectedZipFileIndex(state),
     expandedZipFileIndexes: getExpandedZipFileIndexes(state),
   }),
-  mapDispatchToProps: { changeSelectedZipFile, changeExpandedZipFile },
+  mapDispatchToProps: {
+    changeSelectedZipFile,
+    changeExpandedZipFile,
+    viewProfileFromZip,
+  },
   component: ZipFileViewer,
 };
 

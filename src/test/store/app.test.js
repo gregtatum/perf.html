@@ -218,7 +218,7 @@ describe('app actions', function() {
       expect(AppSelectors.getZipFileMaxDepth(getState())).toEqual(2);
     });
 
-    fdescribe('ZipFileTree', function() {
+    describe('ZipFileTree', function() {
       async function initStoreAndZipFileTree() {
         const { getState } = await storeWithZipFile();
 

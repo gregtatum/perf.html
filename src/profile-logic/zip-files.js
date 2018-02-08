@@ -104,6 +104,10 @@ type ZipDisplayData = {|
 
 export class ZipFileTree {
   _zipFileTable: ZipFileTable;
+  _parentToChildren: null | Map<
+    IndexIntoZipFileTable | null,
+    IndexIntoZipFileTable[]
+  >;
   _displayDataByIndex: Map<IndexIntoZipFileTable, ZipDisplayData>;
 
   constructor(zipFileTable: ZipFileTable) {
@@ -116,22 +120,57 @@ export class ZipFileTree {
   }
 
   getChildren(zipTableIndex: IndexIntoZipFileTable | null): IndexIntoZipFileTable[] {
-    const indexes = [];
-    for (let index = 0; index < this._zipFileTable.length; index++) {
-      if (this._zipFileTable.prefix[index] === zipTableIndex) {
-        indexes.push(index);
+    const parentToChildMap = this._getParentToChildMap();
+    const children = parentToChildMap.get(zipTableIndex);
+    if (!children) {
+      throw new Error(
+        'Attempted to fetch the children from an unknown IndexIntoZipFileTable.'
+      );
+    }
+    return children;
+  }
+
+  _computeChildrenArray(parentIndex: IndexIntoZipFileTable | null): IndexIntoZipFileTable[] {
+    const children = [];
+    for (
+      let childIndex = 0;
+      childIndex < this._zipFileTable.length;
+      childIndex++
+    ) {
+      if (this._zipFileTable.prefix[childIndex] === parentIndex) {
+        children.push(childIndex);
       }
     }
-    return indexes;
+    return children;
+  }
+
+  /**
+   * Create a Map of the parents to the children to make it O(1) to dynamically compute
+   * any property about the tree.
+   */
+  _getParentToChildMap(): Map<
+    IndexIntoZipFileTable | null,
+    IndexIntoZipFileTable[]
+  > {
+    let parentToChildren = this._parentToChildren;
+    if (!parentToChildren) {
+      parentToChildren = new Map();
+      parentToChildren.set(null, this._computeChildrenArray(null));
+
+      for (
+        let parentIndex = 0;
+        parentIndex < this._zipFileTable.length;
+        parentIndex++
+      ) {
+        const children = this._computeChildrenArray(parentIndex);
+        parentToChildren.set(parentIndex, children);
+      }
+    }
+    return parentToChildren;
   }
 
   hasChildren(zipTableIndex: IndexIntoZipFileTable): boolean {
-    for (let index = 0; index < this._zipFileTable.length; index++) {
-      if (this._zipFileTable.prefix[index] === zipTableIndex) {
-        return true;
-      }
-    }
-    return false;
+    return this.getChildren(zipTableIndex).length > 0;
   }
 
   getAllDescendants(
@@ -148,8 +187,8 @@ export class ZipFileTree {
   }
 
   getParent(zipTableIndex: IndexIntoZipFileTable): IndexIntoZipFileTable {
-    // This returns -1 to support the CallTree interface.
     const prefix = this._zipFileTable.prefix[zipTableIndex];
+    // This returns -1 to support the CallTree interface.
     return prefix === null ? -1 : prefix;
   }
 
@@ -171,4 +210,39 @@ export class ZipFileTree {
     }
     return displayData;
   }
+}
+
+/**
+ * Try and display a nice amount of files in a zip file initially for a user. The amount
+ * is an arbitrary choice really.
+ */
+export function procureInitialInterestingExpandedNodes(
+  zipFileTree: ZipFileTree,
+  maxExpandedNodes: number = 30
+) {
+  const roots = zipFileTree.getRoots();
+
+  // Get a list of all of the root node's children.
+  const children = [];
+  for (const index of roots) {
+    for (const childIndex of zipFileTree.getChildren(index)) {
+      children.push(childIndex);
+    }
+  }
+
+  // Try to expand as many of these as needed to show more expanded nodes.
+  let nodeCount = roots.length + children.length;
+  const expansions = [...roots];
+  for (const childIndex of children) {
+    if (nodeCount >= maxExpandedNodes) {
+      break;
+    }
+    const subChildren = zipFileTree.getChildren(childIndex);
+    if (subChildren.length > 0) {
+      expansions.push(childIndex);
+      nodeCount += subChildren.length;
+    }
+  }
+
+  return expansions;
 }

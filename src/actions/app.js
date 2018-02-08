@@ -5,7 +5,9 @@
 // @flow
 import { getSelectedTab, getDataSource } from '../reducers/url-state';
 import { sendAnalytics } from '../utils/analytics';
-
+import { getJSZip, getZipFileTable } from '../reducers/app';
+import { receiveProfileFromStore } from './receive-profile';
+import { unserializeProfileOfArbitraryFormat } from '../profile-logic/process-profile';
 import type { Action, ThunkAction } from '../types/store';
 import type { TabSlug } from '../types/actions';
 import type { UrlState } from '../types/reducers';
@@ -84,4 +86,28 @@ export function show404(url: string): Action {
 
 export function updateUrlState(urlState: UrlState): Action {
   return { type: '@@urlenhancer/updateUrlState', urlState };
+}
+
+export function viewProfileFromZip(
+  zipFileIndex: IndexIntoZipFileTable
+): ThunkAction<Promise<void>> {
+  return async (dispatch, getState) => {
+    const zip = getJSZip(getState());
+    const zipFileTable = getZipFileTable(getState());
+    if (!zip || !zipFileTable) {
+      throw new Error(
+        'Attempted to view a profile from a zip, when there is no zip file loaded.'
+      );
+    }
+    const file = zipFileTable.file[zipFileIndex];
+    if (!file) {
+      throw new Error(
+        'Attempted to load a zip file that did not exist or was a directory.'
+      );
+    }
+
+    const text = await file.async('string');
+    const profile = unserializeProfileOfArbitraryFormat(text);
+    dispatch(receiveProfileFromStore(profile));
+  };
 }

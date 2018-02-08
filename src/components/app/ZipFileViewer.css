@@ -32,3 +32,11 @@
   background-color: #fff;
   overflow: hidden;
 }
+
+.zipFileViewerSection > .treeView {
+  font-size: 14px;
+}
+
+.zipFileViewerSection .treeRowToggleButton {
+  margin: 0 5px;
+}

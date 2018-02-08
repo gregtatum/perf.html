@@ -125,7 +125,6 @@ export default appStateReducer;
 
 export const getApp = (state: State): AppState => state.app;
 export const getView = (state: State): AppViewState => getApp(state).view;
-export const getJSZip = (state: State): JSZip | null => getApp(state).zipFile;
 export const getSelectedZipFileIndex = (state: State) =>
   getApp(state).selectedZipFileIndex;
 export const getExpandedZipFileIndexes = (state: State) =>
@@ -136,6 +135,7 @@ export const getHasZoomedViaMousewheel = (state: Object): boolean => {
   return getApp(state).hasZoomedViaMousewheel;
 };
 
+export const getJSZip = (state: State): JSZip | null => getApp(state).zipFile;
 export const getZipFileTable = createSelector(
   getJSZip,
   ZipFiles.createZipTable
