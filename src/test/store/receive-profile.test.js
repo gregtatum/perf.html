@@ -48,9 +48,14 @@ describe('actions/receive-profile', function() {
     it('can take a profile and view it', function() {
       const store = blankStore();
 
-      const initialProfile = ProfileViewSelectors.getProfile(store.getState());
-      expect(initialProfile).toBeTruthy();
-      expect(initialProfile.threads).toHaveLength(0);
+      expect(() => {
+        ProfileViewSelectors.getProfile(store.getState());
+      }).toThrow();
+
+      const initialProfile = ProfileViewSelectors.getProfileOrNull(
+        store.getState()
+      );
+      expect(initialProfile).toBeNull();
       store.dispatch(viewProfile(preprocessedProfile));
       expect(ProfileViewSelectors.getProfile(store.getState())).toBe(
         preprocessedProfile
@@ -84,7 +89,7 @@ describe('actions/receive-profile', function() {
       await store.dispatch(retrieveProfileFromAddon());
 
       const state = store.getState();
-      expect(getView(state)).toEqual({ phase: 'PROFILE' });
+      expect(getView(state)).toEqual({ phase: 'DATA_LOADED' });
       expect(ProfileViewSelectors.getDisplayRange(state)).toEqual({
         start: 0,
         end: 1007,
@@ -114,11 +119,11 @@ describe('actions/receive-profile', function() {
           additionalData: { attempt: null, message: errorMessage },
         }, // when the error happens
         { phase: 'INITIALIZING' }, // when we could connect to the addon but waiting for the profile
-        { phase: 'PROFILE' }, // yay, we got a profile!
+        { phase: 'DATA_LOADED' }, // yay, we got a profile!
       ]);
 
       const state = store.getState();
-      expect(getView(state)).toEqual({ phase: 'PROFILE' });
+      expect(getView(state)).toEqual({ phase: 'DATA_LOADED' });
       expect(ProfileViewSelectors.getDisplayRange(state)).toEqual({
         start: 0,
         end: 1007,
@@ -164,7 +169,7 @@ describe('actions/receive-profile', function() {
       await store.dispatch(retrieveProfileFromStore(hash));
 
       const state = store.getState();
-      expect(getView(state)).toEqual({ phase: 'PROFILE' });
+      expect(getView(state)).toEqual({ phase: 'DATA_LOADED' });
       expect(ProfileViewSelectors.getDisplayRange(state)).toEqual({
         start: 0,
         end: 1007,
@@ -197,7 +202,7 @@ describe('actions/receive-profile', function() {
             message: errorMessage,
           },
         },
-        { phase: 'PROFILE' },
+        { phase: 'DATA_LOADED' },
       ]);
 
       const state = store.getState();
@@ -280,7 +285,7 @@ describe('actions/receive-profile', function() {
       await store.dispatch(retrieveProfileOrZipFromUrl(expectedUrl));
 
       const state = store.getState();
-      expect(getView(state)).toEqual({ phase: 'PROFILE' });
+      expect(getView(state)).toEqual({ phase: 'DATA_LOADED' });
       expect(ProfileViewSelectors.getDisplayRange(state)).toEqual({
         start: 0,
         end: 1007,
@@ -312,7 +317,7 @@ describe('actions/receive-profile', function() {
             message: errorMessage,
           },
         },
-        { phase: 'PROFILE' },
+        { phase: 'DATA_LOADED' },
       ]);
 
       const state = store.getState();
@@ -444,30 +449,30 @@ describe('actions/receive-profile', function() {
         isJSON: true,
       });
 
-      const profileFetched = await _fetchProfile(args);
+      const { profile: profileFetched } = await _fetchProfile(args);
       expect(profileFetched).toEqual(profile);
     });
 
     it('fetches a zipped profile with correct content-type headers', async function() {
-      const { profile, args, reportError } = await configureFetch({
+      const { args, reportError } = await configureFetch({
         url: 'https://example.com/profile.zip',
         contentType: 'application/zip',
         isZipped: true,
       });
 
-      const profileFetched = await _fetchProfile(args);
-      expect(profileFetched).toEqual(profile);
+      const { zip } = await _fetchProfile(args);
+      expect(zip).toBeTruthy();
       expect(reportError.mock.calls.length).toBe(0);
     });
 
     it('fetches a zipped profile with incorrect content-type headers, but .zip extension', async function() {
-      const { profile, args, reportError } = await configureFetch({
+      const { args, reportError } = await configureFetch({
         url: 'https://example.com/profile.zip',
         isZipped: true,
       });
 
-      const profileFetched = await _fetchProfile(args);
-      expect(profileFetched).toEqual(profile);
+      const { zip } = await _fetchProfile(args);
+      expect(zip).toBeTruthy();
       expect(reportError.mock.calls.length).toBe(0);
     });
 
@@ -477,7 +482,7 @@ describe('actions/receive-profile', function() {
         isJSON: true,
       });
 
-      const profileFetched = await _fetchProfile(args);
+      const { profile: profileFetched } = await _fetchProfile(args);
       expect(profileFetched).toEqual(profile);
       expect(reportError.mock.calls.length).toBe(0);
     });
@@ -488,7 +493,7 @@ describe('actions/receive-profile', function() {
         isJSON: true,
       });
 
-      const profileFetched = await _fetchProfile(args);
+      const { profile: profileFetched } = await _fetchProfile(args);
       expect(profileFetched).toEqual(profile);
       expect(reportError.mock.calls.length).toBe(0);
     });
