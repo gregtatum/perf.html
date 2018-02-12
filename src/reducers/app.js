@@ -15,7 +15,7 @@ function view(
   state: AppViewState = { phase: 'INITIALIZING' },
   action: Action
 ): AppViewState {
-  if (state.phase === 'PROFILE') {
+  if (state.phase === 'DATA_LOADED') {
     // Let's not come back at another phase if we're already displaying a profile
     return state;
   }
@@ -40,13 +40,9 @@ function view(
       return { phase: 'INITIALIZING' };
     case 'ROUTE_NOT_FOUND':
       return { phase: 'ROUTE_NOT_FOUND' };
-    case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_STORE':
-    case 'RECEIVE_PROFILE_FROM_URL':
-    case 'RECEIVE_PROFILE_FROM_FILE':
-      return { phase: 'PROFILE' };
+    case 'VIEW_PROFILE':
     case 'RECEIVE_ZIP_FILE':
-      return { phase: 'ZIP' };
+      return { phase: 'DATA_LOADED' };
     default:
       return state;
   }
@@ -135,9 +131,9 @@ export const getHasZoomedViaMousewheel = (state: Object): boolean => {
   return getApp(state).hasZoomedViaMousewheel;
 };
 
-export const getJSZip = (state: State): JSZip | null => getApp(state).zipFile;
+export const getZipFile = (state: State): JSZip | null => getApp(state).zipFile;
 export const getZipFileTable = createSelector(
-  getJSZip,
+  getZipFile,
   ZipFiles.createZipTable
 );
 

@@ -38,10 +38,10 @@ export function waitingForProfileFromAddon(): Action {
   };
 }
 
-export function receiveProfileFromAddon(profile: Profile): Action {
+export function viewProfile(profile: Profile): Action {
   return {
-    type: 'RECEIVE_PROFILE_FROM_ADDON',
-    profile: profile,
+    type: 'VIEW_PROFILE',
+    profile,
   };
 }
 
@@ -216,7 +216,7 @@ async function getProfileFromAddon(dispatch, geckoProfiler) {
   // XXX update state to show that we're connected to the profiler addon
   const rawGeckoProfile = await geckoProfiler.getProfile();
   const profile = processProfile(_unpackGeckoProfileFromAddon(rawGeckoProfile));
-  dispatch(receiveProfileFromAddon(profile));
+  dispatch(viewProfile(profile));
 
   return profile;
 }
@@ -323,20 +323,6 @@ export function waitingForProfileFromStore(): Action {
 export function waitingForProfileFromUrl(): Action {
   return {
     type: 'WAITING_FOR_PROFILE_FROM_URL',
-  };
-}
-
-export function receiveProfileFromStore(profile: Profile): Action {
-  return {
-    type: 'RECEIVE_PROFILE_FROM_STORE',
-    profile,
-  };
-}
-
-export function receiveProfileFromUrl(profile: Profile): Action {
-  return {
-    type: 'RECEIVE_PROFILE_FROM_URL',
-    profile,
   };
 }
 
@@ -533,7 +519,7 @@ export function retrieveProfileFromStore(
         );
       }
 
-      dispatch(receiveProfileFromStore(profile));
+      dispatch(viewProfile(profile));
     } catch (error) {
       dispatch(fatalErrorReceivingProfileFromStore(error));
     }
@@ -577,7 +563,7 @@ export function retrieveProfileOrZipFromUrl(
             })
           );
         }
-        dispatch(receiveProfileFromUrl(profile));
+        dispatch(viewProfile(profile));
       } else if (zip) {
         dispatch(receiveZipFile(zip));
       } else {
@@ -594,13 +580,6 @@ export function retrieveProfileOrZipFromUrl(
 export function waitingForProfileFromFile(): Action {
   return {
     type: 'WAITING_FOR_PROFILE_FROM_FILE',
-  };
-}
-
-export function receiveProfileFromFile(profile: Profile): Action {
-  return {
-    type: 'RECEIVE_PROFILE_FROM_FILE',
-    profile,
   };
 }
 
@@ -648,7 +627,7 @@ export function retrieveProfileFromFile(
         throw new Error('Unable to parse the profile.');
       }
 
-      dispatch(receiveProfileFromFile(profile));
+      dispatch(viewProfile(profile));
       return;
     } catch (e) {
       // continuing the function normally, as we return in the try block above;
@@ -665,7 +644,7 @@ export function retrieveProfileFromFile(
         throw new Error('Unable to parse the profile.');
       }
 
-      dispatch(receiveProfileFromFile(profile));
+      dispatch(viewProfile(profile));
     } catch (error) {
       dispatch(errorReceivingProfileFromFile(error));
     }

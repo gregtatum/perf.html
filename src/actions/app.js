@@ -5,8 +5,7 @@
 // @flow
 import { getSelectedTab, getDataSource } from '../reducers/url-state';
 import { sendAnalytics } from '../utils/analytics';
-import { getJSZip, getZipFileTable } from '../reducers/app';
-import { receiveProfileFromStore } from './receive-profile';
+import { getZipFile, getZipFileTable } from '../reducers/app';
 import { unserializeProfileOfArbitraryFormat } from '../profile-logic/process-profile';
 import type { Action, ThunkAction } from '../types/store';
 import type { TabSlug } from '../types/actions';
@@ -92,13 +91,14 @@ export function viewProfileFromZip(
   zipFileIndex: IndexIntoZipFileTable
 ): ThunkAction<Promise<void>> {
   return async (dispatch, getState) => {
-    const zip = getJSZip(getState());
+    const zip = getZipFile(getState());
     const zipFileTable = getZipFileTable(getState());
     if (!zip || !zipFileTable) {
       throw new Error(
         'Attempted to view a profile from a zip, when there is no zip file loaded.'
       );
     }
+    const zipFilePath = zipFileTable.path[zipFileIndex];
     const file = zipFileTable.file[zipFileIndex];
     if (!file) {
       throw new Error(
@@ -108,6 +108,10 @@ export function viewProfileFromZip(
 
     const text = await file.async('string');
     const profile = unserializeProfileOfArbitraryFormat(text);
-    dispatch(receiveProfileFromStore(profile));
+    dispatch({
+      type: 'VIEW_PROFILE',
+      profile,
+      zipFilePath,
+    });
   };
 }

@@ -9,7 +9,7 @@ import * as ProfileViewSelectors from '../../reducers/profile-view';
 import * as UrlStateSelectors from '../../reducers/url-state';
 import { getView } from '../../reducers/app';
 import {
-  receiveProfileFromAddon,
+  viewProfile,
   retrieveProfileFromAddon,
   retrieveProfileFromStore,
   retrieveProfileOrZipFromUrl,
@@ -44,14 +44,14 @@ describe('actions/receive-profile', function() {
     return states;
   }
 
-  describe('receiveProfileFromAddon', function() {
-    it('can take a profile from an addon and save it to state', function() {
+  describe('viewProfile', function() {
+    it('can take a profile and view it', function() {
       const store = blankStore();
 
       const initialProfile = ProfileViewSelectors.getProfile(store.getState());
       expect(initialProfile).toBeTruthy();
       expect(initialProfile.threads).toHaveLength(0);
-      store.dispatch(receiveProfileFromAddon(preprocessedProfile));
+      store.dispatch(viewProfile(preprocessedProfile));
       expect(ProfileViewSelectors.getProfile(store.getState())).toBe(
         preprocessedProfile
       );

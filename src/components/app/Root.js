@@ -15,11 +15,12 @@ import {
 import ProfileViewer from './ProfileViewer';
 import ZipFileViewer from './ZipFileViewer';
 import Home from './Home';
-import { getView } from '../../reducers/app';
+import { getView, getZipFile } from '../../reducers/app';
 import {
   getDataSource,
   getHash,
   getProfileUrl,
+  getZipFilePath,
 } from '../../reducers/url-state';
 import UrlManager from './UrlManager';
 import FooterLinks from './FooterLinks';
@@ -76,6 +77,8 @@ type ProfileViewStateProps = {|
   +dataSource: DataSource,
   +hash: string,
   +profileUrl: string,
+  +hasZipFile: boolean,
+  +zipFilePath: string | null,
 |};
 
 type ProfileViewDispatchProps = {|
@@ -161,7 +164,7 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
   }
 
   render() {
-    const { view, dataSource } = this.props;
+    const { view, dataSource, hasZipFile, zipFilePath } = this.props;
     switch (view.phase) {
       case 'INITIALIZING': {
         if (dataSource === 'none') {
@@ -201,10 +204,13 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
 
         return this.renderMessage(message, additionalMessage, false);
       }
-      case 'ZIP':
-        return <ZipFileViewer />;
-      case 'PROFILE':
-        return <ProfileViewer />;
+      case 'DATA_LOADED':
+        // The data is now loaded. This could be either a single profile, or a zip file
+        // with multiple profiles. Only show the ZipFileViewer if the data loaded is a
+        // Zip file, and there is no stored path into the zip file.
+        return hasZipFile && !zipFilePath
+          ? <ZipFileViewer />
+          : <ProfileViewer />;
       case 'ROUTE_NOT_FOUND':
       default:
         return (
@@ -224,6 +230,8 @@ const options: ExplicitConnectOptions<
     dataSource: getDataSource(state),
     hash: getHash(state),
     profileUrl: getProfileUrl(state),
+    hasZipFile: !!getZipFile(state),
+    zipFilePath: getZipFilePath(state),
   }),
   mapDispatchToProps: {
     retrieveProfileFromStore,

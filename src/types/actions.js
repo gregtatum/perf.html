@@ -122,10 +122,7 @@ type ReceiveProfileAction =
     }
   | { type: 'FATAL_ERROR_RECEIVING_PROFILE_FROM_STORE', error: Error }
   | { type: 'FATAL_ERROR_RECEIVING_PROFILE_FROM_URL', error: Error }
-  | { type: 'RECEIVE_PROFILE_FROM_ADDON', profile: Profile }
-  | { type: 'RECEIVE_PROFILE_FROM_FILE', profile: Profile }
-  | { type: 'RECEIVE_PROFILE_FROM_STORE', profile: Profile }
-  | { type: 'RECEIVE_PROFILE_FROM_URL', profile: Profile }
+  | {| +type: 'VIEW_PROFILE', +profile: Profile, +zipFilePath?: string |}
   | { type: 'RECEIVE_ZIP_FILE', zip: JSZip }
   | { type: 'REQUESTING_SYMBOL_TABLE', requestedLib: RequestedLib }
   | { type: 'RECEIVED_SYMBOL_TABLE_REPLY', requestedLib: RequestedLib }

@@ -36,14 +36,14 @@ type StateProps = {|
   // TreeView interface.
   expandedZipFileIndexes: Array<IndexIntoZipFileTable | null>,
 |};
+
 type DispatchProps = {|
   +changeSelectedZipFile: typeof changeSelectedZipFile,
   +changeExpandedZipFile: typeof changeExpandedZipFile,
   +viewProfileFromZip: typeof viewProfileFromZip,
 |};
-type OwnProps = {||};
 
-type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 type ZipDisplayData = {|
   +name: string,
@@ -84,17 +84,6 @@ class ZipFileViewer extends PureComponent<Props> {
     if (zipFileIndex !== null) {
       this.props.viewProfileFromZip(zipFileIndex);
     }
-  };
-
-  _onExpandedCallNodesChange(
-    newExpandedZipFileIndexes: Array<IndexIntoZipFileTable | null>
-  ) {
-    console.log(newExpandedZipFileIndexes);
-  }
-
-  _onSelectionChange = (selectedFile: IndexIntoZipFileTable) => {
-    // TODO
-    console.log('selectedFile', selectedFile);
   };
 
   render() {
@@ -140,7 +129,7 @@ class ZipFileViewer extends PureComponent<Props> {
   }
 }
 
-const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     zipFileTree: getZipFileTree(state),
     zipFileMaxDepth: getZipFileMaxDepth(state),

@@ -194,7 +194,7 @@ describe('app actions', function() {
 
     it('can store the zip file in the reducer', async function() {
       const { getState, zippedProfile } = await storeWithZipFile();
-      AppSelectors.getJSZip(getState());
+      AppSelectors.getZipFile(getState());
       expect(zippedProfile).toBe(zippedProfile);
     });
 

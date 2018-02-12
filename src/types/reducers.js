@@ -47,9 +47,8 @@ export type ProfileViewState = {
 };
 
 export type AppViewState =
-  | {| +phase: 'ZIP' |}
   | {| +phase: 'ROUTE_NOT_FOUND' |}
-  | {| +phase: 'PROFILE' |}
+  | {| +phase: 'DATA_LOADED' |}
   | {| +phase: 'FATAL_ERROR', +error: Error |}
   | {|
       +phase: 'INITIALIZING',
@@ -78,7 +77,7 @@ export type UrlState = {
   profileUrl: string,
   selectedTab: TabSlug,
   rangeFilters: RangeFilterState[],
-  selectedThread: ThreadIndex,
+  selectedThread: ThreadIndex | null,
   callTreeSearchString: string,
   markersSearchString: string,
   implementation: ImplementationFilter,
@@ -87,6 +86,7 @@ export type UrlState = {
   threadOrder: ThreadIndex[],
   hiddenThreads: ThreadIndex[],
   transforms: TransformStacksPerThread,
+  zipFilePath: string | null,
 };
 
 export type IconState = Set<string>;

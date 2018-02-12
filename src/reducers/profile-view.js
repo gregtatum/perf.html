@@ -53,10 +53,7 @@ function profile(
   action: Action
 ) {
   switch (action.type) {
-    case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_STORE':
-    case 'RECEIVE_PROFILE_FROM_URL':
-    case 'RECEIVE_PROFILE_FROM_FILE':
+    case 'VIEW_PROFILE':
       return action.profile;
     case 'COALESCED_FUNCTIONS_UPDATE': {
       if (!state.threads.length) {
@@ -99,12 +96,12 @@ function symbolicationStatus(
   }
 }
 
-function viewOptionsPerThread(state: ThreadViewOptions[] = [], action: Action) {
+function viewOptionsPerThread(
+  state: ThreadViewOptions[] = [],
+  action: Action
+): ThreadViewOptions[] {
   switch (action.type) {
-    case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_STORE':
-    case 'RECEIVE_PROFILE_FROM_URL':
-    case 'RECEIVE_PROFILE_FROM_FILE':
+    case 'VIEW_PROFILE':
       return action.profile.threads.map(() => ({
         selectedCallNodePath: [],
         expandedCallNodePaths: [],
@@ -305,9 +302,11 @@ function waitingForLibs(state: Set<RequestedLib> = new Set(), action: Action) {
 function selection(
   state: ProfileSelection = { hasSelection: false, isModifying: false },
   action: Action
-) {
+): ProfileSelection {
   // TODO: Rename to timeRangeSelection
   switch (action.type) {
+    case 'VIEW_PROFILE':
+      return { hasSelection: false, isModifying: false };
     case 'UPDATE_PROFILE_SELECTION':
       return action.selection;
     default:
@@ -341,10 +340,7 @@ function rootRange(
   action: Action
 ) {
   switch (action.type) {
-    case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_STORE':
-    case 'RECEIVE_PROFILE_FROM_URL':
-    case 'RECEIVE_PROFILE_FROM_FILE':
+    case 'VIEW_PROFILE':
       return ProfileData.getTimeRangeIncludingAllThreads(action.profile);
     default:
       return state;
@@ -353,10 +349,7 @@ function rootRange(
 
 function zeroAt(state: Milliseconds = 0, action: Action) {
   switch (action.type) {
-    case 'RECEIVE_PROFILE_FROM_ADDON':
-    case 'RECEIVE_PROFILE_FROM_STORE':
-    case 'RECEIVE_PROFILE_FROM_URL':
-    case 'RECEIVE_PROFILE_FROM_FILE':
+    case 'VIEW_PROFILE':
       return ProfileData.getTimeRangeIncludingAllThreads(action.profile).start;
     default:
       return state;
