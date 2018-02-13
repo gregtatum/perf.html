@@ -40,3 +40,13 @@
 .zipFileViewerSection .treeRowToggleButton {
   margin: 0 5px;
 }
+
+.zipFileViewerMessage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid var(--grey-30);
+  background-color: #f5f5f5;
+  font-size: 14px;
+}

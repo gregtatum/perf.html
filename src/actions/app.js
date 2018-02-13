@@ -113,8 +113,8 @@ export function viewProfileFromZip(
         ),
         zipFilePath,
       });
-    } catch (e) {
-      dispatch({ type: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP' });
+    } catch (error) {
+      dispatch({ type: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE', error });
     }
   };
 }

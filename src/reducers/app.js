@@ -17,6 +17,7 @@ import type {
   Reducer,
   ZipFileState,
 } from '../types/reducers';
+import type JSZip from 'jszip';
 
 function view(
   state: AppViewState = { phase: 'INITIALIZING' },
@@ -74,6 +75,12 @@ function hasZoomedViaMousewheel(state: boolean = false, action: Action) {
   }
 }
 
+/**
+ * This function ensures that the state transitions are logical and make sense. The
+ * switch statement provides a mapping of what states are valid to transition to from
+ * a previous state. A switch is used rather than an object in order to make it easier
+ * to exhaustively check with Flow.
+ */
 function _validateStateTransition(
   prev: ZipFileState,
   next: ZipFileState
@@ -82,9 +89,6 @@ function _validateStateTransition(
   let expectedNextPhases;
   switch (prevPhase) {
     case 'NO_ZIP_FILE':
-      expectedNextPhases = ['LOADING_ZIP_FILE'];
-      break;
-    case 'LOADING_ZIP_FILE':
       expectedNextPhases = ['LIST_FILES_IN_ZIP_FILE'];
       break;
     case 'LIST_FILES_IN_ZIP_FILE':
@@ -93,18 +97,21 @@ function _validateStateTransition(
     case 'PROCESS_PROFILE_FROM_ZIP_FILE':
       expectedNextPhases = [
         'VIEW_PROFILE_IN_ZIP_FILE',
-        'ERROR_PROCESSING_PROFILE',
+        'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE',
       ];
+      break;
+    case 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE':
+      expectedNextPhases = ['LIST_FILES_IN_ZIP_FILE'];
       break;
     case 'VIEW_PROFILE_IN_ZIP_FILE':
       expectedNextPhases = ['LIST_FILES_IN_ZIP_FILE'];
       break;
     default:
-      throw new Error(`Unhandled ZipFileState ${(prevPhase: empty)}`);
+      throw new Error(`Unhandled ZipFileState “${(prevPhase: empty)}”`);
   }
   if (!expectedNextPhases.includes(next.phase)) {
     throw new Error(oneLine`
-      Attempted to transition a finite state machine from the phase “${prev.phase}”
+      Attempted to transition the ZipFileState from the phase “${prev.phase}”
       to “${next.phase}”, however “${prev.phase}” can only transition to
       “${expectedNextPhases.join('”, “')}”.
     `);
@@ -128,18 +135,34 @@ function zipFile(
   action: Action
 ): ZipFileState {
   switch (action.type) {
-    case 'LOAD_PROFILE_IN_ZIP': {
-      return _validateStateTransition(state, {
-        phase: 'PROCESS_PROFILE_FROM_ZIP_FILE',
-        zip: _getZipFile(state),
-      });
-    }
-    case 'RECEIVE_ZIP_FILE': {
+    case 'RECEIVE_ZIP_FILE':
       return _validateStateTransition(state, {
         phase: 'LIST_FILES_IN_ZIP_FILE',
         zip: action.zip,
       });
-    }
+    case 'DISMISS_PROCESS_PROFILE_FROM_ZIP_ERROR':
+      return _validateStateTransition(state, {
+        phase: 'LIST_FILES_IN_ZIP_FILE',
+        zip: _getZipFile(state),
+      });
+    case 'PROCESS_PROFILE_FROM_ZIP_FILE':
+      return _validateStateTransition(state, {
+        phase: 'PROCESS_PROFILE_FROM_ZIP_FILE',
+        zip: _getZipFile(state),
+      });
+    case 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE':
+      return _validateStateTransition(state, {
+        phase: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE',
+        zip: _getZipFile(state),
+      });
+    case 'VIEW_PROFILE':
+      // Only process this as a change if a zip file is actually loaded.
+      return state.phase === 'NO_ZIP_FILE'
+        ? state
+        : _validateStateTransition(state, {
+            phase: 'VIEW_PROFILE_IN_ZIP_FILE',
+            zip: _getZipFile(state),
+          });
     default:
       return state;
   }
@@ -198,30 +221,24 @@ export const getHasZoomedViaMousewheel = (state: Object): boolean => {
 
 export const getZipFileState = (state: State): ZipFileState =>
   getApp(state).zipFile;
-export const getZipFileTable = createSelector(getZipFileState, zipFileState => {
-  switch (zipFileState.phase) {
-    case 'NONE':
-    case 'LOADING':
-      return null;
-    case 'LOADED':
-      return ZipFiles.createZipTable(zipFileState.zip);
-    default:
-      (zipFileState: empty); // eslint-disable-line no-unused-expressions
-      throw new Error('Unknown zip file phase.');
-  }
-});
+export const getZipFile = (state: State): JSZip | null => {
+  return getZipFileState(state).zip;
+};
 export const hasZipFile = (state: State): boolean =>
-  getZipFileState(state).phase === 'NONE';
+  getZipFileState(state).phase !== 'NO_ZIP_FILE';
+
+export const getZipFileTable = createSelector(
+  getZipFile,
+  zip => (zip === null ? null : ZipFiles.createZipTable(zip))
+);
 
 export const getZipFileMaxDepth = createSelector(
   getZipFileTable,
   ZipFiles.getZipFileMaxDepth
 );
 
-export const getZipFileTree = createSelector(getZipFileTable, zipFileTable => {
-  if (zipFileTable) {
-    return new ZipFiles.ZipFileTree(zipFileTable);
-  } else {
-    return null;
-  }
-});
+export const getZipFileTree = createSelector(
+  getZipFileTable,
+  zipFileTable =>
+    zipFileTable === null ? null : new ZipFiles.ZipFileTree(zipFileTable)
+);

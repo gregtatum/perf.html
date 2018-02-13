@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import React, { PureComponent } from 'react';
+import * as React from 'react';
 import explicitConnect, {
   type ExplicitConnectOptions,
   type ConnectedProps,
@@ -55,7 +55,7 @@ type ZipDisplayData = {|
   +name: string,
 |};
 
-class ZipFileViewer extends PureComponent<Props> {
+class ZipFileViewer extends React.PureComponent<Props> {
   _fixedColumns = [];
   _mainColumn = { propName: 'name', title: '' };
   _appendageButtons = ['focusCallstackButton'];
@@ -102,6 +102,22 @@ class ZipFileViewer extends PureComponent<Props> {
     }
   };
 
+  _renderMessage(message: React.Node) {
+    return (
+      <section className="zipFileViewer">
+        <div className="zipFileViewerSection">
+          <header className="zipFileViewerHeader">
+            <h1>perf.html</h1>
+            <p>Choose a profile from this zip file</p>
+          </header>
+          <div className="zipFileViewerMessage">
+            {message}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   render() {
     const {
       zipFileState,
@@ -118,18 +134,14 @@ class ZipFileViewer extends PureComponent<Props> {
       return null;
     }
     const { phase } = zipFileState;
+
     switch (phase) {
-      // TODO - HANDLE ERROR CASES
-      case 'LOADED':
-        return <ProfileViewer />;
-      case 'LOADING':
-        return null;
       case 'NO_ZIP_FILE':
         console.error(
           'Loaded the ZipFileViewer component when there is no zip file.'
         );
-        return null;
-      case 'NONE':
+        return this._renderMessage(<span>Error: No zip file was found.</span>);
+      case 'LIST_FILES_IN_ZIP_FILE':
         return (
           <section className="zipFileViewer">
             <div className="zipFileViewerSection">
@@ -156,7 +168,12 @@ class ZipFileViewer extends PureComponent<Props> {
             </div>
           </section>
         );
-
+      case 'PROCESS_PROFILE_FROM_ZIP_FILE':
+        return this._renderMessage(<span>Processing the profile...</span>);
+      case 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE':
+        return this._renderMessage(<span>Failed to process the profile</span>);
+      case 'VIEW_PROFILE_IN_ZIP_FILE':
+        return <ProfileViewer />;
       default:
         (phase: empty); // eslint-disable-line no-unused-expressions
         throw new Error('Unknown zip file phase.');

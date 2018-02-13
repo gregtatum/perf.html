@@ -65,15 +65,15 @@ export type ZipFileState =
       +zip: null,
     |}
   | {|
-      +phase: 'LOADING_ZIP_FILE',
-      +zip: null,
-    |}
-  | {|
       +phase: 'LIST_FILES_IN_ZIP_FILE',
       +zip: JSZip,
     |}
   | {|
       +phase: 'PROCESS_PROFILE_FROM_ZIP_FILE',
+      +zip: JSZip,
+    |}
+  | {|
+      +phase: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE',
       +zip: JSZip,
     |}
   | {|
