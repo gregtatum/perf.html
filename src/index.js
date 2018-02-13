@@ -13,6 +13,7 @@ import {
   addDataToWindowObject,
   logFriendlyPreamble,
 } from './utils/window-console';
+import { setupUrlHandling } from './url-handling';
 
 // Mock out Google Analytics for anything that's not production so that we have run-time
 // code coverage in development and testing.
@@ -43,10 +44,10 @@ window.geckoProfilerPromise = new Promise(function(resolve) {
 });
 
 const store = createStore();
+setupUrlHandling(store);
+addDataToWindowObject(store.getState);
+logFriendlyPreamble();
 
 render(<Root store={store} />, document.getElementById('root'));
 
 window.Perf = Perf;
-
-addDataToWindowObject(store.getState);
-logFriendlyPreamble();

@@ -56,15 +56,6 @@ function view(
   }
 }
 
-function isUrlSetupDone(state: boolean = false, action: Action) {
-  switch (action.type) {
-    case '@@urlenhancer/urlSetupDone':
-      return true;
-    default:
-      return state;
-  }
-}
-
 function hasZoomedViaMousewheel(state: boolean = false, action: Action) {
   switch (action.type) {
     case 'HAS_ZOOMED_VIA_MOUSEWHEEL': {
@@ -198,7 +189,6 @@ function expandedZipFileIndexes(
 
 const appStateReducer: Reducer<AppState> = combineReducers({
   view,
-  isUrlSetupDone,
   hasZoomedViaMousewheel,
   zipFile,
   selectedZipFileIndex,
@@ -213,8 +203,6 @@ export const getSelectedZipFileIndex = (state: State) =>
   getApp(state).selectedZipFileIndex;
 export const getExpandedZipFileIndexes = (state: State) =>
   getApp(state).expandedZipFileIndexes;
-export const getIsUrlSetupDone = (state: State): boolean =>
-  getApp(state).isUrlSetupDone;
 export const getHasZoomedViaMousewheel = (state: Object): boolean => {
   return getApp(state).hasZoomedViaMousewheel;
 };

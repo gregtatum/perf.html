@@ -8,9 +8,9 @@
  */
 import * as urlStateReducers from '../reducers/url-state';
 import {
-  stateFromLocation,
+  locationObjectToUrlState,
   urlStateToUrlObject,
-  urlFromState,
+  urlStateToLocationString,
   CURRENT_URL_VERSION,
 } from '../url-handling';
 import { blankStore } from './fixtures/stores';
@@ -42,13 +42,17 @@ function _getStoreWithURL(
 
   const searchWithVersion =
     v === false ? search : `${search ? search + '&' : '?'}v=${v}`;
-  const urlState = stateFromLocation({
+  const newUrlState = locationObjectToUrlState({
     pathname,
     search: searchWithVersion,
     hash,
   });
   const store = blankStore();
-  store.dispatch({ type: '@@urlenhancer/updateUrlState', urlState });
+  store.dispatch({
+    type: 'URL_STATE_UPDATED_FROM_BROWSER_NAVIGATION',
+    newUrlState,
+    state: store.getState(),
+  });
   store.dispatch(viewProfile(profile));
   return store;
 }
@@ -56,12 +60,16 @@ function _getStoreWithURL(
 describe('selectedThread', function() {
   function storeWithThread(threadIndex) {
     const store = blankStore();
-    const urlState = stateFromLocation({
+    const newUrlState = locationObjectToUrlState({
       pathname: '/public/1ecd7a421948995171a4bb483b7bcc8e1868cc57/calltree/',
       search: `?thread=${threadIndex}`,
       hash: '',
     });
-    store.dispatch({ type: '@@urlenhancer/updateUrlState', urlState });
+    store.dispatch({
+      type: 'URL_STATE_UPDATED_FROM_BROWSER_NAVIGATION',
+      newUrlState,
+      state: store.getState(),
+    });
 
     return store;
   }
@@ -304,13 +312,15 @@ describe('URL serialization of the transform stack', function() {
   });
 });
 
-describe('urlFromState', function() {
+describe('urlStateToLocationString', function() {
   it('outputs the current URL version', function() {
-    const urlState = stateFromLocation({
+    const urlState = locationObjectToUrlState({
       pathname: '/public/1ecd7a421948995171a4bb483b7bcc8e1868cc57/calltree/',
       search: '',
       hash: '',
     });
-    expect(urlFromState(urlState)).toMatch(`v=${CURRENT_URL_VERSION}`);
+    expect(urlStateToLocationString(urlState)).toMatch(
+      `v=${CURRENT_URL_VERSION}`
+    );
   });
 });

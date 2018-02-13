@@ -83,7 +83,6 @@ export type ZipFileState =
 
 export type AppState = {
   view: AppViewState,
-  isUrlSetupDone: boolean,
   hasZoomedViaMousewheel: boolean,
   zipFile: ZipFileState,
   selectedZipFileIndex: IndexIntoZipFileTable | null,

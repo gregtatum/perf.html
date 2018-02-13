@@ -18,6 +18,7 @@ import type { GetCategory } from '../profile-logic/color-categories';
 import type { TemporaryError } from '../utils/errors';
 import type { Transform } from './transforms';
 import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
+import type { State, UrlState } from './reducers';
 
 export type DataSource =
   | 'none'
@@ -140,11 +141,12 @@ type StackChartAction =
   | { type: 'CHANGE_STACK_CHART_LABELING_STRATEGY', getLabel: GetLabel }
   | { type: 'HAS_ZOOMED_VIA_MOUSEWHEEL' };
 
-type UrlEnhancerAction =
-  | { type: '@@urlenhancer/urlSetupDone' }
-  | { type: '@@urlenhancer/updateUrlState', urlState: any };
-
 type UrlStateAction =
+  | {
+      type: 'URL_STATE_UPDATED_FROM_BROWSER_NAVIGATION',
+      newUrlState: UrlState,
+      state: State,
+    }
   | { type: 'WAITING_FOR_PROFILE_FROM_FILE' }
   | { type: 'PROFILE_PUBLISHED', hash: string }
   | { type: 'CHANGE_SELECTED_TAB', selectedTab: TabSlug }
@@ -190,6 +192,5 @@ export type Action =
   | ProfileAction
   | ReceiveProfileAction
   | StackChartAction
-  | UrlEnhancerAction
   | UrlStateAction
   | IconsAction;

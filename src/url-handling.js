@@ -13,28 +13,20 @@ import {
   parseTransforms,
 } from './profile-logic/transforms';
 import { assertExhaustiveCheck, toValidTabSlug } from './utils/flow';
+import * as AppActions from './actions/app';
+import {
+  getUrlState,
+  getSelectedTab,
+  getDataSource,
+} from './reducers/url-state';
+import shallowEqual from 'shallowequal';
+import { sendAnalytics } from './utils/analytics';
+
+import type { Store } from './types/store';
 import type { UrlState } from './types/reducers';
 import type { DataSource } from './types/actions';
 
 export const CURRENT_URL_VERSION = 2;
-
-function dataSourceDirs(urlState: UrlState) {
-  const { dataSource } = urlState;
-  switch (dataSource) {
-    case 'from-addon':
-      return ['from-addon'];
-    case 'from-file':
-      return ['from-file'];
-    case 'local':
-      return ['local', urlState.hash];
-    case 'public':
-      return ['public', urlState.hash];
-    case 'from-url':
-      return ['from-url', encodeURIComponent(urlState.profileUrl)];
-    default:
-      return [];
-  }
-}
 
 // "null | void" in the query objects are flags which map to true for null, and false
 // for void. False flags do not show up the URL.
@@ -71,6 +63,74 @@ type UrlObject = {
 type Query = BaseQuery | CallTreeQuery | MarkersQuery | StackChartQuery;
 
 /**
+ * This function sets up the relationship between the History API, and Redux Store.
+ *
+ * The URL holds the minimal serializable string that represents the current state of
+ * the application. Anything that needs to be serialized to the URL should be stored
+ * in the UrlState. It should be trivial to go between the UrlState and location string.
+ *
+ *    UrlState => string
+ *    string => UrlState
+ *
+ * When the UrlState changes it is serialized back into a location string, and the URL
+ * on the pages is updated. When the location string is manually changed, the string is
+ * deserialized back into a UrlState. However, during browser navigation events, the
+ * UrlState will be pulled from the history state. So while navigating the UrlState
+ * can be pulled out without having to deserialize the location string.
+ */
+export function setupUrlHandling(store: Store) {
+  const { getState } = store;
+
+  // Pull the state out of window.history.state, or deserialize the window.location. This
+  // dispatches the new state to the store so that it can update appropriately.
+  updateStoreFromBrowserEvent(store);
+
+  // Replace the state in history, and update the url after the initial processing just
+  // in case there is any variation.
+  const initialUrlState = getUrlState(getState());
+  window.history.replaceState(
+    initialUrlState,
+    document.title,
+    urlStateToLocationString(initialUrlState)
+  );
+
+  // Send the initial analytics report for a pageview.
+  const dataSource = getDataSource(getState());
+  sendAnalytics({
+    hitType: 'pageview',
+    page: dataSource === 'none' ? 'home' : getSelectedTab(getState()),
+  });
+  sendAnalytics({
+    hitType: 'event',
+    eventCategory: 'datasource',
+    eventAction: dataSource,
+  });
+
+  // Listen for history events, and update the UrlState when those happen.
+  window.addEventListener('popstate', () => updateStoreFromBrowserEvent(store));
+
+  // Finally when the store's UrlState changes, check for differences and update the
+  // URL as needed. Any change to the UrlState should result in a change to the URL,
+  // and a history event pushed on.
+  let oldUrlState = initialUrlState;
+  store.subscribe(() => {
+    const newUrlState = getUrlState(getState());
+
+    // Only update the URL when there are differences.
+    if (!shallowEqual(oldUrlState, newUrlState)) {
+      const oldUrl = window.location.pathname + window.location.search;
+      const newUrl = urlStateToLocationString(newUrlState);
+      if (oldUrl !== newUrl) {
+        window.history.pushState(newUrlState, document.title, newUrl);
+      }
+    }
+
+    // Remember the UrlState for the next time.
+    oldUrlState = newUrlState;
+  });
+}
+
+/**
  * Take the UrlState and map it into a serializable UrlObject, that represents the
  * target URL.
  */
@@ -82,7 +142,7 @@ export function urlStateToUrlObject(urlState: UrlState): UrlObject {
       query: {},
     };
   }
-  const pathParts = [...dataSourceDirs(urlState), urlState.selectedTab];
+  const pathParts = [..._dataSourceDirs(urlState), urlState.selectedTab];
 
   // Start with the query parameters that are shown regardless of the active tab.
   const query: Object = {
@@ -136,7 +196,7 @@ export function urlStateToUrlObject(urlState: UrlState): UrlObject {
   return { query, pathParts };
 }
 
-export function urlFromState(urlState: UrlState): string {
+export function urlStateToLocationString(urlState: UrlState): string {
   const { pathParts, query } = urlStateToUrlObject(urlState);
   const { dataSource } = urlState;
   if (dataSource === 'none') {
@@ -149,33 +209,16 @@ export function urlFromState(urlState: UrlState): string {
   return pathname + (qString ? '?' + qString : '');
 }
 
-function getDataSourceFromPathParts(pathParts: string[]): DataSource {
-  const str = pathParts[0] || 'none';
-  // With this switch, flow is able to understand that we return a valid value
-  switch (str) {
-    case 'none':
-    case 'from-addon':
-    case 'from-file':
-    case 'local':
-    case 'public':
-    case 'from-url':
-      return str;
-    default:
-      throw new Error(`Unexpected data source ${str}`);
-  }
-}
-
 /**
- * Define only the properties of the window.location object that the function uses
- * so that it can be mocked in tests.
+ * This function takes a window.location object and transforms it into the UrlState.
+ * The function signature uses a generic object so that the window.location object can
+ * easily be mocked in tests.
  */
-type Location = {
+export function locationObjectToUrlState(location: {
   pathname: string,
   search: string,
   hash: string,
-};
-
-export function stateFromLocation(location: Location): UrlState {
+}): UrlState {
   const { pathname, query } = upgradeLocationToCurrentVersion({
     pathname: location.pathname,
     hash: location.hash,
@@ -183,7 +226,7 @@ export function stateFromLocation(location: Location): UrlState {
   });
 
   const pathParts = pathname.split('/').filter(d => d);
-  const dataSource = getDataSourceFromPathParts(pathParts);
+  const dataSource = _getDataSourceFromPathParts(pathParts);
   const selectedThread = query.thread !== undefined ? +query.thread : 0;
 
   // https://perf-html.io/public/{hash}/calltree/
@@ -227,6 +270,61 @@ export function stateFromLocation(location: Location): UrlState {
         : [],
     },
   };
+}
+
+export function updateStoreFromBrowserEvent({ dispatch, getState }: Store) {
+  const state = getState();
+  let urlState;
+  if (window.history.state) {
+    // The state is already stored in the window history, pull it out.
+    urlState = window.history.state;
+  } else {
+    try {
+      // Pull in the initial UrlState out of the location string.
+      urlState = locationObjectToUrlState(window.location);
+    } catch (e) {
+      console.error(e);
+      dispatch(
+        AppActions.show404(window.location.pathname + window.location.search)
+      );
+      return;
+    }
+  }
+  dispatch(AppActions.updateUrlState(urlState, state));
+}
+
+function _getDataSourceFromPathParts(pathParts: string[]): DataSource {
+  const str = pathParts[0] || 'none';
+  // With this switch, flow is able to understand that we return a valid value
+  switch (str) {
+    case 'none':
+    case 'from-addon':
+    case 'from-file':
+    case 'local':
+    case 'public':
+    case 'from-url':
+      return str;
+    default:
+      throw new Error(`Unexpected data source ${str}`);
+  }
+}
+
+function _dataSourceDirs(urlState: UrlState) {
+  const { dataSource } = urlState;
+  switch (dataSource) {
+    case 'from-addon':
+      return ['from-addon'];
+    case 'from-file':
+      return ['from-file'];
+    case 'local':
+      return ['local', urlState.hash];
+    case 'public':
+      return ['public', urlState.hash];
+    case 'from-url':
+      return ['from-url', encodeURIComponent(urlState.profileUrl)];
+    default:
+      return [];
+  }
 }
 
 type ProcessedLocation = { pathname: string, hash: string, query: Object };

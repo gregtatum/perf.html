@@ -80,14 +80,8 @@ describe('app actions', function() {
   });
 
   describe('urlSetupDone', function() {
-    it('will remember when url setup is done', function() {
-      const { dispatch, getState } = storeWithSimpleProfile();
-      expect(AppSelectors.getIsUrlSetupDone(getState())).toEqual(false);
-      dispatch(AppActions.urlSetupDone());
-      expect(AppSelectors.getIsUrlSetupDone(getState())).toEqual(true);
-    });
-
     it('records analytics events for pageview and datasource', function() {
+      // TODO - Move me.
       withAnalyticsMock(() => {
         const { dispatch } = storeWithSimpleProfile();
         dispatch(AppActions.urlSetupDone());

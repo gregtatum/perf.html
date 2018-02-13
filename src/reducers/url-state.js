@@ -8,7 +8,7 @@ import escapeStringRegexp from 'escape-string-regexp';
 import { createSelector } from 'reselect';
 
 import { defaultThreadOrder } from '../profile-logic/profile-data';
-import { urlFromState } from '../url-handling';
+import { urlStateToLocationString } from '../url-handling';
 import * as RangeFilters from '../profile-logic/range-filters';
 
 import type { ThreadIndex } from '../types/profile';
@@ -256,8 +256,8 @@ const urlStateReducer: Reducer<UrlState> = (regularUrlStateReducer => (
   action: Action
 ): UrlState => {
   switch (action.type) {
-    case '@@urlenhancer/updateUrlState':
-      return action.urlState;
+    case 'URL_STATE_UPDATED_FROM_BROWSER_NAVIGATION':
+      return action.newUrlState;
     default:
       return regularUrlStateReducer(state, action);
   }
@@ -354,7 +354,7 @@ export const getUrlPredictor = createSelector(
       ? actionOrActionList
       : [actionOrActionList];
     const newUrlState = actionList.reduce(urlStateReducer, oldUrlState);
-    return urlFromState(newUrlState);
+    return urlStateToLocationString(newUrlState);
   }
 );
 

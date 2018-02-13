@@ -21,7 +21,6 @@ import {
   getHash,
   getProfileUrl,
 } from '../../reducers/url-state';
-import UrlManager from './UrlManager';
 import FooterLinks from './FooterLinks';
 
 import type { Store } from '../../types/store';
@@ -240,9 +239,7 @@ export default class Root extends PureComponent<RootProps> {
     const { store } = this.props;
     return (
       <Provider store={store}>
-        <UrlManager>
-          <ProfileViewWhenReady />
-        </UrlManager>
+        <ProfileViewWhenReady />
       </Provider>
     );
   }

@@ -3,13 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import { getSelectedTab, getDataSource } from '../reducers/url-state';
+import { getSelectedTab } from '../reducers/url-state';
 import { sendAnalytics } from '../utils/analytics';
 import { getZipFileTable } from '../reducers/app';
 import { unserializeProfileOfArbitraryFormat } from '../profile-logic/process-profile';
 import type { Action, ThunkAction } from '../types/store';
 import type { TabSlug } from '../types/actions';
-import type { UrlState } from '../types/reducers';
+import type { UrlState, State } from '../types/reducers';
 import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
 
 export function changeSelectedTab(selectedTab: TabSlug): ThunkAction<void> {
@@ -42,25 +42,6 @@ export function changeTabOrder(tabOrder: number[]): Action {
   };
 }
 
-export function urlSetupDone(): ThunkAction<void> {
-  return (dispatch, getState) => {
-    dispatch({ type: '@@urlenhancer/urlSetupDone' });
-
-    // After the url setup is done, we can successfully query our state about its
-    // initial page.
-    const dataSource = getDataSource(getState());
-    sendAnalytics({
-      hitType: 'pageview',
-      page: dataSource === 'none' ? 'home' : getSelectedTab(getState()),
-    });
-    sendAnalytics({
-      hitType: 'event',
-      eventCategory: 'datasource',
-      eventAction: dataSource,
-    });
-  };
-}
-
 export function changeSelectedZipFile(
   selectedZipFileIndex: IndexIntoZipFileTable
 ): Action {
@@ -83,8 +64,12 @@ export function show404(url: string): Action {
   return { type: 'ROUTE_NOT_FOUND', url };
 }
 
-export function updateUrlState(urlState: UrlState): Action {
-  return { type: '@@urlenhancer/updateUrlState', urlState };
+export function updateUrlState(newUrlState: UrlState, state: State): Action {
+  return {
+    type: 'URL_STATE_UPDATED_FROM_BROWSER_NAVIGATION',
+    newUrlState,
+    state,
+  };
 }
 
 export function viewProfileFromZip(
