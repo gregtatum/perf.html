@@ -21,11 +21,7 @@ export type ZipFileTable = {|
   length: number,
 |};
 
-export function createZipTable(zipEntries: JSZip | null): ZipFileTable | null {
-  if (!zipEntries) {
-    return null;
-  }
-
+export function createZipTable(zipEntries: JSZip): ZipFileTable {
   const fullPaths = [];
   for (const fileName in zipEntries.files) {
     if (zipEntries.files.hasOwnProperty(fileName)) {

@@ -428,7 +428,9 @@ export async function _fetchProfile(
       } else {
         try {
           // Don't check the content-type, but attempt to parse the response as JSON.
-          return await response.json();
+          return {
+            profile: await response.json(),
+          };
         } catch (error) {
           // Change the error message depending on the circumstance:
           let message;
@@ -544,9 +546,9 @@ export function retrieveProfileOrZipFromUrl(
           dispatch(temporaryErrorReceivingProfileFromUrl(e));
         },
       });
+
       const serializedProfile = response.profile;
       const zip = response.zip;
-
       if (serializedProfile) {
         const profile = unserializeProfileOfArbitraryFormat(serializedProfile);
         if (profile === undefined) {

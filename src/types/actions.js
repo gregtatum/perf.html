@@ -123,7 +123,10 @@ type ReceiveProfileAction =
   | { type: 'FATAL_ERROR_RECEIVING_PROFILE_FROM_STORE', error: Error }
   | { type: 'FATAL_ERROR_RECEIVING_PROFILE_FROM_URL', error: Error }
   | {| +type: 'VIEW_PROFILE', +profile: Profile, +zipFilePath?: string |}
-  | { type: 'RECEIVE_ZIP_FILE', zip: JSZip }
+  | {| +type: 'RECEIVE_ZIP_FILE', +zip: JSZip |}
+  | {| +type: 'PROCESS_PROFILE_FROM_ZIP_FILE' |}
+  | {| +type: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP', error: any |}
+  | { type: 'LOAD_PROFILE_IN_ZIP' }
   | { type: 'REQUESTING_SYMBOL_TABLE', requestedLib: RequestedLib }
   | { type: 'RECEIVED_SYMBOL_TABLE_REPLY', requestedLib: RequestedLib }
   | { type: 'START_SYMBOLICATING' }

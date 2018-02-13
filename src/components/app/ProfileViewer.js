@@ -83,7 +83,6 @@ class ProfileViewer extends PureComponent<Props> {
 
   render() {
     const { tabOrder, changeTabOrder, selectedTab } = this.props;
-
     return (
       <div className="profileViewer">
         <div className="profileViewerTopBar">

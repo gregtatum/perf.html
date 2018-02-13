@@ -48,14 +48,16 @@ import type {
 } from '../types/reducers';
 import type { Transform, TransformStack } from '../types/transforms';
 
-function profile(
-  state: Profile = ProfileData.getEmptyProfile(),
-  action: Action
-) {
+function profile(state: Profile | null = null, action: Action): Profile | null {
   switch (action.type) {
     case 'VIEW_PROFILE':
       return action.profile;
     case 'COALESCED_FUNCTIONS_UPDATE': {
+      if (state === null) {
+        throw new Error(
+          'Assumed that a profile would be loaded in time for a coalesced functions update.'
+        );
+      }
       if (!state.threads.length) {
         return state;
       }
@@ -441,8 +443,16 @@ export const getDisplayRange = createSelector(
 /**
  * Profile
  */
-export const getProfile = (state: State): Profile =>
+export const getProfileOrNull = (state: State): Profile | null =>
   getProfileView(state).profile;
+export const getProfile = (state: State): Profile => {
+  const profile = getProfileOrNull(state);
+  if (profile === null) {
+    debugger;
+    throw new Error('Tried to access the profile before it was loaded.');
+  }
+  return profile;
+};
 export const getProfileInterval = (state: State): Milliseconds =>
   getProfile(state).meta.interval;
 export const getThreads = (state: State): Thread[] => getProfile(state).threads;

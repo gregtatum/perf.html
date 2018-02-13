@@ -19,17 +19,23 @@ import {
   viewProfileFromZip,
 } from '../../actions/app';
 import {
+  getZipFileState,
   getZipFileTree,
   getZipFileMaxDepth,
   getSelectedZipFileIndex,
   getExpandedZipFileIndexes,
 } from '../../reducers/app';
+import { getZipFilePath } from '../../reducers/url-state';
 import TreeView from '../shared/TreeView';
+import ProfileViewer from './ProfileViewer';
+import type { ZipFileState } from '../../types/reducers';
 
 import './ZipFileViewer.css';
 
 type StateProps = {|
-  +zipFileTree: ZipFileTree | null,
+  +zipFileState: ZipFileState,
+  +zipFilePath: string | null,
+  +zipFileTree: ZipFileTree,
   +zipFileMaxDepth: number,
   +selectedZipFileIndex: IndexIntoZipFileTable | null,
   // In practice this should never contain null, but needs to support the
@@ -70,6 +76,16 @@ class ZipFileViewer extends PureComponent<Props> {
   }
 
   componentDidMount() {
+    const { zipFileState, zipFilePath, zipFileTree } = this.props;
+    if (zipFileState.phase === 'NONE' && zipFilePath) {
+      // Most likely the UrlState was deserialized from the URL, but the zip file
+      // still hasn't actually been decompressed yet.
+      if (!zipFileTree) {
+        throw new Error(
+          'The zipFileTree should exist if this component was mounted'
+        );
+      }
+    }
     this.focus();
   }
 
@@ -88,6 +104,7 @@ class ZipFileViewer extends PureComponent<Props> {
 
   render() {
     const {
+      zipFileState,
       zipFileTree,
       zipFileMaxDepth,
       selectedZipFileIndex,
@@ -97,45 +114,73 @@ class ZipFileViewer extends PureComponent<Props> {
     } = this.props;
 
     if (!zipFileTree) {
+      console.error('No zipFileTree was found in a ZipFileViewer.');
       return null;
     }
+    const { phase } = zipFileState;
+    switch (phase) {
+      // TODO - HANDLE ERROR CASES
+      case 'LOADED':
+        return <ProfileViewer />;
+      case 'LOADING':
+        return null;
+      case 'NO_ZIP_FILE':
+        console.error(
+          'Loaded the ZipFileViewer component when there is no zip file.'
+        );
+        return null;
+      case 'NONE':
+        return (
+          <section className="zipFileViewer">
+            <div className="zipFileViewerSection">
+              <header className="zipFileViewerHeader">
+                <h1>perf.html</h1>
+                <p>Choose a profile from this zip file</p>
+              </header>
+              <TreeView
+                maxNodeDepth={zipFileMaxDepth}
+                tree={zipFileTree}
+                fixedColumns={this._fixedColumns}
+                mainColumn={this._mainColumn}
+                onSelectionChange={changeSelectedZipFile}
+                onExpandedNodesChange={changeExpandedZipFile}
+                selectedNodeId={selectedZipFileIndex}
+                expandedNodeIds={expandedZipFileIndexes}
+                appendageButtons={this._appendageButtons}
+                onAppendageButtonClick={this._onAppendageButtonClick}
+                ref={this._takeTreeViewRef}
+                contextMenuId={'MarkersContextMenu'}
+                rowHeight={30}
+                indentWidth={15}
+              />
+            </div>
+          </section>
+        );
 
-    return (
-      <section className="zipFileViewer">
-        <div className="zipFileViewerSection">
-          <header className="zipFileViewerHeader">
-            <h1>perf.html</h1>
-            <p>Choose a profile from this zip file</p>
-          </header>
-          <TreeView
-            maxNodeDepth={zipFileMaxDepth}
-            tree={zipFileTree}
-            fixedColumns={this._fixedColumns}
-            mainColumn={this._mainColumn}
-            onSelectionChange={changeSelectedZipFile}
-            onExpandedNodesChange={changeExpandedZipFile}
-            selectedNodeId={selectedZipFileIndex}
-            expandedNodeIds={expandedZipFileIndexes}
-            appendageButtons={this._appendageButtons}
-            onAppendageButtonClick={this._onAppendageButtonClick}
-            ref={this._takeTreeViewRef}
-            contextMenuId={'MarkersContextMenu'}
-            rowHeight={30}
-            indentWidth={15}
-          />
-        </div>
-      </section>
-    );
+      default:
+        (phase: empty); // eslint-disable-line no-unused-expressions
+        throw new Error('Unknown zip file phase.');
+    }
   }
 }
 
 const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
-  mapStateToProps: state => ({
-    zipFileTree: getZipFileTree(state),
-    zipFileMaxDepth: getZipFileMaxDepth(state),
-    selectedZipFileIndex: getSelectedZipFileIndex(state),
-    expandedZipFileIndexes: getExpandedZipFileIndexes(state),
-  }),
+  mapStateToProps: state => {
+    const zipFileTree = getZipFileTree(state);
+    if (zipFileTree === null) {
+      throw new Error(
+        'The zipFileTree should exist if the ZipFileViewer is mounted.'
+      );
+    }
+    return {
+      zipFileState: getZipFileState(state),
+      zipFilePath: getZipFilePath(state),
+      zipFileTree,
+      zipFileMaxDepth: getZipFileMaxDepth(state),
+      selectedZipFileIndex: getSelectedZipFileIndex(state),
+      expandedZipFileIndexes: getExpandedZipFileIndexes(state),
+    };
+  },
   mapDispatchToProps: {
     changeSelectedZipFile,
     changeExpandedZipFile,

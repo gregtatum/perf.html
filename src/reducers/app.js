@@ -5,11 +5,18 @@
 // @flow
 import { combineReducers } from 'redux';
 import { createSelector } from 'reselect';
+import { oneLine } from 'common-tags';
+
 import * as ZipFiles from '../profile-logic/zip-files';
 
 import type { Action } from '../types/store';
-import type { State, AppState, AppViewState, Reducer } from '../types/reducers';
-import JSZip from 'jszip';
+import type {
+  State,
+  AppState,
+  AppViewState,
+  Reducer,
+  ZipFileState,
+} from '../types/reducers';
 
 function view(
   state: AppViewState = { phase: 'INITIALIZING' },
@@ -40,8 +47,8 @@ function view(
       return { phase: 'INITIALIZING' };
     case 'ROUTE_NOT_FOUND':
       return { phase: 'ROUTE_NOT_FOUND' };
-    case 'VIEW_PROFILE':
     case 'RECEIVE_ZIP_FILE':
+    case 'VIEW_PROFILE':
       return { phase: 'DATA_LOADED' };
     default:
       return state;
@@ -67,13 +74,71 @@ function hasZoomedViaMousewheel(state: boolean = false, action: Action) {
   }
 }
 
+function _validateStateTransition(
+  prev: ZipFileState,
+  next: ZipFileState
+): ZipFileState {
+  const prevPhase = prev.phase;
+  let expectedNextPhases;
+  switch (prevPhase) {
+    case 'NO_ZIP_FILE':
+      expectedNextPhases = ['LOADING_ZIP_FILE'];
+      break;
+    case 'LOADING_ZIP_FILE':
+      expectedNextPhases = ['LIST_FILES_IN_ZIP_FILE'];
+      break;
+    case 'LIST_FILES_IN_ZIP_FILE':
+      expectedNextPhases = ['PROCESS_PROFILE_FROM_ZIP_FILE'];
+      break;
+    case 'PROCESS_PROFILE_FROM_ZIP_FILE':
+      expectedNextPhases = [
+        'VIEW_PROFILE_IN_ZIP_FILE',
+        'ERROR_PROCESSING_PROFILE',
+      ];
+      break;
+    case 'VIEW_PROFILE_IN_ZIP_FILE':
+      expectedNextPhases = ['LIST_FILES_IN_ZIP_FILE'];
+      break;
+    default:
+      throw new Error(`Unhandled ZipFileState ${(prevPhase: empty)}`);
+  }
+  if (!expectedNextPhases.includes(next.phase)) {
+    throw new Error(oneLine`
+      Attempted to transition a finite state machine from the phase “${prev.phase}”
+      to “${next.phase}”, however “${prev.phase}” can only transition to
+      “${expectedNextPhases.join('”, “')}”.
+    `);
+  }
+  return next;
+}
+
+function _getZipFile(state: ZipFileState) {
+  const { zip } = state;
+  if (!zip) {
+    throw new Error('Expected to find a zip file in the state.');
+  }
+  return zip;
+}
+
 /**
  * A zip file can hold many profiles, keep it up at the app level.
  */
-function zipFile(state = null, action: Action): JSZip | null {
+function zipFile(
+  state: ZipFileState = { phase: 'NO_ZIP_FILE', zip: null },
+  action: Action
+): ZipFileState {
   switch (action.type) {
+    case 'LOAD_PROFILE_IN_ZIP': {
+      return _validateStateTransition(state, {
+        phase: 'PROCESS_PROFILE_FROM_ZIP_FILE',
+        zip: _getZipFile(state),
+      });
+    }
     case 'RECEIVE_ZIP_FILE': {
-      return action.zip;
+      return _validateStateTransition(state, {
+        phase: 'LIST_FILES_IN_ZIP_FILE',
+        zip: action.zip,
+      });
     }
     default:
       return state;
@@ -131,11 +196,22 @@ export const getHasZoomedViaMousewheel = (state: Object): boolean => {
   return getApp(state).hasZoomedViaMousewheel;
 };
 
-export const getZipFile = (state: State): JSZip | null => getApp(state).zipFile;
-export const getZipFileTable = createSelector(
-  getZipFile,
-  ZipFiles.createZipTable
-);
+export const getZipFileState = (state: State): ZipFileState =>
+  getApp(state).zipFile;
+export const getZipFileTable = createSelector(getZipFileState, zipFileState => {
+  switch (zipFileState.phase) {
+    case 'NONE':
+    case 'LOADING':
+      return null;
+    case 'LOADED':
+      return ZipFiles.createZipTable(zipFileState.zip);
+    default:
+      (zipFileState: empty); // eslint-disable-line no-unused-expressions
+      throw new Error('Unknown zip file phase.');
+  }
+});
+export const hasZipFile = (state: State): boolean =>
+  getZipFileState(state).phase === 'NONE';
 
 export const getZipFileMaxDepth = createSelector(
   getZipFileTable,

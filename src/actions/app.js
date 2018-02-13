@@ -5,7 +5,7 @@
 // @flow
 import { getSelectedTab, getDataSource } from '../reducers/url-state';
 import { sendAnalytics } from '../utils/analytics';
-import { getZipFile, getZipFileTable } from '../reducers/app';
+import { getZipFileTable } from '../reducers/app';
 import { unserializeProfileOfArbitraryFormat } from '../profile-logic/process-profile';
 import type { Action, ThunkAction } from '../types/store';
 import type { TabSlug } from '../types/actions';
@@ -91,9 +91,8 @@ export function viewProfileFromZip(
   zipFileIndex: IndexIntoZipFileTable
 ): ThunkAction<Promise<void>> {
   return async (dispatch, getState) => {
-    const zip = getZipFile(getState());
     const zipFileTable = getZipFileTable(getState());
-    if (!zip || !zipFileTable) {
+    if (!zipFileTable) {
       throw new Error(
         'Attempted to view a profile from a zip, when there is no zip file loaded.'
       );
@@ -105,13 +104,17 @@ export function viewProfileFromZip(
         'Attempted to load a zip file that did not exist or was a directory.'
       );
     }
-
-    const text = await file.async('string');
-    const profile = unserializeProfileOfArbitraryFormat(text);
-    dispatch({
-      type: 'VIEW_PROFILE',
-      profile,
-      zipFilePath,
-    });
+    dispatch({ type: 'PROCESS_PROFILE_FROM_ZIP_FILE' });
+    try {
+      dispatch({
+        type: 'VIEW_PROFILE',
+        profile: unserializeProfileOfArbitraryFormat(
+          await file.async('string')
+        ),
+        zipFilePath,
+      });
+    } catch (e) {
+      dispatch({ type: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP' });
+    }
   };
 }

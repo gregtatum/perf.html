@@ -43,7 +43,7 @@ export type ProfileViewState = {
     tabOrder: number[],
     rightClickedThread: ThreadIndex,
   },
-  profile: Profile,
+  profile: Profile | null,
 };
 
 export type AppViewState =
@@ -55,11 +55,37 @@ export type AppViewState =
       +additionalData?: {| +attempt: Attempt | null, +message: string |},
     |};
 
+/**
+ * This represents the finite state machine for loading zip files. The phase represents
+ * where the state is now, and next is the phase it can transition to.
+ */
+export type ZipFileState =
+  | {|
+      +phase: 'NO_ZIP_FILE',
+      +zip: null,
+    |}
+  | {|
+      +phase: 'LOADING_ZIP_FILE',
+      +zip: null,
+    |}
+  | {|
+      +phase: 'LIST_FILES_IN_ZIP_FILE',
+      +zip: JSZip,
+    |}
+  | {|
+      +phase: 'PROCESS_PROFILE_FROM_ZIP_FILE',
+      +zip: JSZip,
+    |}
+  | {|
+      +phase: 'VIEW_PROFILE_IN_ZIP_FILE',
+      +zip: JSZip,
+    |};
+
 export type AppState = {
   view: AppViewState,
   isUrlSetupDone: boolean,
   hasZoomedViaMousewheel: boolean,
-  zipFile: JSZip | null,
+  zipFile: ZipFileState,
   selectedZipFileIndex: IndexIntoZipFileTable | null,
   // In practice this should never contain null, but needs to support the
   // TreeView interface.
