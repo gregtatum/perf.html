@@ -143,7 +143,7 @@ describe('app actions', function() {
       );
 
       // Now revert it to the original, and make sure everything resets.
-      dispatch(AppActions.updateUrlState(originalUrlState));
+      dispatch(AppActions.updateUrlState(originalUrlState, getState()));
       expect(UrlStateSelectors.getUrlState(getState())).toBe(originalUrlState);
       expect(UrlStateSelectors.getSelectedTab(getState())).toEqual('calltree');
     });

@@ -305,7 +305,7 @@ type TreeViewProps<NodeIndex, DisplayData> = {|
   +tree: Tree<NodeIndex, DisplayData>,
   +expandedNodeIds: Array<NodeIndex | null>,
   +selectedNodeId: NodeIndex | null,
-  +onExpandedNodesChange: PropTypes.func.isRequired,
+  +onExpandedNodesChange: (Array<NodeIndex | null>) => mixed,
   +highlightRegExp?: RegExp | null,
   +appendageColumn?: Column,
   +appendageButtons?: string[],

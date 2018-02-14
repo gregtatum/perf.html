@@ -63,22 +63,27 @@ export type ZipFileState =
   | {|
       +phase: 'NO_ZIP_FILE',
       +zip: null,
+      +zipFilePath: null,
     |}
   | {|
       +phase: 'LIST_FILES_IN_ZIP_FILE',
       +zip: JSZip,
+      +zipFilePath: null,
     |}
   | {|
       +phase: 'PROCESS_PROFILE_FROM_ZIP_FILE',
       +zip: JSZip,
+      +zipFilePath: string,
     |}
   | {|
       +phase: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE',
       +zip: JSZip,
+      +zipFilePath: string,
     |}
   | {|
       +phase: 'VIEW_PROFILE_IN_ZIP_FILE',
       +zip: JSZip,
+      +zipFilePath: string,
     |};
 
 export type AppState = {

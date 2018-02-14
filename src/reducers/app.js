@@ -58,7 +58,7 @@ function view(
 
 function isUrlSetupDone(state: boolean = false, action: Action) {
   switch (action.type) {
-    case '@@urlenhancer/urlSetupDone':
+    case 'URL_SETUP_DONE':
       return true;
     default:
       return state;
@@ -89,7 +89,14 @@ function _validateStateTransition(
   let expectedNextPhases;
   switch (prevPhase) {
     case 'NO_ZIP_FILE':
-      expectedNextPhases = ['LIST_FILES_IN_ZIP_FILE'];
+      expectedNextPhases = [
+        // Coming into a fresh page load with a zip file, this is the first state
+        // transition.
+        'LIST_FILES_IN_ZIP_FILE',
+        // This will happen if coming in from a URL that is already pointing at a file
+        // in a zip.
+        'PROCESS_PROFILE_FROM_ZIP_FILE',
+      ];
       break;
     case 'LIST_FILES_IN_ZIP_FILE':
       expectedNextPhases = ['PROCESS_PROFILE_FROM_ZIP_FILE'];
@@ -98,6 +105,8 @@ function _validateStateTransition(
       expectedNextPhases = [
         'VIEW_PROFILE_IN_ZIP_FILE',
         'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE',
+        // When navigating with the URL, it's possible to go back and list the files.
+        'LIST_FILES_IN_ZIP_FILE',
       ];
       break;
     case 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE':
@@ -119,6 +128,10 @@ function _validateStateTransition(
   return next;
 }
 
+/**
+ * This is a getter to help make the zip reducer less verbose. It should only throw an error if there
+ * is a misplaced assumption in the state transitions.
+ */
 function _getZipFile(state: ZipFileState) {
   const { zip } = state;
   if (!zip) {
@@ -128,10 +141,22 @@ function _getZipFile(state: ZipFileState) {
 }
 
 /**
+ * This is a getter to help make the zip reducer less verbose. It should only throw an error if there
+ * is a misplaced assumption in the state transitions.
+ */
+function _getZipFilePath(state: ZipFileState) {
+  const { zipFilePath } = state;
+  if (!zipFilePath) {
+    throw new Error('Expected to find a zip file path in the state.');
+  }
+  return zipFilePath;
+}
+
+/**
  * A zip file can hold many profiles, keep it up at the app level.
  */
 function zipFile(
-  state: ZipFileState = { phase: 'NO_ZIP_FILE', zip: null },
+  state: ZipFileState = { phase: 'NO_ZIP_FILE', zip: null, zipFilePath: null },
   action: Action
 ): ZipFileState {
   switch (action.type) {
@@ -139,21 +164,26 @@ function zipFile(
       return _validateStateTransition(state, {
         phase: 'LIST_FILES_IN_ZIP_FILE',
         zip: action.zip,
+        zipFilePath: null,
       });
+    case 'RETURN_TO_ZIP_FILE_LIST':
     case 'DISMISS_PROCESS_PROFILE_FROM_ZIP_ERROR':
       return _validateStateTransition(state, {
         phase: 'LIST_FILES_IN_ZIP_FILE',
         zip: _getZipFile(state),
+        zipFilePath: null,
       });
     case 'PROCESS_PROFILE_FROM_ZIP_FILE':
       return _validateStateTransition(state, {
         phase: 'PROCESS_PROFILE_FROM_ZIP_FILE',
         zip: _getZipFile(state),
+        zipFilePath: action.zipFilePath,
       });
     case 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE':
       return _validateStateTransition(state, {
         phase: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE',
         zip: _getZipFile(state),
+        zipFilePath: _getZipFilePath(state),
       });
     case 'VIEW_PROFILE':
       // Only process this as a change if a zip file is actually loaded.
@@ -162,6 +192,7 @@ function zipFile(
         : _validateStateTransition(state, {
             phase: 'VIEW_PROFILE_IN_ZIP_FILE',
             zip: _getZipFile(state),
+            zipFilePath: _getZipFilePath(state),
           });
     default:
       return state;

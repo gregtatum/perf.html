@@ -18,6 +18,7 @@ import type { GetCategory } from '../profile-logic/color-categories';
 import type { TemporaryError } from '../utils/errors';
 import type { Transform } from './transforms';
 import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
+import type { UrlState, State } from '../types/reducers';
 
 export type DataSource =
   | 'none'
@@ -125,9 +126,10 @@ type ReceiveProfileAction =
   | { type: 'FATAL_ERROR_RECEIVING_PROFILE_FROM_URL', error: Error }
   | {| +type: 'VIEW_PROFILE', +profile: Profile, +zipFilePath?: string |}
   | {| +type: 'RECEIVE_ZIP_FILE', +zip: JSZip |}
-  | {| +type: 'PROCESS_PROFILE_FROM_ZIP_FILE' |}
+  | {| +type: 'PROCESS_PROFILE_FROM_ZIP_FILE', +zipFilePath: string |}
   | {| +type: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE', error: any |}
   | {| +type: 'DISMISS_PROCESS_PROFILE_FROM_ZIP_ERROR' |}
+  | {| +type: 'RETURN_TO_ZIP_FILE_LIST' |}
   | { type: 'REQUESTING_SYMBOL_TABLE', requestedLib: RequestedLib }
   | { type: 'RECEIVED_SYMBOL_TABLE_REPLY', requestedLib: RequestedLib }
   | { type: 'START_SYMBOLICATING' }
@@ -141,8 +143,8 @@ type StackChartAction =
   | { type: 'HAS_ZOOMED_VIA_MOUSEWHEEL' };
 
 type UrlEnhancerAction =
-  | { type: '@@urlenhancer/urlSetupDone' }
-  | { type: '@@urlenhancer/updateUrlState', urlState: any };
+  | { type: 'URL_SETUP_DONE' }
+  | { type: 'UPDATE_URL_STATE', newUrlState: UrlState, state: State };
 
 type UrlStateAction =
   | { type: 'WAITING_FOR_PROFILE_FROM_FILE' }

@@ -244,8 +244,12 @@ function zipFilePath(
   action: Action
 ): string | null {
   switch (action.type) {
-    case 'VIEW_PROFILE':
+    // Update the URL the moment the zip file is starting to be
+    // processed, not when it is viewed. The processing is async.
+    case 'PROCESS_PROFILE_FROM_ZIP_FILE':
       return action.zipFilePath ? action.zipFilePath : null;
+    case 'RETURN_TO_ZIP_FILE_LIST':
+      return null;
     default:
       return state;
   }
@@ -256,8 +260,8 @@ const urlStateReducer: Reducer<UrlState> = (regularUrlStateReducer => (
   action: Action
 ): UrlState => {
   switch (action.type) {
-    case '@@urlenhancer/updateUrlState':
-      return action.urlState;
+    case 'UPDATE_URL_STATE':
+      return action.newUrlState;
     default:
       return regularUrlStateReducer(state, action);
   }
@@ -358,7 +362,8 @@ export const getUrlPredictor = createSelector(
   }
 );
 
-export const getZipFilePath = (state: State) => getUrlState(state).zipFilePath;
+export const getZipFilePathFromUrl = (state: State) =>
+  getUrlState(state).zipFilePath;
 
 export const getRangeFilterLabels = createSelector(
   getRangeFilters,
