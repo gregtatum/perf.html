@@ -256,12 +256,25 @@ function zipFilePath(
 }
 
 /**
+ * These values are specific to an individual profile.
+ */
+const profileSpecific = combineReducers({
+  rangeFilters,
+  selectedThread,
+  callTreeSearchString,
+  threadOrder,
+  hiddenThreads,
+  markersSearchString,
+  transforms,
+});
+
+/**
  * Provide a mechanism to wrap the UrlState reducer in a special function that can swap
  * out the entire UrlState with a new one coming from the History API. Also provide a
  * way to invalidate sections of the state based off of looking at multiple profiles.
  */
 const wrapReducerInResetter = (
-  regularReducer: Reducer<UrlState>
+  regularUrlStateReducer: Reducer<UrlState>
 ): Reducer<UrlState> => {
   return (state, action) => {
     switch (action.type) {
@@ -270,22 +283,13 @@ const wrapReducerInResetter = (
         // and use the new one, which was probably serialized from the URL, or stored
         // in the history API.
         return action.newUrlState;
-      case 'RETURN_TO_ZIP_FILE_LIST': {
+      case 'RETURN_TO_ZIP_FILE_LIST':
         // Invalidate all information that would be specific to an individual profile.
-        // Keep settings like implementation filters, which are not specific.
-        const newState = regularReducer(state, action);
-        return Object.assign({}, newState, {
-          rangeFilters: rangeFilters(undefined, action),
-          selectedThread: selectedThread(undefined, action),
-          callTreeSearchString: callTreeSearchString(undefined, action),
-          threadOrder: threadOrder(undefined, action),
-          hiddenThreads: hiddenThreads(undefined, action),
-          markersSearchString: markersSearchString(undefined, action),
-          transforms: transforms(undefined, action),
+        return Object.assign({}, regularUrlStateReducer(state, action), {
+          profileSpecific: profileSpecific(undefined, state),
         });
-      }
       default:
-        return regularReducer(state, action);
+        return regularUrlStateReducer(state, action);
     }
   };
 };
@@ -296,29 +300,25 @@ const urlStateReducer = wrapReducerInResetter(
     hash,
     profileUrl,
     selectedTab,
-    rangeFilters,
-    selectedThread,
-    callTreeSearchString,
     implementation,
     invertCallstack,
     hidePlatformDetails,
-    threadOrder,
-    hiddenThreads,
-    markersSearchString,
-    transforms,
     zipFilePath,
+    profileSpecific,
   })
 );
 
 export default urlStateReducer;
 
 export const getUrlState = (state: State): UrlState => state.urlState;
+export const getProfileSpecificState = (state: State) =>
+  getUrlState(state).profileSpecific;
 
 export const getDataSource = (state: State) => getUrlState(state).dataSource;
 export const getHash = (state: State) => getUrlState(state).hash;
 export const getProfileUrl = (state: State) => getUrlState(state).profileUrl;
 export const getRangeFilters = (state: State) =>
-  getUrlState(state).rangeFilters;
+  getProfileSpecificState(state).rangeFilters;
 export const getImplementationFilter = (state: State) =>
   getUrlState(state).implementation;
 export const getHidePlatformDetails = (state: State) =>
@@ -326,7 +326,7 @@ export const getHidePlatformDetails = (state: State) =>
 export const getInvertCallstack = (state: State) =>
   getUrlState(state).invertCallstack;
 export const getCurrentSearchString = (state: State) =>
-  getUrlState(state).callTreeSearchString;
+  getProfileSpecificState(state).callTreeSearchString;
 export const getSearchStrings = createSelector(
   getCurrentSearchString,
   searchString => {
@@ -356,11 +356,11 @@ export const getSearchStringsAsRegExp = createSelector(
   }
 );
 export const getMarkersSearchString = (state: State) =>
-  getUrlState(state).markersSearchString;
+  getProfileSpecificState(state).markersSearchString;
 
 export const getSelectedTab = (state: State) => getUrlState(state).selectedTab;
 export const getSelectedThreadIndex = (state: State) => {
-  const threadIndex = getUrlState(state).selectedThread;
+  const threadIndex = getProfileSpecificState(state).selectedThread;
   if (threadIndex === null) {
     throw new Error(
       'Attempted to get a thread index before a profile was loaded.'
@@ -372,11 +372,15 @@ export const getTransformStack = (
   state: State,
   threadIndex: ThreadIndex
 ): TransformStack => {
-  return getUrlState(state).transforms[threadIndex] || EMPTY_TRANSFORM_STACK;
+  return (
+    getProfileSpecificState(state).transforms[threadIndex] ||
+    EMPTY_TRANSFORM_STACK
+  );
 };
-export const getThreadOrder = (state: State) => getUrlState(state).threadOrder;
+export const getThreadOrder = (state: State) =>
+  getProfileSpecificState(state).threadOrder;
 export const getHiddenThreads = (state: State) =>
-  getUrlState(state).hiddenThreads;
+  getProfileSpecificState(state).hiddenThreads;
 export const getUrlPredictor = createSelector(
   getUrlState,
   (oldUrlState: UrlState) => (actionOrActionList: Action | Action[]) => {

@@ -112,17 +112,19 @@ export type UrlState = {
   hash: string,
   profileUrl: string,
   selectedTab: TabSlug,
-  rangeFilters: RangeFilterState[],
-  selectedThread: ThreadIndex | null,
-  callTreeSearchString: string,
-  markersSearchString: string,
   implementation: ImplementationFilter,
   invertCallstack: boolean,
   hidePlatformDetails: boolean,
-  threadOrder: ThreadIndex[],
-  hiddenThreads: ThreadIndex[],
-  transforms: TransformStacksPerThread,
   zipFilePath: string | null,
+  profileSpecific: {
+    rangeFilters: RangeFilterState[],
+    selectedThread: ThreadIndex | null,
+    callTreeSearchString: string,
+    threadOrder: ThreadIndex[],
+    hiddenThreads: ThreadIndex[],
+    markersSearchString: string,
+    transforms: TransformStacksPerThread,
+  },
 };
 
 export type IconState = Set<string>;

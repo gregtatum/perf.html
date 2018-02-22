@@ -86,10 +86,11 @@ export function urlStateToUrlObject(urlState: UrlState): UrlObject {
 
   // Start with the query parameters that are shown regardless of the active tab.
   const query: Object = {
-    range: stringifyRangeFilters(urlState.rangeFilters) || undefined,
-    thread: urlState.selectedThread,
-    threadOrder: urlState.threadOrder.join('-'),
-    hiddenThreads: urlState.hiddenThreads.join('-'),
+    range:
+      stringifyRangeFilters(urlState.profileSpecific.rangeFilters) || undefined,
+    thread: urlState.profileSpecific.selectedThread,
+    threadOrder: urlState.profileSpecific.threadOrder.join('-'),
+    hiddenThreads: urlState.profileSpecific.hiddenThreads.join('-'),
     file: urlState.zipFilePath || undefined,
     v: CURRENT_URL_VERSION,
   };
@@ -110,18 +111,20 @@ export function urlStateToUrlObject(urlState: UrlState): UrlObject {
         urlState.implementation === 'combined'
           ? undefined
           : urlState.implementation;
-      const selectedThread = urlState.selectedThread;
+      const selectedThread = urlState.profileSpecific.selectedThread;
       if (selectedThread !== null) {
         query.transforms =
-          stringifyTransforms(urlState.transforms[selectedThread]) || undefined;
+          stringifyTransforms(
+            urlState.profileSpecific.transforms[selectedThread]
+          ) || undefined;
       }
       break;
     }
     case 'marker-table':
-      query.markerSearch = urlState.markersSearchString;
+      query.markerSearch = urlState.profileSpecific.markersSearchString;
       break;
     case 'stack-chart':
-      query.search = urlState.callTreeSearchString || undefined;
+      query.search = urlState.profileSpecific.callTreeSearchString || undefined;
       query.invertCallstack = urlState.invertCallstack ? null : undefined;
       query.hidePlatformDetails = urlState.hidePlatformDetails
         ? null
@@ -207,24 +210,26 @@ export function stateFromLocation(location: Location): UrlState {
     hash: hasProfileHash ? pathParts[1] : '',
     profileUrl: hasProfileUrl ? decodeURIComponent(pathParts[1]) : '',
     selectedTab: toValidTabSlug(pathParts[selectedTabPathPart]) || 'calltree',
-    rangeFilters: query.range ? parseRangeFilters(query.range) : [],
-    selectedThread: selectedThread,
-    callTreeSearchString: query.search || '',
-    markersSearchString: query.markerSearch || '',
     implementation,
     invertCallstack: query.invertCallstack !== undefined,
     hidePlatformDetails: query.hidePlatformDetails !== undefined,
     zipFilePath: query.file || null,
-    hiddenThreads: query.hiddenThreads
-      ? query.hiddenThreads.split('-').map(index => Number(index))
-      : [],
-    threadOrder: query.threadOrder
-      ? query.threadOrder.split('-').map(index => Number(index))
-      : [],
-    transforms: {
-      [selectedThread]: query.transforms
-        ? parseTransforms(query.transforms)
+    profileSpecific: {
+      rangeFilters: query.range ? parseRangeFilters(query.range) : [],
+      selectedThread: selectedThread,
+      callTreeSearchString: query.search || '',
+      threadOrder: query.threadOrder
+        ? query.threadOrder.split('-').map(index => Number(index))
         : [],
+      hiddenThreads: query.hiddenThreads
+        ? query.hiddenThreads.split('-').map(index => Number(index))
+        : [],
+      markersSearchString: query.markerSearch || '',
+      transforms: {
+        [selectedThread]: query.transforms
+          ? parseTransforms(query.transforms)
+          : [],
+      },
     },
   };
 }
