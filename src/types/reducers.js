@@ -21,7 +21,7 @@ import type { TransformStacksPerThread } from './transforms';
 import JSZip from 'jszip';
 import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
 
-export type Reducer<T> = (T, Action) => T;
+export type Reducer<T> = (T | void, Action) => T;
 
 export type RequestedLib = { debugName: string, breakpadId: string };
 export type SymbolicationStatus = 'DONE' | 'SYMBOLICATING';

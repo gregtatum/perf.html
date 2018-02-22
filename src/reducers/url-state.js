@@ -255,17 +255,42 @@ function zipFilePath(
   }
 }
 
-const urlStateReducer: Reducer<UrlState> = (regularUrlStateReducer => (
-  state: UrlState,
-  action: Action
-): UrlState => {
-  switch (action.type) {
-    case 'UPDATE_URL_STATE':
-      return action.newUrlState;
-    default:
-      return regularUrlStateReducer(state, action);
-  }
-})(
+/**
+ * Provide a mechanism to wrap the UrlState reducer in a special function that can swap
+ * out the entire UrlState with a new one coming from the History API. Also provide a
+ * way to invalidate sections of the state based off of looking at multiple profiles.
+ */
+const wrapReducerInResetter = (
+  regularReducer: Reducer<UrlState>
+): Reducer<UrlState> => {
+  return (state, action) => {
+    switch (action.type) {
+      case 'UPDATE_URL_STATE':
+        // A new URL came in because of a browser action, discard the current UrlState
+        // and use the new one, which was probably serialized from the URL, or stored
+        // in the history API.
+        return action.newUrlState;
+      case 'RETURN_TO_ZIP_FILE_LIST': {
+        // Invalidate all information that would be specific to an individual profile.
+        // Keep settings like implementation filters, which are not specific.
+        const newState = regularReducer(state, action);
+        return Object.assign({}, newState, {
+          rangeFilters: rangeFilters(undefined, action),
+          selectedThread: selectedThread(undefined, action),
+          callTreeSearchString: callTreeSearchString(undefined, action),
+          threadOrder: threadOrder(undefined, action),
+          hiddenThreads: hiddenThreads(undefined, action),
+          markersSearchString: markersSearchString(undefined, action),
+          transforms: transforms(undefined, action),
+        });
+      }
+      default:
+        return regularReducer(state, action);
+    }
+  };
+};
+
+const urlStateReducer = wrapReducerInResetter(
   combineReducers({
     dataSource,
     hash,
@@ -284,6 +309,7 @@ const urlStateReducer: Reducer<UrlState> = (regularUrlStateReducer => (
     zipFilePath,
   })
 );
+
 export default urlStateReducer;
 
 export const getUrlState = (state: State): UrlState => state.urlState;
