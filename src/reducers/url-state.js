@@ -284,6 +284,7 @@ const wrapReducerInResetter = (
         // in the history API.
         return action.newUrlState;
       case 'RETURN_TO_ZIP_FILE_LIST':
+        console.log('!!! RETURN_TO_ZIP_FILE_LIST', { state, action });
         // Invalidate all information that would be specific to an individual profile.
         return Object.assign({}, regularUrlStateReducer(state, action), {
           profileSpecific: profileSpecific(undefined, state),
@@ -362,6 +363,7 @@ export const getSelectedTab = (state: State) => getUrlState(state).selectedTab;
 export const getSelectedThreadIndex = (state: State) => {
   const threadIndex = getProfileSpecificState(state).selectedThread;
   if (threadIndex === null) {
+    debugger;
     throw new Error(
       'Attempted to get a thread index before a profile was loaded.'
     );

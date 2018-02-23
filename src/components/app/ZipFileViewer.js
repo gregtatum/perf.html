@@ -257,6 +257,7 @@ class ZipFileViewer extends React.PureComponent<Props> {
         );
         return this._renderMessage(<span>Error: No zip file was found.</span>);
       case 'LIST_FILES_IN_ZIP_FILE':
+        console.log(`case 'LIST_FILES_IN_ZIP_FILE':`);
         return (
           <section className="zipFileViewer">
             <div className="zipFileViewerSection">
@@ -287,10 +288,12 @@ class ZipFileViewer extends React.PureComponent<Props> {
           </section>
         );
       case 'PROCESS_PROFILE_FROM_ZIP_FILE':
+        console.log(`case 'PROCESS_PROFILE_FROM_ZIP_FILE':`);
         return this._renderMessage(
           <span>Loading the profile from the zip file...</span>
         );
       case 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE':
+        console.log(`case 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE':`);
         return this._renderMessage([
           <span key="message">
             Are you sure this is a profile? Failed to process the file in the
@@ -307,6 +310,7 @@ class ZipFileViewer extends React.PureComponent<Props> {
           this._renderBackButton(),
         ]);
       case 'FILE_NOT_FOUND_IN_ZIP_FILE':
+        console.log(`case 'FILE_NOT_FOUND_IN_ZIP_FILE':`);
         return this._renderMessage([
           <span key="message">
             Failed to find a file in the zip at the following path:
@@ -322,6 +326,7 @@ class ZipFileViewer extends React.PureComponent<Props> {
           this._renderBackButton(),
         ]);
       case 'VIEW_PROFILE_IN_ZIP_FILE':
+        console.log(`case 'VIEW_PROFILE_IN_ZIP_FILE':`);
         return <ProfileViewer />;
       default:
         (phase: empty); // eslint-disable-line no-unused-expressions
