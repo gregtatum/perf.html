@@ -10,7 +10,7 @@ import explicitConnect from '../../utils/connect';
 import {
   retrieveProfileFromAddon,
   retrieveProfileFromStore,
-  retrieveProfileFromUrl,
+  retrieveProfileOrZipFromUrl,
 } from '../../actions/receive-profile';
 import ProfileViewer from './ProfileViewer';
 import Home from './Home';
@@ -76,7 +76,7 @@ type ProfileViewStateProps = {|
 type ProfileViewDispatchProps = {|
   +retrieveProfileFromAddon: typeof retrieveProfileFromAddon,
   +retrieveProfileFromStore: typeof retrieveProfileFromStore,
-  +retrieveProfileFromUrl: typeof retrieveProfileFromUrl,
+  +retrieveProfileOrZipFromUrl: typeof retrieveProfileOrZipFromUrl,
 |};
 
 type ProfileViewProps = ConnectedProps<
@@ -93,7 +93,7 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
       profileUrl,
       retrieveProfileFromAddon,
       retrieveProfileFromStore,
-      retrieveProfileFromUrl,
+      retrieveProfileOrZipFromUrl,
     } = this.props;
     switch (dataSource) {
       case 'from-addon':
@@ -108,7 +108,7 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
         retrieveProfileFromStore(hash);
         break;
       case 'from-url':
-        retrieveProfileFromUrl(profileUrl);
+        retrieveProfileOrZipFromUrl(profileUrl);
         break;
       case 'none':
         // nothing to do
@@ -218,7 +218,7 @@ const options: ExplicitConnectOptions<
   }),
   mapDispatchToProps: {
     retrieveProfileFromStore,
-    retrieveProfileFromUrl,
+    retrieveProfileOrZipFromUrl,
     retrieveProfileFromAddon,
   },
   component: ProfileViewWhenReadyImpl,
@@ -234,7 +234,7 @@ export default class Root extends PureComponent<RootProps> {
     const { store } = this.props;
     return (
       <Provider store={store}>
-        <UrlManager>
+        <UrlManager store={store}>
           <ProfileViewWhenReady />
         </UrlManager>
       </Provider>
