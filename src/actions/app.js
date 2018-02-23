@@ -9,7 +9,7 @@ import { getZipFileTable, getZipFileState } from '../reducers/app';
 import { unserializeProfileOfArbitraryFormat } from '../profile-logic/process-profile';
 import type { Action, ThunkAction } from '../types/store';
 import type { TabSlug } from '../types/actions';
-import type { UrlState, State } from '../types/reducers';
+import type { UrlState } from '../types/reducers';
 import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
 
 export function changeSelectedTab(selectedTab: TabSlug): ThunkAction<void> {
@@ -86,11 +86,10 @@ export function show404(url: string): Action {
 /**
  * This function is called when a browser navigation event happens. A new UrlState
  * is generated when the window.location is serialized, or the state is pulled out of
- * the history API. Please note that the `State` still contains the OLD UrlState.
- * It is the job of the reducers to handle this new UrlState.
+ * the history API.
  */
-export function updateUrlState(newUrlState: UrlState, state: State): Action {
-  return { type: 'UPDATE_URL_STATE', newUrlState, state };
+export function updateUrlState(newUrlState: UrlState): Action {
+  return { type: 'UPDATE_URL_STATE', newUrlState };
 }
 
 /**
