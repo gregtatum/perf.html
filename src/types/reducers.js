@@ -57,7 +57,7 @@ export type AppViewState =
 
 /**
  * This represents the finite state machine for loading zip files. The phase represents
- * where the state is now, and next is the phase it can transition to.
+ * where the state is now.
  */
 export type ZipFileState =
   | {|
@@ -95,6 +95,9 @@ export type AppState = {
   view: AppViewState,
   isUrlSetupDone: boolean,
   hasZoomedViaMousewheel: boolean,
+};
+
+export type ZippedProfilesState = {
   zipFile: ZipFileState,
   selectedZipFileIndex: IndexIntoZipFileTable | null,
   // In practice this should never contain null, but needs to support the
@@ -132,13 +135,14 @@ export type StackChartState = {
   labelingStrategy: GetLabel,
 };
 
-export type State = {
+export type State = {|
   app: AppState,
   profileView: ProfileViewState,
   urlState: UrlState,
   stackChart: StackChartState,
   icons: IconState,
-};
+  zippedProfiles: ZippedProfilesState,
+|};
 
 export type IconWithClassName = {
   icon: string,
