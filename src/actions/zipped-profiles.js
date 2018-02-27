@@ -40,7 +40,7 @@ export function viewProfileFromZip(
 ): ThunkAction<Promise<void>> {
   return async (dispatch, getState) => {
     const zipFileTable = getZipFileTable(getState());
-    const zipFilePath = zipFileTable.path[zipFileIndex];
+    const pathInZipFile = zipFileTable.path[zipFileIndex];
     const file = zipFileTable.file[zipFileIndex];
     if (!file) {
       throw new Error(
@@ -48,7 +48,7 @@ export function viewProfileFromZip(
       );
     }
 
-    dispatch({ type: 'PROCESS_PROFILE_FROM_ZIP_FILE', zipFilePath });
+    dispatch({ type: 'PROCESS_PROFILE_FROM_ZIP_FILE', pathInZipFile });
 
     try {
       // Attempt to unserialize the profile.
@@ -61,13 +61,13 @@ export function viewProfileFromZip(
       // is invalid, don't dispatch anything, and discard the profile.
       const zipFileState = getZipFileState(getState());
       if (
-        zipFileState.zipFilePath === zipFilePath &&
+        zipFileState.pathInZipFile === pathInZipFile &&
         zipFileState.phase === 'PROCESS_PROFILE_FROM_ZIP_FILE'
       ) {
         dispatch({
           type: 'VIEW_PROFILE',
           profile,
-          zipFilePath,
+          pathInZipFile,
         });
       }
     } catch (error) {
@@ -84,14 +84,14 @@ export function viewProfileFromZip(
  * This function can take a zip file path, but the path can come from the URL, so
  * don't really trust it.
  */
-export function viewProfileFromZipFilePath(
-  zipFilePath: string
+export function viewProfileFromPathInZipFile(
+  pathInZipFile: string
 ): ThunkAction<void> {
   return (dispatch, getState) => {
     const zipFileTable = getZipFileTable(getState());
-    const zipFileIndex = zipFileTable.path.indexOf(zipFilePath);
+    const zipFileIndex = zipFileTable.path.indexOf(pathInZipFile);
     if (zipFileIndex === -1) {
-      dispatch(showErrorForNoFileInZip(zipFilePath));
+      dispatch(showErrorForNoFileInZip(pathInZipFile));
     } else {
       dispatch(viewProfileFromZip(zipFileIndex));
     }
@@ -102,6 +102,6 @@ export function returnToZipFileList() {
   return { type: 'RETURN_TO_ZIP_FILE_LIST' };
 }
 
-export function showErrorForNoFileInZip(zipFilePath: string) {
-  return { type: 'FILE_NOT_FOUND_IN_ZIP_FILE', zipFilePath };
+export function showErrorForNoFileInZip(pathInZipFile: string) {
+  return { type: 'FILE_NOT_FOUND_IN_ZIP_FILE', pathInZipFile };
 }

@@ -25,7 +25,11 @@ import type JSZip from 'jszip';
  */
 
 function zipFile(
-  state: ZipFileState = { phase: 'NO_ZIP_FILE', zip: null, zipFilePath: null },
+  state: ZipFileState = {
+    phase: 'NO_ZIP_FILE',
+    zip: null,
+    pathInZipFile: null,
+  },
   action: Action
 ): ZipFileState {
   switch (action.type) {
@@ -33,32 +37,32 @@ function zipFile(
       return _validateStateTransition(state, {
         phase: 'LIST_FILES_IN_ZIP_FILE',
         zip: action.zip,
-        zipFilePath: null,
+        pathInZipFile: null,
       });
     case 'RETURN_TO_ZIP_FILE_LIST':
     case 'DISMISS_PROCESS_PROFILE_FROM_ZIP_ERROR':
       return _validateStateTransition(state, {
         phase: 'LIST_FILES_IN_ZIP_FILE',
         zip: ensureExists(state.zip),
-        zipFilePath: null,
+        pathInZipFile: null,
       });
     case 'PROCESS_PROFILE_FROM_ZIP_FILE':
       return _validateStateTransition(state, {
         phase: 'PROCESS_PROFILE_FROM_ZIP_FILE',
         zip: ensureExists(state.zip),
-        zipFilePath: action.zipFilePath,
+        pathInZipFile: action.pathInZipFile,
       });
     case 'FILE_NOT_FOUND_IN_ZIP_FILE':
       return _validateStateTransition(state, {
         phase: 'FILE_NOT_FOUND_IN_ZIP_FILE',
         zip: ensureExists(state.zip),
-        zipFilePath: action.zipFilePath,
+        pathInZipFile: action.pathInZipFile,
       });
     case 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE':
       return _validateStateTransition(state, {
         phase: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE',
         zip: ensureExists(state.zip),
-        zipFilePath: ensureExists(state.zipFilePath),
+        pathInZipFile: ensureExists(state.pathInZipFile),
       });
     case 'VIEW_PROFILE':
       // Only process this as a change if a zip file is actually loaded.
@@ -67,7 +71,7 @@ function zipFile(
         : _validateStateTransition(state, {
             phase: 'VIEW_PROFILE_IN_ZIP_FILE',
             zip: ensureExists(state.zip),
-            zipFilePath: ensureExists(state.zipFilePath),
+            pathInZipFile: ensureExists(state.pathInZipFile),
           });
     default:
       return state;

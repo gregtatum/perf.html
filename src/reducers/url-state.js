@@ -243,7 +243,7 @@ function hiddenThreads(state: ThreadIndex[] = [], action: Action) {
   }
 }
 
-function zipFilePath(
+function pathInZipFile(
   state: string | null = null,
   action: Action
 ): string | null {
@@ -251,7 +251,7 @@ function zipFilePath(
     // Update the URL the moment the zip file is starting to be
     // processed, not when it is viewed. The processing is async.
     case 'PROCESS_PROFILE_FROM_ZIP_FILE':
-      return action.zipFilePath ? action.zipFilePath : null;
+      return action.pathInZipFile ? action.pathInZipFile : null;
     case 'RETURN_TO_ZIP_FILE_LIST':
       return null;
     default:
@@ -285,7 +285,7 @@ const urlStateReducer: Reducer<UrlState> = (regularUrlStateReducer => (
     hiddenThreads,
     markersSearchString,
     transforms,
-    zipFilePath,
+    pathInZipFile,
   })
 );
 export default urlStateReducer;
@@ -366,19 +366,19 @@ export const getUrlPredictor = createSelector(
   }
 );
 
-export const getZipFilePathFromUrl = (state: State) =>
-  getUrlState(state).zipFilePath;
+export const getPathInZipFileFromUrl = (state: State) =>
+  getUrlState(state).pathInZipFile;
 
 /**
  * For now only provide a name for a profile if it came from a zip file.
  */
 export const getProfileName: State => null | string = createSelector(
-  getZipFilePathFromUrl,
-  zipFilePath => {
-    if (!zipFilePath) {
+  getPathInZipFileFromUrl,
+  pathInZipFile => {
+    if (!pathInZipFile) {
       return null;
     }
-    const pathParts = zipFilePath.split('/');
+    const pathParts = pathInZipFile.split('/');
     return pathParts[pathParts.length - 1];
   }
 );
