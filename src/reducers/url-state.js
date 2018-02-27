@@ -82,6 +82,10 @@ function selectedThread(
   action: Action
 ): ThreadIndex | null {
   function findDefaultThreadIndex(threads) {
+    if (threads.length === 0) {
+      // Tests may have no threads.
+      return null;
+    }
     const contentThreadId = threads.findIndex(
       thread => thread.name === 'GeckoMain' && thread.processType === 'tab'
     );

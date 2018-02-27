@@ -106,11 +106,6 @@ export function viewProfileFromZip(
 ): ThunkAction<Promise<void>> {
   return async (dispatch, getState) => {
     const zipFileTable = getZipFileTable(getState());
-    if (!zipFileTable) {
-      throw new Error(
-        'Attempted to view a profile from a zip, when there is no zip file loaded.'
-      );
-    }
     const zipFilePath = zipFileTable.path[zipFileIndex];
     const file = zipFileTable.file[zipFileIndex];
     if (!file) {
@@ -142,8 +137,29 @@ export function viewProfileFromZip(
         });
       }
     } catch (error) {
-      console.error('Failed to process the profile in the zip file.', error);
+      console.error(
+        'Failed to process the profile in the zip file with the following error:'
+      );
+      console.error(error);
       dispatch({ type: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE', error });
+    }
+  };
+}
+
+/**
+ * This function can take a zip file path, but the path can come from the URL, so
+ * don't really trust it.
+ */
+export function viewProfileFromZipFilePath(
+  zipFilePath: string
+): ThunkAction<void> {
+  return (dispatch, getState) => {
+    const zipFileTable = getZipFileTable(getState());
+    const zipFileIndex = zipFileTable.path.indexOf(zipFilePath);
+    if (zipFileIndex === -1) {
+      dispatch(showErrorForNoFileInZip(zipFilePath));
+    } else {
+      dispatch(viewProfileFromZip(zipFileIndex));
     }
   };
 }
