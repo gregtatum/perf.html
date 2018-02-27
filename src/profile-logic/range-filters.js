@@ -43,8 +43,6 @@ export function getRangeFilterLabels(rangeFilters: StartEndRange[]): string[] {
   const labels = rangeFilters.map(range =>
     getFormattedTimeLength(range.end - range.start)
   );
-  if (labels.length > 0) {
-    labels.unshift('Full Range');
-  }
+  labels.unshift('Full Range');
   return labels;
 }
