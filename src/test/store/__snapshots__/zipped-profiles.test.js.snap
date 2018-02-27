@@ -1,46 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`zipFile ZipFileTree can get compute display data 1`] = `
-Object {
-  "name": "foo",
-  "url": null,
-  "zipTableIndex": 0,
-}
-`;
-
-exports[`zipFile ZipFileTree can get compute display data 2`] = `
-Object {
-  "name": "baz",
-  "url": null,
-  "zipTableIndex": 6,
-}
-`;
-
-exports[`zipFile ZipFileTree can get compute display data 3`] = `
-Object {
-  "name": "bar",
-  "url": null,
-  "zipTableIndex": 1,
-}
-`;
-
-exports[`zipFile ZipFileTree can get compute display data 4`] = `
-Object {
-  "name": "profile2.json",
-  "url": "null/from-url//calltree/?file=foo%2Fprofile2.json",
-  "zipTableIndex": 3,
-}
-`;
-
-exports[`zipFile ZipFileTree can get compute display data 5`] = `
-Object {
-  "name": "profile3.json",
-  "url": "null/from-url//calltree/?file=foo%2Fprofile3.json",
-  "zipTableIndex": 4,
-}
-`;
-
-exports[`zipFile will fail when trying to load an invalid profile 1`] = `
+exports[`reducer zipFileState will fail when trying to load an invalid profile 1`] = `
 Array [
   Array [
     "Failed to process the profile in the zip file with the following error:",
