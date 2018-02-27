@@ -7,7 +7,7 @@ import { getEmptyProfile } from '../../../profile-logic/profile-data';
 import { serializeProfile } from '../../../profile-logic/process-profile';
 import JSZip from 'jszip';
 
-export async function getZippedProfiles(): Promise<JSZip> {
+export function getZippedProfiles(): JSZip {
   const profile = serializeProfile(getEmptyProfile());
   const files = [
     'foo/bar/profile1.json',
@@ -23,5 +23,4 @@ export async function getZippedProfiles(): Promise<JSZip> {
   });
 
   return zip;
-  // return zip.generateAsync({ type: 'uint8array' });
 }
