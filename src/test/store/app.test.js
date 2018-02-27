@@ -10,6 +10,9 @@ import * as UrlStateSelectors from '../../reducers/url-state';
 import * as AppSelectors from '../../reducers/app';
 import createStore from '../../create-store';
 import { withAnalyticsMock } from '../fixtures/mocks/analytics';
+import { mockConsoleError } from '../fixtures/mocks/console-error';
+import { waitUntilState } from '../fixtures/utils';
+import JSZip from 'jszip';
 
 import * as AppActions from '../../actions/app';
 import * as ReceiveProfileActions from '../../actions/receive-profile';
@@ -154,7 +157,7 @@ describe('app actions', function() {
      * Transform the zip file data structure into a human readable string to easily
      * assert the tree structure of the table.
      */
-    function formatZipFileTable(zipFileTable: ZipFileTable | null): string[] {
+    function formatZipFileTable(zipFileTable: ZipFileTable): string[] {
       if (!zipFileTable) {
         return [];
       }
@@ -182,20 +185,75 @@ describe('app actions', function() {
     }
 
     async function storeWithZipFile() {
-      const { dispatch, getState } = createStore();
-      const zippedProfile = await getZippedProfiles();
-      dispatch(ReceiveProfileActions.receiveZipFile(zippedProfile));
+      const store = createStore();
+      const zippedProfiles = getZippedProfiles();
+      store.dispatch(ReceiveProfileActions.receiveZipFile(zippedProfiles));
       return {
-        dispatch,
-        getState,
-        zippedProfile,
+        store,
+        dispatch: store.dispatch,
+        getState: store.getState,
+        zippedProfiles,
       };
     }
 
     it('can store the zip file in the reducer', async function() {
-      const { getState, zippedProfile } = await storeWithZipFile();
-      AppSelectors.getZipFileState(getState());
-      expect(zippedProfile).toBe(zippedProfile);
+      const { zippedProfiles } = await storeWithZipFile();
+      expect(zippedProfiles).toBe(zippedProfiles);
+    });
+
+    it('can load a profile from the zip file', async function() {
+      const { store, dispatch, getState } = await storeWithZipFile();
+      expect(ProfileViewSelectors.getProfileOrNull(getState())).toEqual(null);
+
+      dispatch(AppActions.viewProfileFromZipFilePath('foo/bar/profile1.json'));
+
+      await waitUntilState(
+        store,
+        state =>
+          AppSelectors.getZipFileState(state).phase ===
+          'VIEW_PROFILE_IN_ZIP_FILE'
+      );
+
+      const profile1 = ProfileViewSelectors.getProfile(getState());
+
+      expect(profile1).toBeTruthy();
+    });
+
+    it('will fail when trying to load an invalid profile', async function() {
+      const store = createStore();
+      const { getState, dispatch } = store;
+      const zip = new JSZip();
+      zip.file('not-a-profile.json', 'not a profile');
+      dispatch(ReceiveProfileActions.receiveZipFile(zip));
+
+      const clearMock = mockConsoleError();
+      dispatch(AppActions.viewProfileFromZipFilePath('not-a-profile.json'));
+
+      await waitUntilState(
+        store,
+        state =>
+          AppSelectors.getZipFileState(state).phase ===
+          'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE'
+      );
+
+      expect(AppSelectors.getZipFileState(getState()).phase).toEqual(
+        'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE'
+      );
+      // console error was called.
+      expect(console.error.mock.calls.length >= 1).toEqual(true);
+      expect(console.error.mock.calls).toMatchSnapshot();
+      clearMock();
+    });
+
+    it('will fail when not finding a profile', async function() {
+      const store = createStore();
+      const { getState, dispatch } = store;
+      dispatch(ReceiveProfileActions.receiveZipFile(new JSZip()));
+      dispatch(AppActions.viewProfileFromZipFilePath('nothing-here.json'));
+
+      expect(AppSelectors.getZipFileState(getState()).phase).toEqual(
+        'FILE_NOT_FOUND_IN_ZIP_FILE'
+      );
     });
 
     it('can compute a ZipFileTable', async function() {
@@ -224,11 +282,7 @@ describe('app actions', function() {
 
         const zipFileTree = AppSelectors.getZipFileTree(getState());
         const zipFileTable = AppSelectors.getZipFileTable(getState());
-        if (!zipFileTree || !zipFileTable) {
-          throw new Error(
-            'Both the zip file tree and zip file table should exist.'
-          );
-        }
+
         const indexesToPartName = indexes =>
           indexes.map(index => {
             return zipFileTable.partName[index];
@@ -240,12 +294,6 @@ describe('app actions', function() {
           indexesToPartName,
         };
       }
-
-      it('can compute a ZipFileTree', async function() {
-        const { getState } = await storeWithZipFile();
-        const zipFileTree = AppSelectors.getZipFileTree(getState());
-        expect(zipFileTree).toBeTruthy();
-      });
 
       it('can get the tree roots', async function() {
         const {
