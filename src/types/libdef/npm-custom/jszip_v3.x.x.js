@@ -16,6 +16,17 @@
 declare module 'jszip' {
   declare type JSZipFile = {
     async: (key: 'string') => Promise<string>,
+    name: string, // The absolute path of the file.
+    dir: boolean, // true if this is a directory.
+    date: any, // The last modification date.
+    comment: any, // The comment for this file.
+    unixPermissions: number, // bits number - The UNIX permissions of the file, if any.
+    dosPermissions: number, // bits number - The DOS permissions of the file, if any.
+    // The options of the file. The available options are:
+    options: {
+      compression: string,
+      compressionOptions: any,
+    },
   };
 
   declare class JSZip {

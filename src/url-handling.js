@@ -90,7 +90,7 @@ export function urlStateToUrlObject(urlState: UrlState): UrlObject {
     thread: urlState.selectedThread,
     threadOrder: urlState.threadOrder.join('-'),
     hiddenThreads: urlState.hiddenThreads.join('-'),
-    file: urlState.zipFilePath || undefined,
+    file: urlState.pathInZipFile || undefined,
     v: CURRENT_URL_VERSION,
   };
 
@@ -214,7 +214,7 @@ export function stateFromLocation(location: Location): UrlState {
     implementation,
     invertCallstack: query.invertCallstack !== undefined,
     hidePlatformDetails: query.hidePlatformDetails !== undefined,
-    zipFilePath: query.file || null,
+    pathInZipFile: query.file || null,
     hiddenThreads: query.hiddenThreads
       ? query.hiddenThreads.split('-').map(index => Number(index))
       : [],

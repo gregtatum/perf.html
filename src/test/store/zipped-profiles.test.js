@@ -35,7 +35,9 @@ describe('reducer zipFileState', function() {
     expect(ProfileViewSelectors.getProfileOrNull(getState())).toEqual(null);
 
     dispatch(
-      ZippedProfilesActions.viewProfileFromZipFilePath('foo/bar/profile1.json')
+      ZippedProfilesActions.viewProfileFromPathInZipFile(
+        'foo/bar/profile1.json'
+      )
     );
 
     await waitUntilState(
@@ -59,7 +61,7 @@ describe('reducer zipFileState', function() {
 
     const clearMock = mockConsoleError();
     dispatch(
-      ZippedProfilesActions.viewProfileFromZipFilePath('not-a-profile.json')
+      ZippedProfilesActions.viewProfileFromPathInZipFile('not-a-profile.json')
     );
 
     await waitUntilState(
@@ -83,7 +85,7 @@ describe('reducer zipFileState', function() {
     const { getState, dispatch } = store;
     dispatch(ReceiveProfileActions.receiveZipFile(new JSZip()));
     dispatch(
-      ZippedProfilesActions.viewProfileFromZipFilePath('nothing-here.json')
+      ZippedProfilesActions.viewProfileFromPathInZipFile('nothing-here.json')
     );
 
     expect(ZippedProfilesSelectors.getZipFileState(getState()).phase).toEqual(

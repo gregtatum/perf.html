@@ -20,7 +20,7 @@ import * as MarkerTiming from '../profile-logic/marker-timing';
 import * as CallTree from '../profile-logic/call-tree';
 import { getCategoryColorStrategy } from './stack-chart';
 import uniqWith from 'lodash.uniqwith';
-import { assertExhaustiveCheck } from '../utils/flow';
+import { assertExhaustiveCheck, ensureExists } from '../utils/flow';
 
 import type {
   Profile,
@@ -307,8 +307,6 @@ function selection(
 ): ProfileSelection {
   // TODO: Rename to timeRangeSelection
   switch (action.type) {
-    case 'VIEW_PROFILE':
-      return { hasSelection: false, isModifying: false };
     case 'UPDATE_PROFILE_SELECTION':
       return action.selection;
     default:
@@ -445,13 +443,11 @@ export const getDisplayRange = createSelector(
  */
 export const getProfileOrNull = (state: State): Profile | null =>
   getProfileView(state).profile;
-export const getProfile = (state: State): Profile => {
-  const profile = getProfileOrNull(state);
-  if (profile === null) {
-    throw new Error('Tried to access the profile before it was loaded.');
-  }
-  return profile;
-};
+export const getProfile = (state: State): Profile =>
+  ensureExists(
+    getProfileOrNull(state),
+    'Tried to access the profile before it was loaded.'
+  );
 export const getProfileInterval = (state: State): Milliseconds =>
   getProfile(state).meta.interval;
 export const getThreads = (state: State): Thread[] => getProfile(state).threads;

@@ -18,7 +18,7 @@ import type { Attempt } from '../utils/errors';
 import type { GetLabel } from '../profile-logic/labeling-strategies';
 import type { GetCategory } from '../profile-logic/color-categories';
 import type { TransformStacksPerThread } from './transforms';
-import JSZip from 'jszip';
+import type JSZip from 'jszip';
 import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
 
 export type Reducer<T> = (T, Action) => T;
@@ -63,32 +63,32 @@ export type ZipFileState =
   | {|
       +phase: 'NO_ZIP_FILE',
       +zip: null,
-      +zipFilePath: null,
+      +pathInZipFile: null,
     |}
   | {|
       +phase: 'LIST_FILES_IN_ZIP_FILE',
       +zip: JSZip,
-      +zipFilePath: null,
+      +pathInZipFile: null,
     |}
   | {|
       +phase: 'PROCESS_PROFILE_FROM_ZIP_FILE',
       +zip: JSZip,
-      +zipFilePath: string,
+      +pathInZipFile: string,
     |}
   | {|
       +phase: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE',
       +zip: JSZip,
-      +zipFilePath: string,
+      +pathInZipFile: string,
     |}
   | {|
       +phase: 'FILE_NOT_FOUND_IN_ZIP_FILE',
       +zip: JSZip,
-      +zipFilePath: string,
+      +pathInZipFile: string,
     |}
   | {|
       +phase: 'VIEW_PROFILE_IN_ZIP_FILE',
       +zip: JSZip,
-      +zipFilePath: string,
+      +pathInZipFile: string,
     |};
 
 export type AppState = {
@@ -125,7 +125,7 @@ export type UrlState = {
   threadOrder: ThreadIndex[],
   hiddenThreads: ThreadIndex[],
   transforms: TransformStacksPerThread,
-  zipFilePath: string | null,
+  pathInZipFile: string | null,
 };
 
 export type IconState = Set<string>;

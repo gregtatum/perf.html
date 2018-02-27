@@ -371,7 +371,13 @@ function _wait(delayMs) {
 type FetchProfileArgs = {
   url: string,
   onTemporaryError: TemporaryError => void,
-  reportError?: (...args: any[]) => void,
+  // Allow tests to capture the reported error, but normally use console.error.
+  reportError?: Function,
+};
+
+type ProfileOrZip = {
+  profile?: any,
+  zip?: JSZip,
 };
 
 /**
@@ -384,78 +390,18 @@ type FetchProfileArgs = {
  */
 export async function _fetchProfile(
   args: FetchProfileArgs
-): Promise<{
-  profile?: any,
-  zip?: JSZip,
-}> {
+): Promise<ProfileOrZip> {
   const MAX_WAIT_SECONDS = 10;
   let i = 0;
   const { url, onTemporaryError } = args;
   // Allow tests to capture the reported error, but normally use console.error.
   const reportError = args.reportError || console.error;
-  const moreInfoMessage =
-    'The full error information has been printed out to the DevTool’s console.';
 
   while (true) {
     const response = await fetch(url);
     // Case 1: successful answer.
     if (response.ok) {
-      const contentType = response.headers.get('content-type');
-
-      // We're getting information from third parties, they may not serve them correctly.
-      // Try to do the right thing for them to reduce errors.
-      const isZipContentType = contentType === 'application/zip';
-      const isJsonContentType = contentType === 'application/json';
-      const isUnknownContentType = !isZipContentType && !isJsonContentType;
-      const hasZipEnding = !!url.match(/\.zip$/);
-      const hasJsonEnding = !!url.match(/\.json/);
-
-      if (isZipContentType || (isUnknownContentType && hasZipEnding)) {
-        // Probably a zip file.
-        const buffer = await response.arrayBuffer();
-        try {
-          return {
-            zip: await JSZip.loadAsync(buffer),
-          };
-        } catch (error) {
-          const message = 'Unable to unzip the zip file.';
-          reportError(message);
-          reportError('Error:', error);
-          reportError('Fetch response:', response);
-          throw new Error(`${message} ${moreInfoMessage}`);
-        }
-      } else {
-        try {
-          // Don't check the content-type, but attempt to parse the response as JSON.
-          return {
-            profile: await response.json(),
-          };
-        } catch (error) {
-          // Change the error message depending on the circumstance:
-          let message;
-          if (isJsonContentType) {
-            message = 'The profile’s JSON could not be decoded.';
-          } else if (hasJsonEnding) {
-            message = oneLine`
-              The profile’s JSON could not be decoded. The file was not sent with the
-              "application/json" content type, but it did have a .json file ending.
-              Are you sure it was actually JSON?
-            `;
-          } else {
-            message = oneLine`
-              The profile could not be decoded. This does not look like a supported file
-              type.
-            `;
-          }
-
-          // Provide helpful debugging information to the console.
-          reportError(message);
-          reportError('JSON parsing error:', error);
-          reportError('Fetch response:', response);
-
-          throw new Error(`${message} ${moreInfoMessage}`);
-        }
-      }
+      return _extractProfileOrZipFromResponse(url, response, reportError);
     }
 
     // case 2: unrecoverable error.
@@ -488,6 +434,117 @@ export async function _fetchProfile(
     Could not fetch the profile on remote server:
     still not found after ${MAX_WAIT_SECONDS} seconds.
   `);
+}
+
+/**
+ * Deduce the file type from a url and content type. Third parties can give us
+ * arbitrary information, so make sure that we try out best to extract the proper
+ * information about it.
+ */
+function _deduceContentType(
+  url: string,
+  contentType: string
+): 'application/json' | 'application/zip' | null {
+  if (contentType === 'application/zip' || contentType === 'application/json') {
+    return contentType;
+  }
+  if (url.match(/\.zip$/)) {
+    return 'application/zip';
+  }
+  if (url.match(/\.json/)) {
+    return 'application/json';
+  }
+  return null;
+}
+
+/**
+ * This function guesses the correct content-type (even if one isn't sent) and then
+ * attempts to use the proper method to extract the response.
+ */
+async function _extractProfileOrZipFromResponse(
+  url: string,
+  response: Response,
+  reportError: Function
+): Promise<ProfileOrZip> {
+  const contentType = _deduceContentType(
+    url,
+    response.headers.get('content-type')
+  );
+  switch (contentType) {
+    case 'application/zip':
+      return {
+        zip: await _extractZipFromResponse(response, reportError),
+      };
+    case 'application/json':
+    case null:
+      // The content type is null if it is unknown, or an unsupported type. Go ahead
+      // and try to process it as a profile.
+      return {
+        profile: await _extractJsonFromResponse(
+          response,
+          reportError,
+          contentType
+        ),
+      };
+    default:
+      throw new Error(`Unhandled file type: ${(contentType: empty)}`);
+  }
+}
+
+/**
+ * Attempt to load a zip file from a third party. This process can fail, so make sure
+ * to handle and report the error if it does.
+ */
+async function _extractZipFromResponse(
+  response: Response,
+  reportError: Function
+): Promise<JSZip> {
+  const buffer = await response.arrayBuffer();
+  try {
+    return await JSZip.loadAsync(buffer);
+  } catch (error) {
+    const message = 'Unable to unzip the zip file.';
+    reportError(message);
+    reportError('Error:', error);
+    reportError('Fetch response:', response);
+    throw new Error(
+      `${message} The full error information has been printed out to the DevTool’s console.`
+    );
+  }
+}
+
+/**
+ * Don't trust third party responses, try and handle a variety of responses gracefully.
+ */
+async function _extractJsonFromResponse(
+  response: Response,
+  reportError: Function,
+  fileType: 'application/json' | null
+): Promise<any> {
+  try {
+    // Don't check the content-type, but attempt to parse the response as JSON.
+    return await response.json();
+  } catch (error) {
+    // Change the error message depending on the circumstance:
+    let message;
+    if (fileType === 'application/json') {
+      message = 'The profile’s JSON could not be decoded.';
+    } else {
+      message = oneLine`
+        The profile could not be decoded. This does not look like a supported file
+        type.
+      `;
+    }
+
+    // Provide helpful debugging information to the console.
+    reportError(message);
+    reportError('JSON parsing error:', error);
+    reportError('Fetch response:', response);
+
+    throw new Error(
+      `${message} The full error information has been printed out to the DevTool’s console.`
+    );
+  }
 }
 
 export function retrieveProfileFromStore(

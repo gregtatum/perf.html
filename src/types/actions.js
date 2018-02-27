@@ -124,13 +124,13 @@ type ReceiveProfileAction =
     }
   | { type: 'FATAL_ERROR_RECEIVING_PROFILE_FROM_STORE', error: Error }
   | { type: 'FATAL_ERROR_RECEIVING_PROFILE_FROM_URL', error: Error }
-  | {| +type: 'VIEW_PROFILE', +profile: Profile, +zipFilePath?: string |}
+  | {| +type: 'VIEW_PROFILE', +profile: Profile, +pathInZipFile?: string |}
   | {| +type: 'RECEIVE_ZIP_FILE', +zip: JSZip |}
-  | {| +type: 'PROCESS_PROFILE_FROM_ZIP_FILE', +zipFilePath: string |}
+  | {| +type: 'PROCESS_PROFILE_FROM_ZIP_FILE', +pathInZipFile: string |}
   | {| +type: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE', error: any |}
   | {| +type: 'DISMISS_PROCESS_PROFILE_FROM_ZIP_ERROR' |}
   | {| +type: 'RETURN_TO_ZIP_FILE_LIST' |}
-  | {| +type: 'FILE_NOT_FOUND_IN_ZIP_FILE', zipFilePath: string |}
+  | {| +type: 'FILE_NOT_FOUND_IN_ZIP_FILE', pathInZipFile: string |}
   | { type: 'REQUESTING_SYMBOL_TABLE', requestedLib: RequestedLib }
   | { type: 'RECEIVED_SYMBOL_TABLE_REPLY', requestedLib: RequestedLib }
   | { type: 'START_SYMBOLICATING' }
