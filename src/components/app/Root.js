@@ -155,7 +155,8 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
 
   render() {
     const { view, dataSource } = this.props;
-    switch (view.phase) {
+    const phase = view.phase;
+    switch (phase) {
       case 'INITIALIZING': {
         if (dataSource === 'none') {
           return <Home />;
@@ -194,10 +195,15 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
 
         return this.renderMessage(message, additionalMessage, false);
       }
-      case 'PROFILE':
+      case 'DATA_LOADED':
         return <ProfileViewer />;
       case 'ROUTE_NOT_FOUND':
       default:
+        if (phase !== 'ROUTE_NOT_FOUND') {
+          // Exhaustively check that we've handled every phase, but don't throw an error
+          // in render if we hit the default arm of the switch.
+          (phase: empty);
+        }
         return (
           <Home specialMessage="The URL you came in on was not recognized." />
         );
