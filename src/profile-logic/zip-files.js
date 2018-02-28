@@ -3,8 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 // @flow
 
-import JSZip, { type JSZipFile } from 'jszip';
-import { ensureIsValidTabSlug } from '../utils/flow';
+import { ensureIsValidTabSlug, objectEntries } from '../utils/flow';
+import type JSZip, { JSZipFile } from 'jszip';
 export type IndexIntoZipFileTable = number;
 
 /**
@@ -28,15 +28,10 @@ export type ZipDisplayData = {|
 |};
 
 export function createZipTable(zipEntries: JSZip): ZipFileTable {
-  const fullPaths = [];
-  for (const fileName in zipEntries.files) {
-    if (zipEntries.files.hasOwnProperty(fileName)) {
-      const file = zipEntries.files[fileName];
-      if (!file.dir) {
-        fullPaths.push(fileName);
-      }
-    }
-  }
+  const fullPaths = objectEntries(zipEntries.files)
+    .filter(([_fileName, file]) => !file.dir)
+    .map(([fileName, _file]) => fileName);
+
   const pathToFilesTableIndex: Map<string, IndexIntoZipFileTable> = new Map();
   const filesTable: ZipFileTable = {
     prefix: [],
@@ -47,17 +42,19 @@ export function createZipTable(zipEntries: JSZip): ZipFileTable {
     length: 0,
   };
 
-  for (let i = 0; i < fullPaths.length; i++) {
-    // e.g.: 'profile_tresize/tresize/cycle_0.profile'
-    const fullPath = fullPaths[i];
-    // e.g.: ['profile_tresize', 'tresize', 'cycle_0.profile']
-    const pathParts = fullPath.split('/').filter(part => part);
+  for (const fullPath of fullPaths) {
+    // fullPath: 'profile_tresize/tresize/cycle_0.profile'
+    const pathParts = fullPath
+      .split('/')
+      // Prevent any empty strings from double // or trailing slashes.
+      .filter(part => part);
+    // pathParts: ['profile_tresize', 'tresize', 'cycle_0.profile']
 
     let path = '';
     let prefixIndex = null;
-    for (let j = 0; j < pathParts.length; j++) {
+    for (let i = 0; i < pathParts.length; i++) {
       // Go through each path part to assemble the table
-      const pathPart = pathParts[j];
+      const pathPart = pathParts[i];
 
       // Add the path part to the path.
       if (path) {
@@ -78,9 +75,9 @@ export function createZipTable(zipEntries: JSZip): ZipFileTable {
       filesTable.prefix[index] = prefixIndex;
       filesTable.path[index] = path;
       filesTable.partName[index] = pathPart;
-      filesTable.depth[index] = j;
+      filesTable.depth[index] = i;
       filesTable.file[index] =
-        j + 1 === pathParts.length ? zipEntries.files[fullPath] : null;
+        i + 1 === pathParts.length ? zipEntries.files[fullPath] : null;
       pathToFilesTableIndex.set(path, index);
       // Remember this index as the prefix.
       prefixIndex = index;
@@ -102,10 +99,7 @@ export function getZipFileMaxDepth(zipFileTable: ZipFileTable | null): number {
 
 export class ZipFileTree {
   _zipFileTable: ZipFileTable;
-  _parentToChildren: null | Map<
-    IndexIntoZipFileTable | null,
-    IndexIntoZipFileTable[]
-  >;
+  _parentToChildren: Map<IndexIntoZipFileTable | null, IndexIntoZipFileTable[]>;
   _displayDataByIndex: Map<IndexIntoZipFileTable, ZipDisplayData>;
   _zipFileUrl: string;
 
@@ -113,6 +107,10 @@ export class ZipFileTree {
     this._zipFileTable = zipFileTable;
     this._zipFileUrl = zipFileUrl;
     this._displayDataByIndex = new Map();
+    this._parentToChildren = new Map();
+
+    // null IndexIntoZipFileTable have no children
+    this._parentToChildren.set(null, this._computeChildrenArray(null));
   }
 
   getRoots(): IndexIntoZipFileTable[] {
@@ -122,12 +120,10 @@ export class ZipFileTree {
   getChildren(
     zipTableIndex: IndexIntoZipFileTable | null
   ): IndexIntoZipFileTable[] {
-    const parentToChildMap = this._getParentToChildMap();
-    const children = parentToChildMap.get(zipTableIndex);
+    let children = this._parentToChildren.get(zipTableIndex);
     if (!children) {
-      throw new Error(
-        'Attempted to fetch the children from an unknown IndexIntoZipFileTable.'
-      );
+      children = this._computeChildrenArray(zipTableIndex);
+      this._parentToChildren.set(zipTableIndex, children);
     }
     return children;
   }
@@ -148,31 +144,6 @@ export class ZipFileTree {
     return children;
   }
 
-  /**
-   * Create a Map of the parents to the children to make it O(1) to dynamically compute
-   * any property about the tree.
-   */
-  _getParentToChildMap(): Map<
-    IndexIntoZipFileTable | null,
-    IndexIntoZipFileTable[]
-  > {
-    let parentToChildren = this._parentToChildren;
-    if (!parentToChildren) {
-      parentToChildren = new Map();
-      parentToChildren.set(null, this._computeChildrenArray(null));
-
-      for (
-        let parentIndex = 0;
-        parentIndex < this._zipFileTable.length;
-        parentIndex++
-      ) {
-        const children = this._computeChildrenArray(parentIndex);
-        parentToChildren.set(parentIndex, children);
-      }
-    }
-    return parentToChildren;
-  }
-
   hasChildren(zipTableIndex: IndexIntoZipFileTable): boolean {
     return this.getChildren(zipTableIndex).length > 0;
   }
@@ -180,7 +151,7 @@ export class ZipFileTree {
   getAllDescendants(
     zipTableIndex: IndexIntoZipFileTable
   ): Set<IndexIntoZipFileTable> {
-    const result = new Set([]);
+    const result = new Set();
     for (const child of this.getChildren(zipTableIndex)) {
       result.add(child);
       for (const descendant of this.getAllDescendants(child)) {

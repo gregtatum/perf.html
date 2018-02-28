@@ -107,6 +107,16 @@ export function objectValues<Value, Obj: {| [string]: Value |}>(
 }
 
 /**
+ * This is a type-friendly version of Object.entries that assumes the object has
+ * a Map-like structure.
+ */
+export function objectEntries<Value, Obj: {| [string]: Value |}>(
+  object: Obj
+): Array<[string, Value]> {
+  return (Object.entries: Function)(object);
+}
+
+/**
  * This function will take an arbitrary string, and will turn it into a TransformType
  * it will throw an error if an invalid type was passed to it.
  */
