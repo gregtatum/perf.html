@@ -307,8 +307,6 @@ function selection(
 ): ProfileSelection {
   // TODO: Rename to timeRangeSelection
   switch (action.type) {
-    case 'VIEW_PROFILE':
-      return { hasSelection: false, isModifying: false };
     case 'UPDATE_PROFILE_SELECTION':
       return action.selection;
     default:
