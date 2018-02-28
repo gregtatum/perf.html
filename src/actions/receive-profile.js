@@ -371,6 +371,7 @@ function _wait(delayMs) {
 type FetchProfileArgs = {
   url: string,
   onTemporaryError: TemporaryError => void,
+  // Allow tests to capture the reported error, but normally use console.error.
   reportError?: (...args: any[]) => void,
 };
 
