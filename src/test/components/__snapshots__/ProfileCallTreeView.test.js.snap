@@ -5,20 +5,20 @@ exports[`calltree/ProfileCallTreeView computes a width for a call tree of a real
   className="treeAndSidebarWrapper"
 >
   <div
-    className="profileCallTreeSettings"
+    className="stackSettings"
   >
     <ul
-      className="profileCallTreeSettingsList"
+      className="stackSettingsList"
     >
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           Filter:
           <select
-            className="profileCallTreeSettingsSelect"
+            className="stackSettingsSelect"
             onChange={[Function]}
             value="combined"
           >
@@ -41,14 +41,14 @@ exports[`calltree/ProfileCallTreeView computes a width for a call tree of a real
         </label>
       </li>
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           <input
             checked={false}
-            className="profileCallTreeSettingsCheckbox"
+            className="stackSettingsCheckbox"
             onChange={[Function]}
             type="checkbox"
           />
@@ -57,7 +57,7 @@ exports[`calltree/ProfileCallTreeView computes a width for a call tree of a real
       </li>
     </ul>
     <div
-      className="stackSearchField profileCallTreeSettingsSearchField"
+      className="stackSearchField stackSettingsSearchField"
     >
       <label
         className="stackSearchFieldLabel"
@@ -1609,20 +1609,20 @@ exports[`calltree/ProfileCallTreeView renders an inverted call tree 1`] = `
   className="treeAndSidebarWrapper"
 >
   <div
-    className="profileCallTreeSettings"
+    className="stackSettings"
   >
     <ul
-      className="profileCallTreeSettingsList"
+      className="stackSettingsList"
     >
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           Filter:
           <select
-            className="profileCallTreeSettingsSelect"
+            className="stackSettingsSelect"
             onChange={[Function]}
             value="combined"
           >
@@ -1645,14 +1645,14 @@ exports[`calltree/ProfileCallTreeView renders an inverted call tree 1`] = `
         </label>
       </li>
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           <input
             checked={true}
-            className="profileCallTreeSettingsCheckbox"
+            className="stackSettingsCheckbox"
             onChange={[Function]}
             type="checkbox"
           />
@@ -1661,7 +1661,7 @@ exports[`calltree/ProfileCallTreeView renders an inverted call tree 1`] = `
       </li>
     </ul>
     <div
-      className="stackSearchField profileCallTreeSettingsSearchField"
+      className="stackSearchField stackSettingsSearchField"
     >
       <label
         className="stackSearchFieldLabel"
@@ -2329,20 +2329,20 @@ exports[`calltree/ProfileCallTreeView renders an unfiltered call tree 1`] = `
   className="treeAndSidebarWrapper"
 >
   <div
-    className="profileCallTreeSettings"
+    className="stackSettings"
   >
     <ul
-      className="profileCallTreeSettingsList"
+      className="stackSettingsList"
     >
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           Filter:
           <select
-            className="profileCallTreeSettingsSelect"
+            className="stackSettingsSelect"
             onChange={[Function]}
             value="combined"
           >
@@ -2365,14 +2365,14 @@ exports[`calltree/ProfileCallTreeView renders an unfiltered call tree 1`] = `
         </label>
       </li>
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           <input
             checked={false}
-            className="profileCallTreeSettingsCheckbox"
+            className="stackSettingsCheckbox"
             onChange={[Function]}
             type="checkbox"
           />
@@ -2381,7 +2381,7 @@ exports[`calltree/ProfileCallTreeView renders an unfiltered call tree 1`] = `
       </li>
     </ul>
     <div
-      className="stackSearchField profileCallTreeSettingsSearchField"
+      className="stackSearchField stackSettingsSearchField"
     >
       <label
         className="stackSearchFieldLabel"
@@ -3049,20 +3049,20 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
   className="treeAndSidebarWrapper"
 >
   <div
-    className="profileCallTreeSettings"
+    className="stackSettings"
   >
     <ul
-      className="profileCallTreeSettingsList"
+      className="stackSettingsList"
     >
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           Filter:
           <select
-            className="profileCallTreeSettingsSelect"
+            className="stackSettingsSelect"
             onChange={[Function]}
             value="combined"
           >
@@ -3085,14 +3085,14 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
         </label>
       </li>
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           <input
             checked={false}
-            className="profileCallTreeSettingsCheckbox"
+            className="stackSettingsCheckbox"
             onChange={[Function]}
             type="checkbox"
           />
@@ -3101,7 +3101,7 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
       </li>
     </ul>
     <div
-      className="stackSearchField profileCallTreeSettingsSearchField"
+      className="stackSearchField stackSettingsSearchField"
     >
       <label
         className="stackSearchFieldLabel"
@@ -3769,20 +3769,20 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
   className="treeAndSidebarWrapper"
 >
   <div
-    className="profileCallTreeSettings"
+    className="stackSettings"
   >
     <ul
-      className="profileCallTreeSettingsList"
+      className="stackSettingsList"
     >
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           Filter:
           <select
-            className="profileCallTreeSettingsSelect"
+            className="stackSettingsSelect"
             onChange={[Function]}
             value="combined"
           >
@@ -3805,14 +3805,14 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
         </label>
       </li>
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           <input
             checked={false}
-            className="profileCallTreeSettingsCheckbox"
+            className="stackSettingsCheckbox"
             onChange={[Function]}
             type="checkbox"
           />
@@ -3821,7 +3821,7 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
       </li>
     </ul>
     <div
-      className="stackSearchField profileCallTreeSettingsSearchField"
+      className="stackSearchField stackSettingsSearchField"
     >
       <label
         className="stackSearchFieldLabel"
@@ -4422,20 +4422,20 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
   className="treeAndSidebarWrapper"
 >
   <div
-    className="profileCallTreeSettings"
+    className="stackSettings"
   >
     <ul
-      className="profileCallTreeSettingsList"
+      className="stackSettingsList"
     >
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           Filter:
           <select
-            className="profileCallTreeSettingsSelect"
+            className="stackSettingsSelect"
             onChange={[Function]}
             value="combined"
           >
@@ -4458,14 +4458,14 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
         </label>
       </li>
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           <input
             checked={false}
-            className="profileCallTreeSettingsCheckbox"
+            className="stackSettingsCheckbox"
             onChange={[Function]}
             type="checkbox"
           />
@@ -4474,7 +4474,7 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
       </li>
     </ul>
     <div
-      className="stackSearchField profileCallTreeSettingsSearchField"
+      className="stackSearchField stackSettingsSearchField"
     >
       <label
         className="stackSearchFieldLabel"
@@ -5075,20 +5075,20 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
   className="treeAndSidebarWrapper"
 >
   <div
-    className="profileCallTreeSettings"
+    className="stackSettings"
   >
     <ul
-      className="profileCallTreeSettingsList"
+      className="stackSettingsList"
     >
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           Filter:
           <select
-            className="profileCallTreeSettingsSelect"
+            className="stackSettingsSelect"
             onChange={[Function]}
             value="combined"
           >
@@ -5111,14 +5111,14 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
         </label>
       </li>
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           <input
             checked={false}
-            className="profileCallTreeSettingsCheckbox"
+            className="stackSettingsCheckbox"
             onChange={[Function]}
             type="checkbox"
           />
@@ -5127,7 +5127,7 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
       </li>
     </ul>
     <div
-      className="stackSearchField profileCallTreeSettingsSearchField"
+      className="stackSearchField stackSettingsSearchField"
     >
       <label
         className="stackSearchFieldLabel"
@@ -5588,20 +5588,20 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
   className="treeAndSidebarWrapper"
 >
   <div
-    className="profileCallTreeSettings"
+    className="stackSettings"
   >
     <ul
-      className="profileCallTreeSettingsList"
+      className="stackSettingsList"
     >
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           Filter:
           <select
-            className="profileCallTreeSettingsSelect"
+            className="stackSettingsSelect"
             onChange={[Function]}
             value="combined"
           >
@@ -5624,14 +5624,14 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
         </label>
       </li>
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           <input
             checked={false}
-            className="profileCallTreeSettingsCheckbox"
+            className="stackSettingsCheckbox"
             onChange={[Function]}
             type="checkbox"
           />
@@ -5640,7 +5640,7 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
       </li>
     </ul>
     <div
-      className="stackSearchField profileCallTreeSettingsSearchField"
+      className="stackSearchField stackSettingsSearchField"
     >
       <label
         className="stackSearchFieldLabel"
@@ -6101,20 +6101,20 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
   className="treeAndSidebarWrapper"
 >
   <div
-    className="profileCallTreeSettings"
+    className="stackSettings"
   >
     <ul
-      className="profileCallTreeSettingsList"
+      className="stackSettingsList"
     >
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           Filter:
           <select
-            className="profileCallTreeSettingsSelect"
+            className="stackSettingsSelect"
             onChange={[Function]}
             value="combined"
           >
@@ -6137,14 +6137,14 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
         </label>
       </li>
       <li
-        className="profileCallTreeSettingsListItem"
+        className="stackSettingsListItem"
       >
         <label
-          className="profileCallTreeSettingsLabel"
+          className="stackSettingsLabel"
         >
           <input
             checked={false}
-            className="profileCallTreeSettingsCheckbox"
+            className="stackSettingsCheckbox"
             onChange={[Function]}
             type="checkbox"
           />
@@ -6153,7 +6153,7 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
       </li>
     </ul>
     <div
-      className="stackSearchField profileCallTreeSettingsSearchField"
+      className="stackSearchField stackSettingsSearchField"
     >
       <label
         className="stackSearchFieldLabel"
