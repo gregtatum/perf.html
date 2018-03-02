@@ -9,6 +9,7 @@ import explicitConnect from '../../../utils/connect';
 import { getHasZoomedViaMousewheel } from '../../../reducers/app';
 import { setHasZoomedViaMousewheel } from '../../../actions/stack-chart';
 import { updateProfileSelection } from '../../../actions/profile-view';
+import throttle from 'lodash.throttle';
 
 import type {
   CssPixels,
@@ -301,6 +302,64 @@ export const withChartViewport: WithChartViewport<*, *> =
         );
       }
 
+      _throttledZoom = (mouseX: number) => {
+        // Grab and reset the scroll delta accumulated up until this frame.
+        // Let another frame be scheduled.
+        const deltaY = this.zoomRangeSelectionScrollDelta;
+        this.zoomRangeSelectionScrollDelta = 0;
+
+        const { maximumZoom } = this.props.viewportProps;
+        const {
+          containerLeft,
+          containerWidth,
+          viewportLeft,
+          viewportRight,
+        } = this.state;
+        const mouseCenter = (mouseX - containerLeft) / containerWidth;
+
+        const viewportLength: CssPixels = viewportRight - viewportLeft;
+        const scale = viewportLength - viewportLength / (1 + deltaY * 0.001);
+        let newViewportLeft: UnitIntervalOfProfileRange = clamp(
+          0,
+          1,
+          viewportLeft - scale * mouseCenter
+        );
+        let newViewportRight: UnitIntervalOfProfileRange = clamp(
+          0,
+          1,
+          viewportRight + scale * (1 - mouseCenter)
+        );
+
+        if (newViewportRight - newViewportLeft < maximumZoom) {
+          const newViewportMiddle = (viewportLeft + viewportRight) * 0.5;
+          newViewportLeft = newViewportMiddle - maximumZoom * 0.5;
+          newViewportRight = newViewportMiddle + maximumZoom * 0.5;
+        }
+
+        const {
+          updateProfileSelection,
+          viewportProps: { timeRange },
+        } = this.props;
+        if (newViewportLeft === 0 && newViewportRight === 1) {
+          if (viewportLeft === 0 && viewportRight === 1) {
+            // Do not update if at the maximum bounds.
+            return;
+          }
+          updateProfileSelection({
+            hasSelection: false,
+            isModifying: false,
+          });
+        } else {
+          const timeRangeLength = timeRange.end - timeRange.start;
+          updateProfileSelection({
+            hasSelection: true,
+            isModifying: false,
+            selectionStart: timeRange.start + timeRangeLength * newViewportLeft,
+            selectionEnd: timeRange.start + timeRangeLength * newViewportRight,
+          });
+        }
+      };
+
       zoomRangeSelection(event: SyntheticWheelEvent<>) {
         const {
           hasZoomedViaMousewheel,
@@ -322,72 +381,7 @@ export const withChartViewport: WithChartViewport<*, *> =
           deltaKey
         );
 
-        // See if an update needs to be scheduled.
-        if (!this.zoomRangeSelectionScheduled) {
-          const mouseX = event.clientX;
-          this.zoomRangeSelectionScheduled = true;
-          requestAnimationFrame(() => {
-            // Grab and reset the scroll delta accumulated up until this frame.
-            // Let another frame be scheduled.
-            const deltaY = this.zoomRangeSelectionScrollDelta;
-            this.zoomRangeSelectionScrollDelta = 0;
-            this.zoomRangeSelectionScheduled = false;
-
-            const { maximumZoom } = this.props.viewportProps;
-            const {
-              containerLeft,
-              containerWidth,
-              viewportLeft,
-              viewportRight,
-            } = this.state;
-            const mouseCenter = (mouseX - containerLeft) / containerWidth;
-
-            const viewportLength: CssPixels = viewportRight - viewportLeft;
-            const scale =
-              viewportLength - viewportLength / (1 + deltaY * 0.001);
-            let newViewportLeft: UnitIntervalOfProfileRange = clamp(
-              0,
-              1,
-              viewportLeft - scale * mouseCenter
-            );
-            let newViewportRight: UnitIntervalOfProfileRange = clamp(
-              0,
-              1,
-              viewportRight + scale * (1 - mouseCenter)
-            );
-
-            if (newViewportRight - newViewportLeft < maximumZoom) {
-              const newViewportMiddle = (viewportLeft + viewportRight) * 0.5;
-              newViewportLeft = newViewportMiddle - maximumZoom * 0.5;
-              newViewportRight = newViewportMiddle + maximumZoom * 0.5;
-            }
-
-            const {
-              updateProfileSelection,
-              viewportProps: { timeRange },
-            } = this.props;
-            if (newViewportLeft === 0 && newViewportRight === 1) {
-              if (viewportLeft === 0 && viewportRight === 1) {
-                // Do not update if at the maximum bounds.
-                return;
-              }
-              updateProfileSelection({
-                hasSelection: false,
-                isModifying: false,
-              });
-            } else {
-              const timeRangeLength = timeRange.end - timeRange.start;
-              updateProfileSelection({
-                hasSelection: true,
-                isModifying: false,
-                selectionStart:
-                  timeRange.start + timeRangeLength * newViewportLeft,
-                selectionEnd:
-                  timeRange.start + timeRangeLength * newViewportRight,
-              });
-            }
-          });
-        }
+        this._throttledZoom(event.clientX);
       }
 
       _mouseDownListener(event: SyntheticMouseEvent<>) {

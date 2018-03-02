@@ -12,6 +12,7 @@ import ChartCanvas from '../shared/chart/Canvas';
 import TextMeasurement from '../../utils/text-measurement';
 import { formatNumber } from '../../utils/format-numbers';
 import { updateProfileSelection } from '../../actions/profile-view';
+import bisection from 'bisection';
 
 import type { Thread } from '../../types/profile';
 import type {
@@ -98,6 +99,18 @@ class StackChartCanvas extends React.PureComponent<Props> {
       },
     } = this.props;
 
+    ctx.clearRect(0, 0, containerWidth, containerHeight);
+
+    // Convert CssPixels to Stack Depth
+    const startDepth = Math.floor(viewportTop / stackFrameHeight);
+    const endDepth = Math.ceil(viewportBottom / stackFrameHeight);
+    const rangeLength: Milliseconds = rangeEnd - rangeStart;
+    // Decide which samples to actually draw
+    const timeAtViewportLeft: Milliseconds =
+      rangeStart + rangeLength * viewportLeft;
+    const timeAtViewportRight: Milliseconds =
+      rangeStart + rangeLength * viewportRight;
+
     // Ensure the text measurement tool is created, since this is the first time
     // this class has access to a ctx.
     if (!this._textMeasurement) {
@@ -105,88 +118,132 @@ class StackChartCanvas extends React.PureComponent<Props> {
     }
     const textMeasurement = this._textMeasurement;
 
-    ctx.clearRect(0, 0, containerWidth, containerHeight);
+    // Get a list of all the stack timings that are in the viewport range.
+    const stacksTimingsInRange = [];
+    for (let depth = startDepth; depth < endDepth; depth++) {
+      const stackTiming = stackTimingByDepth[depth];
+      const startIndex = bisection.right(
+        stackTiming.start,
+        timeAtViewportLeft - 1
+      );
+      const afterEndIndex = bisection.right(
+        stackTiming.start,
+        timeAtViewportRight,
+        startIndex
+      );
+      stacksTimingsInRange.push({
+        depth,
+        startIndex,
+        afterEndIndex,
+      });
+    }
 
+    let lastFillStyle;
+    this._drawPass(
+      ctx,
+      hoveredItem,
+      stacksTimingsInRange,
+      (stackIndex, isHovered, x, y, w, h) => {
+        const frameIndex = thread.stackTable.frame[stackIndex];
+        const category = getCategory(thread, frameIndex);
+
+        const fillStyle = isHovered ? 'Highlight' : category.color;
+        if (fillStyle !== lastFillStyle) {
+          ctx.fillStyle = fillStyle;
+          lastFillStyle = fillStyle;
+        }
+        ctx.fillRect(x, y, w, h);
+      }
+    );
+
+    this._drawPass(
+      ctx,
+      hoveredItem,
+      stacksTimingsInRange,
+      (stackIndex, isHovered, x, y, w, h) => {
+        ctx.clearRect(x, y, 1, h);
+      }
+    );
+
+    this._drawPass(
+      ctx,
+      hoveredItem,
+      stacksTimingsInRange,
+      (stackIndex, isHovered, x, y, w, _h) => {
+        // TODO - L10N RTL.
+        // Constrain the x coordinate to the leftmost area.
+        const x2: CssPixels = Math.max(x, 0) + TEXT_OFFSET_START;
+        const w2: CssPixels = Math.max(0, w - (x2 - x));
+        const text = getLabel(thread, stackIndex);
+
+        if (w2 > textMeasurement.minWidth) {
+          const fittedText = textMeasurement.getFittedText(text, w2);
+          if (fittedText) {
+            const fillStyle = isHovered ? 'HighlightText' : '#000000';
+            if (fillStyle !== lastFillStyle) {
+              ctx.fillStyle = fillStyle;
+              lastFillStyle = fillStyle;
+            }
+            ctx.fillStyle = fillStyle;
+            ctx.fillText(fittedText, x2, y + TEXT_OFFSET_TOP);
+          }
+        }
+      }
+    );
+  }
+
+  _drawPass(
+    ctx: CanvasRenderingContext2D,
+    hoveredItem: HoveredStackTiming | null,
+    stacksTimingsInRange: Array<{
+      depth: number,
+      startIndex: number,
+      afterEndIndex: number,
+    }>,
+    draw: Function
+  ) {
+    const {
+      rangeStart,
+      rangeEnd,
+      stackTimingByDepth,
+      viewport: { containerWidth, viewportLeft, viewportRight, viewportTop },
+    } = this.props;
+
+    // Compute scalar values that don't change in the loop.
+    const h: CssPixels = ROW_HEIGHT - 1;
     const rangeLength: Milliseconds = rangeEnd - rangeStart;
     const viewportLength: UnitIntervalOfProfileRange =
       viewportRight - viewportLeft;
 
-    // Convert CssPixels to Stack Depth
-    const startDepth = Math.floor(viewportTop / stackFrameHeight);
-    const endDepth = Math.ceil(viewportBottom / stackFrameHeight);
-
-    // Only draw the stack frames that are vertically within view.
-    for (let depth = startDepth; depth < endDepth; depth++) {
-      // Get the timing information for a row of stack frames.
+    // Go through each depth of the timings that are in range.
+    for (const { depth, startIndex, afterEndIndex } of stacksTimingsInRange) {
       const stackTiming = stackTimingByDepth[depth];
+      for (
+        let stackTimingIndex = startIndex;
+        stackTimingIndex < afterEndIndex;
+        stackTimingIndex++
+      ) {
+        const startTime: UnitIntervalOfProfileRange =
+          (stackTiming.start[stackTimingIndex] - rangeStart) / rangeLength;
+        const endTime: UnitIntervalOfProfileRange =
+          (stackTiming.end[stackTimingIndex] - rangeStart) / rangeLength;
 
-      if (!stackTiming) {
-        continue;
-      }
-      /*
-       * TODO - Do an O(log n) binary search to find the only samples in range rather than
-       * linear O(n) search for loops. Profile the results to see if this helps at all.
-       *
-       * const startSampleIndex = binarySearch(stackTiming.start, rangeStart + rangeLength * viewportLeft);
-       * const endSampleIndex = binarySearch(stackTiming.end, rangeStart + rangeLength * viewportRight);
-       */
-
-      // Decide which samples to actually draw
-      const timeAtViewportLeft: Milliseconds =
-        rangeStart + rangeLength * viewportLeft;
-      const timeAtViewportRight: Milliseconds =
-        rangeStart + rangeLength * viewportRight;
-
-      for (let i = 0; i < stackTiming.length; i++) {
-        // Only draw samples that are in bounds.
-        if (
-          stackTiming.end[i] > timeAtViewportLeft &&
-          stackTiming.start[i] < timeAtViewportRight
-        ) {
-          const startTime: UnitIntervalOfProfileRange =
-            (stackTiming.start[i] - rangeStart) / rangeLength;
-          const endTime: UnitIntervalOfProfileRange =
-            (stackTiming.end[i] - rangeStart) / rangeLength;
-
-          const x: CssPixels =
-            (startTime - viewportLeft) * containerWidth / viewportLength;
-          const y: CssPixels = depth * ROW_HEIGHT - viewportTop;
-          const w: CssPixels =
-            (endTime - startTime) * containerWidth / viewportLength;
-          const h: CssPixels = ROW_HEIGHT - 1;
-
-          if (w < 2) {
-            // Skip sending draw calls for sufficiently small boxes.
-            continue;
-          }
-
-          const stackIndex = stackTiming.stack[i];
-          const frameIndex = thread.stackTable.frame[stackIndex];
-          const text = getLabel(thread, stackIndex);
-          const category = getCategory(thread, frameIndex);
-          const isHovered =
-            hoveredItem &&
-            depth === hoveredItem.depth &&
-            i === hoveredItem.stackTableIndex;
-
-          ctx.fillStyle = isHovered ? 'Highlight' : category.color;
-          ctx.fillRect(x, y, w, h);
-          // Ensure spacing between blocks.
-          ctx.clearRect(x, y, 1, h);
-
-          // TODO - L10N RTL.
-          // Constrain the x coordinate to the leftmost area.
-          const x2: CssPixels = Math.max(x, 0) + TEXT_OFFSET_START;
-          const w2: CssPixels = Math.max(0, w - (x2 - x));
-
-          if (w2 > textMeasurement.minWidth) {
-            const fittedText = textMeasurement.getFittedText(text, w2);
-            if (fittedText) {
-              ctx.fillStyle = isHovered ? 'HighlightText' : '#000000';
-              ctx.fillText(fittedText, x2, y + TEXT_OFFSET_TOP);
-            }
-          }
+        const w: CssPixels =
+          (endTime - startTime) * containerWidth / viewportLength;
+        if (w < 2) {
+          // Skip sending draw calls for sufficiently small boxes.
+          continue;
         }
+        const x: CssPixels =
+          (startTime - viewportLeft) * containerWidth / viewportLength;
+        const y: CssPixels = depth * ROW_HEIGHT - viewportTop;
+        const isHovered =
+          hoveredItem &&
+          depth === hoveredItem.depth &&
+          stackTimingIndex === hoveredItem.stackTableIndex;
+
+        const stackIndex = stackTiming.stack[stackTimingIndex];
+        draw(stackIndex, isHovered, x, y, w, h);
       }
     }
   }
