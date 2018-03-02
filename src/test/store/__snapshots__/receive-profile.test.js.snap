@@ -26,12 +26,12 @@ Array [
 ]
 `;
 
-exports[`actions/receive-profile _fetchProfile fails if a bad profile JSON is passed in, with no content type 1`] = `[Error: The profile’s JSON could not be decoded. The file was not sent with the "application/json" content type, but it did have a .json file ending. Are you sure it was actually JSON? The full error information has been printed out to the DevTool’s console.]`;
+exports[`actions/receive-profile _fetchProfile fails if a bad profile JSON is passed in, with no content type 1`] = `[Error: The profile’s JSON could not be decoded. The full error information has been printed out to the DevTool’s console.]`;
 
 exports[`actions/receive-profile _fetchProfile fails if a bad profile JSON is passed in, with no content type 2`] = `
 Array [
   Array [
-    "The profile’s JSON could not be decoded. The file was not sent with the \\"application/json\\" content type, but it did have a .json file ending. Are you sure it was actually JSON?",
+    "The profile’s JSON could not be decoded.",
   ],
   Array [
     "JSON parsing error:",
