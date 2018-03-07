@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import React, { PureComponent } from 'react';
+import React, { Fragment, PureComponent } from 'react';
 import { ContextMenu, MenuItem } from 'react-contextmenu';
 import explicitConnect from '../../utils/connect';
 import { selectedThreadSelectors } from '../../reducers/profile-view';
@@ -54,13 +54,54 @@ type DispatchProps = {|
 
 type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
+type State = {|
+  isShown: boolean,
+|};
+
 require('./ProfileCallTreeContextMenu.css');
 
-class ProfileCallTreeContextMenu extends PureComponent<Props> {
-  constructor(props: Props) {
-    super(props);
-    (this: any).handleClick = this.handleClick.bind(this);
-  }
+class ProfileCallTreeContextMenu extends PureComponent<Props, State> {
+  state = {
+    isShown: false,
+  };
+
+  _handleShow = () => {
+    this.setState({ isShown: true });
+  };
+
+  _handleHide = () => {
+    this.setState({ isShown: false });
+  };
+
+  _handleClick = (event: SyntheticEvent<>, data: { type: string }): void => {
+    const { type } = data;
+
+    const transformType = convertToTransformType(type);
+    if (transformType) {
+      this.addTransformToStack(transformType);
+      return;
+    }
+
+    switch (type) {
+      case 'searchfox':
+        this.lookupFunctionOnSearchfox();
+        break;
+      case 'copy-function-name':
+        this.copyFunctionName();
+        break;
+      case 'copy-url':
+        this.copyUrl();
+        break;
+      case 'copy-stack':
+        this.copyStack();
+        break;
+      case 'expand-all':
+        this.expandAll();
+        break;
+      default:
+        throw new Error(`Unknown type ${type}`);
+    }
+  };
 
   _getFunctionName(): string {
     const {
@@ -142,36 +183,6 @@ class ProfileCallTreeContextMenu extends PureComponent<Props> {
     } while (callNodeIndex !== -1);
 
     copy(stack);
-  }
-
-  handleClick(event: SyntheticEvent<>, data: { type: string }): void {
-    const { type } = data;
-
-    const transformType = convertToTransformType(type);
-    if (transformType) {
-      this.addTransformToStack(transformType);
-      return;
-    }
-
-    switch (type) {
-      case 'searchfox':
-        this.lookupFunctionOnSearchfox();
-        break;
-      case 'copy-function-name':
-        this.copyFunctionName();
-        break;
-      case 'copy-url':
-        this.copyUrl();
-        break;
-      case 'copy-stack':
-        this.copyStack();
-        break;
-      case 'expand-all':
-        this.expandAll();
-        break;
-      default:
-        throw new Error(`Unknown type ${type}`);
-    }
   }
 
   addTransformToStack(type: TransformType): void {
@@ -320,7 +331,11 @@ class ProfileCallTreeContextMenu extends PureComponent<Props> {
     return funcHasRecursiveCall(thread, implementation, funcIndex);
   }
 
-  render() {
+  renderContextMenuContents() {
+    if (!this.state.isShown) {
+      return null;
+    }
+
     const {
       selectedCallNodeIndex,
       inverted,
@@ -338,32 +353,32 @@ class ProfileCallTreeContextMenu extends PureComponent<Props> {
     const nameForResource = this.getNameForSelectedResource();
 
     return (
-      <ContextMenu id={'ProfileCallTreeContextMenu'}>
+      <Fragment>
         {inverted ? null : (
           <MenuItem
-            onClick={this.handleClick}
+            onClick={this._handleClick}
             data={{ type: 'merge-call-node' }}
           >
             <span className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconMerge" />
             Merge node into calling function
           </MenuItem>
         )}
-        <MenuItem onClick={this.handleClick} data={{ type: 'merge-function' }}>
+        <MenuItem onClick={this._handleClick} data={{ type: 'merge-function' }}>
           <span className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconMerge" />
           Merge function into caller across the entire tree
         </MenuItem>
-        <MenuItem onClick={this.handleClick} data={{ type: 'focus-subtree' }}>
+        <MenuItem onClick={this._handleClick} data={{ type: 'focus-subtree' }}>
           <span className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconFocus" />
           Focus on subtree
         </MenuItem>
-        <MenuItem onClick={this.handleClick} data={{ type: 'focus-function' }}>
+        <MenuItem onClick={this._handleClick} data={{ type: 'focus-function' }}>
           <span className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconFocus" />
           {inverted
             ? 'Focus on calls made by this function'
             : 'Focus on function'}
         </MenuItem>
         <MenuItem
-          onClick={this.handleClick}
+          onClick={this._handleClick}
           data={{ type: 'collapse-function-subtree' }}
         >
           <span className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconCollapse" />
@@ -371,7 +386,7 @@ class ProfileCallTreeContextMenu extends PureComponent<Props> {
         </MenuItem>
         {nameForResource ? (
           <MenuItem
-            onClick={this.handleClick}
+            onClick={this._handleClick}
             data={{ type: 'collapse-resource' }}
           >
             <span className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconCollapse" />
@@ -383,39 +398,51 @@ class ProfileCallTreeContextMenu extends PureComponent<Props> {
         ) : null}
         {this.isRecursiveCall() ? (
           <MenuItem
-            onClick={this.handleClick}
+            onClick={this._handleClick}
             data={{ type: 'collapse-direct-recursion' }}
           >
             <span className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconCollapse" />
             Collapse direct recursion
           </MenuItem>
         ) : null}
-        <MenuItem onClick={this.handleClick} data={{ type: 'drop-function' }}>
+        <MenuItem onClick={this._handleClick} data={{ type: 'drop-function' }}>
           <span className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconDrop" />
           Drop samples with this function
         </MenuItem>
         <div className="react-contextmenu-separator" />
-        <MenuItem onClick={this.handleClick} data={{ type: 'expand-all' }}>
+        <MenuItem onClick={this._handleClick} data={{ type: 'expand-all' }}>
           Expand all
         </MenuItem>
         <div className="react-contextmenu-separator" />
-        <MenuItem onClick={this.handleClick} data={{ type: 'searchfox' }}>
+        <MenuItem onClick={this._handleClick} data={{ type: 'searchfox' }}>
           Look up the function name on Searchfox
         </MenuItem>
         <MenuItem
-          onClick={this.handleClick}
+          onClick={this._handleClick}
           data={{ type: 'copy-function-name' }}
         >
           Copy function name
         </MenuItem>
         {isJS ? (
-          <MenuItem onClick={this.handleClick} data={{ type: 'copy-url' }}>
+          <MenuItem onClick={this._handleClick} data={{ type: 'copy-url' }}>
             Copy script URL
           </MenuItem>
         ) : null}
-        <MenuItem onClick={this.handleClick} data={{ type: 'copy-stack' }}>
+        <MenuItem onClick={this._handleClick} data={{ type: 'copy-stack' }}>
           Copy stack
         </MenuItem>
+      </Fragment>
+    );
+  }
+
+  render() {
+    return (
+      <ContextMenu
+        id={'ProfileCallTreeContextMenu'}
+        onShow={this._handleShow}
+        onHide={this._handleHide}
+      >
+        {this.renderContextMenuContents()}
       </ContextMenu>
     );
   }
