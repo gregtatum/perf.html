@@ -52,7 +52,7 @@ export function viewProfileFromZip(
 
     try {
       // Attempt to unserialize the profile.
-      const profile = await unserializeProfileOfArbitraryFormat(
+      const profile = unserializeProfileOfArbitraryFormat(
         await file.async('string')
       );
 
@@ -86,14 +86,15 @@ export function viewProfileFromZip(
  */
 export function viewProfileFromPathInZipFile(
   pathInZipFile: string
-): ThunkAction<void> {
+): ThunkAction<Promise<void>> {
   return (dispatch, getState) => {
     const zipFileTable = getZipFileTable(getState());
     const zipFileIndex = zipFileTable.path.indexOf(pathInZipFile);
     if (zipFileIndex === -1) {
       dispatch(showErrorForNoFileInZip(pathInZipFile));
+      return Promise.resolve();
     } else {
-      dispatch(viewProfileFromZip(zipFileIndex));
+      return dispatch(viewProfileFromZip(zipFileIndex));
     }
   };
 }

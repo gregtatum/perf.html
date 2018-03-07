@@ -51,7 +51,6 @@ function _getStoreWithURL(
   store.dispatch({
     type: 'UPDATE_URL_STATE',
     newUrlState,
-    state: store.getState(),
   });
   store.dispatch(viewProfile(profile));
   return store;
@@ -68,7 +67,6 @@ describe('selectedThread', function() {
     store.dispatch({
       type: 'UPDATE_URL_STATE',
       newUrlState,
-      state: store.getState(),
     });
 
     return store;

@@ -199,11 +199,9 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
         return <ProfileViewer />;
       case 'ROUTE_NOT_FOUND':
       default:
-        if (phase !== 'ROUTE_NOT_FOUND') {
-          // Exhaustively check that we've handled every phase, but don't throw an error
-          // in render if we hit the default arm of the switch.
-          (phase: empty);
-        }
+        // Assert with Flow that we've handled all the cases, as the only thing left
+        // should be 'ROUTE_NOT_FOUND'.
+        (phase: 'ROUTE_NOT_FOUND');
         return (
           <Home specialMessage="The URL you came in on was not recognized." />
         );

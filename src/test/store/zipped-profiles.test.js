@@ -11,8 +11,6 @@ import { procureInitialInterestingExpandedNodes } from '../../profile-logic/zip-
 import * as ProfileViewSelectors from '../../reducers/profile-view';
 import * as ZippedProfilesSelectors from '../../reducers/zipped-profiles';
 import createStore from '../../create-store';
-import { mockConsoleError } from '../fixtures/mocks/console-error';
-import { waitUntilState } from '../fixtures/utils';
 import { ensureExists } from '../../utils/flow';
 
 import JSZip from 'jszip';
@@ -27,26 +25,22 @@ describe('reducer zipFileState', function() {
   });
 
   it('can load a profile from the zip file', async function() {
-    const { store, dispatch, getState } = await storeWithZipFile([
+    const { dispatch, getState } = await storeWithZipFile([
       'foo/bar/profile1.json',
       'foo/profile2.json',
       'baz/profile3.json',
     ]);
     expect(ProfileViewSelectors.getProfileOrNull(getState())).toEqual(null);
 
-    dispatch(
+    await dispatch(
       ZippedProfilesActions.viewProfileFromPathInZipFile(
         'foo/bar/profile1.json'
       )
     );
 
-    await waitUntilState(
-      store,
-      state =>
-        ZippedProfilesSelectors.getZipFileState(state).phase ===
-        'VIEW_PROFILE_IN_ZIP_FILE'
+    expect(ZippedProfilesSelectors.getZipFileState(getState()).phase).toBe(
+      'VIEW_PROFILE_IN_ZIP_FILE'
     );
-
     const profile1 = ProfileViewSelectors.getProfile(getState());
 
     expect(profile1).toBeTruthy();
@@ -59,16 +53,10 @@ describe('reducer zipFileState', function() {
     zip.file('not-a-profile.json', 'not a profile');
     dispatch(ReceiveProfileActions.receiveZipFile(zip));
 
-    const clearMock = mockConsoleError();
-    dispatch(
-      ZippedProfilesActions.viewProfileFromPathInZipFile('not-a-profile.json')
-    );
+    jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    await waitUntilState(
-      store,
-      state =>
-        ZippedProfilesSelectors.getZipFileState(state).phase ===
-        'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE'
+    await dispatch(
+      ZippedProfilesActions.viewProfileFromPathInZipFile('not-a-profile.json')
     );
 
     expect(ZippedProfilesSelectors.getZipFileState(getState()).phase).toEqual(
@@ -77,7 +65,8 @@ describe('reducer zipFileState', function() {
     // console error was called.
     expect(console.error.mock.calls.length >= 1).toEqual(true);
     expect(console.error.mock.calls).toMatchSnapshot();
-    clearMock();
+
+    console.error.mockRestore();
   });
 
   it('will fail when not finding a profile', async function() {

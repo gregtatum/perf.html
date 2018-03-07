@@ -4,7 +4,7 @@
 
 // @flow
 import { CallTree } from '../profile-logic/call-tree';
-import JSZip from 'jszip';
+import type JSZip from 'jszip';
 import type {
   Profile,
   Thread,
@@ -144,8 +144,8 @@ type StackChartAction =
   | { type: 'HAS_ZOOMED_VIA_MOUSEWHEEL' };
 
 type UrlEnhancerAction =
-  | { type: 'URL_SETUP_DONE' }
-  | { type: 'UPDATE_URL_STATE', newUrlState: UrlState };
+  | {| type: 'URL_SETUP_DONE' |}
+  | {| type: 'UPDATE_URL_STATE', newUrlState: UrlState |};
 
 type UrlStateAction =
   | { type: 'WAITING_FOR_PROFILE_FROM_FILE' }

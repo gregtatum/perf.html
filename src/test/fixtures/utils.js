@@ -4,7 +4,6 @@
 // @flow
 import { CallTree } from '../../profile-logic/call-tree';
 import type { IndexIntoCallNodeTable } from '../../types/profile-derived';
-import type { Store, State } from '../../types/store';
 
 export function getBoundingBox(width: number, height: number) {
   return {
@@ -58,21 +57,4 @@ export function formatTree(
   });
 
   return lines;
-}
-
-/**
- * Wait on the Store to get into a desired state.
- */
-export function waitUntilState(
-  store: Store,
-  callback: State => ?boolean
-): Promise<void> {
-  return new Promise(resolve => {
-    const unsubscribe = store.subscribe(() => {
-      if (callback(store.getState())) {
-        unsubscribe();
-        resolve();
-      }
-    });
-  });
 }

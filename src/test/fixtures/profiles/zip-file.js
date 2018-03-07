@@ -32,7 +32,6 @@ export async function storeWithZipFile(files: string[] = []) {
   const zippedProfiles = getZippedProfiles(files);
   store.dispatch(receiveZipFile(zippedProfiles));
   return {
-    store,
     dispatch: store.dispatch,
     getState: store.getState,
     zippedProfiles,
@@ -61,7 +60,7 @@ export function formatZipFileTable(zipFileTable: ZipFileTable): string[] {
     // Compute the depth and whitespace
     const prefixDepth = indexToDepth.get(prefix);
     const depth = prefixDepth + 1;
-    const whitespace = Array(depth * 2 + 1).join(' ');
+    const whitespace = ''.padStart(depth * 2);
 
     // Remember the depth.
     indexToDepth.set(i, depth);

@@ -501,7 +501,9 @@ async function _extractZipFromResponse(
 ): Promise<JSZip> {
   const buffer = await response.arrayBuffer();
   try {
-    return await JSZip.loadAsync(buffer);
+    const zip = await JSZip.loadAsync(buffer);
+    // Catch the error if unable to load the zip.
+    return zip;
   } catch (error) {
     const message = 'Unable to unzip the zip file.';
     reportError(message);
@@ -523,7 +525,9 @@ async function _extractJsonFromResponse(
 ): Promise<any> {
   try {
     // Don't check the content-type, but attempt to parse the response as JSON.
-    return await response.json();
+    const json = await response.json();
+    // Catch the error if unable to parse the JSON.
+    return json;
   } catch (error) {
     // Change the error message depending on the circumstance:
     let message;
