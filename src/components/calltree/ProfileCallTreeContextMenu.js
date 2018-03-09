@@ -332,10 +332,6 @@ class ProfileCallTreeContextMenu extends PureComponent<Props, State> {
   }
 
   renderContextMenuContents() {
-    if (!this.state.isShown) {
-      return null;
-    }
-
     const {
       selectedCallNodeIndex,
       inverted,
@@ -442,7 +438,7 @@ class ProfileCallTreeContextMenu extends PureComponent<Props, State> {
         onShow={this._handleShow}
         onHide={this._handleHide}
       >
-        {this.renderContextMenuContents()}
+        {this.state.isShown ? this.renderContextMenuContents() : null}
       </ContextMenu>
     );
   }
