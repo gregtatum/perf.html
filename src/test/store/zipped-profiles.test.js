@@ -65,8 +65,6 @@ describe('reducer zipFileState', function() {
     // console error was called.
     expect(console.error.mock.calls.length >= 1).toEqual(true);
     expect(console.error.mock.calls).toMatchSnapshot();
-
-    console.error.mockRestore();
   });
 
   it('will fail when not finding a profile', async function() {
