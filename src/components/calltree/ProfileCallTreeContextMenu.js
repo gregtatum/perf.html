@@ -37,6 +37,10 @@ import type {
   ConnectedProps,
 } from '../../utils/connect';
 
+type OwnProps = {|
+  forceOpenForTests?: boolean,
+|};
+
 type StateProps = {|
   +thread: Thread,
   +threadIndex: ThreadIndex,
@@ -52,7 +56,7 @@ type DispatchProps = {|
   +expandAllCallNodeDescendants: typeof expandAllCallNodeDescendants,
 |};
 
-type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
+type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
 
 type State = {|
   isShown: boolean,
@@ -61,9 +65,12 @@ type State = {|
 require('./ProfileCallTreeContextMenu.css');
 
 class ProfileCallTreeContextMenu extends PureComponent<Props, State> {
-  state = {
-    isShown: false,
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      isShown: Boolean(this.props.forceOpenForTests),
+    };
+  }
 
   _handleShow = () => {
     this.setState({ isShown: true });
@@ -340,7 +347,7 @@ class ProfileCallTreeContextMenu extends PureComponent<Props, State> {
     } = this.props;
 
     if (selectedCallNodeIndex === null) {
-      return null;
+      return <div />;
     }
 
     const funcIndex = callNodeTable.func[selectedCallNodeIndex];
@@ -438,13 +445,18 @@ class ProfileCallTreeContextMenu extends PureComponent<Props, State> {
         onShow={this._handleShow}
         onHide={this._handleHide}
       >
-        {this.state.isShown ? this.renderContextMenuContents() : null}
+        {this.state.isShown ? (
+          this.renderContextMenuContents()
+        ) : (
+          // ContextMenu expects at least 1 child.
+          <div />
+        )}
       </ContextMenu>
     );
   }
 }
 
-const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
+const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     thread: selectedThreadSelectors.getFilteredThread(state),
     threadIndex: getSelectedThreadIndex(state),
