@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a blank context menu (with only 1 div) before it is open 1`] = `
+exports[`calltree/CallNodeContextMenu basic rendering renders a blank context menu (with only 1 div) before it is open 1`] = `
 <Provider
   store={
     Object {
@@ -12,10 +12,10 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a blank con
     }
   }
 >
-  <Connect(ProfileCallTreeContextMenu)
+  <Connect(CallNodeContextMenu)
     forceOpenForTests={false}
   >
-    <ProfileCallTreeContextMenu
+    <CallNodeContextMenu
       addTransformToStack={[Function]}
       callNodeInfo={
         Object {
@@ -87,6 +87,8 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a blank con
           1,
         ]
       }
+      selectedTab="calltree"
+      setCallNodeContextMenuVisibility={[Function]}
       thread={
         Object {
           "frameTable": Object {
@@ -362,7 +364,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a blank con
         className=""
         data={Object {}}
         hideOnLeave={false}
-        id="ProfileCallTreeContextMenu"
+        id="CallNodeContextMenu"
         onHide={[Function]}
         onMouseLeave={[Function]}
         onShow={[Function]}
@@ -387,12 +389,12 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a blank con
           />
         </nav>
       </ContextMenu>
-    </ProfileCallTreeContextMenu>
-  </Connect(ProfileCallTreeContextMenu)>
+    </CallNodeContextMenu>
+  </Connect(CallNodeContextMenu)>
 </Provider>
 `;
 
-exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full context menu when open, with many nav items 1`] = `
+exports[`calltree/CallNodeContextMenu basic rendering renders a full context menu when open, with many nav items 1`] = `
 <Provider
   store={
     Object {
@@ -404,10 +406,10 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
     }
   }
 >
-  <Connect(ProfileCallTreeContextMenu)
+  <Connect(CallNodeContextMenu)
     forceOpenForTests={true}
   >
-    <ProfileCallTreeContextMenu
+    <CallNodeContextMenu
       addTransformToStack={[Function]}
       callNodeInfo={
         Object {
@@ -479,6 +481,8 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
           1,
         ]
       }
+      selectedTab="calltree"
+      setCallNodeContextMenuVisibility={[Function]}
       thread={
         Object {
           "frameTable": Object {
@@ -754,7 +758,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
         className=""
         data={Object {}}
         hideOnLeave={false}
-        id="ProfileCallTreeContextMenu"
+        id="CallNodeContextMenu"
         onHide={[Function]}
         onMouseLeave={[Function]}
         onShow={[Function]}
@@ -802,7 +806,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
               tabIndex="-1"
             >
               <span
-                className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconMerge"
+                className="callNodeContextMenuIcon callNodeContextMenuIconMerge"
               />
               Merge node into calling function
             </div>
@@ -835,7 +839,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
               tabIndex="-1"
             >
               <span
-                className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconMerge"
+                className="callNodeContextMenuIcon callNodeContextMenuIconMerge"
               />
               Merge function into caller across the entire tree
             </div>
@@ -868,7 +872,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
               tabIndex="-1"
             >
               <span
-                className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconFocus"
+                className="callNodeContextMenuIcon callNodeContextMenuIconFocus"
               />
               Focus on subtree
             </div>
@@ -901,7 +905,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
               tabIndex="-1"
             >
               <span
-                className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconFocus"
+                className="callNodeContextMenuIcon callNodeContextMenuIconFocus"
               />
               Focus on function
             </div>
@@ -934,7 +938,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
               tabIndex="-1"
             >
               <span
-                className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconCollapse"
+                className="callNodeContextMenuIcon callNodeContextMenuIconCollapse"
               />
               Collapse function’s subtree across the entire tree
             </div>
@@ -967,12 +971,12 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
               tabIndex="-1"
             >
               <span
-                className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconCollapse"
+                className="callNodeContextMenuIcon callNodeContextMenuIconCollapse"
               />
               Collapse functions in
                
               <span
-                className="profileCallTreeContextMenuLabel"
+                className="callNodeContextMenuLabel"
               >
                 library
               </span>
@@ -1006,7 +1010,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
               tabIndex="-1"
             >
               <span
-                className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconCollapse"
+                className="callNodeContextMenuIcon callNodeContextMenuIconCollapse"
               />
               Collapse direct recursion
             </div>
@@ -1039,7 +1043,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
               tabIndex="-1"
             >
               <span
-                className="profileCallTreeContextMenuIcon profileCallTreeContextMenuIconDrop"
+                className="callNodeContextMenuIcon callNodeContextMenuIconDrop"
               />
               Drop samples with this function
             </div>
@@ -1057,7 +1061,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
             }
             disabled={false}
             divider={false}
-            key=".9"
+            key=".0"
             onClick={[Function]}
             onMouseLeave={[Function]}
             onMouseMove={[Function]}
@@ -1080,7 +1084,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
           </MenuItem>
           <div
             className="react-contextmenu-separator"
-            key=".a"
+            key=".1"
           />
           <MenuItem
             attributes={Object {}}
@@ -1091,7 +1095,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
             }
             disabled={false}
             divider={false}
-            key=".b"
+            key=".a"
             onClick={[Function]}
             onMouseLeave={[Function]}
             onMouseMove={[Function]}
@@ -1121,7 +1125,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
             }
             disabled={false}
             divider={false}
-            key=".c"
+            key=".b"
             onClick={[Function]}
             onMouseLeave={[Function]}
             onMouseMove={[Function]}
@@ -1151,7 +1155,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
             }
             disabled={false}
             divider={false}
-            key=".e"
+            key=".d"
             onClick={[Function]}
             onMouseLeave={[Function]}
             onMouseMove={[Function]}
@@ -1174,7 +1178,7 @@ exports[`calltree/ProfileCallTreeContextMenu basic rendering renders a full cont
           </MenuItem>
         </nav>
       </ContextMenu>
-    </ProfileCallTreeContextMenu>
-  </Connect(ProfileCallTreeContextMenu)>
+    </CallNodeContextMenu>
+  </Connect(CallNodeContextMenu)>
 </Provider>
 `;
