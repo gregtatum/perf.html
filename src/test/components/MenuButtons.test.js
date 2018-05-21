@@ -4,7 +4,7 @@
 
 // @flow
 import * as React from 'react';
-import ProfileSharing from '../../components/app/ProfileSharing';
+import MenuButtons from '../../components/app/MenuButtons';
 import renderer from 'react-test-renderer';
 import { Provider } from 'react-redux';
 import { storeWithProfile } from '../fixtures/stores';
@@ -13,8 +13,8 @@ import {
   doneSymbolicating,
 } from '../../actions/receive-profile';
 
-describe('app/ProfileSharing', function() {
-  it('renders the ProfileSharing buttons', () => {
+describe('app/MenuButtons', function() {
+  it('renders the MenuButtons buttons', () => {
     /**
      * Mock out any created refs for the components with relevant information.
      */
@@ -34,7 +34,7 @@ describe('app/ProfileSharing', function() {
 
     const profileSharing = renderer.create(
       <Provider store={store}>
-        <ProfileSharing />
+        <MenuButtons />
       </Provider>,
       { createNodeMock }
     );
