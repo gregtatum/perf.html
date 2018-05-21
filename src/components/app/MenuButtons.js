@@ -400,7 +400,7 @@ class ProfileDownloadButton extends PureComponent<
     return (
       <ButtonWithPanel
         className="menuButtonsProfileDownloadButton"
-        label="Save as file..."
+        label="Save file"
         panel={
           <ArrowPanel
             className="menuButtonsProfileDownloadPanel"
@@ -473,6 +473,9 @@ const MenuButtons = ({
       predictUrl={predictUrl}
     />
     <ProfileDownloadButton profile={profile} rootRange={rootRange} />
+    <a href="/docs/" target="_blank" className="menuButtonsLink">
+      Docs
+    </a>
   </div>
 );
 

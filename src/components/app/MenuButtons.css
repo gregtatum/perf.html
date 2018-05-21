@@ -11,12 +11,59 @@
   flex-flow: row nowrap;
 }
 
+.menuButtonsLink {
+  height: 24px;
+  position: relative;
+  padding: 0 10px;
+  border-left: 1px solid var(--grey-30);
+  text-decoration: none;
+  line-height: 24px;
+  cursor: default;
+  color: var(--grey-90);
+}
+
+.menuButtonsLink:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
 .menuButtonsCompositeButtonContainer {
   display: flex;
   flex-flow: column nowrap;
   border-left: 1px solid var(--grey-30);
   border-right: 1px solid var(--grey-30);
 }
+
+/* Make a little bit of room for the icon */
+.menuButtonsLink,
+.menuButtonsProfileDownloadButtonButton {
+  padding-left: 30px;
+}
+
+/* Create a before pseudo-element to contain an icon */
+.menuButtonsLink::before,
+.menuButtonsPermalinkButton > .buttonWithPanelButtonWrapper::before,
+.menuButtonsProfileDownloadButton::before {
+  position: absolute;
+  pointer-events: none;
+  top: 4px;
+  left: 8px;
+  width: 16px;
+  height: 16px;
+  content: "";
+}
+
+.menuButtonsPermalinkButton > .buttonWithPanelButtonWrapper::before {
+  background: url(../../../res/img/svg/link.svg);
+}
+
+.menuButtonsProfileDownloadButton::before {
+  background: url(../../../res/img/svg/download.svg);
+}
+
+.menuButtonsLink::before {
+  background: url(../../../res/img/svg/help.svg);
+}
+
 
 .menuButtonsShareButton,
 .menuButtonsUploadingButton,
