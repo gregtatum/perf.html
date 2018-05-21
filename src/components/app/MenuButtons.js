@@ -34,7 +34,7 @@ import type {
   ConnectedProps,
 } from '../../utils/connect';
 
-require('./ProfileSharing.css');
+require('./MenuButtons.css');
 
 const PrivacyNotice = () => (
   <section className="privacyNotice">
@@ -55,13 +55,13 @@ const PrivacyNotice = () => (
 );
 
 const UploadingStatus = ({ progress }: { progress: number }) => (
-  <div className="profileSharingUploadingButton">
-    <div className="profileSharingUploadingButtonInner">
+  <div className="menuButtonsUploadingButton">
+    <div className="menuButtonsUploadingButtonInner">
       <progress
-        className="profileSharingUploadingButtonProgress"
+        className="menuButtonsUploadingButtonProgress"
         value={progress}
       />
-      <div className="profileSharingUploadingButtonLabel">Uploading...</div>
+      <div className="menuButtonsUploadingButtonLabel">Uploading...</div>
     </div>
   </div>
 );
@@ -257,7 +257,7 @@ class ProfileSharingCompositeButton extends PureComponent<
         : 'Sharing will be enabled once symbolication is complete';
     return (
       <div
-        className={classNames('profileSharingCompositeButtonContainer', {
+        className={classNames('menuButtonsCompositeButtonContainer', {
           currentButtonIsShareButton: state === 'local',
           currentButtonIsUploadingButton: state === 'uploading',
           currentButtonIsPermalinkButton: state === 'public',
@@ -265,12 +265,12 @@ class ProfileSharingCompositeButton extends PureComponent<
         })}
       >
         <ButtonWithPanel
-          className="profileSharingShareButton"
+          className="menuButtonsShareButton"
           label={shareLabel}
           disabled={symbolicationStatus !== 'DONE'}
           panel={
             <ArrowPanel
-              className="profileSharingPrivacyPanel"
+              className="menuButtonsPrivacyPanel"
               title={'Upload Profile – Privacy Notice'}
               okButtonText="Share"
               cancelButtonText="Cancel"
@@ -282,18 +282,18 @@ class ProfileSharingCompositeButton extends PureComponent<
         />
         <UploadingStatus progress={uploadProgress} />
         <ButtonWithPanel
-          className="profileSharingPermalinkButton"
+          className="menuButtonsPermalinkButton"
           ref={this._permalinkButtonCreated}
           label="Permalink"
           panel={
             <ArrowPanel
-              className="profileSharingPermalinkPanel"
+              className="menuButtonsPermalinkPanel"
               onOpen={this._onPermalinkPanelOpen}
               onClose={this._onPermalinkPanelClose}
             >
               <input
                 type="text"
-                className="profileSharingPermalinkTextField"
+                className="menuButtonsPermalinkTextField"
                 value={shortUrl}
                 readOnly="readOnly"
                 ref={this._permalinkTextFieldCreated}
@@ -302,12 +302,12 @@ class ProfileSharingCompositeButton extends PureComponent<
           }
         />
         <ButtonWithPanel
-          className="profileSharingUploadErrorButton"
+          className="menuButtonsUploadErrorButton"
           ref={this._uploadErrorButtonCreated}
           label="Upload Error"
           panel={
             <ArrowPanel
-              className="profileSharingUploadErrorPanel"
+              className="menuButtonsUploadErrorPanel"
               title={'Upload Error'}
               okButtonText="Try Again"
               cancelButtonText="Cancel"
@@ -399,11 +399,11 @@ class ProfileDownloadButton extends PureComponent<
     } = this.state;
     return (
       <ButtonWithPanel
-        className="profileSharingProfileDownloadButton"
+        className="menuButtonsProfileDownloadButton"
         label="Save as file..."
         panel={
           <ArrowPanel
-            className="profileSharingProfileDownloadPanel"
+            className="menuButtonsProfileDownloadPanel"
             title={'Save Profile to a Local File'}
             onOpen={this._onPanelOpen}
           >
@@ -411,7 +411,7 @@ class ProfileDownloadButton extends PureComponent<
               {uncompressedBlobUrl ? (
                 <p>
                   <a
-                    className="profileSharingDownloadLink"
+                    className="menuButtonsDownloadLink"
                     href={uncompressedBlobUrl}
                     download={filename}
                   >
@@ -422,7 +422,7 @@ class ProfileDownloadButton extends PureComponent<
               {compressedBlobUrl ? (
                 <p>
                   <a
-                    className="profileSharingDownloadLink"
+                    className="menuButtonsDownloadLink"
                     href={compressedBlobUrl}
                     download={`${filename}.gz`}
                   >
@@ -438,7 +438,7 @@ class ProfileDownloadButton extends PureComponent<
   }
 }
 
-type ProfileSharingStateProps = {|
+type MenuButtonsStateProps = {|
   +profile: Profile,
   +rootRange: StartEndRange,
   +dataSource: DataSource,
@@ -446,25 +446,25 @@ type ProfileSharingStateProps = {|
   +predictUrl: (Action | Action[]) => string,
 |};
 
-type ProfileSharingDispatchProps = {|
+type MenuButtonsDispatchProps = {|
   +profilePublished: typeof actions.profilePublished,
 |};
 
-type ProfileSharingProps = ConnectedProps<
+type MenuButtonsProps = ConnectedProps<
   {||},
-  ProfileSharingStateProps,
-  ProfileSharingDispatchProps
+  MenuButtonsStateProps,
+  MenuButtonsDispatchProps
 >;
 
-const ProfileSharing = ({
+const MenuButtons = ({
   profile,
   rootRange,
   dataSource,
   symbolicationStatus,
   profilePublished,
   predictUrl,
-}: ProfileSharingProps) => (
-  <div className="profileSharing">
+}: MenuButtonsProps) => (
+  <div className="menuButtons">
     <ProfileSharingCompositeButton
       profile={profile}
       dataSource={dataSource}
@@ -478,8 +478,8 @@ const ProfileSharing = ({
 
 const options: ExplicitConnectOptions<
   {||},
-  ProfileSharingStateProps,
-  ProfileSharingDispatchProps
+  MenuButtonsStateProps,
+  MenuButtonsDispatchProps
 > = {
   mapStateToProps: state => ({
     profile: getProfile(state),
@@ -489,6 +489,6 @@ const options: ExplicitConnectOptions<
     predictUrl: getUrlPredictor(state),
   }),
   mapDispatchToProps: { profilePublished: actions.profilePublished },
-  component: ProfileSharing,
+  component: MenuButtons,
 };
 export default explicitConnect(options);

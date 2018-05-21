@@ -10,7 +10,7 @@ import TabBar from './TabBar';
 import ProfileCallTreeView from '../calltree/ProfileCallTreeView';
 import MarkerTable from '../marker-table';
 import ProfileFilterNavigator from './ProfileFilterNavigator';
-import ProfileSharing from './ProfileSharing';
+import MenuButtons from './MenuButtons';
 import SymbolicationStatusOverlay from './SymbolicationStatusOverlay';
 import StackChart from '../stack-chart/';
 import MarkerChart from '../marker-chart/';
@@ -114,7 +114,7 @@ class ProfileViewer extends PureComponent<Props> {
             <div className="profileViewerName">{profileName}</div>
           ) : null}
           <ProfileFilterNavigator />
-          <ProfileSharing />
+          <MenuButtons />
         </div>
         <ProfileViewerHeader />
         <TabBar
