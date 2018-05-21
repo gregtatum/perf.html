@@ -201,7 +201,7 @@ exports[`app/MenuButtons renders the MenuButtons buttons 1`] = `
         disabled={false}
         onClick={[Function]}
         type="button"
-        value="Save as file..."
+        value="Save as file…"
       />
     </div>
     <div
@@ -226,6 +226,14 @@ exports[`app/MenuButtons renders the MenuButtons buttons 1`] = `
       </div>
     </div>
   </div>
+  <a
+    className="menuButtonsLink"
+    href="/docs/"
+    target="_blank"
+    title="Open up the documentation in a new window"
+  >
+    Docs…
+  </a>
 </div>
 `;
 
@@ -430,7 +438,7 @@ exports[`app/MenuButtons renders the MenuButtons buttons 2`] = `
         disabled={false}
         onClick={[Function]}
         type="button"
-        value="Save as file..."
+        value="Save as file…"
       />
     </div>
     <div
@@ -455,5 +463,13 @@ exports[`app/MenuButtons renders the MenuButtons buttons 2`] = `
       </div>
     </div>
   </div>
+  <a
+    className="menuButtonsLink"
+    href="/docs/"
+    target="_blank"
+    title="Open up the documentation in a new window"
+  >
+    Docs…
+  </a>
 </div>
 `;
