@@ -102,9 +102,12 @@ export function viewProfile(
  * full of empty threads. It can be helpful to hide certain threads that appear to
  * be idle. This function attempts to find and hide idle threads.
  */
-function _hideIdleThreads(profile: Profile): ThreadIndex[] {
+function _hideIdleThreads(_profile: Profile): ThreadIndex[] {
   const hiddenThreadIndexes = [];
   // Go through each thread.
+  // DO NOT MERGE! Hidden threads is broken for now.
+  return hiddenThreadIndexes;
+  /*
   for (
     let threadIndex = 0;
     threadIndex < profile.threads.length;
@@ -138,6 +141,7 @@ function _hideIdleThreads(profile: Profile): ThreadIndex[] {
   }
 
   return hiddenThreadIndexes;
+  */
 }
 
 function _findDefaultThread(threads: Thread[]): Thread | null {
