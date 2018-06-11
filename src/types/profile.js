@@ -41,8 +41,11 @@ export type SamplesTable = {
   responsiveness: number[],
   stack: Array<IndexIntoStackTable | null>,
   time: number[],
-  rss: any[], // TODO
-  uss: any[], // TODO
+  // The resident set size of memory. This must be turned on with the "memory" feature.
+  rss: Array<number | null>,
+  // The unique set size of memory. This must be turned on with the "memory" feature. It
+  // is only available on Linux and Android.
+  uss: Array<number | null>,
   length: number,
 };
 

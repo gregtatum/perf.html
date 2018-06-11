@@ -10,6 +10,7 @@ import TimeSelectionScrubber from './TimeSelectionScrubber';
 import OverflowEdgeIndicator from './OverflowEdgeIndicator';
 import Screenshots from './Screenshots';
 import Network from './Network';
+import Memory from './Memory';
 
 import explicitConnect from '../../utils/connect';
 import {
@@ -171,6 +172,9 @@ class ProfileViewerHeader extends PureComponent<Props> {
                   <ol className="profileViewerHeaderThreadList">
                     {mainThread === null ? null : (
                       <Network threadIndex={mainThread} />
+                    )}
+                    {mainThread === null ? null : (
+                      <Memory threadIndex={mainThread} />
                     )}
                     {this.optionallyRenderScreenshots(
                       mainThread,

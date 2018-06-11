@@ -5,6 +5,7 @@
 // @flow
 
 import React, { PureComponent } from 'react';
+import bisection from 'bisection';
 import { withSize } from '../shared/WithSize';
 import explicitConnect from '../../utils/connect';
 import {

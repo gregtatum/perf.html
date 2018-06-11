@@ -543,6 +543,7 @@ export type SelectorsForThread = {
     MarkersTableWithPayload<ScreenshotPayload>
   >,
   getNetworkTracingMarkers: State => TracingMarker[],
+  getMemoryTracingMarkers: State => TracingMarker[],
   getNetworkTiming: State => MarkerTimingRows,
   getMarkerTiming: State => MarkerTimingRows,
   getRangeSelectionFilteredTracingMarkers: State => TracingMarker[],
@@ -783,6 +784,17 @@ export const selectorsForThread = (
           marker => marker.data && marker.data.type === 'Network'
         )
     );
+    const getMemoryTracingMarkers = createSelector(
+      getRangeSelectionFilteredTracingMarkers,
+      tracingMarkers =>
+        tracingMarkers.filter(
+          marker =>
+            marker.data &&
+            (marker.data.type === 'GCMinor' ||
+              marker.data.type === 'GCMajor' ||
+              marker.data.type === 'GCSlice')
+        )
+    );
     const getNetworkTiming = createSelector(
       getNetworkTracingMarkers,
       MarkerTiming.getMarkerTiming
@@ -886,6 +898,7 @@ export const selectorsForThread = (
       getTracingMarkers,
       getScreenshotMarkers,
       getNetworkTracingMarkers,
+      getMemoryTracingMarkers,
       getNetworkTiming,
       getMarkerTiming,
       getRangeSelectionFilteredTracingMarkers,

@@ -1,0 +1,24 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+.headerMemoryDetails {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.headerMemoryCanvasContainer {
+  position: relative;
+}
+
+.headerMemoryCanvas {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+
+.headerMemoryIntervalMarkerOverview {
+  height: 7px;
+}
