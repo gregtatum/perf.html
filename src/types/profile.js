@@ -158,14 +158,9 @@ export type PausedRange = {
  * thread has a unique set of tables for its data.
  */
 export type Thread = {
-  processType: string,
-  processStartupTime: Milliseconds,
-  processShutdownTime: Milliseconds | null,
   registerTime: Milliseconds,
   unregisterTime: Milliseconds | null,
-  pausedRanges: PausedRange[],
   name: string,
-  pid: number | void,
   tid: number | void,
   samples: SamplesTable,
   markers: MarkersTable,
@@ -187,6 +182,22 @@ export type ExtensionTable = {|
 |};
 
 /**
+ * Firefox separates different parts of executing code into different processes,
+ * and each of these processes can then arbitrarily start new threads that can run in
+ * parallel. Processes can instrumented by the Gecko profiler.
+ */
+export type Process = {
+  // The processType is one of the following strings, describing the type of process.
+  // https://searchfox.org/mozilla-central/rev/4074ba403219b7accdf00220b20dc492bfd4d83e/xpcom/build/nsXULAppAPI.h#382
+  processType: string,
+  processStartupTime: Milliseconds,
+  processShutdownTime: Milliseconds | null,
+  pid: number | void,
+  // Each process can register multiple threads.
+  threads: Thread[],
+};
+
+/**
  * Meta information associated for the entire profile.
  */
 export type ProfileMeta = {|
@@ -196,7 +207,6 @@ export type ProfileMeta = {|
   misc: string,
   oscpu: string,
   platform: string,
-  processType: number, // TODO find the possible values
   // The extensions property landed in Firefox 60, and is only optional because older
   // processed profile versions may not have it. No upgrader was written for this change.
   extensions?: ExtensionTable,
@@ -220,5 +230,6 @@ export type ProfileMeta = {|
  */
 export type Profile = {
   meta: ProfileMeta,
-  threads: Thread[],
+  pausedRanges: PausedRange[],
+  processes: Process[],
 };
