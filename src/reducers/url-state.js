@@ -179,7 +179,7 @@ function invertCallstack(state: boolean = false, action: Action) {
   }
 }
 
-function threadOrder(state: ThreadsInProcess[] = [], action: Action) {
+function threadOrder(state: ThreadsInProcess[] = new Map(), action: Action) {
   switch (action.type) {
     case 'VIEW_PROFILE': {
       // When receiving a new profile, try to use the thread order specified in the URL,
@@ -369,8 +369,8 @@ export const getTransformStack = (
     EMPTY_TRANSFORM_STACK
   );
 };
-export const getThreadOrder = (state: State) =>
-  getProfileSpecificState(state).threadOrder;
+export const getThreadOrder = (state: State, pid: void | number) =>
+  getProfileSpecificState(state).threadOrderByProcess.get(pid);
 export const getHiddenThreads = (state: State) =>
   getProfileSpecificState(state).hiddenThreads;
 export const getUrlPredictor = createSelector(

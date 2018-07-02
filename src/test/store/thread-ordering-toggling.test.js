@@ -40,7 +40,7 @@ describe('thread ordering and toggling', function() {
       },
 
       changeThreadOrder: threadOrder => {
-        dispatch(ProfileViewActions.changeThreadOrder(threadOrder));
+        dispatch(ProfileViewActions.changeThreadOrder(undefined, threadOrder));
       },
 
       hideThread: threadIndex => {
