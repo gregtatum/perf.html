@@ -84,9 +84,9 @@ class NetworkChart extends React.PureComponent<Props> {
     const maxViewportHeight = maxNetworkRows * ROW_HEIGHT;
 
     return (
-      <div className="markerChart">
-        <div className="markerChartLabels grippy" title={processDetails}>
-          <span className="markerChartLabelsName">{threadName}</span>
+      <div className="networkChart">
+        <div className="networkChartLabels grippy" title={processDetails}>
+          <span className="networkChartLabelsName">{threadName}</span>
         </div>
         <MarkerChartCanvas
           key={threadIndex}
@@ -122,7 +122,7 @@ function viewportNeedsUpdate(
 
 const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => {
-    const markers = selectedThreadSelectors.getTracingMarkersForView(state);
+    const markers = selectedThreadSelectors.getTracingMarkers(state);
     const networkTimingRows = selectedThreadSelectors.getNetworkTiming(state);
     const threadName = selectedThreadSelectors.getFriendlyThreadName(state);
 

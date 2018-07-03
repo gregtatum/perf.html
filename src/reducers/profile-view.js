@@ -536,7 +536,6 @@ export type SelectorsForThread = {
   getJankInstances: State => TracingMarker[],
   getProcessedMarkersThread: State => Thread,
   getTracingMarkers: State => TracingMarker[],
-  getTracingMarkersForView: State => TracingMarker[],
   getMarkerTiming: State => MarkerTimingRows,
   getNetworkTiming: State => MarkerTimingRows,
   getRangeSelectionFilteredTracingMarkers: State => TracingMarker[],
@@ -731,18 +730,8 @@ export const selectorsForThread = (
       markers => markers.filter(marker => !ProfileData.isNetworkMarker(marker))
     );
 
-    const getTracingMarkersForView = state => {
-      const selectedTab = UrlState.getSelectedTab(state);
-      switch (selectedTab) {
-        case 'marker-chart':
-          return getTracingMarkersForMarkerChart(state);
-        default:
-          return getTracingMarkers(state);
-      }
-    };
-
     const getMarkerTiming = createSelector(
-      getTracingMarkersForView,
+      getTracingMarkersForMarkerChart,
       MarkerTiming.getMarkerTiming
     );
 
@@ -865,7 +854,6 @@ export const selectorsForThread = (
       getJankInstances,
       getProcessedMarkersThread,
       getTracingMarkers,
-      getTracingMarkersForView,
       getMarkerTiming,
       getNetworkTiming,
       getRangeSelectionFilteredTracingMarkers,
