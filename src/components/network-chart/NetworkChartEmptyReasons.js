@@ -23,18 +23,18 @@ type StateProps = {|
 |};
 
 type Props = ConnectedProps<{||}, StateProps, {||}>;
-class MarkerChartEmptyReasons extends PureComponent<Props> {
+class NetworkChartEmptyReasons extends PureComponent<Props> {
   render() {
     const { thread, threadName } = this.props;
 
     let reason;
-    const viewName = 'marker chart';
+    const viewName = 'network chart';
     if (thread.markers.length === 0) {
       reason = 'This thread contains no markers.';
     } else {
       // I can't think of a possible reason coming here at the moment as we
       // don't have any search yet.
-      reason = 'No markers have been found in this thread.';
+      reason = 'This thread has no network markers.';
     }
 
     return (
@@ -53,7 +53,7 @@ const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
     threadName: selectedThreadSelectors.getFriendlyThreadName(state),
     selectedTab: getSelectedTab(state),
   }),
-  component: MarkerChartEmptyReasons,
+  component: NetworkChartEmptyReasons,
 };
 
 export default explicitConnect(options);

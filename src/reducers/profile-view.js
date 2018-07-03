@@ -538,6 +538,7 @@ export type SelectorsForThread = {
   getTracingMarkers: State => TracingMarker[],
   getTracingMarkersForView: State => TracingMarker[],
   getMarkerTiming: State => MarkerTimingRows,
+  getNetworkTiming: State => MarkerTimingRows,
   getRangeSelectionFilteredTracingMarkers: State => TracingMarker[],
   getRangeSelectionFilteredTracingMarkersForHeader: State => TracingMarker[],
   getFilteredThread: State => Thread,
@@ -729,19 +730,24 @@ export const selectorsForThread = (
       getTracingMarkers,
       markers => markers.filter(marker => !ProfileData.isNetworkMarker(marker))
     );
+
     const getTracingMarkersForView = state => {
       const selectedTab = UrlState.getSelectedTab(state);
       switch (selectedTab) {
         case 'marker-chart':
           return getTracingMarkersForMarkerChart(state);
-        case 'network-chart':
-          return getTracingMarkersForNetworkChart(state);
         default:
           return getTracingMarkers(state);
       }
     };
+
     const getMarkerTiming = createSelector(
       getTracingMarkersForView,
+      MarkerTiming.getMarkerTiming
+    );
+
+    const getNetworkTiming = createSelector(
+      getTracingMarkersForNetworkChart,
       MarkerTiming.getMarkerTiming
     );
     const getRangeSelectionFilteredTracingMarkers = createSelector(
@@ -861,6 +867,7 @@ export const selectorsForThread = (
       getTracingMarkers,
       getTracingMarkersForView,
       getMarkerTiming,
+      getNetworkTiming,
       getRangeSelectionFilteredTracingMarkers,
       getRangeSelectionFilteredTracingMarkersForHeader,
       getFilteredThread,

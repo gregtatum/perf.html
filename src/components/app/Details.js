@@ -11,6 +11,7 @@ import ProfileCallTreeView from '../calltree/ProfileCallTreeView';
 import MarkerTable from '../marker-table';
 import StackChart from '../stack-chart/';
 import MarkerChart from '../marker-chart/';
+import NetworkChart from '../network-chart/';
 import FlameGraph from '../flame-graph/';
 import { changeSelectedTab, changeTabOrder } from '../../actions/app';
 import { getTabOrder } from '../../reducers/profile-view';
@@ -97,7 +98,7 @@ class ProfileViewer extends PureComponent<Props> {
             'stack-chart': <StackChart />,
             'marker-chart': <MarkerChart />,
             'marker-table': <MarkerTable />,
-            'network-chart': <MarkerChart />,
+            'network-chart': <NetworkChart />,
           }[selectedTab]
         }
         <CallNodeContextMenu />
