@@ -31,8 +31,6 @@ class NetworkChartEmptyReasons extends PureComponent<Props> {
     const viewName = 'network chart';
 
     if (thread.markers.length === 0) {
-      reason = 'This thread contains no markers.';
-    } else {
       reason = 'This thread has no network markers.';
     }
 
