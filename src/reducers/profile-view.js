@@ -739,6 +739,7 @@ export const selectorsForThread = (
       getTracingMarkersForNetworkChart,
       MarkerTiming.getMarkerTiming
     );
+
     const getRangeSelectionFilteredTracingMarkers = createSelector(
       getTracingMarkers,
       getDisplayRange,

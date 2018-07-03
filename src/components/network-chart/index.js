@@ -75,7 +75,7 @@ class NetworkChart extends React.PureComponent<Props> {
       updateProfileSelection,
     } = this.props;
 
-    if (!markers.length) {
+    if (!networkTimingRows.length) {
       return <NetworkChartEmptyReasons />;
     }
 
