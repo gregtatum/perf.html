@@ -12,8 +12,18 @@ import type {
   TabSlug,
 } from './actions';
 import type { Milliseconds, StartEndRange } from './units';
-import type { IndexIntoMarkersTable, Profile, ThreadIndex } from './profile';
-import type { CallNodePath } from './profile-derived';
+import type {
+  IndexIntoMarkersTable,
+  Profile,
+  ThreadIndex,
+  Pid,
+} from './profile';
+import type {
+  CallNodePath,
+  GlobalTrack,
+  LocalTrack,
+  TrackIndex,
+} from './profile-derived';
 import type { Attempt } from '../utils/errors';
 import type { GetLabel } from '../profile-logic/labeling-strategies';
 import type { GetCategory } from '../profile-logic/color-categories';
@@ -45,6 +55,8 @@ export type ProfileViewState = {
     rightClickedThread: ThreadIndex,
     isCallNodeContextMenuVisible: boolean,
   },
+  globalTracks: GlobalTrack[],
+  localTracksByPid: Map<Pid, LocalTrack[]>,
   profile: Profile | null,
 };
 
@@ -119,13 +131,15 @@ export type UrlState = {|
   selectedTab: TabSlug,
   pathInZipFile: string | null,
   profileSpecific: {|
+    selectedThread: ThreadIndex | null,
+    globalTrackOrder: TrackIndex[],
+    hiddenGlobalTracks: Set<TrackIndex>,
+    hiddenLocalTracksByPid: Map<Pid, Set<TrackIndex>>,
+    localTrackOrderByPid: Map<Pid, TrackIndex[]>,
     implementation: ImplementationFilter,
     invertCallstack: boolean,
     rangeFilters: RangeFilterState[],
-    selectedThread: ThreadIndex | null,
     callTreeSearchString: string,
-    threadOrder: ThreadIndex[],
-    hiddenThreads: ThreadIndex[],
     markersSearchString: string,
     transforms: TransformStacksPerThread,
   |},

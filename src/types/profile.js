@@ -20,6 +20,14 @@ export type resourceTypeEnum = number;
 export type ThreadIndex = number;
 
 /**
+ * If a pid is a number, then it is the int value that came from the profiler.
+ * However, if it is a string, then it is an unique value generated during
+ * the profile processing. This happens for older profiles before the pid was
+ * collected.
+ */
+export type Pid = number | string;
+
+/**
  * The stack table is the minimal representation of a call stack. Each stack entry
  * consists of the frame at the top of the stack, and the prefix for the stack that
  * came before it. Stacks can be shared between samples.
@@ -165,7 +173,9 @@ export type Thread = {
   unregisterTime: Milliseconds | null,
   pausedRanges: PausedRange[],
   name: string,
-  pid: number | void,
+  // An undefined pid is a valid value. An undefined value will key
+  // properly on Map<pid, T>.
+  pid: Pid,
   tid: number | void,
   samples: SamplesTable,
   markers: MarkersTable,
