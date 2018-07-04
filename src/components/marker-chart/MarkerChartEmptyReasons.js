@@ -30,10 +30,6 @@ class MarkerChartEmptyReasons extends PureComponent<Props> {
     let reason;
     const viewName = 'marker chart';
     if (thread.markers.length === 0) {
-      reason = 'This thread contains no markers.';
-    } else {
-      // I can't think of a possible reason coming here at the moment as we
-      // don't have any search yet.
       reason = 'No markers have been found in this thread.';
     }
 
