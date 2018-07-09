@@ -723,7 +723,7 @@ export const selectorsForThread = (
     );
     const getTracingMarkersForNetworkChart = createSelector(
       getTracingMarkers,
-      markers => markers.filter(ProfileData.isNetworkMarker)
+      markers => markers.filter(marker => ProfileData.isNetworkMarker(marker))
     );
     const getTracingMarkersForMarkerChart = createSelector(
       getTracingMarkers,
@@ -855,6 +855,7 @@ export const selectorsForThread = (
       getJankInstances,
       getProcessedMarkersThread,
       getTracingMarkers,
+      getTracingMarkersForNetworkChart,
       getMarkerTiming,
       getNetworkTiming,
       getRangeSelectionFilteredTracingMarkers,
