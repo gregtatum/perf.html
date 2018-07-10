@@ -57,6 +57,7 @@ const extraBinaries = [
 ];
 
 const thread = {
+  pid: 1,
   samples: {
     schema: {
       stack: 0,
