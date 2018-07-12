@@ -352,11 +352,15 @@ function getMarkerDetails(
                       formatBytes
                     )
                   )}
-                  {nursery.cells_tenured
+                  {nursery.cells_tenured && nursery.cells_allocated_nursery
                     ? _markerDetail(
                         'gcpromotioncells',
                         'Cells tenured',
-                        formatSI(nursery.cells_tenured)
+                        formatValueTotal(
+                          nursery.cells_tenured,
+                          nursery.cells_allocated_nursery,
+                          formatSI
+                        )
                       )
                     : null}
                   {nursery.cur_capacity
@@ -384,6 +388,19 @@ function getMarkerDetails(
                         'Lazy-allocated size',
                         nursery.lazy_capacity,
                         formatBytes
+                      )
+                    : null}
+                  {nursery.cells_allocated_nursery &&
+                  nursery.cells_allocated_tenured
+                    ? _markerDetail(
+                        'gcnursaryallocations',
+                        'Nursery allocations since last minor GC',
+                        formatValueTotal(
+                          nursery.cells_allocated_nursery,
+                          nursery.cells_allocated_nursery +
+                            nursery.cells_allocated_tenured,
+                          formatSI
+                        )
                       )
                     : null}
                   {evictTimeMS
