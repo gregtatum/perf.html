@@ -7,7 +7,6 @@ import React, { PureComponent } from 'react';
 
 import EmptyReasons from '../shared/EmptyReasons';
 import { selectedThreadSelectors } from '../../reducers/profile-view';
-import { getSelectedTab } from '../../reducers/url-state';
 
 import explicitConnect, {
   type ExplicitConnectOptions,
@@ -47,7 +46,6 @@ const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
   mapStateToProps: (state: State) => ({
     thread: selectedThreadSelectors.getThread(state),
     threadName: selectedThreadSelectors.getFriendlyThreadName(state),
-    selectedTab: getSelectedTab(state),
   }),
   component: MarkerChartEmptyReasons,
 };
