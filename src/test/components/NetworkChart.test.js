@@ -7,7 +7,7 @@ import * as React from 'react';
 import renderer from 'react-test-renderer';
 import { Provider } from 'react-redux';
 
-import MarkerChart from '../../components/marker-chart';
+import NetworkChart from '../../components/network-chart';
 import { changeSelectedTab } from '../../actions/app';
 
 import mockCanvasContext from '../fixtures/mocks/canvas-context';
@@ -16,37 +16,18 @@ import { getProfileWithMarkers } from '../fixtures/profiles/make-profile';
 import { getBoundingBox } from '../fixtures/utils';
 import mockRaf from '../fixtures/mocks/request-animation-frame';
 
-const MARKERS = [
-  ['Marker A', 0, { startTime: 0, endTime: 10 }],
-  ['Marker B', 0, { startTime: 0, endTime: 10 }],
-  ['Marker C', 5, { startTime: 5, endTime: 15 }],
+const NETWORK_MARKERS = [
   [
-    'Very very very very very very Very very very very very very Very very very very very very Very very very very very very Very very very very very very long Marker D',
-    6,
-    { startTime: 5, endTime: 15 },
-  ],
-  ['Dot marker E', 4, { startTime: 4, endTime: 4 }],
-  ['Non-interval marker F without data', 7, null],
-  [
-    'Marker G type DOMEvent',
-    5,
+    'Load event',
+    11,
     {
-      type: 'tracing',
-      category: 'DOMEvent',
-      eventType: 'click',
-      interval: 'start',
-      phase: 2,
-    },
-  ],
-  [
-    'Marker G type DOMEvent',
-    10,
-    {
-      type: 'tracing',
-      category: 'DOMEvent',
-      eventType: 'click',
-      interval: 'end',
-      phase: 2,
+      type: 'Network',
+      startTime: 11,
+      endTime: 12,
+      id: 31666793873480,
+      status: 'STATUS_START',
+      pri: 0,
+      URI: 'https://tiles.services.mozilla.com/v3/links/ping-centre',
     },
   ],
 ];
@@ -77,17 +58,17 @@ function setupWithProfile(profile) {
   }
 
   const store = storeWithProfile(profile);
-  store.dispatch(changeSelectedTab('marker-chart'));
+  store.dispatch(changeSelectedTab('network-chart'));
 
-  const markerChart = renderer.create(
+  const networkChart = renderer.create(
     <Provider store={store}>
-      <MarkerChart />
+      <NetworkChart />
     </Provider>,
     { createNodeMock }
   );
 
   return {
-    markerChart,
+    networkChart,
     flushRafCalls,
     store,
     flushDrawLog: () => ctx.__flushDrawLog(),
@@ -97,27 +78,27 @@ function setupWithProfile(profile) {
 it('renders MarkerChart correctly', () => {
   window.devicePixelRatio = 1;
 
-  const profile = getProfileWithMarkers([...MARKERS]);
-  const { flushRafCalls, store, markerChart, flushDrawLog } = setupWithProfile(
+  const profile = getProfileWithMarkers([...NETWORK_MARKERS]);
+  const { flushRafCalls, store, networkChart, flushDrawLog } = setupWithProfile(
     profile
   );
 
-  store.dispatch(changeSelectedTab('marker-chart'));
+  store.dispatch(changeSelectedTab('network-chart'));
   flushRafCalls();
 
   const drawCalls = flushDrawLog();
-  expect(markerChart).toMatchSnapshot();
+  expect(networkChart).toMatchSnapshot();
   expect(drawCalls).toMatchSnapshot();
 
   delete window.devicePixelRatio;
 });
 
 describe('Empty Reasons', () => {
-  it('shows a reason when a profile has no marker', () => {
-    const profile = getProfileWithMarkers([]);
-    const { store, markerChart } = setupWithProfile(profile);
+  it('shows a reason when a profil has no network markers', () => {
+    const profile = getProfileWithMarkers(NETWORK_MARKERS);
+    const { store, networkChart } = setupWithProfile(profile);
 
-    store.dispatch(changeSelectedTab('marker-chart'));
-    expect(markerChart).toMatchSnapshot();
+    store.dispatch(changeSelectedTab('network-chart'));
+    expect(networkChart).toMatchSnapshot();
   });
 });
