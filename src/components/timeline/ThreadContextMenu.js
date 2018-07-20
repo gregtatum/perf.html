@@ -6,21 +6,35 @@
 import React, { PureComponent } from 'react';
 import { ContextMenu, MenuItem } from 'react-contextmenu';
 import {
-  hideThread,
-  showThread,
-  isolateThread,
+  hideGlobalTrack,
+  showGlobalTrack,
+  isolateGlobalTrack,
+  isolateLocalTrack,
 } from '../../actions/profile-view';
 import explicitConnect from '../../utils/connect';
+import { ensureExists } from '../../utils/flow';
 import {
   getThreads,
-  getRightClickedThreadIndex,
+  getRightClickedTrack,
+  getGlobalTracks,
+  getLocalTracksByPid,
 } from '../../reducers/profile-view';
-import { getThreadOrder, getHiddenThreads } from '../../reducers/url-state';
+import {
+  getGlobalTrackOrder,
+  getHiddenGlobalTracks,
+} from '../../reducers/url-state';
 import { getFriendlyThreadName } from '../../profile-logic/profile-data';
 import classNames from 'classnames';
 
-import type { Thread, ThreadIndex } from '../../types/profile';
+import type { Thread, ThreadIndex, Pid } from '../../types/profile';
+import type {
+  TrackIndex,
+  GlobalTrack,
+  LocalTrack,
+} from '../../types/profile-derived';
 import type { State } from '../../types/reducers';
+import type { TrackReference } from '../../types/actions';
+
 import type {
   ExplicitConnectOptions,
   ConnectedProps,
@@ -28,89 +42,116 @@ import type {
 
 type StateProps = {|
   +threads: Thread[],
-  +threadOrder: ThreadIndex[],
-  +hiddenThreads: ThreadIndex[],
-  +rightClickedThreadIndex: ThreadIndex,
+  +globalTrackOrder: TrackIndex[],
+  +hiddenGlobalTracks: Set<TrackIndex>,
+  +rightClickedTrack: TrackReference,
+  +globalTracks: GlobalTrack[],
+  +localTracksByPid: Map<Pid, LocalTrack[]>,
 |};
 
 type DispatchProps = {|
-  +hideThread: typeof hideThread,
-  +showThread: typeof showThread,
-  +isolateThread: typeof isolateThread,
+  +hideGlobalTrack: typeof hideGlobalTrack,
+  +showGlobalTrack: typeof showGlobalTrack,
+  +isolateGlobalTrack: typeof isolateGlobalTrack,
+  +isolateLocalTrack: typeof isolateLocalTrack,
 |};
 
 type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 class TimelineThreadContextMenu extends PureComponent<Props> {
-  constructor(props: Props) {
-    super(props);
-    (this: any)._toggleThreadVisibility = this._toggleThreadVisibility.bind(
-      this
-    );
-  }
-
-  _toggleThreadVisibility(
-    _,
-    data: {
-      threadIndex: ThreadIndex,
-      isHidden: boolean,
-    }
-  ): void {
-    const { threadIndex, isHidden } = data;
-    const { hideThread, showThread } = this.props;
-    if (isHidden) {
-      showThread(threadIndex);
+  _toggleTrackVisibility = (_, data: { trackIndex: TrackIndex }): void => {
+    console.log('!!! _toggleTrackVisibility', data.trackIndex);
+    const { trackIndex } = data;
+    const { hiddenGlobalTracks, hideGlobalTrack, showGlobalTrack } = this.props;
+    if (hiddenGlobalTracks.has(trackIndex)) {
+      console.log('!!! show');
+      showGlobalTrack(trackIndex);
     } else {
-      hideThread(threadIndex);
+      console.log('!!! hide');
+      hideGlobalTrack(trackIndex);
+    }
+  };
+
+  _isolateTrack = () => {
+    const {
+      isolateGlobalTrack,
+      isolateLocalTrack,
+      rightClickedTrack,
+    } = this.props;
+    if (rightClickedTrack.type === 'global') {
+      isolateGlobalTrack(rightClickedTrack.trackIndex);
+    } else {
+      const { pid, trackIndex } = rightClickedTrack;
+      isolateLocalTrack(pid, trackIndex);
+    }
+  };
+
+  getRightClickedThreadIndex(): ThreadIndex | null {
+    const { rightClickedTrack, globalTracks, localTracksByPid } = this.props;
+    if (rightClickedTrack.type === 'global') {
+      const track = globalTracks[rightClickedTrack.trackIndex];
+      return track.type === 'process' ? track.mainThreadIndex : null;
+    } else {
+      const { pid, trackIndex } = rightClickedTrack;
+      const localTracks = ensureExists(
+        localTracksByPid.get(pid),
+        'No local tracks found at that pid.'
+      );
+      const track = localTracks[trackIndex];
+
+      return track.type === 'thread' ? track.threadIndex : null;
     }
   }
-
-  _isolateThread = () => {
-    const { isolateThread, rightClickedThreadIndex } = this.props;
-    isolateThread(rightClickedThreadIndex);
-  };
 
   render() {
     const {
       threads,
-      threadOrder,
-      hiddenThreads,
-      rightClickedThreadIndex,
+      globalTrackOrder,
+      hiddenGlobalTracks,
+      globalTracks,
     } = this.props;
 
-    const clickedThreadName = getFriendlyThreadName(
-      threads,
-      threads[rightClickedThreadIndex]
-    );
+    const rightClickedThreadIndex = this.getRightClickedThreadIndex();
+    const clickedThreadName =
+      rightClickedThreadIndex === null
+        ? null
+        : getFriendlyThreadName(threads, threads[rightClickedThreadIndex]);
 
+    console.log('!!! globalTrackOrder', globalTrackOrder);
     return (
       <ContextMenu id={'TimelineThreadContextMenu'}>
-        {threads.length <= 1 ? null : (
+        {threads.length > 1 && clickedThreadName !== null ? (
           <div>
             <MenuItem
-              onClick={this._isolateThread}
-              disabled={hiddenThreads.length === threads.length - 1}
+              onClick={this._isolateTrack}
+              disabled={hiddenGlobalTracks.size === globalTrackOrder.length - 1}
             >
               Only show: {`"${clickedThreadName}"`}
             </MenuItem>
             <div className="react-contextmenu-separator" />
           </div>
-        )}
-        {threadOrder.map(threadIndex => {
-          const isHidden = hiddenThreads.includes(threadIndex);
-          return (
+        ) : null}
+        {globalTrackOrder.map(trackIndex => {
+          const isHidden = hiddenGlobalTracks.has(trackIndex);
+          const globalTrack = globalTracks[trackIndex];
+          return globalTrack.type === 'process' ? (
             <MenuItem
-              key={threadIndex}
+              key={trackIndex}
               preventClose={true}
-              data={{ threadIndex, isHidden }}
-              onClick={this._toggleThreadVisibility}
+              data={{ trackIndex }}
+              onClick={this._toggleTrackVisibility}
               attributes={{
                 className: classNames({ checkable: true, checked: !isHidden }),
               }}
             >
-              {getFriendlyThreadName(threads, threads[threadIndex])}
+              {globalTrack.mainThreadIndex === null
+                ? null
+                : getFriendlyThreadName(
+                    threads,
+                    threads[globalTrack.mainThreadIndex]
+                  )}
             </MenuItem>
-          );
+          ) : null;
         })}
       </ContextMenu>
     );
@@ -120,11 +161,18 @@ class TimelineThreadContextMenu extends PureComponent<Props> {
 const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: (state: State) => ({
     threads: getThreads(state),
-    threadOrder: getThreadOrder(state),
-    hiddenThreads: getHiddenThreads(state),
-    rightClickedThreadIndex: getRightClickedThreadIndex(state),
+    globalTrackOrder: getGlobalTrackOrder(state),
+    hiddenGlobalTracks: getHiddenGlobalTracks(state),
+    rightClickedTrack: getRightClickedTrack(state),
+    globalTracks: getGlobalTracks(state),
+    localTracksByPid: getLocalTracksByPid(state),
   }),
-  mapDispatchToProps: { hideThread, showThread, isolateThread },
+  mapDispatchToProps: {
+    hideGlobalTrack,
+    showGlobalTrack,
+    isolateGlobalTrack,
+    isolateLocalTrack,
+  },
   component: TimelineThreadContextMenu,
 };
 export default explicitConnect(options);

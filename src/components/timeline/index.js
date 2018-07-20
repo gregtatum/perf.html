@@ -17,20 +17,26 @@ import {
   getProfileViewOptions,
   getDisplayRange,
   getZeroAt,
+  getGlobalTracks,
+  getGlobalTrackReferences,
 } from '../../reducers/profile-view';
-import { getHiddenThreads, getThreadOrder } from '../../reducers/url-state';
+import {
+  getHiddenGlobalTracks,
+  getGlobalTrackOrder,
+} from '../../reducers/url-state';
 import './index.css';
 
 import type { SizeProps } from '../shared/WithSize';
 
 import {
-  changeThreadOrder,
+  changeGlobalTrackOrder,
   updateProfileSelection,
   addRangeFilterAndUnsetSelection,
 } from '../../actions/profile-view';
 
-import type { Profile, ThreadIndex } from '../../types/profile';
-import type { ProfileSelection } from '../../types/actions';
+import type { Profile } from '../../types/profile';
+import type { TrackIndex, GlobalTrack } from '../../types/profile-derived';
+import type { ProfileSelection, TrackReference } from '../../types/actions';
 import type { Milliseconds, StartEndRange } from '../../types/units';
 import type {
   ExplicitConnectOptions,
@@ -43,14 +49,16 @@ type StateProps = {|
   +profile: Profile,
   +displayRange: StartEndRange,
   +selection: ProfileSelection,
-  +threadOrder: ThreadIndex[],
-  +hiddenThreads: ThreadIndex[],
+  +globalTracks: GlobalTrack[],
+  +globalTrackOrder: TrackIndex[],
+  +globalTrackReferences: TrackReference[],
+  +hiddenGlobalTracks: Set<TrackIndex>,
   +timeRange: StartEndRange,
   +zeroAt: Milliseconds,
 |};
 
 type DispatchProps = {|
-  +changeThreadOrder: typeof changeThreadOrder,
+  +changeGlobalTrackOrder: typeof changeGlobalTrackOrder,
   +addRangeFilterAndUnsetSelection: typeof addRangeFilterAndUnsetSelection,
   +updateProfileSelection: typeof updateProfileSelection,
 |};
@@ -61,16 +69,17 @@ class Timeline extends PureComponent<Props> {
   render() {
     const {
       profile,
-      threadOrder,
-      changeThreadOrder,
+      globalTracks,
+      globalTrackOrder,
+      changeGlobalTrackOrder,
       selection,
       timeRange,
-      hiddenThreads,
+      hiddenGlobalTracks,
       displayRange,
       zeroAt,
       width,
+      globalTrackReferences,
     } = this.props;
-    const threads = profile.threads;
     return (
       <TimelineSelection width={width}>
         <TimelineRuler
@@ -84,21 +93,32 @@ class Timeline extends PureComponent<Props> {
             <Reorderable
               tagName="ol"
               className="timelineThreadList"
-              order={threadOrder}
+              order={globalTrackOrder}
               orient="vertical"
-              onChangeOrder={changeThreadOrder}
+              onChangeOrder={changeGlobalTrackOrder}
             >
-              {threads.map((thread, threadIndex) => (
-                <TimelineThread
-                  key={threadIndex}
-                  threadIndex={threadIndex}
-                  interval={profile.meta.interval}
-                  rangeStart={timeRange.start}
-                  rangeEnd={timeRange.end}
-                  isHidden={hiddenThreads.includes(threadIndex)}
-                  isModifyingSelection={selection.isModifying}
-                />
-              ))}
+              {globalTracks.map((globalTrack, trackIndex) => {
+                const trackReference = globalTrackReferences[trackIndex];
+                if (globalTrack.type !== 'process') {
+                  return <div key={trackIndex} />;
+                }
+                const { mainThreadIndex } = globalTrack;
+                if (mainThreadIndex === null) {
+                  return <div key={trackIndex} />;
+                }
+                return (
+                  <TimelineThread
+                    key={trackIndex}
+                    threadIndex={mainThreadIndex}
+                    interval={profile.meta.interval}
+                    rangeStart={timeRange.start}
+                    rangeEnd={timeRange.end}
+                    isHidden={hiddenGlobalTracks.has(mainThreadIndex)}
+                    isModifyingSelection={selection.isModifying}
+                    trackReference={trackReference}
+                  />
+                );
+              })}
             </Reorderable>
           }
         </OverflowEdgeIndicator>
@@ -111,14 +131,16 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: state => ({
     profile: getProfile(state),
     selection: getProfileViewOptions(state).selection,
-    threadOrder: getThreadOrder(state),
-    hiddenThreads: getHiddenThreads(state),
+    globalTracks: getGlobalTracks(state),
+    globalTrackOrder: getGlobalTrackOrder(state),
+    globalTrackReferences: getGlobalTrackReferences(state),
+    hiddenGlobalTracks: getHiddenGlobalTracks(state),
     timeRange: getDisplayRange(state),
     displayRange: getDisplayRange(state),
     zeroAt: getZeroAt(state),
   }),
   mapDispatchToProps: {
-    changeThreadOrder,
+    changeGlobalTrackOrder,
     updateProfileSelection,
     addRangeFilterAndUnsetSelection,
   },

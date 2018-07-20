@@ -21,7 +21,7 @@ import {
 import {
   changeSelectedThread,
   updateProfileSelection,
-  changeRightClickedThread,
+  changeRightClickedTrack,
   changeSelectedCallNode,
   focusCallTree,
 } from '../../actions/profile-view';
@@ -35,6 +35,7 @@ import type {
   IndexIntoCallNodeTable,
 } from '../../types/profile-derived';
 import type { State } from '../../types/reducers';
+import type { TrackReference } from '../../types/actions';
 import type {
   ExplicitConnectOptions,
   ConnectedProps,
@@ -42,6 +43,7 @@ import type {
 
 type OwnProps = {|
   +threadIndex: ThreadIndex,
+  +trackReference: TrackReference,
   +interval: Milliseconds,
   +rangeStart: Milliseconds,
   +rangeEnd: Milliseconds,
@@ -62,7 +64,7 @@ type StateProps = {|
 
 type DispatchProps = {|
   +changeSelectedThread: typeof changeSelectedThread,
-  +changeRightClickedThread: typeof changeRightClickedThread,
+  +changeRightClickedTrack: typeof changeRightClickedTrack,
   +updateProfileSelection: typeof updateProfileSelection,
   +changeSelectedCallNode: typeof changeSelectedCallNode,
   +focusCallTree: typeof focusCallTree,
@@ -74,8 +76,9 @@ class TimelineThread extends PureComponent<Props> {
   _onLabelMouseDown = (event: MouseEvent) => {
     const {
       changeSelectedThread,
-      changeRightClickedThread,
+      changeRightClickedTrack,
       threadIndex,
+      trackReference,
     } = this.props;
     if (event.button === 0) {
       changeSelectedThread(threadIndex);
@@ -85,7 +88,7 @@ class TimelineThread extends PureComponent<Props> {
     } else if (event.button === 2) {
       // This is needed to allow the context menu to know what was right clicked without
       // actually changing the current selection.
-      changeRightClickedThread(threadIndex);
+      changeRightClickedTrack(trackReference);
     }
   };
 
@@ -259,7 +262,7 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapDispatchToProps: {
     changeSelectedThread,
     updateProfileSelection,
-    changeRightClickedThread,
+    changeRightClickedTrack,
     changeSelectedCallNode,
     focusCallTree,
   },
