@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-.timelineThread {
+.timelineGlobalTrack {
   margin: 0;
   padding: 0;
   display: flex;
@@ -11,16 +11,16 @@
   box-shadow: 0 1px var(--grey-30);
 }
 
-.timelineThread.selected {
+.timelineGlobalTrack.selected {
   background-color: #edf6ff;
 }
 
-.timelineThreadHidden {
+.timelineGlobalTrackHidden {
   height: 0;
   pointer-events: none;
 }
 
-.timelineThreadLabel {
+.timelineGlobalTrackLabel {
   box-sizing: border-box;
   width: 150px;
   border-right: 1px solid var(--grey-30);
@@ -31,7 +31,7 @@
   align-items: center;
 }
 
-.timelineThreadName {
+.timelineGlobalTrackName {
   font-weight: normal;
   font: message-box;
   font-size: 100%;
@@ -44,32 +44,10 @@
   user-select: none;
 }
 
-.timelineThreadDetails {
+.timelineGlobalTrackTrack {
   flex: 1;
   position: relative;
   z-index: 1;
   display: flex;
   flex-flow: column nowrap;
-}
-
-.timelineThreadIntervalMarkerOverview {
-  list-style: none;
-  display: block;
-  margin: 0;
-  height: 6px;
-  position: relative;
-  overflow: hidden;
-  opacity: 0.75;
-}
-
-.timelineThreadIntervalMarkerOverviewContainerJank {
-  border-bottom: 1px solid var(--grey-30);
-}
-
-.timelineThreadIntervalMarkerOverview.selected {
-  opacity: 1;
-}
-
-.timelineThreadIntervalMarkerOverviewThreadGeckoMain {
-  height: 18px;
 }

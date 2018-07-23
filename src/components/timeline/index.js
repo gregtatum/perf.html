@@ -5,7 +5,7 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import TimelineThread from './Thread';
+import TimelineGlobalTrack from './GlobalTrack';
 import TimelineRuler from './Ruler';
 import TimelineSelection from './Selection';
 import OverflowEdgeIndicator from './OverflowEdgeIndicator';
@@ -20,10 +20,7 @@ import {
   getGlobalTracks,
   getGlobalTrackReferences,
 } from '../../reducers/profile-view';
-import {
-  getHiddenGlobalTracks,
-  getGlobalTrackOrder,
-} from '../../reducers/url-state';
+import { getGlobalTrackOrder } from '../../reducers/url-state';
 import './index.css';
 
 import type { SizeProps } from '../shared/WithSize';
@@ -52,7 +49,6 @@ type StateProps = {|
   +globalTracks: GlobalTrack[],
   +globalTrackOrder: TrackIndex[],
   +globalTrackReferences: TrackReference[],
-  +hiddenGlobalTracks: Set<TrackIndex>,
   +timeRange: StartEndRange,
   +zeroAt: Milliseconds,
 |};
@@ -68,13 +64,12 @@ type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
 class Timeline extends PureComponent<Props> {
   render() {
     const {
-      profile,
+      // profile,
+      // selection,
+      // timeRange,
       globalTracks,
       globalTrackOrder,
       changeGlobalTrackOrder,
-      selection,
-      timeRange,
-      hiddenGlobalTracks,
       displayRange,
       zeroAt,
       width,
@@ -107,14 +102,14 @@ class Timeline extends PureComponent<Props> {
                   return <div key={trackIndex} />;
                 }
                 return (
-                  <TimelineThread
+                  <TimelineGlobalTrack
                     key={trackIndex}
-                    threadIndex={mainThreadIndex}
-                    interval={profile.meta.interval}
-                    rangeStart={timeRange.start}
-                    rangeEnd={timeRange.end}
-                    isHidden={hiddenGlobalTracks.has(mainThreadIndex)}
-                    isModifyingSelection={selection.isModifying}
+                    // threadIndex={mainThreadIndex}
+                    // interval={profile.meta.interval}
+                    // rangeStart={timeRange.start}
+                    // rangeEnd={timeRange.end}
+                    // isModifyingSelection={selection.isModifying}
+                    trackIndex={trackIndex}
                     trackReference={trackReference}
                   />
                 );
@@ -134,7 +129,6 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
     globalTracks: getGlobalTracks(state),
     globalTrackOrder: getGlobalTrackOrder(state),
     globalTrackReferences: getGlobalTrackReferences(state),
-    hiddenGlobalTracks: getHiddenGlobalTracks(state),
     timeRange: getDisplayRange(state),
     displayRange: getDisplayRange(state),
     zeroAt: getZeroAt(state),
