@@ -11,14 +11,13 @@ import arrayMove from 'array-move';
 import { getContentRect, getMarginRect } from '../../utils/css-geometry-tools';
 
 import type { DOMRectLiteral } from '../../utils/dom-rect';
-import type { Action } from '../../types/actions';
 
 type Props = {|
   orient: 'horizontal' | 'vertical',
   tagName: string,
   className: string,
   order: number[],
-  onChangeOrder: (number[]) => Action,
+  onChangeOrder: (number[]) => mixed,
   // This forces the children to be an array of React Elements.
   // See https://flow.org/en/docs/react/children/ for more information.
   // Be careful: children need to handle a `style` property.

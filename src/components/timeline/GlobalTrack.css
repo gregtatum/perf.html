@@ -5,10 +5,13 @@
 .timelineGlobalTrack {
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-flow: row nowrap;
   border-top: 1px solid var(--grey-30);
   box-shadow: 0 1px var(--grey-30);
+}
+
+.timelineGlobalTrackGlobalRow {
+  display: flex;
+  flex-flow: row nowrap;
 }
 
 .timelineGlobalTrack.selected {

@@ -8,62 +8,47 @@ import React, { PureComponent } from 'react';
 import {
   changeSelectedThread,
   changeRightClickedTrack,
-  changeLocalTrackOrder,
 } from '../../actions/profile-view';
 import ContextMenuTrigger from '../shared/ContextMenuTrigger';
 import {
   getSelectedThreadIndex,
   getHiddenGlobalTracks,
-  getLocalTrackOrder,
 } from '../../reducers/url-state';
 import explicitConnect from '../../utils/connect';
-import {
-  getGlobalTracks,
-  selectorsForThread,
-  getLocalTracks,
-} from '../../reducers/profile-view';
+import { selectorsForThread } from '../../reducers/profile-view';
 import './GlobalTrack.css';
 import TrackThread from './TrackThread';
-import TimelineLocalTrack from './LocalTrack';
-import Reorderable from '../shared/Reorderable';
 import type { TrackReference } from '../../types/actions';
 import type { ThreadIndex } from '../../types/profile';
-import type {
-  TrackIndex,
-  GlobalTrack,
-  LocalTrack,
-} from '../../types/profile-derived';
+import type { TrackIndex, LocalTrack } from '../../types/profile-derived';
 import type {
   ExplicitConnectOptions,
   ConnectedProps,
 } from '../../utils/connect';
 
 type OwnProps = {|
-  +trackReference: TrackReference,
+  +localTrack: LocalTrack,
   +trackIndex: TrackIndex,
+  +trackReference?: TrackReference,
   +style?: Object /* This is used by Reorderable */,
 |};
 
 type StateProps = {|
   +threadIndex: null | ThreadIndex,
   +trackName: string,
-  +globalTrack: GlobalTrack,
   +isSelected: boolean,
   +isHidden: boolean,
   +titleText: string | null,
-  +localTrackOrder: TrackIndex[],
-  +localTracks: LocalTrack[],
 |};
 
 type DispatchProps = {|
   +changeSelectedThread: typeof changeSelectedThread,
   +changeRightClickedTrack: typeof changeRightClickedTrack,
-  +changeLocalTrackOrder: typeof changeLocalTrackOrder,
 |};
 
 type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
 
-class GlobalTrackComponent extends PureComponent<Props> {
+class LocalTrackComponent extends PureComponent<Props> {
   _onLabelMouseDown = (event: MouseEvent) => {
     const {
       changeSelectedThread,
@@ -81,7 +66,9 @@ class GlobalTrackComponent extends PureComponent<Props> {
     } else if (event.button === 2) {
       // This is needed to allow the context menu to know what was right clicked without
       // actually changing the current selection.
-      changeRightClickedTrack(trackReference);
+      if (trackReference) {
+        changeRightClickedTrack(trackReference);
+      }
     }
   };
 
@@ -93,43 +80,22 @@ class GlobalTrackComponent extends PureComponent<Props> {
   };
 
   renderTrack() {
-    const { globalTrack } = this.props;
-    switch (globalTrack.type) {
-      case 'process': {
-        const { mainThreadIndex } = globalTrack;
-        if (mainThreadIndex === null) {
-          (mainThreadIndex: empty);
-          throw new Error('TODO - Add support for blank main thread index');
-        }
-        return <TrackThread threadIndex={mainThreadIndex} />;
-      }
-      case 'screenshots':
-        // TODO: Add support for screenshots.
+    const { localTrack } = this.props;
+    switch (localTrack.type) {
+      case 'thread':
+        return <TrackThread threadIndex={localTrack.threadIndex} />;
+      case 'network':
+      case 'memory':
+        // TODO: Add support for these track types.
         return <div />;
       default:
-        console.error('Unhandled globalTrack type', (globalTrack: empty));
+        console.error('Unhandled localTrack type', (localTrack: empty));
         return null;
     }
   }
 
-  _changeLocalTrackOrder = (trackOrder: TrackIndex[]) => {
-    const { globalTrack, changeLocalTrackOrder } = this.props;
-    if (globalTrack.type === 'process') {
-      // Only process tracks have local tracks.
-      changeLocalTrackOrder(globalTrack.pid, trackOrder);
-    }
-  };
-
   render() {
-    const {
-      isSelected,
-      isHidden,
-      titleText,
-      trackName,
-      style,
-      localTracks,
-      localTrackOrder,
-    } = this.props;
+    const { isSelected, isHidden, titleText, trackName, style } = this.props;
 
     if (isHidden) {
       // If this global track is hidden, render out a stub element so that the
@@ -157,33 +123,13 @@ class GlobalTrackComponent extends PureComponent<Props> {
           </ContextMenuTrigger>
           <div className="timelineGlobalTrackTrack">{this.renderTrack()}</div>
         </div>
-        <Reorderable
-          tagName="ol"
-          className="timelineGlobalTrackLocalTracks"
-          order={localTrackOrder}
-          orient="vertical"
-          onChangeOrder={this._changeLocalTrackOrder}
-        >
-          {localTracks.map((localTrack, trackIndex) => {
-            return (
-              <TimelineLocalTrack
-                key={trackIndex}
-                localTrack={localTrack}
-                trackIndex={trackIndex}
-              />
-            );
-          })}
-        </Reorderable>
       </li>
     );
   }
 }
 
 const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
-  mapStateToProps: (state, { trackIndex }) => {
-    const globalTracks = getGlobalTracks(state);
-    const globalTrack = globalTracks[trackIndex];
-
+  mapStateToProps: (state, { localTrack, trackIndex }) => {
     // These get assigned based on the track type.
     let threadIndex = null;
     let isSelected = false;
@@ -191,45 +137,40 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
     let trackName;
 
     // Run different selectors based on the track type.
-    switch (globalTrack.type) {
-      case 'process':
+    switch (localTrack.type) {
+      case 'thread':
         {
           // Look up the thread information for the process if it exists.
-          if (globalTrack.mainThreadIndex !== null) {
-            threadIndex = globalTrack.mainThreadIndex;
-            const selectors = selectorsForThread(threadIndex);
-            isSelected = threadIndex === getSelectedThreadIndex(state);
-            trackName = selectors.getFriendlyThreadName(state);
-            titleText = selectors.getThreadProcessDetails(state);
-          } else {
-            trackName = `Process ${globalTrack.pid}`;
-          }
+          threadIndex = localTrack.threadIndex;
+          const selectors = selectorsForThread(threadIndex);
+          isSelected = threadIndex === getSelectedThreadIndex(state);
+          trackName = selectors.getFriendlyThreadName(state);
+          titleText = selectors.getThreadProcessDetails(state);
         }
         break;
-      case 'screenshots':
-        trackName = 'Screenshots';
+      case 'memory':
+        trackName = 'Memory';
+        break;
+      case 'network':
+        trackName = 'Network';
         break;
       default:
-        throw new Error(`Unhandled GlobalTrack type ${(globalTrack: empty)}`);
+        throw new Error(`Unhandled LocalTrack type ${(localTrack: empty)}`);
     }
 
     return {
       threadIndex,
       trackName,
       titleText,
-      globalTrack,
       isSelected,
-      localTrackOrder: getLocalTrackOrder(state, globalTrack.pid),
-      localTracks: getLocalTracks(state, globalTrack.pid),
       isHidden: getHiddenGlobalTracks(state).has(trackIndex),
     };
   },
   mapDispatchToProps: {
     changeSelectedThread,
     changeRightClickedTrack,
-    changeLocalTrackOrder,
   },
-  component: GlobalTrackComponent,
+  component: LocalTrackComponent,
 };
 
 export default explicitConnect(options);
