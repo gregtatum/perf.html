@@ -10,6 +10,16 @@
   flex-flow: column nowrap;
 }
 
+.timelineTrackThreadBlank {
+  /* Clip off the border to the left, by overflowing by one pixel. */
+  position: relative;
+  height: 30px;
+  width: 100%;
+  left: -1px;
+  padding-left: 1px;
+  background-color: #fff;
+}
+
 .timelineTrackThreadIntervalMarkerOverview {
   list-style: none;
   display: block;

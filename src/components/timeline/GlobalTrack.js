@@ -26,7 +26,7 @@ import {
   getThreads,
 } from '../../reducers/profile-view';
 import './Track.css';
-import TrackThread from './TrackThread';
+import TimelineTrackThread from './TrackThread';
 import TimelineLocalTrack from './LocalTrack';
 import Reorderable from '../shared/Reorderable';
 import type { TrackReference } from '../../types/actions';
@@ -102,10 +102,9 @@ class GlobalTrackComponent extends PureComponent<Props> {
       case 'process': {
         const { mainThreadIndex } = globalTrack;
         if (mainThreadIndex === null) {
-          (mainThreadIndex: empty);
-          throw new Error('TODO - Add support for blank main thread index');
+          return <div className="timelineTrackThreadBlank" />;
         }
-        return <TrackThread threadIndex={mainThreadIndex} />;
+        return <TimelineTrackThread threadIndex={mainThreadIndex} />;
       }
       case 'screenshots':
         // TODO: Add support for screenshots.

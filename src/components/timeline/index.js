@@ -64,9 +64,6 @@ type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
 class Timeline extends PureComponent<Props> {
   render() {
     const {
-      // profile,
-      // selection,
-      // timeRange,
       globalTracks,
       globalTrackOrder,
       changeGlobalTrackOrder,
@@ -75,6 +72,7 @@ class Timeline extends PureComponent<Props> {
       width,
       globalTrackReferences,
     } = this.props;
+
     return (
       <TimelineSelection width={width}>
         <TimelineRuler
@@ -93,28 +91,13 @@ class Timeline extends PureComponent<Props> {
               orient="vertical"
               onChangeOrder={changeGlobalTrackOrder}
             >
-              {globalTracks.map((globalTrack, trackIndex) => {
-                const trackReference = globalTrackReferences[trackIndex];
-                if (globalTrack.type !== 'process') {
-                  return <div key={trackIndex} />;
-                }
-                const { mainThreadIndex } = globalTrack;
-                if (mainThreadIndex === null) {
-                  return <div key={trackIndex} />;
-                }
-                return (
-                  <TimelineGlobalTrack
-                    key={trackIndex}
-                    // threadIndex={mainThreadIndex}
-                    // interval={profile.meta.interval}
-                    // rangeStart={timeRange.start}
-                    // rangeEnd={timeRange.end}
-                    // isModifyingSelection={selection.isModifying}
-                    trackIndex={trackIndex}
-                    trackReference={trackReference}
-                  />
-                );
-              })}
+              {globalTracks.map((globalTrack, trackIndex) => (
+                <TimelineGlobalTrack
+                  key={trackIndex}
+                  trackIndex={trackIndex}
+                  trackReference={globalTrackReferences[trackIndex]}
+                />
+              ))}
             </Reorderable>
           }
         </OverflowEdgeIndicator>
