@@ -88,6 +88,7 @@ class Timeline extends PureComponent<Props> {
             <Reorderable
               tagName="ol"
               className="timelineThreadList"
+              grippyClassName="timelineTrackGlobalGrippy"
               order={globalTrackOrder}
               orient="vertical"
               onChangeOrder={changeGlobalTrackOrder}

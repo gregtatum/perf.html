@@ -5,11 +5,13 @@
 // @flow
 
 import React, { PureComponent } from 'react';
+import classNames from 'classnames';
 import {
   changeSelectedThread,
   changeRightClickedTrack,
   changeLocalTrackOrder,
 } from '../../actions/profile-view';
+import { getFriendlyThreadName } from '../../profile-logic/profile-data';
 import ContextMenuTrigger from '../shared/ContextMenuTrigger';
 import {
   getSelectedThreadIndex,
@@ -21,13 +23,14 @@ import {
   getGlobalTracks,
   selectorsForThread,
   getLocalTracks,
+  getThreads,
 } from '../../reducers/profile-view';
-import './GlobalTrack.css';
+import './Track.css';
 import TrackThread from './TrackThread';
 import TimelineLocalTrack from './LocalTrack';
 import Reorderable from '../shared/Reorderable';
 import type { TrackReference } from '../../types/actions';
-import type { ThreadIndex } from '../../types/profile';
+import type { ThreadIndex, Thread, Pid } from '../../types/profile';
 import type {
   TrackIndex,
   GlobalTrack,
@@ -53,6 +56,7 @@ type StateProps = {|
   +titleText: string | null,
   +localTrackOrder: TrackIndex[],
   +localTracks: LocalTrack[],
+  +pid: Pid | null,
 |};
 
 type DispatchProps = {|
@@ -129,45 +133,56 @@ class GlobalTrackComponent extends PureComponent<Props> {
       style,
       localTracks,
       localTrackOrder,
+      pid,
     } = this.props;
 
     if (isHidden) {
       // If this global track is hidden, render out a stub element so that the
       // Reorderable Component still works across all the tracks.
-      return <li className="timelineGlobalTrackHidden" />;
+      return <li className="timelineTrackHidden" />;
     }
 
     return (
-      <li
-        className={'timelineGlobalTrack' + (isSelected ? ' selected' : '')}
-        onClick={this._onLineClick}
-        style={style}
-      >
-        <div className="timelineGlobalTrackGlobalRow">
+      <li className="timelineTrack" style={style}>
+        <div
+          className={classNames('timelineTrackRow timelineTrackGlobalRow', {
+            selected: isSelected,
+          })}
+          onClick={this._onLineClick}
+        >
           <ContextMenuTrigger
-            id={'TimelineThreadContextMenu'}
+            id={'TimelineTrackContextMenu'}
             renderTag="div"
             attributes={{
               title: titleText,
-              className: 'grippy timelineGlobalTrackLabel',
+              className: 'timelineTrackLabel timelineTrackGlobalGrippy',
               onMouseDown: this._onLabelMouseDown,
             }}
           >
-            <h1 className="timelineGlobalTrackName">{trackName}</h1>
+            <h1 className="timelineTrackName">{trackName}</h1>
           </ContextMenuTrigger>
-          <div className="timelineGlobalTrackTrack">{this.renderTrack()}</div>
+          <div className="timelineTrackTrack">{this.renderTrack()}</div>
         </div>
         <Reorderable
           tagName="ol"
-          className="timelineGlobalTrackLocalTracks"
+          className="timelineTrackLocalTracks"
           order={localTrackOrder}
           orient="vertical"
+          grippyClassName="timelineTrackLocalGrippy"
           onChangeOrder={this._changeLocalTrackOrder}
         >
           {localTracks.map((localTrack, trackIndex) => {
+            if (pid === null) {
+              console.error(
+                'The pid should never be null when adding a TimelineLocalTrack.',
+                pid
+              );
+              return <div />;
+            }
             return (
               <TimelineLocalTrack
                 key={trackIndex}
+                pid={pid}
                 localTrack={localTrack}
                 trackIndex={trackIndex}
               />
@@ -179,6 +194,28 @@ class GlobalTrackComponent extends PureComponent<Props> {
   }
 }
 
+function getGlobalTrackName(
+  globalTrack: GlobalTrack,
+  threads: Thread[]
+): string {
+  switch (globalTrack.type) {
+    case 'process': {
+      // Look up the thread information for the process if it exists.
+      return globalTrack.mainThreadIndex === null
+        ? `Process ${globalTrack.pid}`
+        : getFriendlyThreadName(threads, threads[globalTrack.mainThreadIndex]);
+    }
+    case 'screenshots':
+      return 'Screenshots';
+    default:
+      throw new Error(`Unhandled GlobalTrack type ${(globalTrack: empty)}`);
+  }
+}
+
+// Provide some empty lists, so that strict equality checks work for component updates.
+const EMPTY_TRACK_ORDER = [];
+const EMPTY_LOCAL_TRACKS = [];
+
 const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: (state, { trackIndex }) => {
     const globalTracks = getGlobalTracks(state);
@@ -188,7 +225,11 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
     let threadIndex = null;
     let isSelected = false;
     let titleText = null;
-    let trackName;
+    let trackName = getGlobalTrackName(globalTrack, getThreads(state));
+
+    let localTrackOrder = EMPTY_TRACK_ORDER;
+    let localTracks = EMPTY_LOCAL_TRACKS;
+    let pid = null;
 
     // Run different selectors based on the track type.
     switch (globalTrack.type) {
@@ -204,6 +245,9 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
           } else {
             trackName = `Process ${globalTrack.pid}`;
           }
+          pid = globalTrack.pid;
+          localTrackOrder = getLocalTrackOrder(state, pid);
+          localTracks = getLocalTracks(state, pid);
         }
         break;
       case 'screenshots':
@@ -219,8 +263,9 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
       titleText,
       globalTrack,
       isSelected,
-      localTrackOrder: getLocalTrackOrder(state, globalTrack.pid),
-      localTracks: getLocalTracks(state, globalTrack.pid),
+      localTrackOrder,
+      localTracks,
+      pid,
       isHidden: getHiddenGlobalTracks(state).has(trackIndex),
     };
   },

@@ -5,6 +5,7 @@
 // @flow
 
 import React, { PureComponent } from 'react';
+import classNames from 'classnames';
 import {
   changeSelectedThread,
   changeRightClickedTrack,
@@ -12,14 +13,13 @@ import {
 import ContextMenuTrigger from '../shared/ContextMenuTrigger';
 import {
   getSelectedThreadIndex,
-  getHiddenGlobalTracks,
+  getHiddenLocalTracks,
 } from '../../reducers/url-state';
 import explicitConnect from '../../utils/connect';
 import { selectorsForThread } from '../../reducers/profile-view';
-import './GlobalTrack.css';
 import TrackThread from './TrackThread';
 import type { TrackReference } from '../../types/actions';
-import type { ThreadIndex } from '../../types/profile';
+import type { ThreadIndex, Pid } from '../../types/profile';
 import type { TrackIndex, LocalTrack } from '../../types/profile-derived';
 import type {
   ExplicitConnectOptions,
@@ -27,6 +27,7 @@ import type {
 } from '../../utils/connect';
 
 type OwnProps = {|
+  +pid: Pid,
   +localTrack: LocalTrack,
   +trackIndex: TrackIndex,
   +trackReference?: TrackReference,
@@ -100,28 +101,31 @@ class LocalTrackComponent extends PureComponent<Props> {
     if (isHidden) {
       // If this global track is hidden, render out a stub element so that the
       // Reorderable Component still works across all the tracks.
-      return <li className="timelineGlobalTrackHidden" />;
+      return <li className="timelineTrackHidden" />;
     }
 
     return (
-      <li
-        className={'timelineGlobalTrack' + (isSelected ? ' selected' : '')}
-        onClick={this._onLineClick}
-        style={style}
-      >
-        <div className="timelineGlobalTrackGlobalRow">
+      <li className="timelineTrack timelineTrackLocal" style={style}>
+        {/* This next div is used to mirror the structure of the TimelineGlobalTrack */}
+        <div
+          className={classNames('timelineTrackRow timelineTrackLocalRow', {
+            selected: isSelected,
+          })}
+          onClick={this._onLineClick}
+        >
           <ContextMenuTrigger
-            id={'TimelineThreadContextMenu'}
+            id={'TimelineTrackContextMenu'}
             renderTag="div"
             attributes={{
               title: titleText,
-              className: 'grippy timelineGlobalTrackLabel',
+              className:
+                'timelineTrackLabel timelineTrackLocalLabel timelineTrackLocalGrippy',
               onMouseDown: this._onLabelMouseDown,
             }}
           >
-            <h1 className="timelineGlobalTrackName">{trackName}</h1>
+            <h1 className="timelineTrackName">{trackName}</h1>
           </ContextMenuTrigger>
-          <div className="timelineGlobalTrackTrack">{this.renderTrack()}</div>
+          <div className="timelineTrackTrack">{this.renderTrack()}</div>
         </div>
       </li>
     );
@@ -129,7 +133,7 @@ class LocalTrackComponent extends PureComponent<Props> {
 }
 
 const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
-  mapStateToProps: (state, { localTrack, trackIndex }) => {
+  mapStateToProps: (state, { pid, localTrack, trackIndex }) => {
     // These get assigned based on the track type.
     let threadIndex = null;
     let isSelected = false;
@@ -163,7 +167,7 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
       trackName,
       titleText,
       isSelected,
-      isHidden: getHiddenGlobalTracks(state).has(trackIndex),
+      isHidden: getHiddenLocalTracks(state, pid).has(trackIndex),
     };
   },
   mapDispatchToProps: {

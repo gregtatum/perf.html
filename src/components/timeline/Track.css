@@ -2,28 +2,37 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-.timelineGlobalTrack {
+/**
+ * This file is a little different. It combines the GlobalTrack and LocalTrack css
+ * into one file, as it is mostly shared style.
+ */
+.timelineTrack {
   margin: 0;
   padding: 0;
   border-top: 1px solid var(--grey-30);
   box-shadow: 0 1px var(--grey-30);
 }
 
-.timelineGlobalTrackGlobalRow {
-  display: flex;
-  flex-flow: row nowrap;
+.timelineTrackLocal {
+  margin-left: 15px;
 }
 
-.timelineGlobalTrack.selected {
+.timelineTrackRow {
+  display: flex;
+  flex-flow: row nowrap;
+  background-color: #fff;
+}
+
+.timelineTrackRow.selected {
   background-color: #edf6ff;
 }
 
-.timelineGlobalTrackHidden {
+.timelineTrackHidden {
   height: 0;
   pointer-events: none;
 }
 
-.timelineGlobalTrackLabel {
+.timelineTrackLabel {
   box-sizing: border-box;
   width: 150px;
   border-right: 1px solid var(--grey-30);
@@ -34,7 +43,7 @@
   align-items: center;
 }
 
-.timelineGlobalTrackName {
+.timelineTrackName {
   font-weight: normal;
   font: message-box;
   font-size: 100%;
@@ -47,10 +56,34 @@
   user-select: none;
 }
 
-.timelineGlobalTrackTrack {
+.timelineTrackTrack {
   flex: 1;
   position: relative;
   z-index: 1;
   display: flex;
   flex-flow: column nowrap;
+}
+
+.timelineTrackLocalTracks {
+  position: relative;
+  list-style: none;
+  padding: 0;
+  background: var(--grey-20);
+}
+
+.timelineTrackLocalTracks::before {
+  content: "";
+  width: calc(100% + 15px);
+  height: 100%;
+  position: absolute;
+  box-shadow: inset 0 1px 5px rgba(0,0,0,.2);
+  pointer-events: none;
+  left: -15px;
+  /* Place it above the Reorderable component, which has a z-index of 2. */
+  z-index: 3;
+}
+
+.timelineTrackLocalLabel {
+  width: 135px;
+  border-left: 1px solid var(--grey-30);
 }

@@ -9,7 +9,7 @@ import type {
   LocalTrack,
   TrackIndex,
 } from '../types/profile-derived';
-import { defaultThreadOrder } from './profile-data';
+import { defaultThreadOrder, getFriendlyThreadName } from './profile-data';
 import { ensureExists } from '../utils/flow';
 
 /**
@@ -271,6 +271,40 @@ export function getVisibleThreads(
     }
   }
   return visibleThreads;
+}
+
+export function getGlobalTrackName(
+  globalTrack: GlobalTrack,
+  threads: Thread[]
+): string {
+  switch (globalTrack.type) {
+    case 'process': {
+      // Look up the thread information for the process if it exists.
+      return globalTrack.mainThreadIndex === null
+        ? `Process ${globalTrack.pid}`
+        : getFriendlyThreadName(threads, threads[globalTrack.mainThreadIndex]);
+    }
+    case 'screenshots':
+      return 'Screenshots';
+    default:
+      throw new Error(`Unhandled GlobalTrack type ${(globalTrack: empty)}`);
+  }
+}
+
+export function getLocalTrackName(
+  localTrack: LocalTrack,
+  threads: Thread[]
+): string {
+  switch (localTrack.type) {
+    case 'thread':
+      return getFriendlyThreadName(threads, threads[localTrack.threadIndex]);
+    case 'network':
+      return 'Network';
+    case 'memory':
+      return 'Memory';
+    default:
+      throw new Error(`Unhandled LocalTrack type ${(localTrack: empty)}`);
+  }
 }
 
 /**
