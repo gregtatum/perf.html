@@ -345,7 +345,7 @@ function getMarkerDetails(
                   {_markerDetail('gcreason', 'Reason', nursery.reason)}
                   {_markerDetail(
                     'gcpromotion',
-                    'Bytes tenured',
+                    'Bytes evicted',
                     formatValueTotal(
                       nursery.bytes_tenured,
                       nursery.bytes_used,
@@ -355,7 +355,7 @@ function getMarkerDetails(
                   {nursery.cells_tenured && nursery.cells_allocated_nursery
                     ? _markerDetail(
                         'gcpromotioncells',
-                        'Cells tenured',
+                        'Cells evicted',
                         formatValueTotal(
                           nursery.cells_tenured,
                           nursery.cells_allocated_nursery,
@@ -406,7 +406,7 @@ function getMarkerDetails(
                   {evictTimeMS
                     ? _markerDetail(
                         'gctenurerate',
-                        'Tenure rate (bytes/sec)',
+                        'Tenuring allocation rate',
                         // evictTimeMS is in milliseconds.
                         nursery.bytes_tenured / (evictTimeMS / 1000000),
                         x => formatBytes(x) + '/s'
@@ -415,7 +415,7 @@ function getMarkerDetails(
                   {evictTimeMS && nursery.cells_tenured
                     ? _markerDetail(
                         'gctenurereatecells',
-                        'Tenure rate (cells/sec)',
+                        'Tenuring allocation rate',
                         nursery.cells_tenured / (evictTimeMS / 10000000),
                         x => formatSI(x) + '/s'
                       )
