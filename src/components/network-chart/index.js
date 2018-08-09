@@ -10,12 +10,11 @@ import NetworkChartEmptyReasons from './NetworkChartEmptyReasons';
 
 import {
   selectedThreadSelectors,
-  getDisplayRange,
+  getCommittedRange,
   getProfileInterval,
-  getProfileViewOptions,
+  getPreviewSelection,
 } from '../../reducers/profile-view';
 import { getSelectedThreadIndex } from '../../reducers/url-state';
-import { updateProfileSelection } from '../../actions/profile-view';
 
 import type {
   TracingMarker,
@@ -25,7 +24,6 @@ import type {
   Milliseconds,
   UnitIntervalOfProfileRange,
 } from '../../types/units';
-import type { ProfileSelection } from '../../types/actions';
 import type {
   ExplicitConnectOptions,
   ConnectedProps,
@@ -46,9 +44,7 @@ type StateProps = {|
   +timeRange: { start: Milliseconds, end: Milliseconds },
   +interval: Milliseconds,
   +threadIndex: number,
-  +selection: ProfileSelection,
-  +threadName: string,
-  +processDetails: string,
+  +previewSelection: PreviewSelection,
 |};
 
 type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
@@ -69,10 +65,7 @@ class NetworkChart extends React.PureComponent<Props> {
       threadIndex,
       networkTimingRows,
       markers,
-      selection,
-      threadName,
-      processDetails,
-      updateProfileSelection,
+      previewSelection,
     } = this.props;
 
     if (!networkTimingRows.length) {
@@ -85,14 +78,11 @@ class NetworkChart extends React.PureComponent<Props> {
 
     return (
       <div className="networkChart">
-        <div className="networkChartLabels grippy" title={processDetails}>
-          <span className="networkChartLabelsName">{threadName}</span>
-        </div>
         <MarkerChartCanvas
           key={threadIndex}
           viewportProps={{
             timeRange,
-            selection,
+            previewSelection,
             maxViewportHeight,
             viewportNeedsUpdate,
             maximumZoom: this.getMaximumZoom(),
@@ -126,18 +116,15 @@ const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
       state
     );
     const networkTimingRows = selectedThreadSelectors.getNetworkTiming(state);
-    const threadName = selectedThreadSelectors.getFriendlyThreadName(state);
 
     return {
       markers,
       networkTimingRows,
       maxNetworkRows: networkTimingRows.length,
-      timeRange: getDisplayRange(state),
+      timeRange: getCommittedRange(state),
       interval: getProfileInterval(state),
       threadIndex: getSelectedThreadIndex(state),
-      selection: getProfileViewOptions(state).selection,
-      threadName,
-      processDetails: selectedThreadSelectors.getThreadProcessDetails(state),
+      previewSelection: getPreviewSelection(state),
     };
   },
   mapDispatchToProps: { updateProfileSelection },

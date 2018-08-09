@@ -4,7 +4,7 @@
 
 // @flow
 import * as React from 'react';
-import renderer from 'react-test-renderer';
+import { mount } from 'enzyme';
 import { Provider } from 'react-redux';
 
 import NetworkChart from '../../components/network-chart';
@@ -35,42 +35,29 @@ const NETWORK_MARKERS = [
 function setupWithProfile(profile) {
   const flushRafCalls = mockRaf();
   const ctx = mockCanvasContext();
+  jest
+    .spyOn(HTMLCanvasElement.prototype, 'getContext')
+    .mockImplementation(() => ctx);
 
-  /**
-   * Mock out any created refs for the components with relevant information.
-   */
-  function createNodeMock(element) {
-    // <ChartCanvas><canvas /></ChartCanvas>
-    if (element.type === 'canvas') {
-      return {
-        getBoundingClientRect: () => getBoundingBox(200, 300),
-        getContext: () => ctx,
-        style: {},
-      };
-    }
-    // <ChartViewport />
-    if (element.props.className.split(' ').includes('chartViewport')) {
-      return {
-        getBoundingClientRect: () => getBoundingBox(200, 300),
-      };
-    }
-    return null;
-  }
+  // Ideally we'd want this only on the Canvas and on ChartViewport, but this is
+  // a lot easier to mock this everywhere.
+  jest
+    .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    .mockImplementation(() => getBoundingBox(200, 300));
 
   const store = storeWithProfile(profile);
   store.dispatch(changeSelectedTab('network-chart'));
 
-  const networkChart = renderer.create(
+  const networkChart = mount(
     <Provider store={store}>
       <NetworkChart />
-    </Provider>,
-    { createNodeMock }
+    </Provider>
   );
 
   return {
     networkChart,
     flushRafCalls,
-    store,
+    dispatch: store.dispatch,
     flushDrawLog: () => ctx.__flushDrawLog(),
   };
 }
@@ -79,11 +66,15 @@ it('renders MarkerChart correctly', () => {
   window.devicePixelRatio = 1;
 
   const profile = getProfileWithMarkers([...NETWORK_MARKERS]);
-  const { flushRafCalls, store, networkChart, flushDrawLog } = setupWithProfile(
-    profile
-  );
+  const {
+    flushRafCalls,
+    dispatch,
+    networkChart,
+    flushDrawLog,
+  } = setupWithProfile(profile);
 
-  store.dispatch(changeSelectedTab('network-chart'));
+  dispatch(changeSelectedTab('network-chart'));
+  networkChart.update();
   flushRafCalls();
 
   const drawCalls = flushDrawLog();
@@ -94,11 +85,12 @@ it('renders MarkerChart correctly', () => {
 });
 
 describe('Empty Reasons', () => {
-  it('shows a reason when a profil has no network markers', () => {
-    const profile = getProfileWithMarkers(NETWORK_MARKERS);
-    const { store, networkChart } = setupWithProfile(profile);
+  it('shows a reason when a profile has no marker', () => {
+    const profile = getProfileWithMarkers([]);
+    const { dispatch, networkChart } = setupWithProfile(profile);
 
-    store.dispatch(changeSelectedTab('network-chart'));
+    dispatch(changeSelectedTab('network-chart'));
+    networkChart.update();
     expect(networkChart).toMatchSnapshot();
   });
 });

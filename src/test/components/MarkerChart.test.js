@@ -85,9 +85,12 @@ it('renders MarkerChart correctly', () => {
   window.devicePixelRatio = 1;
 
   const profile = getProfileWithMarkers([...MARKERS]);
-  const { flushRafCalls, store, markerChart, flushDrawLog } = setupWithProfile(
-    profile
-  );
+  const {
+    flushRafCalls,
+    dispatch,
+    markerChart,
+    flushDrawLog,
+  } = setupWithProfile(profile);
 
   dispatch(changeSelectedTab('marker-chart'));
   markerChart.update();

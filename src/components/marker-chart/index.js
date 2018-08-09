@@ -71,7 +71,7 @@ class MarkerChart extends React.PureComponent<Props> {
       updatePreviewSelection,
     } = this.props;
 
-    if (!markers.length) {
+    if (!markerTimingRows.length) {
       return <MarkerChartEmptyReasons />;
     }
 
@@ -105,7 +105,7 @@ class MarkerChart extends React.PureComponent<Props> {
   }
 }
 
-// This function is given the MarkerChartCanvas's chartProps.
+//** This function is given the MarkerChartCanvas's chartProps. **/
 function viewportNeedsUpdate(
   prevProps: { +markerTimingRows: MarkerTimingRows },
   newProps: { +markerTimingRows: MarkerTimingRows }
