@@ -15,6 +15,7 @@ import {
   getPreviewSelection,
 } from '../../reducers/profile-view';
 import { getSelectedThreadIndex } from '../../reducers/url-state';
+import { updatePreviewSelection } from '../../actions/profile-view';
 
 import type {
   TracingMarker,
@@ -24,6 +25,7 @@ import type {
   Milliseconds,
   UnitIntervalOfProfileRange,
 } from '../../types/units';
+import type { PreviewSelection } from '../../types/actions';
 import type {
   ExplicitConnectOptions,
   ConnectedProps,
@@ -34,7 +36,7 @@ require('./index.css');
 const ROW_HEIGHT = 16;
 
 type DispatchProps = {|
-  +updateProfileSelection: typeof updateProfileSelection,
+  +updatePreviewSelection: typeof updatePreviewSelection,
 |};
 
 type StateProps = {|
@@ -66,6 +68,7 @@ class NetworkChart extends React.PureComponent<Props> {
       networkTimingRows,
       markers,
       previewSelection,
+      updatePreviewSelection,
     } = this.props;
 
     if (!networkTimingRows.length) {
@@ -90,7 +93,7 @@ class NetworkChart extends React.PureComponent<Props> {
           chartProps={{
             networkTimingRows,
             markers,
-            updateProfileSelection,
+            updatePreviewSelection,
             rangeStart: timeRange.start,
             rangeEnd: timeRange.end,
             rowHeight: ROW_HEIGHT,
@@ -127,7 +130,7 @@ const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
       previewSelection: getPreviewSelection(state),
     };
   },
-  mapDispatchToProps: { updateProfileSelection },
+  mapDispatchToProps: { updatePreviewSelection },
   component: NetworkChart,
 };
 export default explicitConnect(options);

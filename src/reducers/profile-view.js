@@ -726,6 +726,7 @@ export type SelectorsForThread = {
   getJankInstances: State => TracingMarker[],
   getProcessedMarkersThread: State => Thread,
   getTracingMarkers: State => TracingMarker[],
+  getTracingMarkersForNetworkChart: State => TracingMarker[],
   getMarkerTiming: State => MarkerTimingRows,
   getNetworkTiming: State => MarkerTimingRows,
   getCommittedRangeFilteredTracingMarkers: State => TracingMarker[],

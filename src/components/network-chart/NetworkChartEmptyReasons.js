@@ -26,7 +26,7 @@ class NetworkChartEmptyReasons extends PureComponent<Props> {
   render() {
     const { thread, threadName } = this.props;
 
-    let reason;
+    let reason = '';
     const viewName = 'network chart';
 
     if (thread.markers.length === 0) {

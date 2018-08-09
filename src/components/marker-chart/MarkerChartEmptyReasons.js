@@ -14,7 +14,6 @@ import explicitConnect, {
 } from '../../utils/connect';
 
 import type { State } from '../../types/store';
-import type { TabSlug } from '../../app-logic/tabs-handling';
 import type { Thread } from '../../types/profile';
 
 type StateProps = {|
@@ -27,7 +26,7 @@ class MarkerChartEmptyReasons extends PureComponent<Props> {
   render() {
     const { thread, threadName } = this.props;
 
-    let reason;
+    let reason = '';
     const viewName = 'marker chart';
     if (thread.markers.length === 0) {
       reason = 'No markers have been found in this thread.';
