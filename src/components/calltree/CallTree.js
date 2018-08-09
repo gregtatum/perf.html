@@ -19,7 +19,7 @@ import {
   selectedThreadSelectors,
   getScrollToSelectionGeneration,
   getFocusCallTreeGeneration,
-  getProfileViewOptions,
+  getPreviewSelection,
 } from '../../reducers/profile-view';
 import { getIconsWithClassNames } from '../../reducers/icons';
 import {
@@ -194,7 +194,7 @@ class CallTreeComponent extends PureComponent<Props> {
         highlightRegExp={searchStringsRegExp}
         disableOverscan={disableOverscan}
         ref={this._takeTreeViewRef}
-        contextMenuId={'CallNodeContextMenu'}
+        contextMenuId="CallNodeContextMenu"
         maxNodeDepth={callNodeMaxDepth}
         icons={this.props.icons}
         rowHeight={16}
@@ -218,7 +218,7 @@ const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
       state
     ),
     searchStringsRegExp: getSearchStringsAsRegExp(state),
-    disableOverscan: getProfileViewOptions(state).selection.isModifying,
+    disableOverscan: getPreviewSelection(state).isModifying,
     invertCallstack: getInvertCallstack(state),
     implementationFilter: getImplementationFilter(state),
     icons: getIconsWithClassNames(state),
