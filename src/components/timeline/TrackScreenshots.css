@@ -17,7 +17,7 @@
   position: absolute;
   overflow: hidden;
   display: flex;
-  justify-content: center;
+  background: #fff;
 }
 
 .timelineTrackScreenshotImgContainer::after {
@@ -27,7 +27,7 @@
   top: 0;
   width: 1px;
   height: 100%;
-  background: var(--grey-30);
+  background: #fff;
   right: 0;
 }
 .timelineTrackScreenshotImg {

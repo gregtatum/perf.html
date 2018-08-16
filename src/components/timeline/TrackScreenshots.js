@@ -53,6 +53,7 @@ type State = {|
 const TRACK_HEIGHT = 50;
 const HOVER_HEIGHT = 100;
 const HOVER_MAX_WIDTH_RATIO = 1.75;
+const IMAGE_CONTAINER_WIDTH = TRACK_HEIGHT * 0.75;
 
 class Screenshots extends PureComponent<Props, State> {
   state = {
@@ -97,7 +98,6 @@ class Screenshots extends PureComponent<Props, State> {
     const pixelLefts = screenshots.time.map(
       time => outerContainerWidth * (time - rangeStart) / rangeLength
     );
-    const imageContainerWidth = TRACK_HEIGHT * 0.75;
     for (let i = 0; i < screenshots.length; i++) {
       // This strategy is to lay out an image into the next fully available space.
       // This leaves some gaps in the images. It would probably be better to find the
@@ -107,17 +107,22 @@ class Screenshots extends PureComponent<Props, State> {
       // error in the math.
       const { url, windowWidth, windowHeight } = screenshots.data[i];
       const scaledImageWidth = TRACK_HEIGHT * windowWidth / windowHeight;
-      if (pixelLefts[i] >= lastRight || pixelLefts[i + 1] > lastRight) {
-        // const width = imageContainerWidth > scaledImageWidth
-        //   ? imageContainerWidth
-        //   : scaledImageWidth;
-        const width = imageContainerWidth;
-        const left = Math.max(pixelLefts[i], lastRight);
+      const thisLeft = pixelLefts[i];
+      const nextLeft = pixelLefts[i + 1];
+      if (thisLeft >= lastRight || nextLeft > lastRight) {
+        const left = Math.max(thisLeft, lastRight);
+        const availableWidth = nextLeft - left;
+        const imageContainerWidth = Math.max(
+          availableWidth,
+          IMAGE_CONTAINER_WIDTH
+        );
+        const justifyContent =
+          imageContainerWidth > scaledImageWidth ? 'left' : 'center';
 
         images.push(
           <div
             className="timelineTrackScreenshotImgContainer"
-            style={{ left, width }}
+            style={{ left, width: imageContainerWidth, justifyContent }}
           >
             <img
               className="timelineTrackScreenshotImg"
@@ -130,7 +135,7 @@ class Screenshots extends PureComponent<Props, State> {
             />
           </div>
         );
-        lastRight = left + width;
+        lastRight = left + imageContainerWidth;
       }
     }
     return images;
