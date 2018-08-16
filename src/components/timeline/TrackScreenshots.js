@@ -83,6 +83,10 @@ class Screenshots extends PureComponent<Props, State> {
     return null;
   }
 
+  /**
+   * This function runs through all of the screenshots, and then samples the last known
+   * screenshot, and places it on the screen, making a film strip.
+   */
   renderScreenshotStrip() {
     const {
       thread,
@@ -91,48 +95,52 @@ class Screenshots extends PureComponent<Props, State> {
       rangeEnd,
       screenshots,
     } = this.props;
-    const images = [];
-    let lastRight = 0;
-    const rangeLength = rangeEnd - rangeStart;
-    const pixelLefts = screenshots.time.map(
-      time => outerContainerWidth * (time - rangeStart) / rangeLength
-    );
-    const imageContainerWidth = TRACK_HEIGHT * 0.75;
-    for (let i = 0; i < screenshots.length; i++) {
-      // This strategy is to lay out an image into the next fully available space.
-      // This leaves some gaps in the images. It would probably be better to find the
-      // next available image that fits, then put the previous image in seamlessly.
-      // This way there would be no gaps. Also the images don't really seem to line
-      // up correctly right now to the data in the timeline, so perhaps there is some
-      // error in the math.
-      const { url, windowWidth, windowHeight } = screenshots.data[i];
-      const scaledImageWidth = TRACK_HEIGHT * windowWidth / windowHeight;
-      if (pixelLefts[i] >= lastRight || pixelLefts[i + 1] > lastRight) {
-        // const width = imageContainerWidth > scaledImageWidth
-        //   ? imageContainerWidth
-        //   : scaledImageWidth;
-        const width = imageContainerWidth;
-        const left = Math.max(pixelLefts[i], lastRight);
-
-        images.push(
-          <div
-            className="timelineTrackScreenshotImgContainer"
-            style={{ left, width }}
-          >
-            <img
-              className="timelineTrackScreenshotImg"
-              key={i}
-              src={thread.stringTable.getString(url)}
-              style={{
-                width: scaledImageWidth,
-                height: TRACK_HEIGHT,
-              }}
-            />
-          </div>
-        );
-        lastRight = left + width;
-      }
+    if (screenshots.length === 0) {
+      return null;
     }
+    const images = [];
+    const rangeLength = rangeEnd - rangeStart;
+    const imageContainerWidth = TRACK_HEIGHT * 0.75;
+    const timeToPixel = time =>
+      outerContainerWidth * (time - rangeStart) / rangeLength;
+
+    let screenshotIndex = 0;
+    for (
+      let left = timeToPixel(screenshots.time[0]);
+      left < outerContainerWidth;
+      left += imageContainerWidth
+    ) {
+      // Try to find the next screenshot to fit in, or re-use the existing one.
+      for (let i = screenshotIndex; i < screenshots.length; i++) {
+        if (timeToPixel(screenshots.time[i]) <= left) {
+          screenshotIndex = i;
+        } else {
+          break;
+        }
+      }
+      const { url, windowWidth, windowHeight } = screenshots.data[
+        screenshotIndex
+      ];
+      const scaledImageWidth = TRACK_HEIGHT * windowWidth / windowHeight;
+      images.push(
+        <div
+          className="timelineTrackScreenshotImgContainer"
+          style={{ left, width: imageContainerWidth }}
+        >
+          {/* The following image is centered and cropped by the outer container. */}
+          <img
+            className="timelineTrackScreenshotImg"
+            key={left}
+            src={thread.stringTable.getString(url)}
+            style={{
+              width: scaledImageWidth,
+              height: TRACK_HEIGHT,
+            }}
+          />
+        </div>
+      );
+    }
+
     return images;
   }
 
