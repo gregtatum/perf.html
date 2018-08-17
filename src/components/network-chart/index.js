@@ -105,7 +105,7 @@ class NetworkChart extends React.PureComponent<Props> {
   }
 }
 
-//** This function is given the NetworkChartCanvas's chartProps. */
+// This function is given the NetworkChartCanvas's chartProps.
 function viewportNeedsUpdate(
   prevProps: { +networkTimingRows: MarkerTimingRows },
   newProps: { +networkTimingRows: MarkerTimingRows }
