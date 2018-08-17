@@ -347,6 +347,8 @@ type VsyncTimestampPayload = {|
 |};
 
 export type ScreenshotPayload = {
+  // The "type" property doesn't exist, but is required to make Flow typing work.
+  type: void,
   // This field represents the data url of the image. It is saved in the string table.
   url: IndexIntoStringTable,
   // A memory address that can uniquely identify a window. It has no meaning other than
@@ -409,6 +411,7 @@ export type MarkerPayload =
   | StyleMarkerPayload
   | BHRMarkerPayload
   | VsyncTimestampPayload
+  | ScreenshotPayload
   | FrameConstructionMarkerPayload
   | DummyForTestsMarkerPayload
   | null;
