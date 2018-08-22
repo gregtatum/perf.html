@@ -2,35 +2,119 @@
 
 exports[`Empty Reasons shows a reason when a profil has no network markers 1`] = `
 <div
-  className="EmptyReasons"
+  className="markerChart"
 >
-  <h3>
-    The 
-    network chart
-     is empty for “
-    Empty
-    ”
-  </h3>
-  <p>
-    This thread has no network markers.
-  </p>
+  <div
+    className="markerSettings"
+  >
+    <div
+      className="markerSettingsSpacer"
+    />
+    <div
+      className="markerSettingsSearchbar"
+    >
+      <label
+        className="markerSettingsSearchbarLabel"
+      >
+        Filter Markers: 
+        <form
+          className="idleSearchField markerSettingsSearchField"
+          onSubmit={[Function]}
+        >
+          <input
+            className="idleSearchFieldInput"
+            name="search"
+            onBlur={[Function]}
+            onChange={[Function]}
+            onFocus={[Function]}
+            required="required"
+            title="Only display markers that match a certain name"
+            type="search"
+            value=""
+          />
+          <input
+            className="idleSearchFieldButton"
+            onClick={[Function]}
+            onFocus={[Function]}
+            type="reset"
+          />
+        </form>
+      </label>
+    </div>
+  </div>
+  <div
+    className="EmptyReasons"
+  >
+    <h3>
+      The 
+      network chart
+       is empty for “
+      Empty
+      ”
+    </h3>
+    <p>
+      All network requests were filtered out by the current selection or search term.
+    </p>
+  </div>
 </div>
 `;
 
 exports[`Empty Reasons shows a reason when a profile has no marker 1`] = `
 <div
-  className="EmptyReasons"
+  className="markerChart"
 >
-  <h3>
-    The 
-    marker chart
-     is empty for “
-    Empty
-    ”
-  </h3>
-  <p>
-    This thread contains no markers.
-  </p>
+  <div
+    className="markerSettings"
+  >
+    <div
+      className="markerSettingsSpacer"
+    />
+    <div
+      className="markerSettingsSearchbar"
+    >
+      <label
+        className="markerSettingsSearchbarLabel"
+      >
+        Filter Markers: 
+        <form
+          className="idleSearchField markerSettingsSearchField"
+          onSubmit={[Function]}
+        >
+          <input
+            className="idleSearchFieldInput"
+            name="search"
+            onBlur={[Function]}
+            onChange={[Function]}
+            onFocus={[Function]}
+            required="required"
+            title="Only display markers that match a certain name"
+            type="search"
+            value=""
+          />
+          <input
+            className="idleSearchFieldButton"
+            onClick={[Function]}
+            onFocus={[Function]}
+            type="reset"
+          />
+        </form>
+      </label>
+    </div>
+  </div>
+  <div
+    className="EmptyReasons"
+  >
+    <h3>
+      The 
+      network chart
+       is empty for “
+      Empty
+      ”
+    </h3>
+    <p>
+      This thread contains no markers.
+    </p>
+  </div>
 </div>
 `;
 
@@ -38,6 +122,44 @@ exports[`renders MarkerChart correctly 1`] = `
 <div
   className="markerChart"
 >
+  <div
+    className="markerSettings"
+  >
+    <div
+      className="markerSettingsSpacer"
+    />
+    <div
+      className="markerSettingsSearchbar"
+    >
+      <label
+        className="markerSettingsSearchbarLabel"
+      >
+        Filter Markers: 
+        <form
+          className="idleSearchField markerSettingsSearchField"
+          onSubmit={[Function]}
+        >
+          <input
+            className="idleSearchFieldInput"
+            name="search"
+            onBlur={[Function]}
+            onChange={[Function]}
+            onFocus={[Function]}
+            required="required"
+            title="Only display markers that match a certain name"
+            type="search"
+            value=""
+          />
+          <input
+            className="idleSearchFieldButton"
+            onClick={[Function]}
+            onFocus={[Function]}
+            type="reset"
+          />
+        </form>
+      </label>
+    </div>
+  </div>
   <div
     className="chartViewport"
     onMouseDown={[Function]}
@@ -455,6 +577,44 @@ exports[`renders MarkerChart correctly 3`] = `
 <div
   className="markerChart"
 >
+  <div
+    className="markerSettings"
+  >
+    <div
+      className="markerSettingsSpacer"
+    />
+    <div
+      className="markerSettingsSearchbar"
+    >
+      <label
+        className="markerSettingsSearchbarLabel"
+      >
+        Filter Markers: 
+        <form
+          className="idleSearchField markerSettingsSearchField"
+          onSubmit={[Function]}
+        >
+          <input
+            className="idleSearchFieldInput"
+            name="search"
+            onBlur={[Function]}
+            onChange={[Function]}
+            onFocus={[Function]}
+            required="required"
+            title="Only display markers that match a certain name"
+            type="search"
+            value=""
+          />
+          <input
+            className="idleSearchFieldButton"
+            onClick={[Function]}
+            onFocus={[Function]}
+            type="reset"
+          />
+        </form>
+      </label>
+    </div>
+  </div>
   <div
     className="chartViewport"
     onMouseDown={[Function]}
