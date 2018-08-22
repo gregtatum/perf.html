@@ -760,10 +760,10 @@ describe('snapshots of selectors/profile-view', function() {
       selectedThreadSelectors.getTracingMarkers(getState())
     ).toMatchSnapshot();
   });
-  it('matches the last stored run of selectedThreadSelector.getMarkerTiming', function() {
+  it('matches the last stored run of selectedThreadSelector.getMarkerChartTiming', function() {
     const { getState } = setupStore();
     expect(
-      selectedThreadSelectors.getMarkerTiming(getState())
+      selectedThreadSelectors.getMarkerChartTiming(getState())
     ).toMatchSnapshot();
   });
   it('matches the last stored run of selectedThreadSelector.getCommittedRangeFilteredTracingMarkers', function() {

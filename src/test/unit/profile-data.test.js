@@ -469,7 +469,10 @@ describe('profile-data', function() {
   describe('getTracingMarkers', function() {
     const profile = processProfile(getGeckoProfile());
     const thread = profile.threads[0];
-    const tracingMarkers = getTracingMarkers(thread);
+    const tracingMarkers = getTracingMarkers(
+      thread.stringTable,
+      thread.markers
+    );
 
     it('should fold the two reflow markers into one tracing marker', function() {
       expect(tracingMarkers.length).toEqual(9);
