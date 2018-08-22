@@ -879,21 +879,28 @@ export function filterThreadToRange(
     rss: samples.rss.slice(sBegin, sEnd),
     uss: samples.uss.slice(sBegin, sEnd),
   };
+  return Object.assign({}, thread, {
+    samples: newSamples,
+    markers: filterMarkersToRange(markers, rangeStart, rangeEnd),
+  });
+}
+
+export function filterMarkersToRange(
+  markers: MarkersTable,
+  rangeStart: number,
+  rangeEnd: number
+) {
   const [mBegin, mEnd] = _getMarkerIndexRangeForSelection(
     markers,
     rangeStart,
     rangeEnd
   );
-  const newMarkers = {
+  return {
     length: mEnd - mBegin,
     time: markers.time.slice(mBegin, mEnd),
     name: markers.name.slice(mBegin, mEnd),
     data: markers.data.slice(mBegin, mEnd),
   };
-  return Object.assign({}, thread, {
-    samples: newSamples,
-    markers: newMarkers,
-  });
 }
 
 // --------------- CallNodePath and CallNodeIndex manipulations ---------------
@@ -1388,8 +1395,10 @@ export function extractMarkerDataFromName(thread: Thread): Thread {
   return Object.assign({}, thread, { markers: newMarkers });
 }
 
-export function getTracingMarkers(thread: Thread): TracingMarker[] {
-  const { stringTable, markers } = thread;
+export function getTracingMarkers(
+  stringTable: UniqueStringArray,
+  markers: MarkersTable
+): TracingMarker[] {
   const tracingMarkers: TracingMarker[] = [];
   // This map is used to track start and end markers for tracing markers.
   const openMarkers: Map<IndexIntoStringTable, TracingMarker[]> = new Map();
@@ -1497,11 +1506,10 @@ export function getTracingMarkers(thread: Thread): TracingMarker[] {
 
 export function filterTracingMarkersToRange(
   tracingMarkers: TracingMarker[],
-  rangeStart: number,
-  rangeEnd: number
+  range: StartEndRange
 ): TracingMarker[] {
   return tracingMarkers.filter(
-    tm => tm.start < rangeEnd && tm.start + tm.dur >= rangeStart
+    tm => tm.start < range.end && tm.start + tm.dur >= range.start
   );
 }
 

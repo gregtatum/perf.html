@@ -13,7 +13,7 @@ import {
 } from '../../reducers/profile-view';
 import { getSelectedThreadIndex } from '../../reducers/url-state';
 import { changeSelectedMarker } from '../../actions/profile-view';
-import Settings from './Settings';
+import MarkerSettings from '../shared/MarkerSettings';
 
 import './index.css';
 
@@ -174,7 +174,7 @@ class MarkerTable extends PureComponent<Props> {
     const tree = new MarkerTree(thread, markers, zeroAt);
     return (
       <div className="markerTable">
-        <Settings />
+        <MarkerSettings />
         <TreeView
           maxNodeDepth={0}
           tree={tree}
