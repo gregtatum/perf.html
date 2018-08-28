@@ -13,7 +13,7 @@
  */
 
 type DataTable = {
-  [key: string]: mixed[],
+  [key: string]: any[],
   length: number,
 };
 

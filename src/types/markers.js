@@ -76,10 +76,12 @@ type GCSliceData_Shared = {|
 
   start_timestamp: Seconds,
 |};
-export type GCSliceData_Gecko = GCSliceData_Shared & {|
+export type GCSliceData_Gecko = {|
+  ...GCSliceData_Shared,
   times: PhaseTimes<Milliseconds>,
 |};
-export type GCSliceData = GCSliceData_Shared & {|
+export type GCSliceData = {|
+  ...GCSliceData_Shared,
   phase_times: PhaseTimes<Microseconds>,
 |};
 
@@ -135,7 +137,8 @@ type GCMajorCompleted_Shared = {|
   slices_list?: GCSliceData[],
 |};
 
-export type GCMajorCompleted = GCMajorCompleted_Shared & {|
+export type GCMajorCompleted = {|
+  ...GCMajorCompleted_Shared,
   // MMU (Minimum mutator utilisation) A measure of GC's affect on
   // responsiveness  See Statistics::computeMMU(), these percentages in the
   // rage of 0-100.
@@ -146,8 +149,10 @@ export type GCMajorCompleted = GCMajorCompleted_Shared & {|
 
   // The duration of each phase.
   phase_times: PhaseTimes<Microseconds>,
+  totals: PhaseTimes<Milliseconds>,
 |};
-export type GCMajorCompleted_Gecko = GCMajorCompleted_Shared & {|
+export type GCMajorCompleted_Gecko = {|
+  ...GCMajorCompleted_Shared,
   // As above except in parts of 100.
   mmu_20ms: number,
   mmu_50ms: number,

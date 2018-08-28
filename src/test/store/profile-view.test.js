@@ -748,38 +748,32 @@ describe('snapshots of selectors/profile-view', function() {
       selectedThreadSelectors.getJankMarkers(getState())
     ).toMatchSnapshot();
   });
-  it('matches the last stored run of selectedThreadSelector.getProcessedMarkersThread', function() {
+  it('matches the last stored run of selectedThreadSelector.getMarkers', function() {
+    const { getState } = setupStore();
+    expect(selectedThreadSelectors.getMarkers(getState())).toMatchSnapshot();
+  });
+  it('matches the last stored run of selectedThreadSelector.getMarkerChartTiming', function() {
     const { getState } = setupStore();
     expect(
-      selectedThreadSelectors.getProcessedMarkersThread(getState())
+      selectedThreadSelectors.getMarkerChartTiming(getState())
     ).toMatchSnapshot();
   });
-  it('matches the last stored run of selectedThreadSelector.getTracingMarkers', function() {
+  it('matches the last stored run of selectedThreadSelector.getNetworkChartTiming', function() {
     const { getState } = setupStore();
     expect(
-      selectedThreadSelectors.getTracingMarkers(getState())
+      selectedThreadSelectors.getNetworkChartTiming(getState())
     ).toMatchSnapshot();
   });
-  it('matches the last stored run of selectedThreadSelector.getMarkerTiming', function() {
+  it('matches the last stored run of selectedThreadSelector.getRangeFilteredMarkers', function() {
     const { getState } = setupStore();
     expect(
-      selectedThreadSelectors.getMarkerTiming(getState())
+      selectedThreadSelectors.getRangeFilteredMarkers(getState())
     ).toMatchSnapshot();
   });
-  it('matches the last stored run of selectedThreadSelector.getCommittedRangeFilteredTracingMarkers', function() {
+  it('matches the last stored run of selectedThreadSelector.getRangeFilteredMarkersForHeader', function() {
     const { getState } = setupStore();
     expect(
-      selectedThreadSelectors.getCommittedRangeFilteredTracingMarkers(
-        getState()
-      )
-    ).toMatchSnapshot();
-  });
-  it('matches the last stored run of selectedThreadSelector.getCommittedRangeFilteredTracingMarkersForHeader', function() {
-    const { getState } = setupStore();
-    expect(
-      selectedThreadSelectors.getCommittedRangeFilteredTracingMarkersForHeader(
-        getState()
-      )
+      selectedThreadSelectors.getRangeFilteredMarkersForHeader(getState())
     ).toMatchSnapshot();
   });
   it('matches the last stored run of selectedThreadSelector.getFilteredThread', function() {

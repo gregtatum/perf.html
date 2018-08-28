@@ -14,10 +14,17 @@ import {
   getProfileInterval,
   getPreviewSelection,
 } from '../../reducers/profile-view';
-import { getSelectedThreadIndex } from '../../reducers/url-state';
+import {
+  getSelectedThreadIndex,
+  getSelectedTab,
+} from '../../reducers/url-state';
 import { updatePreviewSelection } from '../../actions/profile-view';
 
-import type { MarkerTimingRows } from '../../types/profile-derived';
+import type { MarkerPayload, NetworkPayload } from '../../types/markers';
+import type {
+  MarkerTimingRows,
+  MarkersTableByType,
+} from '../../types/profile-derived';
 import type {
   Milliseconds,
   UnitIntervalOfProfileRange,
@@ -37,7 +44,9 @@ type DispatchProps = {|
 |};
 
 type StateProps = {|
-  +markers: TracingMarker[],
+  +markers:
+    | MarkersTableByType<MarkerPayload>
+    | MarkersTableByType<NetworkPayload>,
   +markerTimingRows: MarkerTimingRows,
   +maxMarkerRows: number,
   +timeRange: { start: Milliseconds, end: Milliseconds },
@@ -112,8 +121,22 @@ function viewportNeedsUpdate(
 
 const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => {
-    const markers = selectedThreadSelectors.getTracingMarkersForView(state);
-    const markerTimingRows = selectedThreadSelectors.getMarkerTiming(state);
+    let markers;
+    let markerTimingRows;
+    switch (getSelectedTab(state)) {
+      case 'network':
+        markers = selectedThreadSelectors.getNetworkMarkers(state);
+        markerTimingRows = selectedThreadSelectors.getNetworkChartTiming(state);
+        break;
+      case 'marker-chart':
+        markers = selectedThreadSelectors.getMarkerChartMarkers(state);
+        markerTimingRows = selectedThreadSelectors.getMarkerChartTiming(state);
+        break;
+      default:
+        throw new Error(
+          'The marker chart was created with an unsupported view.'
+        );
+    }
 
     return {
       markers,

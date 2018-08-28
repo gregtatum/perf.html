@@ -22,11 +22,15 @@ import { getImplementationFilter } from '../../reducers/url-state';
 import Backtrace from './Backtrace';
 
 import { bailoutTypeInformation } from '../../profile-logic/marker-info';
+import type { MarkersTableByType } from '../../types/profile-derived';
 import type { Microseconds } from '../../types/units';
-import type { TracingMarker } from '../../types/profile-derived';
 import type { NotVoidOrNull } from '../../types/utils';
 import type { ImplementationFilter } from '../../types/actions';
-import type { Thread, ThreadIndex } from '../../types/profile';
+import type {
+  Thread,
+  ThreadIndex,
+  IndexIntoMarkersTable,
+} from '../../types/profile';
 import type {
   DOMEventMarkerPayload,
   FrameConstructionMarkerPayload,
@@ -250,7 +254,8 @@ function _sumMaybeEntries(
 }
 
 function _markerBacktrace(
-  marker: TracingMarker,
+  markerIndex: IndexIntoMarkersTable,
+  markers: MarkersTableByType<*>,
   data:
     | StyleMarkerPayload
     | PaintProfilerMarkerTracing
@@ -259,12 +264,13 @@ function _markerBacktrace(
   thread: Thread,
   implementationFilter: ImplementationFilter
 ): React.Node {
+  const startTime = markers.startTime[markerIndex];
   switch (data.category) {
     case 'DOMEvent': {
       const latency =
         data.timeStamp === undefined
           ? null
-          : formatMilliseconds(marker.start - data.timeStamp);
+          : formatMilliseconds(startTime - data.timeStamp);
       return (
         <div className="tooltipDetails">
           {_markerDetail('type', 'Type', data.eventType)}
@@ -285,7 +291,7 @@ function _markerBacktrace(
   }
   if ('cause' in data && data.cause) {
     const { cause } = data;
-    const causeAge = marker.start - cause.time;
+    const causeAge = startTime - cause.time;
     return (
       <div className="tooltipDetailsBackTrace" key="backtrace">
         <h2 className="tooltipBackTraceTitle">
@@ -303,11 +309,12 @@ function _markerBacktrace(
 }
 
 function getMarkerDetails(
-  marker: TracingMarker,
+  markerIndex: IndexIntoMarkersTable,
+  markers: MarkersTableByType<*>,
   thread: Thread,
   implementationFilter: ImplementationFilter
 ): React.Node {
-  const data = marker.data;
+  const data = markers[markerIndex].data;
 
   if (data) {
     switch (data.type) {
@@ -706,11 +713,23 @@ function getMarkerDetails(
             {_markerDetail('stylesShared', 'Styles shared', data.stylesShared)}
             {_markerDetail('stylesReused', 'Styles reused', data.stylesReused)}
           </div>,
-          _markerBacktrace(marker, data, thread, implementationFilter),
+          _markerBacktrace(
+            markerIndex,
+            markers,
+            data,
+            thread,
+            implementationFilter
+          ),
         ];
       }
       case 'tracing': {
-        return _markerBacktrace(marker, data, thread, implementationFilter);
+        return _markerBacktrace(
+          markerIndex,
+          markers,
+          data,
+          thread,
+          implementationFilter
+        );
       }
       default:
     }
@@ -719,7 +738,8 @@ function getMarkerDetails(
 }
 
 type OwnProps = {|
-  +marker: TracingMarker,
+  +markerIndex: IndexIntoMarkersTable,
+  +markers: MarkersTableByType<*>,
   +threadIndex: ThreadIndex,
   +className?: string,
 |};
@@ -735,13 +755,22 @@ type Props = ConnectedProps<OwnProps, StateProps, {||}>;
 class MarkerTooltipContents extends React.PureComponent<Props> {
   render() {
     const {
-      marker,
+      markerIndex,
+      markers,
       className,
       threadName,
       thread,
       implementationFilter,
     } = this.props;
-    const details = getMarkerDetails(marker, thread, implementationFilter);
+    const details = getMarkerDetails(
+      markerIndex,
+      markers,
+      thread,
+      implementationFilter
+    );
+    const duration = markers.duration[markerIndex];
+    const title = markers.title[markerIndex];
+    const name = markers.name[markerIndex];
     return (
       <div className={classNames('tooltipMarker', className)}>
         <div className={classNames({ tooltipHeader: details })}>
@@ -749,11 +778,11 @@ class MarkerTooltipContents extends React.PureComponent<Props> {
             <div className="tooltipTiming">
               {/* tracing markers with no start have a negative start, while the
                 ones with no end have an infinite duration */}
-              {Number.isFinite(marker.dur) && marker.start >= 0
-                ? formatNumber(marker.dur) + 'ms'
-                : 'unknown duration'}
+              {duration === null
+                ? 'unknown duration'
+                : formatNumber(duration) + 'ms'}
             </div>
-            <div className="tooltipTitle">{marker.title || marker.name}</div>
+            <div className="tooltipTitle">{title || name}</div>
           </div>
           {threadName ? (
             <div className="tooltipDetails">

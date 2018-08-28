@@ -7,6 +7,7 @@
 import type { Milliseconds, MemoryOffset } from './units';
 import type { UniqueStringArray } from '../utils/unique-string-array';
 import type { MarkerPayload } from './markers';
+
 export type IndexIntoStackTable = number;
 export type IndexIntoSamplesTable = number;
 export type IndexIntoMarkersTable = number;
@@ -105,23 +106,17 @@ export type ProfilerMarkerPayload = {
 };
 
 /**
- * Markers represent arbitrary events that happen within the browser. They have a
- * name, timing information, and potentially a JSON data payload. These can come from all
- * over the system. For instance Paint markers instrument the rendering and layout
- * process. Engineers can easily add arbitrary markers to their code without coordinating
- * with perf.html to instrument their code.
+ * This table represents the lightly processed markers that come from Gecko. When working
+ * with markers, make sure and use the matched MarkersTable type from the derived
+ * profile data. The unmatched table represents markers that haven't had their start
+ * and end markers matched up, which in reality are one marker with a time duration.
  */
-export type MarkersTableByType<Payload> = {|
-  time: Milliseconds[],
-  duration: Array<Milliseconds | null>,
-  type: IndexIntoStringTable[],
+export type UnmatchedMarkersTable = {
+  data: MarkerPayload[],
   name: IndexIntoStringTable[],
-  title: IndexIntoStringTable[],
-  data: Payload[],
+  time: Milliseconds[],
   length: number,
-|};
-
-export type MarkersTable = MarkersTableByType<MarkerPayload>;
+};
 
 /**
  * Frames contain the context information about the function execution at the moment in
@@ -223,7 +218,7 @@ export type Thread = {
   pid: Pid,
   tid: number | void,
   samples: SamplesTable,
-  markers: MarkersTable,
+  markers: UnmatchedMarkersTable,
   stackTable: StackTable,
   frameTable: FrameTable,
   // Strings for profiles are collected into a single table, and are referred to by

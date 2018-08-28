@@ -3,6 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
+import type { MarkerPayload } from '../../types/markers';
+
 import React, { Fragment } from 'react';
 import { Provider } from 'react-redux';
 import MarkersTooltipContents from '../../components/shared/MarkerTooltipContents';
@@ -143,7 +145,7 @@ describe('MarkerTooltipContents', function() {
       [
         'GCMajor',
         16.5,
-        {
+        ({
           type: 'GCMajor',
           startTime: 16.5,
           endTime: 16.5,
@@ -217,12 +219,12 @@ describe('MarkerTooltipContents', function() {
             total_zones: 4,
             zones_collected: 1,
           },
-        },
+        }: MarkerPayload),
       ],
       [
         'GCSlice',
         17.5,
-        {
+        ({
           type: 'GCSlice',
           startTime: 17.5,
           endTime: 17.5,
@@ -245,7 +247,7 @@ describe('MarkerTooltipContents', function() {
             trigger_amount: 279224320,
             trigger_threshold: 256916275,
           },
-        },
+        }: MarkerPayload),
       ],
       [
         'Bailout_ShapeGuard after getelem on line 3666 of resource://foo.js -> resource://bar.js:3662',
@@ -256,7 +258,7 @@ describe('MarkerTooltipContents', function() {
       [
         'Styles',
         18.5,
-        {
+        ({
           type: 'tracing',
           category: 'Paint',
           interval: 'start',
@@ -272,19 +274,19 @@ describe('MarkerTooltipContents', function() {
           // later point.
           startTime: 18.5,
           endTime: 18.5,
-        },
+        }: MarkerPayload),
       ],
       [
         'Styles',
         19,
-        {
+        ({
           type: 'tracing',
           category: 'Paint',
           interval: 'end',
           // startTime and endTime should be unnecessary, see above
           startTime: 18.5,
           endTime: 18.5,
-        },
+        }: MarkerPayload),
       ],
       [
         'Styles',
@@ -386,16 +388,17 @@ describe('MarkerTooltipContents', function() {
     const store = storeWithProfile(profile);
     const state = store.getState();
     const threadIndex = getSelectedThreadIndex(state);
-    const tracingMarkers = selectedThreadSelectors.getTracingMarkers(state);
+    const markers = selectedThreadSelectors.getMarkers(state);
 
     expect(
       renderer.create(
         <Provider store={store}>
           <Fragment>
-            {tracingMarkers.map((marker, i) => (
+            {markers.name.map((_, markerIndex) => (
               <MarkersTooltipContents
-                key={i}
-                marker={marker}
+                key={markerIndex}
+                markerIndex={markerIndex}
+                markers={markers}
                 threadIndex={threadIndex}
                 className="propClass"
               />

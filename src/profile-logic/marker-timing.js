@@ -4,7 +4,11 @@ import type {
   UserTimingMarkerPayload,
   MarkerPayload,
 } from '../types/markers';
-import type { MarkerTiming, MarkerTimingRows } from '../types/profile-derived';
+import type {
+  MarkerTiming,
+  MarkerTimingRows,
+  MarkersTableByType,
+} from '../types/profile-derived';
 
 // Arbitrarily set an upper limit for adding marker depths, avoiding an infinite loop.
 const MAX_STACKING_DEPTH = 300;
@@ -56,23 +60,19 @@ const MAX_STACKING_DEPTH = 300;
  *   |______________|_____________________________|
  */
 export function getMarkerTiming(
-  tracingMarkers: TracingMarker[]
+  markers: MarkersTableByType<*>
 ): MarkerTimingRows {
   // Each marker type will have it's own timing information, later collapse these into
   // a single array.
   const markerTimingsMap: Map<string, MarkerTiming[]> = new Map();
 
   // Go through all of the markers.
-  for (
-    let tracingMarkerIndex = 0;
-    tracingMarkerIndex < tracingMarkers.length;
-    tracingMarkerIndex++
-  ) {
-    const marker = tracingMarkers[tracingMarkerIndex];
-    let markerTimingsByName = markerTimingsMap.get(marker.name);
+  for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
+    const name = markers.name[markerIndex];
+    let markerTimingsByName = markerTimingsMap.get(name);
     if (markerTimingsByName === undefined) {
       markerTimingsByName = [];
-      markerTimingsMap.set(marker.name, markerTimingsByName);
+      markerTimingsMap.set(name, markerTimingsByName);
     }
 
     // Place the marker in the closest row that is empty.
@@ -85,7 +85,7 @@ export function getMarkerTiming(
           end: [],
           index: [],
           label: [],
-          name: marker.name,
+          name: name,
           length: 0,
         };
         markerTimingsByName.push(markerTimingsRow);
@@ -94,11 +94,14 @@ export function getMarkerTiming(
       // Since the markers are sorted, look at the last added marker in this row. If
       // the new marker fits, go ahead and insert it.
       const otherEnd = markerTimingsRow.end[markerTimingsRow.length - 1];
-      if (otherEnd === undefined || otherEnd <= marker.start) {
-        markerTimingsRow.start.push(marker.start);
-        markerTimingsRow.end.push(marker.start + marker.dur);
-        markerTimingsRow.label.push(computeMarkerLabel(marker.data));
-        markerTimingsRow.index.push(tracingMarkerIndex);
+      const startTime = markers.startTime[markerIndex];
+      const endTime = markers.endTime[markerIndex];
+      const data = markers.data[markerIndex];
+      if (otherEnd === undefined || otherEnd <= startTime) {
+        markerTimingsRow.start.push(startTime);
+        markerTimingsRow.end.push(endTime === null ? startTime : endTime);
+        markerTimingsRow.label.push(computeMarkerLabel(data));
+        markerTimingsRow.index.push(markerIndex);
         markerTimingsRow.length++;
         break;
       }

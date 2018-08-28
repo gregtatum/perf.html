@@ -10,6 +10,8 @@ import type {
   Pid,
   IndexIntoMarkersTable,
 } from './profile';
+import type { MarkerPayload } from './markers';
+
 export type IndexIntoCallNodeTable = number;
 
 /**
@@ -118,3 +120,39 @@ export type LocalTrack =
 
 export type Track = GlobalTrack | LocalTrack;
 export type TrackIndex = number;
+
+/**
+ * Markers represent arbitrary events that happen within the browser. They have a
+ * name, timing information, and potentially a JSON data payload. These can come from all
+ * over the system. For instance Paint markers instrument the rendering and layout
+ * process. Engineers can easily add arbitrary markers to their code without coordinating
+ * with perf.html to instrument their code.
+ *
+ * The MarkersTable and MarkersTableByType represent the fully processed table of markers
+ * where the start and end time markers have been joined together to correctly show
+ * the duration and timing information for the event. Use this one, and not the
+ * UnmatchedMarkerTable.
+ */
+export type MarkersTableByType<Payload> = {|
+  // All markers have a start time, however if the value is 0 then the true start
+  // time is unknown. This could happen with tracing markers that had an end marker
+  // and no starting marker.
+  startTime: Milliseconds[],
+  // If a marker has a null endTime, then it does not have a duration. Additionally,
+  // tracing markers that have a start marker, but no end marker will have their time
+  // set to the end of the profile.
+  endTime: Array<Milliseconds | null>,
+  // There are three cases for markers with durations:
+  // 1. Milliseconds - Markers have a duration because there is a start and end time.
+  // 2. null - The marker represents a point in time, and has no duration.
+  // 3. null - A tracing marker did not have a start or end marker, so the start and end
+  //           time were artificially set, but we don't actually know the true duration.
+  duration: Array<Milliseconds | null>,
+  type: string[],
+  name: string[],
+  title: Array<string | null>,
+  data: Payload[],
+  length: number,
+|};
+
+export type MarkersTable = MarkersTableByType<MarkerPayload>;

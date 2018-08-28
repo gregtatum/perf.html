@@ -18,7 +18,7 @@ export function upgradeGCMinorMarker(marker8: Object): GCMinorMarkerPayload {
       if (marker8.nursery.status === 'no collection') {
         marker8.nursery.status = 'nursery empty';
       }
-      return Object.assign(marker8);
+      return marker8;
     } else {
       /*
        * This is the old format for GCMinor, rename some
@@ -29,15 +29,17 @@ export function upgradeGCMinorMarker(marker8: Object): GCMinorMarkerPayload {
        * promotion_rate, leave them so that anyone opening the
        * raw json data can still see them in converted profiles.
        */
-      const marker = Object.assign(marker8, {
-        nursery: Object.assign(marker8.nursery, {
+      const marker = {
+        ...marker8,
+        nursery: {
+          ...marker8.nursery,
           status: 'complete',
           bytes_used: marker8.nursery.nursery_bytes,
           // cur_capacity cannot be filled in.
           new_capacity: marker8.nursery.new_nursery_bytes,
           phase_times: marker8.nursery.timings,
-        }),
-      });
+        },
+      };
       delete marker.nursery.nursery_bytes;
       delete marker.nursery.new_nursery_bytes;
       delete marker.nursery.timings;
@@ -102,11 +104,12 @@ export function upgradeGCMajorMarker_Processed8to9(
   const mt = marker9.timings;
   switch (mt.status) {
     case 'completed': {
-      const timings: GCMajorCompleted = Object.assign({}, mt, {
+      const timings: GCMajorCompleted = {
+        ...mt,
         phase_times: convertPhaseTimes(mt.totals),
         mmu_20ms: mt.mmu_20ms / 100,
         mmu_50ms: mt.mmu_50ms / 100,
-      });
+      };
       return {
         type: 'GCMajor',
         startTime: marker9.startTime,

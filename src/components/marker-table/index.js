@@ -20,9 +20,9 @@ import './index.css';
 import type {
   Thread,
   ThreadIndex,
-  MarkersTable,
   IndexIntoMarkersTable,
 } from '../../types/profile';
+import type { MarkersTable } from '../../types/profile-derived';
 import type { Milliseconds } from '../../types/units';
 import type {
   ExplicitConnectOptions,
@@ -37,13 +37,11 @@ type MarkerDisplayData = {|
 
 class MarkerTree {
   _markers: MarkersTable;
-  _thread: Thread;
   _zeroAt: Milliseconds;
   _displayDataByIndex: Map<IndexIntoMarkersTable, MarkerDisplayData>;
 
   constructor(thread: Thread, markers: MarkersTable, zeroAt: Milliseconds) {
     this._markers = markers;
-    this._thread = thread;
     this._zeroAt = zeroAt;
     this._displayDataByIndex = new Map();
   }
@@ -85,9 +83,8 @@ class MarkerTree {
     let displayData = this._displayDataByIndex.get(markerIndex);
     if (displayData === undefined) {
       const markers = this._markers;
-      const { stringTable } = this._thread;
       let category = 'unknown';
-      let name = stringTable.getString(markers.name[markerIndex]);
+      let name = markers.name[markerIndex];
       if (markers.data[markerIndex]) {
         const data = markers.data[markerIndex];
 
@@ -116,7 +113,7 @@ class MarkerTree {
 
       displayData = {
         timestamp: `${(
-          (markers.start[markerIndex] - this._zeroAt) /
+          (markers.startTime[markerIndex] - this._zeroAt) /
           1000
         ).toFixed(3)}s`,
         name,

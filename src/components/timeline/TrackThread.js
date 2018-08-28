@@ -17,10 +17,7 @@ import {
   getSampleIndexClosestToTime,
   getCallNodePathFromIndex,
 } from '../../profile-logic/profile-data';
-import {
-  TimelineTracingMarkersJank,
-  TimelineTracingMarkersOverview,
-} from './TracingMarkers';
+import { TimelineJankMarkers, TimelineOverviewMarkers } from './Markers';
 import {
   changeSelectedThread,
   updatePreviewSelection,
@@ -136,7 +133,7 @@ class TimelineTrackThread extends PureComponent<Props> {
     return (
       <div className="timelineTrackThread">
         {displayJank ? (
-          <TimelineTracingMarkersJank
+          <TimelineJankMarkers
             className="timelineTrackThreadIntervalMarkerOverview"
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}
@@ -145,7 +142,7 @@ class TimelineTrackThread extends PureComponent<Props> {
           />
         ) : null}
         {displayTracingMarkers ? (
-          <TimelineTracingMarkersOverview
+          <TimelineOverviewMarkers
             // Feed in the thread name to the class. This is used for conditional
             // sizing rules, for instance with GeckoMain threads.
             // TODO - This seems kind of brittle, and should probably done through

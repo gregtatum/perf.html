@@ -21,18 +21,15 @@ import {
 import { getSelectedThreadIndex } from '../../reducers/url-state';
 import './Markers.css';
 
+import type { MarkerPayload } from '../../types/markers';
+import type { MarkersTableByType } from '../../types/profile-derived';
 import type { Milliseconds, CssPixels } from '../../types/units';
-import type { UniqueStringArray } from '../../utils/unique-string-array';
 import type { SizeProps } from '../shared/WithSize';
 import type {
   ExplicitConnectOptions,
   ConnectedProps,
 } from '../../utils/connect';
-import type {
-  ThreadIndex,
-  MarkersTableByType,
-  IndexIntoMarkersTable,
-} from '../../types/profile';
+import type { ThreadIndex, IndexIntoMarkersTable } from '../../types/profile';
 
 type MarkerState = 'PRESSED' | 'HOVERED' | 'NONE';
 
@@ -42,19 +39,19 @@ type MarkerState = 'PRESSED' | 'HOVERED' | 'NONE';
  * the following forms:
  *
  * export const TimelineJankMarkers = (
- *  <Connect markers={JankMarkers}>
- *    <WithSize>
+ *  <WithSize>
+ *    <Connect markers={JankMarkers}>
  *      <TimelineMarkers />
- *    </WithSize>
- *  </Connect>
+ *    </Connect>
+ *  </WithSize>
  * );
  *
  * export const TimelineOverviewMarkers = (
- *   <Connect markers={AllMarkers}>
- *     <WithSize>
+ *   <WithSize>
+ *     <Connect markers={AllMarkers}>
  *       <TimelineMarkers />
- *     </WithSize>
- *   </Connect>
+ *     </Connect>
+ *   </WithSize>
  * );
  */
 
@@ -64,11 +61,11 @@ export type OwnProps = {|
   +rangeEnd: Milliseconds,
   +threadIndex: ThreadIndex,
   +onSelect: any,
+  ...SizeProps,
 |};
 
-export type StateProps = {|
-  +markers: MarkersTableByType<*>,
-  +markerStringTable: UniqueStringArray,
+export type StateProps<Payload> = {|
+  +markers: MarkersTableByType<Payload>,
   +isSelected: boolean,
   +styles: any,
   +overlayFills: {
@@ -78,7 +75,7 @@ export type StateProps = {|
   +isModifyingSelection: boolean,
 |};
 
-type Props = ConnectedProps<SizeProps, OwnProps, StateProps>;
+type Props<Payload> = ConnectedProps<SizeProps, OwnProps, StateProps<Payload>>;
 
 type State = {
   hoveredItem: IndexIntoMarkersTable | null,
@@ -87,7 +84,10 @@ type State = {
   mouseY: CssPixels,
 };
 
-class TimelineMarkersImplementation extends React.PureComponent<Props, State> {
+class TimelineMarkers<Payload> extends React.PureComponent<
+  Props<Payload>,
+  State
+> {
   _canvas: HTMLCanvasElement | null = null;
   _requestedAnimationFrame: boolean = false;
   state = {
@@ -119,14 +119,7 @@ class TimelineMarkersImplementation extends React.PureComponent<Props, State> {
     }
 
     const r = c.getBoundingClientRect();
-    const {
-      width,
-      rangeStart,
-      rangeEnd,
-      markers,
-      styles,
-      markerStringTable,
-    } = this.props;
+    const { width, rangeStart, rangeEnd, markers, styles } = this.props;
     const x = e.pageX - r.left;
     const y = e.pageY - r.top;
     const time = rangeStart + x / width * (rangeEnd - rangeStart);
@@ -140,10 +133,14 @@ class TimelineMarkersImplementation extends React.PureComponent<Props, State> {
       markerIndex >= 0;
       markerIndex--
     ) {
-      const start = markers.time[markerIndex];
+      const startTime = markers.startTime[markerIndex];
       const duration = markers.duration[markerIndex];
-      const name = markerStringTable.getString(markers.name[markerIndex]);
-      if (time < start || time >= start + duration) {
+      const name = markers.name[markerIndex];
+      if (
+        duration === null ||
+        time < startTime ||
+        time >= startTime + duration
+      ) {
         continue;
       }
       const style = name in styles ? styles[name] : styles.default;
@@ -190,9 +187,11 @@ class TimelineMarkersImplementation extends React.PureComponent<Props, State> {
           null /* extra null check because flow doesn't realize it's unnecessary */
       ) {
         const { onSelect, threadIndex, markers } = this.props;
-        const time = markers.time[mouseUpItem];
+        const startTime = markers.startTime[mouseUpItem];
         const duration = markers.duration[mouseUpItem];
-        onSelect(threadIndex, time, time + duration);
+        if (duration !== null) {
+          onSelect(threadIndex, startTime, startTime + duration);
+        }
       }
       this.setState({
         hoveredItem: mouseUpItem,
@@ -207,7 +206,7 @@ class TimelineMarkersImplementation extends React.PureComponent<Props, State> {
     });
   };
 
-  componentDidUpdate(prevProps: Props, prevState: State) {
+  componentDidUpdate(prevProps: Props<Payload>, prevState: State) {
     if (
       prevProps !== this.props ||
       prevState.hoveredItem !== this.state.hoveredItem
@@ -219,6 +218,7 @@ class TimelineMarkersImplementation extends React.PureComponent<Props, State> {
   render() {
     const {
       className,
+      markers,
       isSelected,
       isModifyingSelection,
       threadIndex,
@@ -240,7 +240,8 @@ class TimelineMarkersImplementation extends React.PureComponent<Props, State> {
         {shouldShowTooltip && hoveredItem ? (
           <Tooltip mouseX={mouseX} mouseY={mouseY}>
             <MarkerTooltipContents
-              marker={hoveredItem}
+              markerIndex={hoveredItem}
+              markers={markers}
               threadIndex={threadIndex}
             />
           </Tooltip>
@@ -273,7 +274,6 @@ class TimelineMarkersImplementation extends React.PureComponent<Props, State> {
       markers,
       styles,
       overlayFills,
-      markerStringTable,
     } = this.props;
 
     const devicePixelRatio = c.ownerDocument
@@ -296,14 +296,14 @@ class TimelineMarkersImplementation extends React.PureComponent<Props, State> {
     ctx.scale(devicePixelRatio, devicePixelRatio);
 
     for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
-      const start = markers.time[markerIndex];
+      const startTime = markers.startTime[markerIndex];
       const duration = markers.duration[markerIndex];
-      const name = markerStringTable.getString(markers.name[markerIndex]);
+      const name = markers.name[markerIndex];
       if (duration === null) {
         // Only draw markers with a duration.
         continue;
       }
-      const pos = (start - rangeStart) / (rangeEnd - rangeStart) * width;
+      const pos = (startTime - rangeStart) / (rangeEnd - rangeStart) * width;
       const itemWidth = Number.isFinite(duration)
         ? duration / (rangeEnd - rangeStart) * width
         : Number.MAX_SAFE_INTEGER;
@@ -365,15 +365,9 @@ class TimelineMarkersImplementation extends React.PureComponent<Props, State> {
 }
 
 /**
- * Combine the base implementation of the TimelineMarkers with the
- * WithSize component.
- */
-export const TimelineMarkers = withSize(TimelineMarkersImplementation);
-
-/**
  * Create a special connected component for Jank instances.
  */
-const jankOptions: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
+const jankOptions: ExplicitConnectOptions<OwnProps, StateProps<null>, {||}> = {
   mapStateToProps: (state, props) => {
     const { threadIndex } = props;
     const selectors = selectorsForThread(threadIndex);
@@ -381,7 +375,6 @@ const jankOptions: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
 
     return {
       markers: selectors.getJankMarkers(state),
-      markerStringTable: selectors.getThread(state).stringTable,
       isSelected: threadIndex === selectedThread,
       styles: styles,
       overlayFills: overlayFills,
@@ -391,20 +384,23 @@ const jankOptions: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
   component: TimelineMarkers,
 };
 
-export const TimelineJankMarkers = explicitConnect(jankOptions);
+export const TimelineJankMarkers = withSize(explicitConnect(jankOptions));
 
 /**
  * Create a connected component for an overview of the markers.
  */
-const tracingOptions: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
+const markerOptions: ExplicitConnectOptions<
+  OwnProps,
+  StateProps<MarkerPayload>,
+  {||}
+> = {
   mapStateToProps: (state, props) => {
     const { threadIndex } = props;
     const selectors = selectorsForThread(threadIndex);
     const selectedThread = getSelectedThreadIndex(state);
-    const markers = selectors.getCommittedRangeFilteredMarkersForHeader(state);
+    const markers = selectors.getRangeFilteredMarkersForHeader(state);
     return {
       markers,
-      markerStringTable: selectors.getThread(state).stringTable,
       isSelected: threadIndex === selectedThread,
       styles,
       overlayFills,
@@ -414,4 +410,4 @@ const tracingOptions: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
   component: TimelineMarkers,
 };
 
-export const TimelineOverviewMarkers = explicitConnect(tracingOptions);
+export const TimelineOverviewMarkers = withSize(explicitConnect(markerOptions));
