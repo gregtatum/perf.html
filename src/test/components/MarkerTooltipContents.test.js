@@ -3,7 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import type { MarkerPayload } from '../../types/markers';
+import type {
+  MarkerPayload,
+  GCMajorMarkerPayload,
+  PhaseTimes,
+} from '../../types/markers';
+import type { Microseconds } from '../../types/units';
 
 import React, { Fragment } from 'react';
 import { Provider } from 'react-redux';
@@ -94,11 +99,8 @@ describe('MarkerTooltipContents', function() {
         14.5,
         {
           type: 'tracing',
-          startTime: 14.5,
-          endTime: 14.5,
           category: 'Paint',
           interval: 'start',
-          name: 'NotifyDidPaint',
         },
       ],
       [
@@ -150,8 +152,6 @@ describe('MarkerTooltipContents', function() {
           startTime: 16.5,
           endTime: 16.5,
           timings: {
-            added_chunks: 50,
-            allocated_bytes: 48377856,
             major_gc_number: 1,
             max_pause: 74.026,
             minor_gc_number: 16,
@@ -159,7 +159,9 @@ describe('MarkerTooltipContents', function() {
             mmu_20ms: 0,
             mmu_50ms: 0,
             nonincremental_reason: 'GCBytesTrigger',
-            phase_times: {
+            allocated_bytes: 10,
+            totals: {},
+            phase_times: ({
               barrier: 805,
               'barrier.unmark_gray': 775,
               evict_nursery_for_major_gc: 1321,
@@ -205,7 +207,7 @@ describe('MarkerTooltipContents', function() {
               'sweep.sweep_shape': 1125,
               'sweep.sweep_string': 0,
               wait_background_thread: 13911,
-            },
+            }: PhaseTimes<Microseconds>),
             reason: 'ALLOC_TRIGGER',
             scc_sweep_max_pause: 1.294,
             scc_sweep_total: 1.294,
@@ -213,13 +215,12 @@ describe('MarkerTooltipContents', function() {
             slices: 2,
             status: 'completed',
             store_buffer_overflows: 1,
-            timestamp: 0,
             total_compartments: 19,
             total_time: 85.578,
             total_zones: 4,
             zones_collected: 1,
           },
-        }: MarkerPayload),
+        }: GCMajorMarkerPayload),
       ],
       [
         'GCSlice',
@@ -232,14 +233,12 @@ describe('MarkerTooltipContents', function() {
             reason: 'CC_WAITING',
             slice: 1,
             pause: 5.23,
-            when: 17.5,
             budget: '11ms',
             initial_state: 'Initial',
             final_state: 'Final',
             major_gc_number: 1,
             page_faults: 1,
             start_timestamp: 17,
-            end_timestamp: 17,
             phase_times: {
               mark: 10046,
               wait_background_thread: 0,
@@ -266,14 +265,6 @@ describe('MarkerTooltipContents', function() {
             time: 17.0,
             stack: funcNames.indexOf('nsRefreshDriver::AddStyleFlushObserver'),
           },
-          // The startTime and endTime properties are currently required by
-          // our flow type annotations, but those annotations are wrong:
-          // Actual Gecko profiles won't have these properties in their
-          // tracing markers. The flow types should really be fixed, but I had
-          // some trouble when I tried to do that so I deferred it to some
-          // later point.
-          startTime: 18.5,
-          endTime: 18.5,
         }: MarkerPayload),
       ],
       [
@@ -283,9 +274,6 @@ describe('MarkerTooltipContents', function() {
           type: 'tracing',
           category: 'Paint',
           interval: 'end',
-          // startTime and endTime should be unnecessary, see above
-          startTime: 18.5,
-          endTime: 18.5,
         }: MarkerPayload),
       ],
       [

@@ -1,5 +1,41 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`TimelineOverviewMarkers renders correctly 1`] = `
+<div
+  className="timelineTracingMarkersOverview selected"
+>
+  <canvas
+    className="timelineMarkersCanvas"
+    onMouseDown={[Function]}
+    onMouseMove={[Function]}
+    onMouseOut={[Function]}
+    onMouseUp={[Function]}
+  />
+</div>
+`;
+
+exports[`TimelineOverviewMarkers renders correctly 2`] = `
+Array [
+  Array [
+    "clearRect",
+    0,
+    0,
+    200,
+    300,
+  ],
+  Array [
+    "scale",
+    1,
+    1,
+  ],
+  Array [
+    "scale",
+    1,
+    1,
+  ],
+]
+`;
+
 exports[`TimelineTracingMarkersOverview renders correctly 1`] = `
 <div
   className="timelineTracingMarkersOverview selected"

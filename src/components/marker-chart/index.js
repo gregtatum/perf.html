@@ -124,7 +124,7 @@ const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
     let markers;
     let markerTimingRows;
     switch (getSelectedTab(state)) {
-      case 'network':
+      case 'network-chart':
         markers = selectedThreadSelectors.getNetworkMarkers(state);
         markerTimingRows = selectedThreadSelectors.getNetworkChartTiming(state);
         break;

@@ -56,6 +56,8 @@ import type {
   GCMajorMarkerPayload,
   GCSliceMarkerPayload,
   PhaseTimes,
+  VsyncTimestampPayload,
+  VsyncTimestampPayload_Gecko,
 } from '../types/markers';
 
 type RegExpResult = null | string[];
@@ -550,20 +552,10 @@ function _processStackTable(
 /**
  * Convert stack field to cause field for the given payload.
  */
-type ObjectWithStack = { stack: { samples: GeckoSamples } };
-type ObjectWithAnyStack = { stack: any };
-function _convertStackToCause<T: ObjectWithStack | Object>(
-  dataIn: T
-): {
-  ...$Diff<T, ObjectWithAnyStack>,
-  cause?: CauseBacktrace,
-} {
-  delete dataIn.stack;
-  // Flow doesn't like mutating objects, so opt out of type checking.
-  const data: any = dataIn;
-
+function _convertStackToCause(data: Object): any {
   if ('stack' in data && data.stack && data.stack.samples.data.length > 0) {
-    const stack: { samples: GeckoSamples } = data.stack;
+    const stack = data.stack;
+    delete data.stack;
     const stackIndex = stack.samples.data[0][stack.samples.schema.stack];
     const time = stack.samples.data[0][stack.samples.schema.time];
     if (stackIndex !== null) {
@@ -580,9 +572,10 @@ function _convertStackToCause<T: ObjectWithStack | Object>(
 function _processMarkers(
   geckoMarkers: GeckoMarkerStruct
 ): UnmatchedMarkersTable {
-  const data = geckoMarkers.data.map((m: MarkerPayload_Gecko) => {
-    if (m) {
-      switch (m.type) {
+  const data: MarkerPayload[] = geckoMarkers.data.map(l => {
+    const geckoPayload = l;
+    if (geckoPayload) {
+      switch (geckoPayload.type) {
         /**
          * We want to improve the format of these markers to make them
          * easier to understand and work with, but we can't do that by
@@ -591,23 +584,27 @@ function _processMarkers(
          * improvements while we process a gecko profile.
          */
         case 'GCSlice': {
-          const mt: GCSliceData_Gecko = m.timings;
-          const timings = {
+          const mt: GCSliceData_Gecko = geckoPayload.timings;
+          const timingsWithTime: { ...GCSliceData, times: any } = {
             ...mt,
             phase_times: mt.times
               ? convertPhaseTimes(mt.times)
               : ({}: PhaseTimes<Milliseconds>),
           };
-          delete timings.times;
+          // Flow doesn't understand deleting, so coerce to any when deleting the
+          // times property.
+          delete timingsWithTime.times;
+          const timings: GCSliceData = (timingsWithTime: any);
           return ({
             type: 'GCSlice',
-            startTime: m.startTime,
-            endTime: m.endTime,
-            timings: (timings: GCSliceData),
+            startTime: geckoPayload.startTime,
+            endTime: geckoPayload.endTime,
+            timings,
           }: GCSliceMarkerPayload);
         }
         case 'GCMajor': {
-          const mt: GCMajorAborted | GCMajorCompleted_Gecko = m.timings;
+          const mt: GCMajorAborted | GCMajorCompleted_Gecko =
+            geckoPayload.timings;
           switch (mt.status) {
             case 'completed': {
               const timings: GCMajorCompleted = {
@@ -618,16 +615,16 @@ function _processMarkers(
               };
               return ({
                 type: 'GCMajor',
-                startTime: m.startTime,
-                endTime: m.endTime,
+                startTime: geckoPayload.startTime,
+                endTime: geckoPayload.endTime,
                 timings: timings,
               }: GCMajorMarkerPayload);
             }
             case 'aborted':
               return ({
                 type: 'GCMajor',
-                startTime: m.startTime,
-                endTime: m.endTime,
+                startTime: geckoPayload.startTime,
+                endTime: geckoPayload.endTime,
                 timings: { status: 'aborted' },
               }: GCMajorMarkerPayload);
             default:
@@ -642,13 +639,22 @@ function _processMarkers(
          */
         case 'Styles':
         case 'tracing':
-          return (_convertStackToCause(m): MarkerPayload);
+          // Unsafely (from a type perspective) convert a stack to a cause.
+          return (_convertStackToCause(geckoPayload): MarkerPayload);
+        case undefined:
+          // Handle profiles with no types.
+          if (geckoPayload.category === 'VsyncTimestamp') {
+            return ({
+              type: 'VsyncTimestamp',
+              vsync: (geckoPayload: VsyncTimestampPayload_Gecko).vsync,
+            }: VsyncTimestampPayload);
+          }
+          return (geckoPayload: MarkerPayload);
         default:
-          return m;
+          return (geckoPayload: MarkerPayload);
       }
-    } else {
-      return null;
     }
+    return null;
   });
 
   return {
@@ -902,8 +908,11 @@ export function serializeProfile(
             currentMarker.type === 'Network'
           ) {
             // Remove the URI fields from marker payload.
-            currentMarker.URI = '';
-            currentMarker.RedirectURI = '';
+            newThread.markers.data[i] = {
+              ...currentMarker,
+              URI: '',
+              RedirectURI: '',
+            };
             // Strip the URL from the marker name
             const stringIndex = newThread.markers.name[i];
             stringArray[stringIndex] = stringArray[stringIndex].replace(

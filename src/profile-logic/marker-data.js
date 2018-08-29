@@ -4,7 +4,12 @@
 
 // @flow
 
-import type { MarkerSlug, BailoutPayload } from '../types/markers';
+import type {
+  MarkerSlug,
+  BailoutPayload,
+  VsyncTimestampPayload_Gecko,
+  VsyncTimestampPayload,
+} from '../types/markers';
 import type {
   UnmatchedMarkersTable,
   IndexIntoStringTable,
@@ -21,7 +26,7 @@ import type { UniqueStringArray } from '../utils/unique-string-array';
 import { sortDataTable } from '../utils/data-table-utils';
 import { getNumberPropertyOrNull } from '../utils/flow';
 
-export function filterMarkersToType<T: MarkerSlug, Payload: { type: T }>(
+export function filterMarkersToType<T: MarkerSlug, Payload: { +type: T }>(
   markers: MarkersTable,
   type: T
 ): MarkersTableByType<Payload> {
@@ -383,6 +388,28 @@ export function extractMarkerDataFromName({
   }
 
   return newMarkers;
+}
+
+/**
+ * This function ensures that all known markers have types, and does some other small
+ * cleanups.
+ */
+export function cleanupPayloadInformation(
+  markers: UnmatchedMarkersTable
+): UnmatchedMarkersTable {
+  return {
+    ...markers,
+    data: markers.data.map((data: any) => {
+      if (data.category === 'VsyncTimestamp') {
+        const payload: VsyncTimestampPayload_Gecko = data;
+        return ({
+          type: 'VsyncTimestamp',
+          vsync: payload.vsync,
+        }: VsyncTimestampPayload);
+      }
+      return data;
+    }),
+  };
 }
 
 export function filterMarkersBySearchString(

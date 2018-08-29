@@ -467,7 +467,7 @@ describe('profile-data', function() {
       expect(callNodeTable.length).toEqual(6);
     });
   });
-  describe('matchStartAndEndMarkers', function() {
+  fdescribe('matchStartAndEndMarkers', function() {
     const profile = processProfile(getGeckoProfile());
     const thread = profile.threads[0];
     const rootRange = getTimeRangeIncludingAllThreads(profile);

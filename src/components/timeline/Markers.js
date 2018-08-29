@@ -21,8 +21,10 @@ import {
 import { getSelectedThreadIndex } from '../../reducers/url-state';
 import './Markers.css';
 
-import type { MarkerPayload } from '../../types/markers';
-import type { MarkersTableByType } from '../../types/profile-derived';
+import type {
+  MarkersTableByType,
+  MarkersTable,
+} from '../../types/profile-derived';
 import type { Milliseconds, CssPixels } from '../../types/units';
 import type { SizeProps } from '../shared/WithSize';
 import type {
@@ -64,8 +66,8 @@ export type OwnProps = {|
   ...SizeProps,
 |};
 
-export type StateProps<Payload> = {|
-  +markers: MarkersTableByType<Payload>,
+export type StateProps = {|
+  +markers: MarkersTable | MarkersTableByType<null>,
   +isSelected: boolean,
   +styles: any,
   +overlayFills: {
@@ -75,7 +77,7 @@ export type StateProps<Payload> = {|
   +isModifyingSelection: boolean,
 |};
 
-type Props<Payload> = ConnectedProps<SizeProps, OwnProps, StateProps<Payload>>;
+type Props = ConnectedProps<OwnProps, StateProps, {||}>;
 
 type State = {
   hoveredItem: IndexIntoMarkersTable | null,
@@ -84,10 +86,7 @@ type State = {
   mouseY: CssPixels,
 };
 
-class TimelineMarkers<Payload> extends React.PureComponent<
-  Props<Payload>,
-  State
-> {
+class TimelineMarkers extends React.PureComponent<Props, State> {
   _canvas: HTMLCanvasElement | null = null;
   _requestedAnimationFrame: boolean = false;
   state = {
@@ -206,7 +205,7 @@ class TimelineMarkers<Payload> extends React.PureComponent<
     });
   };
 
-  componentDidUpdate(prevProps: Props<Payload>, prevState: State) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
     if (
       prevProps !== this.props ||
       prevState.hoveredItem !== this.state.hoveredItem
@@ -367,12 +366,11 @@ class TimelineMarkers<Payload> extends React.PureComponent<
 /**
  * Create a special connected component for Jank instances.
  */
-const jankOptions: ExplicitConnectOptions<OwnProps, StateProps<null>, {||}> = {
+const jankOptions: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
   mapStateToProps: (state, props) => {
     const { threadIndex } = props;
     const selectors = selectorsForThread(threadIndex);
     const selectedThread = getSelectedThreadIndex(state);
-
     return {
       markers: selectors.getJankMarkers(state),
       isSelected: threadIndex === selectedThread,
@@ -389,11 +387,7 @@ export const TimelineJankMarkers = withSize(explicitConnect(jankOptions));
 /**
  * Create a connected component for an overview of the markers.
  */
-const markerOptions: ExplicitConnectOptions<
-  OwnProps,
-  StateProps<MarkerPayload>,
-  {||}
-> = {
+const markerOptions: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
   mapStateToProps: (state, props) => {
     const { threadIndex } = props;
     const selectors = selectorsForThread(threadIndex);

@@ -942,8 +942,10 @@ export const selectorsForThread = (
             )
           : markers
     );
-    const getNetworkMarkers = createSelector(getRangeFilteredMarkers, markers =>
-      MarkerData.filterMarkersToType(markers, 'Network')
+    const getNetworkMarkers = createSelector(
+      getRangeFilteredMarkers,
+      (markers): MarkersTableByType<NetworkPayload> =>
+        MarkerData.filterMarkersToType(markers, 'Network')
     );
     const getMarkerChartMarkers = createSelector(
       getRangeFilteredMarkers,

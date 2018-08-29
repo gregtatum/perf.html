@@ -22,7 +22,10 @@ import { getImplementationFilter } from '../../reducers/url-state';
 import Backtrace from './Backtrace';
 
 import { bailoutTypeInformation } from '../../profile-logic/marker-info';
-import type { MarkersTableByType } from '../../types/profile-derived';
+import type {
+  MarkersTableByType,
+  MarkersTable,
+} from '../../types/profile-derived';
 import type { Microseconds } from '../../types/units';
 import type { NotVoidOrNull } from '../../types/utils';
 import type { ImplementationFilter } from '../../types/actions';
@@ -37,6 +40,7 @@ import type {
   PaintProfilerMarkerTracing,
   PhaseTimes,
   StyleMarkerPayload,
+  MarkerPayload,
 } from '../../types/markers';
 import type {
   ExplicitConnectOptions,
@@ -314,7 +318,7 @@ function getMarkerDetails(
   thread: Thread,
   implementationFilter: ImplementationFilter
 ): React.Node {
-  const data = markers[markerIndex].data;
+  const data: MarkerPayload = markers.data[markerIndex];
 
   if (data) {
     switch (data.type) {
