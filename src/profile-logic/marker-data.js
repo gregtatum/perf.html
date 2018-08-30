@@ -21,7 +21,7 @@ export function getJankInstances(
   const addTracingMarker = () =>
     jankInstances.push({
       start: lastTimestamp - lastResponsiveness,
-      dur: lastResponsiveness,
+      duration: lastResponsiveness,
       title: `${lastResponsiveness.toFixed(2)}ms event processing delay`,
       name: 'Jank',
       data: null,
@@ -200,7 +200,7 @@ export function getTracingMarkers(
       // Add a marker with a zero duration
       const marker = {
         start: markers.time[i],
-        dur: 0,
+        duration: 0,
         name: stringTable.getString(markers.name[i]),
         title: null,
         data: null,
@@ -230,7 +230,7 @@ export function getTracingMarkers(
         markerBucket.push({
           start: time,
           name: stringTable.getString(nameStringIndex),
-          dur: 0,
+          duration: 0,
           title: null,
           data,
         });
@@ -252,13 +252,13 @@ export function getTracingMarkers(
           marker = {
             start: -1, // Something negative so that we can distinguish it later
             name: stringTable.getString(nameStringIndex),
-            dur: 0,
+            duration: 0,
             title: null,
             data,
           };
         }
         if (marker.start !== undefined) {
-          marker.dur = time - marker.start;
+          marker.duration = time - marker.start;
         }
         tracingMarkers.push(marker);
       }
@@ -275,7 +275,7 @@ export function getTracingMarkers(
         const duration = endTime - startTime;
         tracingMarkers.push({
           start: startTime,
-          dur: duration,
+          duration: duration,
           name,
           data,
           title: null,
@@ -286,7 +286,7 @@ export function getTracingMarkers(
         // in a consistent manner.
         tracingMarkers.push({
           start: markers.time[i],
-          dur: 0,
+          duration: 0,
           name: stringTable.getString(markers.name[i]),
           data,
           title: null,
@@ -298,7 +298,7 @@ export function getTracingMarkers(
   // Loop over tracing "start" markers without any "end" markers
   for (const markerBucket of openMarkers.values()) {
     for (const marker of markerBucket) {
-      marker.dur = Infinity;
+      marker.duration = Infinity;
       tracingMarkers.push(marker);
     }
   }
@@ -313,7 +313,7 @@ export function filterTracingMarkersToRange(
   rangeEnd: number
 ): TracingMarker[] {
   return tracingMarkers.filter(
-    tm => tm.start < rangeEnd && tm.start + tm.dur >= rangeStart
+    tm => tm.start < rangeEnd && tm.start + tm.duration >= rangeStart
   );
 }
 
@@ -343,7 +343,7 @@ export function extractScreenshotsById(
 
       tracingMarkers.push({
         start: markers.time[markerIndex],
-        dur: 0,
+        duration: 0,
         title: null,
         name,
         data,
@@ -353,7 +353,7 @@ export function extractScreenshotsById(
         // Set the duration
         const prevMarker = tracingMarkers[tracingMarkers.length - 2];
         const nextMarker = tracingMarkers[tracingMarkers.length - 1];
-        prevMarker.dur = nextMarker.start - prevMarker.start;
+        prevMarker.duration = nextMarker.start - prevMarker.start;
       }
     }
   }
@@ -361,7 +361,7 @@ export function extractScreenshotsById(
   for (const [, tracingMarkers] of idToScreenshotMarkers) {
     // This last marker must exist.
     const lastMarker = tracingMarkers[tracingMarkers.length - 1];
-    lastMarker.dur = rootRange.end - lastMarker.start;
+    lastMarker.duration = rootRange.end - lastMarker.start;
   }
 
   return idToScreenshotMarkers;

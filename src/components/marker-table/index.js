@@ -117,7 +117,7 @@ class MarkerTree {
 
       displayData = {
         start: _formatStart(marker.start, this._zeroAt),
-        duration: _formatDuration(marker.dur),
+        duration: _formatDuration(marker.duration),
         name,
         category,
       };

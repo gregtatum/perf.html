@@ -100,7 +100,7 @@ export function getMarkerTiming(
       const otherEnd = markerTimingsRow.end[markerTimingsRow.length - 1];
       if (otherEnd === undefined || otherEnd <= marker.start) {
         markerTimingsRow.start.push(marker.start);
-        markerTimingsRow.end.push(marker.start + marker.dur);
+        markerTimingsRow.end.push(marker.start + marker.duration);
         markerTimingsRow.label.push(computeMarkerLabel(marker.data));
         markerTimingsRow.index.push(tracingMarkerIndex);
         markerTimingsRow.length++;

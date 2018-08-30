@@ -127,8 +127,8 @@ class TimelineTracingMarkersImplementation extends React.PureComponent<
     // with the highest array index. So we walk the list of intervalMarkers
     // from high index to low index, which is front to back in z-order.
     for (let i = intervalMarkers.length - 1; i >= 0; i--) {
-      const { start, dur, name } = intervalMarkers[i];
-      if (time < start || time >= start + dur) {
+      const { start, duration, name } = intervalMarkers[i];
+      if (time < start || time >= start + duration) {
         continue;
       }
       const style = name in styles ? styles[name] : styles.default;
@@ -178,7 +178,7 @@ class TimelineTracingMarkersImplementation extends React.PureComponent<
         onSelect(
           threadIndex,
           mouseUpItem.start,
-          mouseUpItem.start + mouseUpItem.dur
+          mouseUpItem.start + mouseUpItem.duration
         );
       }
       this.setState({
@@ -282,10 +282,10 @@ class TimelineTracingMarkersImplementation extends React.PureComponent<
     ctx.scale(devicePixelRatio, devicePixelRatio);
 
     intervalMarkers.forEach(marker => {
-      const { start, dur, name } = marker;
+      const { start, duration, name } = marker;
       const pos = (start - rangeStart) / (rangeEnd - rangeStart) * width;
-      const itemWidth = Number.isFinite(dur)
-        ? dur / (rangeEnd - rangeStart) * width
+      const itemWidth = Number.isFinite(duration)
+        ? duration / (rangeEnd - rangeStart) * width
         : Number.MAX_SAFE_INTEGER;
       const style = name in styles ? styles[name] : styles.default;
       ctx.fillStyle = style.background;

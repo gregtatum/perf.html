@@ -321,7 +321,7 @@ class MarkerChartCanvas extends React.PureComponent<Props, State> {
       hasSelection: true,
       isModifying: false,
       selectionStart: marker.start,
-      selectionEnd: marker.start + marker.dur,
+      selectionEnd: marker.start + marker.duration,
     });
   };
 

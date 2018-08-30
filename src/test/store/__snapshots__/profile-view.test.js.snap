@@ -1204,21 +1204,21 @@ exports[`snapshots of selectors/profile-view matches the last stored run of sele
 Array [
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "D",
     "start": 3,
     "title": null,
   },
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "E",
     "start": 4,
     "title": null,
   },
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "F",
     "start": 5,
     "title": null,
@@ -1230,21 +1230,21 @@ exports[`snapshots of selectors/profile-view matches the last stored run of sele
 Array [
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "D",
     "start": 3,
     "title": null,
   },
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "E",
     "start": 4,
     "title": null,
   },
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "F",
     "start": 5,
     "title": null,
@@ -1597,7 +1597,7 @@ exports[`snapshots of selectors/profile-view matches the last stored run of sele
 Array [
   Object {
     "data": null,
-    "dur": 100,
+    "duration": 100,
     "name": "Jank",
     "start": -96,
     "title": "100.00ms event processing delay",
@@ -2558,21 +2558,21 @@ exports[`snapshots of selectors/profile-view matches the last stored run of sele
 Array [
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "D",
     "start": 3,
     "title": null,
   },
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "E",
     "start": 4,
     "title": null,
   },
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "F",
     "start": 5,
     "title": null,
@@ -2589,42 +2589,42 @@ exports[`snapshots of selectors/profile-view matches the last stored run of sele
 Array [
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "A",
     "start": 0,
     "title": null,
   },
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "B",
     "start": 1,
     "title": null,
   },
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "C",
     "start": 2,
     "title": null,
   },
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "D",
     "start": 3,
     "title": null,
   },
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "E",
     "start": 4,
     "title": null,
   },
   Object {
     "data": null,
-    "dur": 0,
+    "duration": 0,
     "name": "F",
     "start": 5,
     "title": null,

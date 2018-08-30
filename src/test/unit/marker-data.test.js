@@ -18,7 +18,7 @@ describe('getTracingMarkers', function() {
   it('creates a tracing marker even if there is no start or end time', function() {
     expect(tracingMarkers[1]).toMatchObject({
       start: 2,
-      dur: 0,
+      duration: 0,
       name: 'VsyncTimestamp',
       title: null,
     });
@@ -26,7 +26,7 @@ describe('getTracingMarkers', function() {
   it('should create a tracing marker', function() {
     expect(tracingMarkers[2]).toMatchObject({
       start: 3,
-      dur: 5,
+      duration: 5,
       name: 'Reflow',
       title: null,
     });
@@ -35,7 +35,7 @@ describe('getTracingMarkers', function() {
     expect(tracingMarkers.length).toEqual(10);
     expect(tracingMarkers[2]).toMatchObject({
       start: 3,
-      dur: 5,
+      duration: 5,
       name: 'Reflow',
       title: null,
     });
@@ -43,7 +43,7 @@ describe('getTracingMarkers', function() {
   it('should fold the two Rasterize markers into one tracing marker, after the reflow tracing marker', function() {
     expect(tracingMarkers[3]).toMatchObject({
       start: 4,
-      dur: 1,
+      duration: 1,
       name: 'Rasterize',
       title: null,
     });
@@ -51,14 +51,14 @@ describe('getTracingMarkers', function() {
   it('should create a tracing marker for the MinorGC startTime/endTime marker', function() {
     expect(tracingMarkers[5]).toMatchObject({
       start: 11,
-      dur: 1,
+      duration: 1,
       name: 'MinorGC',
       title: null,
     });
   });
   it('should create a tracing marker for the DOMEvent marker', function() {
     expect(tracingMarkers[4]).toMatchObject({
-      dur: 1,
+      duration: 1,
       name: 'DOMEvent',
       start: 9,
       title: null,
@@ -66,7 +66,7 @@ describe('getTracingMarkers', function() {
   });
   it('should create a tracing marker for the marker UserTiming', function() {
     expect(tracingMarkers[6]).toMatchObject({
-      dur: 1,
+      duration: 1,
       name: 'UserTiming',
       start: 12,
       title: null,
@@ -75,7 +75,7 @@ describe('getTracingMarkers', function() {
   it('should handle tracing markers without a start', function() {
     expect(tracingMarkers[0]).toMatchObject({
       start: -1,
-      dur: 2, // This duration doesn't represent much and won't be displayed anyway
+      duration: 2, // This duration doesn't represent much and won't be displayed anyway
       name: 'Rasterize',
       title: null,
     });
@@ -83,7 +83,7 @@ describe('getTracingMarkers', function() {
   it('should handle tracing markers without an end', function() {
     expect(tracingMarkers[9]).toMatchObject({
       start: 20,
-      dur: Infinity,
+      duration: Infinity,
       name: 'Rasterize',
       title: null,
     });
@@ -91,13 +91,13 @@ describe('getTracingMarkers', function() {
   it('should handle nested tracing markers correctly', function() {
     expect(tracingMarkers[7]).toMatchObject({
       start: 13,
-      dur: 5,
+      duration: 5,
       name: 'Reflow',
       title: null,
     });
     expect(tracingMarkers[8]).toMatchObject({
       start: 14,
-      dur: 1,
+      duration: 1,
       name: 'Reflow',
       title: null,
     });
