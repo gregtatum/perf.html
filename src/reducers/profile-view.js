@@ -968,6 +968,7 @@ export const selectorsForThread = (
     const getTracingMarkers = createSelector(
       getProcessedMarkersTable,
       _getStringTable,
+      getProfileRootRange,
       MarkerData.getTracingMarkers
     );
     const getCommittedRangeFilteredTracingMarkers = createSelector(

@@ -737,17 +737,27 @@ class MarkerTooltipContents extends React.PureComponent<Props> {
       implementationFilter,
     } = this.props;
     const details = getMarkerDetails(marker, thread, implementationFilter);
+
+    let durationText;
+    if (marker.duration !== null) {
+      // There is a known duration.
+      durationText = formatNumber(marker.duration) + 'ms';
+    } else if (marker.end !== null) {
+      // There was a start and end time, meaning that the marker's total duration
+      // wasn't recorded by a start or end marker. Display the amount of known time in
+      // range.
+      durationText =
+        formatNumber(marker.end - marker.start) +
+        'ms plus additional unrecorded time';
+    } else {
+      durationText = 'no duration';
+    }
+
     return (
       <div className={classNames('tooltipMarker', className)}>
         <div className={classNames({ tooltipHeader: details })}>
           <div className="tooltipOneLine">
-            <div className="tooltipTiming">
-              {/* tracing markers with no start have a negative start, while the
-                ones with no end have an infinite duration */}
-              {Number.isFinite(marker.duration) && marker.start >= 0
-                ? formatNumber(marker.duration) + 'ms'
-                : 'unknown duration'}
-            </div>
+            <div className="tooltipTiming">{durationText}</div>
             <div className="tooltipTitle">{marker.title || marker.name}</div>
           </div>
           {threadName ? (

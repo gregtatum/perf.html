@@ -5,12 +5,18 @@
 
 import { getTracingMarkers } from '../../profile-logic/marker-data';
 import { processProfile } from '../../profile-logic/process-profile';
+import { getTimeRangeIncludingAllThreads } from '../../profile-logic/profile-data';
 import getGeckoProfile from '.././fixtures/profiles/gecko-profile';
 
 describe('getTracingMarkers', function() {
   const profile = processProfile(getGeckoProfile());
   const thread = profile.threads[0];
-  const tracingMarkers = getTracingMarkers(thread.markers, thread.stringTable);
+  const rootRange = getTimeRangeIncludingAllThreads(profile);
+  const tracingMarkers = getTracingMarkers(
+    thread.markers,
+    thread.stringTable,
+    rootRange
+  );
 
   it('creates 10 tracing markers given the test data', function() {
     expect(tracingMarkers.length).toEqual(10);
@@ -18,7 +24,7 @@ describe('getTracingMarkers', function() {
   it('creates a tracing marker even if there is no start or end time', function() {
     expect(tracingMarkers[1]).toMatchObject({
       start: 2,
-      duration: 0,
+      duration: null,
       name: 'VsyncTimestamp',
       title: null,
     });

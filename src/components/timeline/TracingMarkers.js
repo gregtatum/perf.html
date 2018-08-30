@@ -282,11 +282,10 @@ class TimelineTracingMarkersImplementation extends React.PureComponent<
     ctx.scale(devicePixelRatio, devicePixelRatio);
 
     intervalMarkers.forEach(marker => {
-      const { start, duration, name } = marker;
+      const { start, end, name } = marker;
       const pos = (start - rangeStart) / (rangeEnd - rangeStart) * width;
-      const itemWidth = Number.isFinite(duration)
-        ? duration / (rangeEnd - rangeStart) * width
-        : Number.MAX_SAFE_INTEGER;
+      const itemWidth =
+        end === null ? 0 : (end - start) / (rangeEnd - rangeStart) * width;
       const style = name in styles ? styles[name] : styles.default;
       ctx.fillStyle = style.background;
       if (style.squareCorners) {

@@ -117,7 +117,7 @@ class MarkerTree {
 
       displayData = {
         start: _formatStart(marker.start, this._zeroAt),
-        duration: _formatDuration(marker.duration),
+        duration: _formatDuration(marker),
         name,
         category,
       };
@@ -136,9 +136,17 @@ function _formatStart(start: number, zeroAt) {
   );
 }
 
-function _formatDuration(duration: number): string {
-  if (duration === 0) {
-    return '—';
+function _formatDuration(marker: TracingMarker): string {
+  let duration = marker.duration;
+  let prefix = '';
+  if (duration === null) {
+    if (marker.end === null) {
+      return '—';
+    }
+    // There is a marker start and marker end, but no duration. This means that the
+    // marker either is missing the start or end marker to give the complete duration.
+    duration = marker.end - marker.start;
+    prefix = '>';
   }
   let maximumFractionDigits = 1;
   if (duration < 0.01) {
@@ -147,10 +155,12 @@ function _formatDuration(duration: number): string {
     maximumFractionDigits = 2;
   }
   return (
+    prefix +
     duration.toLocaleString(undefined, {
       minimumFractionDigits: 0,
       maximumFractionDigits,
-    }) + 'ms'
+    }) +
+    'ms'
   );
 }
 

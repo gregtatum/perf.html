@@ -65,13 +65,28 @@ export type CallNodeInfo = {
  */
 export type CallNodePath = IndexIntoFuncTable[];
 
-export type TracingMarker = {
+export type MutableTracingMarker = {|
+  // All TracingMarkers have a start time, however if the value is 0 then the true start
+  // time is unknown. This could happen with TracingMarkers that had an end marker
+  // and no starting marker.
   start: Milliseconds,
-  duration: Milliseconds,
+  // If a TracingMarker has a null endTime, then it does not have a duration.
+  // Additionally, tracing markers that have a start marker, but no end marker will
+  // have their time set to the end of the profile.
+  end: Milliseconds | null,
+  // There are three cases for TracingMarkers with durations:
+  // 1. Milliseconds - Markers have a duration because there is a start and end time.
+  // 2. null - The marker represents a point in time, and has no duration.
+  // 3. null - A tracing marker did not have a start or end marker, so the start and end
+  //           time were artificially set, but we don't actually know the true duration.
+  duration: Milliseconds | null,
+
   name: string,
   title: string | null,
   data: MarkerPayload,
-};
+|};
+
+export type TracingMarker = $ReadOnly<MutableTracingMarker>;
 
 export type IndexIntoTracingMarkers = number;
 
