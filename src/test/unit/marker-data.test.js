@@ -6,6 +6,74 @@
 import { getTracingMarkers } from '../../profile-logic/marker-data';
 import { processProfile } from '../../profile-logic/process-profile';
 import getGeckoProfile from '.././fixtures/profiles/gecko-profile';
+import { getProfileWithMarkers } from '../fixtures/profiles/make-profile';
+
+fdescribe('getTracingMarkers', function() {
+  it('combines a start and end marker', function() {
+    const markers = setup([
+      ['Reflow', 3, { type: 'tracing', category: 'Paint', interval: 'start' }],
+      ['Reflow', 8, { type: 'tracing', category: 'Paint', interval: 'end' }],
+    ]);
+    expect(markers).toEqual([
+      {
+        data: {
+          category: 'Paint',
+          interval: 'start',
+          type: 'tracing',
+        },
+        dur: 5,
+        name: 'Reflow',
+        start: 3,
+        title: null,
+      },
+    ]);
+  });
+
+  it('combines multiple overlapping markers of different names correctly', function() {
+    // 3------------------4-------------------5-------------------6ms
+    // [Reflow start]-------------------------[Reflow end]---------
+    // -------------------[Rasterize start]---[Rasterize end]------
+    const markers = setup([
+      ['Reflow', 3, { type: 'tracing', category: 'Paint', interval: 'start' }],
+      ['Reflow', 5, { type: 'tracing', category: 'Paint', interval: 'end' }],
+      [
+        'Rasterize',
+        4,
+        { type: 'tracing', category: 'Paint', interval: 'start' },
+      ],
+      ['Rasterize', 5, { type: 'tracing', category: 'Paint', interval: 'end' }],
+    ]);
+    expect(markers).toEqual([
+      {
+        data: {
+          category: 'Paint',
+          interval: 'start',
+          type: 'tracing',
+        },
+        dur: 2,
+        name: 'Reflow',
+        start: 3,
+        title: null,
+      },
+      {
+        data: {
+          category: 'Paint',
+          interval: 'start',
+          type: 'tracing',
+        },
+        dur: 1,
+        name: 'Rasterize',
+        start: 4,
+        title: null,
+      },
+    ]);
+  });
+});
+
+function setup(markers) {
+  const profile = getProfileWithMarkers(markers);
+  return getTracingMarkers(profile.threads[0]);
+}
 
 describe('getTracingMarkers', function() {
   const profile = processProfile(getGeckoProfile());
