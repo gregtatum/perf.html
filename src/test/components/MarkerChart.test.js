@@ -51,22 +51,6 @@ const MARKERS = [
   ],
 ];
 
-const NETWORK_MARKERS = [
-  [
-    'Load event',
-    11,
-    {
-      type: 'Network',
-      startTime: 11,
-      endTime: 12,
-      id: 31666793873480,
-      status: 'STATUS_START',
-      pri: 0,
-      URI: 'https://tiles.services.mozilla.com/v3/links/ping-centre',
-    },
-  ],
-];
-
 function setupWithProfile(profile) {
   const flushRafCalls = mockRaf();
   const ctx = mockCanvasContext();
@@ -100,7 +84,7 @@ function setupWithProfile(profile) {
 it('renders MarkerChart correctly', () => {
   window.devicePixelRatio = 1;
 
-  const profile = getProfileWithMarkers([...MARKERS, ...NETWORK_MARKERS]);
+  const profile = getProfileWithMarkers([...MARKERS]);
   const {
     flushRafCalls,
     dispatch,
@@ -112,15 +96,7 @@ it('renders MarkerChart correctly', () => {
   markerChart.update();
   flushRafCalls();
 
-  let drawCalls = flushDrawLog();
-  expect(markerChart).toMatchSnapshot();
-  expect(drawCalls).toMatchSnapshot();
-
-  dispatch(changeSelectedTab('network-chart'));
-  markerChart.update();
-  flushRafCalls();
-
-  drawCalls = flushDrawLog();
+  const drawCalls = flushDrawLog();
   expect(markerChart).toMatchSnapshot();
   expect(drawCalls).toMatchSnapshot();
 
@@ -168,15 +144,6 @@ describe('Empty Reasons', () => {
     const { dispatch, markerChart } = setupWithProfile(profile);
 
     dispatch(changeSelectedTab('marker-chart'));
-    markerChart.update();
-    expect(markerChart).toMatchSnapshot();
-  });
-
-  it('shows a reason when a profil has no network markers', () => {
-    const profile = getProfileWithMarkers(MARKERS);
-    const { dispatch, markerChart } = setupWithProfile(profile);
-
-    dispatch(changeSelectedTab('network-chart'));
     markerChart.update();
     expect(markerChart).toMatchSnapshot();
   });

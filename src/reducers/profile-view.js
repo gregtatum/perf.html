@@ -726,8 +726,9 @@ export type SelectorsForThread = {
   getJankInstances: State => TracingMarker[],
   getProcessedMarkersThread: State => Thread,
   getTracingMarkers: State => TracingMarker[],
-  getTracingMarkersForView: State => TracingMarker[],
+  getTracingMarkersForNetworkChart: State => TracingMarker[],
   getMarkerTiming: State => MarkerTimingRows,
+  getNetworkTiming: State => MarkerTimingRows,
   getCommittedRangeFilteredTracingMarkers: State => TracingMarker[],
   getCommittedRangeFilteredTracingMarkersForHeader: State => TracingMarker[],
   getFilteredThread: State => Thread,
@@ -923,27 +924,23 @@ export const selectorsForThread = (
     );
     const getTracingMarkersForNetworkChart = createSelector(
       getTracingMarkers,
-      markers => markers.filter(ProfileData.isNetworkMarker)
+      markers => markers.filter(marker => ProfileData.isNetworkMarker(marker))
     );
     const getTracingMarkersForMarkerChart = createSelector(
       getTracingMarkers,
       markers => markers.filter(marker => !ProfileData.isNetworkMarker(marker))
     );
-    const getTracingMarkersForView = state => {
-      const selectedTab = UrlState.getSelectedTab(state);
-      switch (selectedTab) {
-        case 'marker-chart':
-          return getTracingMarkersForMarkerChart(state);
-        case 'network-chart':
-          return getTracingMarkersForNetworkChart(state);
-        default:
-          return getTracingMarkers(state);
-      }
-    };
+
     const getMarkerTiming = createSelector(
-      getTracingMarkersForView,
+      getTracingMarkersForMarkerChart,
       MarkerTiming.getMarkerTiming
     );
+
+    const getNetworkTiming = createSelector(
+      getTracingMarkersForNetworkChart,
+      MarkerTiming.getMarkerTiming
+    );
+
     const getCommittedRangeFilteredTracingMarkers = createSelector(
       getTracingMarkers,
       getCommittedRange,
@@ -1072,8 +1069,9 @@ export const selectorsForThread = (
       getJankInstances,
       getProcessedMarkersThread,
       getTracingMarkers,
-      getTracingMarkersForView,
+      getTracingMarkersForNetworkChart,
       getMarkerTiming,
+      getNetworkTiming,
       getCommittedRangeFilteredTracingMarkers,
       getCommittedRangeFilteredTracingMarkersForHeader,
       getFilteredThread,

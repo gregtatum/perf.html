@@ -22,14 +22,15 @@ type StateProps = {|
 |};
 
 type Props = ConnectedProps<{||}, StateProps, {||}>;
-class MarkerChartEmptyReasons extends PureComponent<Props> {
+class NetworkChartEmptyReasons extends PureComponent<Props> {
   render() {
     const { thread, threadName } = this.props;
 
     let reason = '';
-    const viewName = 'marker chart';
+    const viewName = 'network chart';
+
     if (thread.markers.length === 0) {
-      reason = 'No markers have been found in this thread.';
+      reason = 'This thread has no network markers.';
     }
 
     return (
@@ -47,7 +48,7 @@ const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
     thread: selectedThreadSelectors.getThread(state),
     threadName: selectedThreadSelectors.getFriendlyThreadName(state),
   }),
-  component: MarkerChartEmptyReasons,
+  component: NetworkChartEmptyReasons,
 };
 
 export default explicitConnect(options);
