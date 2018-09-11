@@ -38,6 +38,7 @@ import type {
   IndexIntoFuncTable,
   IndexIntoStringTable,
   IndexIntoResourceTable,
+  JsTracerTable,
 } from '../types/profile';
 import type { Milliseconds } from '../types/units';
 import type {
@@ -733,7 +734,7 @@ function _processThread(
   const markers = _processMarkers(geckoMarkers);
   const samples = _processSamples(geckoSamples);
 
-  return {
+  const newThread: Thread = {
     name: thread.name,
     processType: thread.processType,
     processName:
@@ -754,6 +755,18 @@ function _processThread(
     stringTable,
     samples,
   };
+
+  // Optionally extract the JS Tracer information, if they exist.
+  const { jsTracerEvents } = thread;
+  const { jsTracerDictionary } = processProfile;
+  if (jsTracerEvents && jsTracerDictionary) {
+    newThread.jsTracer = ({
+      events: jsTracerEvents,
+      stringTable: new UniqueStringArray(jsTracerDictionary),
+    }: JsTracerTable);
+  }
+
+  return newThread;
 }
 
 /**
@@ -771,6 +784,27 @@ function _adjustSampleTimestamps(
   });
 }
 
+/**
+ * Adjust the "timestamp" field by the given delta. This is needed when integrating
+ * subprocess profiles into the parent process profile; each profile's process
+ * has its own timebase, and we don't want to keep converting timestamps when
+ * we deal with the integrated profile.
+ */
+function _adjustJsTracerTimestamps(
+  jsTracer: JsTracerTable,
+  delta: Milliseconds
+): JsTracerTable {
+  const deltaMicroseconds = delta * 1000;
+  return {
+    ...jsTracer,
+    events: {
+      ...jsTracer.events,
+      timestamps: jsTracer.events.timestamps.map(
+        time => time + deltaMicroseconds
+      ),
+    },
+  };
+}
 /**
  * Adjust all timestamp fields by the given delta. This is needed when
  * integrating subprocess profiles into the parent process profile; each
@@ -846,6 +880,12 @@ export function processProfile(
           newThread.markers,
           adjustTimestampsBy
         );
+        if (newThread.jsTracer) {
+          newThread.jsTracer = _adjustJsTracerTimestamps(
+            newThread.jsTracer,
+            adjustTimestampsBy
+          );
+        }
         newThread.processStartupTime += adjustTimestampsBy;
         if (newThread.processShutdownTime !== null) {
           newThread.processShutdownTime += adjustTimestampsBy;
@@ -942,6 +982,13 @@ export function serializeProfile(
         }
       }
       newThread.stringArray = stringArray;
+
+      if (thread.jsTracer) {
+        const deserializedJsTracer: Object = { ...thread.jsTracer };
+        deserializedJsTracer.stringArray = deserializedJsTracer.stringTable.serializeToArray();
+        delete deserializedJsTracer.stringTable;
+        newThread.jsTracer = deserializedJsTracer;
+      }
       return newThread;
     }),
   });
@@ -956,10 +1003,19 @@ function _unserializeProfile(profile: Object): Profile {
   // stringArray -> stringTable
   const newProfile = Object.assign({}, profile, {
     threads: profile.threads.map(thread => {
-      const stringArray = thread.stringArray;
-      const newThread = Object.assign({}, thread);
+      const { stringArray, jsTracer } = thread;
+      const newThread = { ...thread };
+
       delete newThread.stringArray;
       newThread.stringTable = new UniqueStringArray(stringArray);
+
+      if (jsTracer) {
+        const newJsTracer = { ...jsTracer };
+        newJsTracer.stringTable = new UniqueStringArray(jsTracer.stringArray);
+        delete newJsTracer.stringArray;
+        newThread.jsTracer = newJsTracer;
+      }
+
       return newThread;
     }),
   });
