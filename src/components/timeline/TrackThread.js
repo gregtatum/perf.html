@@ -6,7 +6,8 @@
 
 import React, { PureComponent } from 'react';
 import explicitConnect from '../../utils/connect';
-import StackGraph from './StackGraph';
+// import ThreadStackGraph from '../shared/thread/StackGraph';
+import ThreadActivityGraph from '../shared/thread/ActivityGraph';
 import {
   selectorsForThread,
   getProfileInterval,
@@ -112,8 +113,8 @@ class TimelineTrackThread extends PureComponent<Props> {
       interval,
       rangeStart,
       rangeEnd,
-      callNodeInfo,
-      selectedCallNodeIndex,
+      // callNodeInfo,
+      // selectedCallNodeIndex,
       unfilteredSamplesRange,
       categories,
     } = this.props;
@@ -153,7 +154,16 @@ class TimelineTrackThread extends PureComponent<Props> {
             onSelect={this._onIntervalMarkerSelect}
           />
         ) : null}
-        <StackGraph
+        <ThreadActivityGraph
+          className="threadActivityGraph"
+          interval={interval}
+          fullThread={thread}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          onSampleClick={this._onSampleClick}
+          categories={categories}
+        />
+        {/* <ThreadStackGraph
           interval={interval}
           thread={thread}
           rangeStart={rangeStart}
@@ -162,7 +172,7 @@ class TimelineTrackThread extends PureComponent<Props> {
           selectedCallNodeIndex={selectedCallNodeIndex}
           categories={categories}
           onSampleClick={this._onSampleClick}
-        />
+        /> */}
         <EmptyThreadIndicator
           thread={thread}
           interval={interval}
