@@ -185,6 +185,7 @@ export function urlStateToUrlObject(urlState: UrlState): UrlObject {
       query.markerSearch = urlState.profileSpecific.markersSearchString;
       break;
     case 'network-chart':
+    case 'js-tracer':
       break;
     default:
       assertExhaustiveCheck(selectedTab);
