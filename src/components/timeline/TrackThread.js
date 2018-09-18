@@ -6,7 +6,7 @@
 
 import React, { PureComponent } from 'react';
 import explicitConnect from '../../utils/connect';
-// import ThreadStackGraph from '../shared/thread/StackGraph';
+import ThreadStackGraph from '../shared/thread/StackGraph';
 import ThreadActivityGraph from '../shared/thread/ActivityGraph';
 import {
   selectorsForThread,
@@ -14,7 +14,10 @@ import {
   getCommittedRange,
   getCategories,
 } from '../../reducers/profile-view';
-import { getSelectedThreadIndex } from '../../reducers/url-state';
+import {
+  getSelectedThreadIndex,
+  getTimelineType,
+} from '../../reducers/url-state';
 import { getCallNodePathFromIndex } from '../../profile-logic/profile-data';
 import {
   TimelineTracingMarkersJank,
@@ -29,6 +32,7 @@ import {
 import EmptyThreadIndicator from './EmptyThreadIndicator';
 import './TrackThread.css';
 
+import type { TimelineType } from '../../types/actions';
 import type {
   Thread,
   ThreadIndex,
@@ -59,6 +63,7 @@ type StateProps = {|
   +rangeStart: Milliseconds,
   +rangeEnd: Milliseconds,
   +categories: CategoryList,
+  +timelineType: TimelineType,
 |};
 
 type DispatchProps = {|
@@ -113,10 +118,11 @@ class TimelineTrackThread extends PureComponent<Props> {
       interval,
       rangeStart,
       rangeEnd,
-      // callNodeInfo,
-      // selectedCallNodeIndex,
+      callNodeInfo,
+      selectedCallNodeIndex,
       unfilteredSamplesRange,
       categories,
+      timelineType,
     } = this.props;
 
     const processType = thread.processType;
@@ -154,25 +160,29 @@ class TimelineTrackThread extends PureComponent<Props> {
             onSelect={this._onIntervalMarkerSelect}
           />
         ) : null}
-        <ThreadActivityGraph
-          className="threadActivityGraph"
-          interval={interval}
-          fullThread={thread}
-          rangeStart={rangeStart}
-          rangeEnd={rangeEnd}
-          onSampleClick={this._onSampleClick}
-          categories={categories}
-        />
-        {/* <ThreadStackGraph
-          interval={interval}
-          thread={thread}
-          rangeStart={rangeStart}
-          rangeEnd={rangeEnd}
-          callNodeInfo={callNodeInfo}
-          selectedCallNodeIndex={selectedCallNodeIndex}
-          categories={categories}
-          onSampleClick={this._onSampleClick}
-        /> */}
+        {timelineType === 'category' ? (
+          <ThreadActivityGraph
+            className="threadActivityGraph"
+            interval={interval}
+            fullThread={thread}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            onSampleClick={this._onSampleClick}
+            categories={categories}
+          />
+        ) : (
+          <ThreadStackGraph
+            className="threadStackGraph"
+            interval={interval}
+            thread={thread}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            callNodeInfo={callNodeInfo}
+            selectedCallNodeIndex={selectedCallNodeIndex}
+            categories={categories}
+            onSampleClick={this._onSampleClick}
+          />
+        )}
         <EmptyThreadIndicator
           thread={thread}
           interval={interval}
@@ -203,6 +213,7 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
       rangeStart: committedRange.start,
       rangeEnd: committedRange.end,
       categories: getCategories(state),
+      timelineType: getTimelineType(state),
     };
   },
   mapDispatchToProps: {
