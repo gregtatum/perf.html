@@ -174,6 +174,8 @@ class ActivityGraph extends PureComponent<Props> {
     const ctx = canvas.getContext('2d');
     const xPixelsPerMs = pixelWidth / rangeLength;
 
+    // Category color names come from https://searchfox.org/mozilla-central/rev/0b8ed772d24605d7cb44c1af6d59e4ca023bd5f5/tools/profiler/core/platform.cpp#1593-1627
+    // and can not be changed here without an additional change in the core.
     const colorMap = {
       transparent: {
         selectedFillStyle: 'transparent',
@@ -181,8 +183,8 @@ class ActivityGraph extends PureComponent<Props> {
         gravity: 0,
       },
       purple: {
-        selectedFillStyle: photonColors.PURPLE_50,
-        unselectedFillStyle: photonColors.PURPLE_50 + '60',
+        selectedFillStyle: photonColors.PURPLE_70,
+        unselectedFillStyle: photonColors.PURPLE_70 + '60',
         gravity: 5,
       },
       green: {
@@ -191,13 +193,13 @@ class ActivityGraph extends PureComponent<Props> {
         gravity: 4,
       },
       orange: {
-        selectedFillStyle: photonColors.ORANGE_60,
-        unselectedFillStyle: photonColors.ORANGE_60 + '60',
+        selectedFillStyle: photonColors.ORANGE_50,
+        unselectedFillStyle: photonColors.ORANGE_50 + '60',
         gravity: 2,
       },
       yellow: {
-        selectedFillStyle: photonColors.YELLOW_60,
-        unselectedFillStyle: photonColors.YELLOW_60 + '60',
+        selectedFillStyle: photonColors.YELLOW_50,
+        unselectedFillStyle: photonColors.YELLOW_50 + '60',
         gravity: 6,
       },
       lightblue: {
@@ -206,8 +208,8 @@ class ActivityGraph extends PureComponent<Props> {
         gravity: 1,
       },
       grey: {
-        selectedFillStyle: photonColors.GREY_40,
-        unselectedFillStyle: photonColors.GREY_40 + '60',
+        selectedFillStyle: photonColors.GREY_30,
+        unselectedFillStyle: photonColors.GREY_30 + '60',
         gravity: 8,
       },
       blue: {
