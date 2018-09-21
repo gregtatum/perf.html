@@ -156,6 +156,11 @@ class ActivityGraph extends PureComponent<Props> {
     } = this.props;
     const { samples, stackTable } = fullThread;
 
+    if (samples.length === 0) {
+      // Do not attempt to render when there are no samples.
+      return;
+    }
+
     const rangeLength = rangeEnd - rangeStart;
 
     const devicePixelRatio = canvas.ownerDocument
@@ -349,6 +354,7 @@ class ActivityGraph extends PureComponent<Props> {
       lastSampleStack !== null
         ? stackTable.category[lastSampleStack]
         : greyCategoryIndex;
+
     accumulateIntoCategory(
       lastSampleCategory,
       samples.length - 1,
