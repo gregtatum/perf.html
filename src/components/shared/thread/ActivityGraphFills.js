@@ -67,7 +67,6 @@ const SMOOTHING_KERNEL: Float32Array = _getSmoothingKernel(
  * be any assumptions made about the validity of strict equalities.
  */
 export class ActivityGraphFills {
-  ctx: CanvasRenderingContext2D;
   rangeStart: Milliseconds;
   rangeEnd: Milliseconds;
   rangeLength: Milliseconds;
@@ -89,7 +88,8 @@ export class ActivityGraphFills {
   ) => number;
 
   constructor(
-    ctx: CanvasRenderingContext2D,
+    canvasPixelWidth: DevicePixels,
+    canvasPixelHeight: DevicePixels,
     {
       rangeEnd,
       rangeStart,
@@ -101,8 +101,8 @@ export class ActivityGraphFills {
     categoryDrawStyles: CategoryDrawStyle[]
   ) {
     // Collect the common variables used on the various methods.
-    this.canvasPixelWidth = ctx.canvas.width;
-    this.canvasPixelHeight = ctx.canvas.height;
+    this.canvasPixelWidth = canvasPixelWidth;
+    this.canvasPixelHeight = canvasPixelHeight;
     this.rangeEnd = rangeEnd;
     this.rangeStart = rangeStart;
     this.rangeLength = rangeEnd - rangeStart;
@@ -114,7 +114,6 @@ export class ActivityGraphFills {
     this.samplesSelectedStates = samplesSelectedStates;
     this.greyCategoryIndex = categories.findIndex(c => c.color === 'grey') || 0;
     this.devicePixelRatio = window.devicePixelRatio;
-    this.ctx = ctx;
     this.percentageBuffers = _createSelectedPercentageAtPixelBuffers(
       categoryDrawStyles,
       this.canvasPixelWidth

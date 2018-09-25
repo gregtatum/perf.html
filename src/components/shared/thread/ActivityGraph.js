@@ -104,7 +104,8 @@ class ThreadActivityGraph extends PureComponent<ActivityGraphProps> {
     canvas.height = canvasPixelHeight;
 
     this._activityGraphFills = new ActivityGraphFills(
-      ctx,
+      canvasPixelWidth,
+      canvasPixelHeight,
       this.props,
       this._getCategoryDrawStyles(ctx)
     );
