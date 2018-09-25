@@ -110,45 +110,6 @@ exports[`calltree/ProfileCallTreeView EmptyReasons shows a reason for a call tre
     </li>
   </ol>
   <div
-    className="chartViewport selectedThreadActivityGraphViewport"
-    onMouseDown={[Function]}
-    onWheel={[Function]}
-  >
-    <div>
-      <div
-        className="selectedThreadActivityGraph"
-      >
-        <canvas
-          className="selectedThreadActivityGraphCanvas threadActivityGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-      <div
-        className="selectedThreadStackGraph"
-      >
-        <canvas
-          className="selectedThreadStackGraphCanvas threadStackGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-    </div>
-    <div
-      className="chartViewportShiftScroll hidden"
-    >
-      Zoom Chart:
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Shift
-      </kbd>
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Scroll
-      </kbd>
-    </div>
-  </div>
-  <div
     className="EmptyReasons"
   >
     <h3>
@@ -274,45 +235,6 @@ exports[`calltree/ProfileCallTreeView EmptyReasons shows reasons for being out o
       </span>
     </li>
   </ol>
-  <div
-    className="chartViewport selectedThreadActivityGraphViewport"
-    onMouseDown={[Function]}
-    onWheel={[Function]}
-  >
-    <div>
-      <div
-        className="selectedThreadActivityGraph"
-      >
-        <canvas
-          className="selectedThreadActivityGraphCanvas threadActivityGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-      <div
-        className="selectedThreadStackGraph"
-      >
-        <canvas
-          className="selectedThreadStackGraphCanvas threadStackGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-    </div>
-    <div
-      className="chartViewportShiftScroll hidden"
-    >
-      Zoom Chart:
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Shift
-      </kbd>
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Scroll
-      </kbd>
-    </div>
-  </div>
   <div
     className="EmptyReasons"
   >
@@ -440,45 +362,6 @@ exports[`calltree/ProfileCallTreeView EmptyReasons shows reasons for when sample
     </li>
   </ol>
   <div
-    className="chartViewport selectedThreadActivityGraphViewport"
-    onMouseDown={[Function]}
-    onWheel={[Function]}
-  >
-    <div>
-      <div
-        className="selectedThreadActivityGraph"
-      >
-        <canvas
-          className="selectedThreadActivityGraphCanvas threadActivityGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-      <div
-        className="selectedThreadStackGraph"
-      >
-        <canvas
-          className="selectedThreadStackGraphCanvas threadStackGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-    </div>
-    <div
-      className="chartViewportShiftScroll hidden"
-    >
-      Zoom Chart:
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Shift
-      </kbd>
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Scroll
-      </kbd>
-    </div>
-  </div>
-  <div
     className="EmptyReasons"
   >
     <h3>
@@ -604,45 +487,6 @@ exports[`calltree/ProfileCallTreeView computes a width for a call tree of a real
       </span>
     </li>
   </ol>
-  <div
-    className="chartViewport selectedThreadActivityGraphViewport"
-    onMouseDown={[Function]}
-    onWheel={[Function]}
-  >
-    <div>
-      <div
-        className="selectedThreadActivityGraph"
-      >
-        <canvas
-          className="selectedThreadActivityGraphCanvas threadActivityGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-      <div
-        className="selectedThreadStackGraph"
-      >
-        <canvas
-          className="selectedThreadStackGraphCanvas threadStackGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-    </div>
-    <div
-      className="chartViewportShiftScroll hidden"
-    >
-      Zoom Chart:
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Shift
-      </kbd>
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Scroll
-      </kbd>
-    </div>
-  </div>
   <div
     className="treeView"
   >
@@ -2286,45 +2130,6 @@ exports[`calltree/ProfileCallTreeView renders an inverted call tree 1`] = `
     </li>
   </ol>
   <div
-    className="chartViewport selectedThreadActivityGraphViewport"
-    onMouseDown={[Function]}
-    onWheel={[Function]}
-  >
-    <div>
-      <div
-        className="selectedThreadActivityGraph"
-      >
-        <canvas
-          className="selectedThreadActivityGraphCanvas threadActivityGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-      <div
-        className="selectedThreadStackGraph"
-      >
-        <canvas
-          className="selectedThreadStackGraphCanvas threadStackGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-    </div>
-    <div
-      className="chartViewportShiftScroll hidden"
-    >
-      Zoom Chart:
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Shift
-      </kbd>
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Scroll
-      </kbd>
-    </div>
-  </div>
-  <div
     className="treeView"
   >
     <div
@@ -3058,45 +2863,6 @@ exports[`calltree/ProfileCallTreeView renders an unfiltered call tree 1`] = `
       </span>
     </li>
   </ol>
-  <div
-    className="chartViewport selectedThreadActivityGraphViewport"
-    onMouseDown={[Function]}
-    onWheel={[Function]}
-  >
-    <div>
-      <div
-        className="selectedThreadActivityGraph"
-      >
-        <canvas
-          className="selectedThreadActivityGraphCanvas threadActivityGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-      <div
-        className="selectedThreadStackGraph"
-      >
-        <canvas
-          className="selectedThreadStackGraphCanvas threadStackGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-    </div>
-    <div
-      className="chartViewportShiftScroll hidden"
-    >
-      Zoom Chart:
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Shift
-      </kbd>
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Scroll
-      </kbd>
-    </div>
-  </div>
   <div
     className="treeView"
   >
@@ -3832,45 +3598,6 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
     </li>
   </ol>
   <div
-    className="chartViewport selectedThreadActivityGraphViewport"
-    onMouseDown={[Function]}
-    onWheel={[Function]}
-  >
-    <div>
-      <div
-        className="selectedThreadActivityGraph"
-      >
-        <canvas
-          className="selectedThreadActivityGraphCanvas threadActivityGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-      <div
-        className="selectedThreadStackGraph"
-      >
-        <canvas
-          className="selectedThreadStackGraphCanvas threadStackGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-    </div>
-    <div
-      className="chartViewportShiftScroll hidden"
-    >
-      Zoom Chart:
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Shift
-      </kbd>
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Scroll
-      </kbd>
-    </div>
-  </div>
-  <div
     className="treeView"
   >
     <div
@@ -4605,45 +4332,6 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
     </li>
   </ol>
   <div
-    className="chartViewport selectedThreadActivityGraphViewport"
-    onMouseDown={[Function]}
-    onWheel={[Function]}
-  >
-    <div>
-      <div
-        className="selectedThreadActivityGraph"
-      >
-        <canvas
-          className="selectedThreadActivityGraphCanvas threadActivityGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-      <div
-        className="selectedThreadStackGraph"
-      >
-        <canvas
-          className="selectedThreadStackGraphCanvas threadStackGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-    </div>
-    <div
-      className="chartViewportShiftScroll hidden"
-    >
-      Zoom Chart:
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Shift
-      </kbd>
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Scroll
-      </kbd>
-    </div>
-  </div>
-  <div
     className="treeView"
   >
     <div
@@ -5307,45 +4995,6 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
       </span>
     </li>
   </ol>
-  <div
-    className="chartViewport selectedThreadActivityGraphViewport"
-    onMouseDown={[Function]}
-    onWheel={[Function]}
-  >
-    <div>
-      <div
-        className="selectedThreadActivityGraph"
-      >
-        <canvas
-          className="selectedThreadActivityGraphCanvas threadActivityGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-      <div
-        className="selectedThreadStackGraph"
-      >
-        <canvas
-          className="selectedThreadStackGraphCanvas threadStackGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-    </div>
-    <div
-      className="chartViewportShiftScroll hidden"
-    >
-      Zoom Chart:
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Shift
-      </kbd>
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Scroll
-      </kbd>
-    </div>
-  </div>
   <div
     className="treeView"
   >
@@ -6011,45 +5660,6 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
     </li>
   </ol>
   <div
-    className="chartViewport selectedThreadActivityGraphViewport"
-    onMouseDown={[Function]}
-    onWheel={[Function]}
-  >
-    <div>
-      <div
-        className="selectedThreadActivityGraph"
-      >
-        <canvas
-          className="selectedThreadActivityGraphCanvas threadActivityGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-      <div
-        className="selectedThreadStackGraph"
-      >
-        <canvas
-          className="selectedThreadStackGraphCanvas threadStackGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-    </div>
-    <div
-      className="chartViewportShiftScroll hidden"
-    >
-      Zoom Chart:
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Shift
-      </kbd>
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Scroll
-      </kbd>
-    </div>
-  </div>
-  <div
     className="treeView"
   >
     <div
@@ -6569,45 +6179,6 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
     </li>
   </ol>
   <div
-    className="chartViewport selectedThreadActivityGraphViewport"
-    onMouseDown={[Function]}
-    onWheel={[Function]}
-  >
-    <div>
-      <div
-        className="selectedThreadActivityGraph"
-      >
-        <canvas
-          className="selectedThreadActivityGraphCanvas threadActivityGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-      <div
-        className="selectedThreadStackGraph"
-      >
-        <canvas
-          className="selectedThreadStackGraphCanvas threadStackGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-    </div>
-    <div
-      className="chartViewportShiftScroll hidden"
-    >
-      Zoom Chart:
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Shift
-      </kbd>
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Scroll
-      </kbd>
-    </div>
-  </div>
-  <div
     className="treeView"
   >
     <div
@@ -7126,45 +6697,6 @@ exports[`calltree/ProfileCallTreeView renders call tree with some search strings
       </span>
     </li>
   </ol>
-  <div
-    className="chartViewport selectedThreadActivityGraphViewport"
-    onMouseDown={[Function]}
-    onWheel={[Function]}
-  >
-    <div>
-      <div
-        className="selectedThreadActivityGraph"
-      >
-        <canvas
-          className="selectedThreadActivityGraphCanvas threadActivityGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-      <div
-        className="selectedThreadStackGraph"
-      >
-        <canvas
-          className="selectedThreadStackGraphCanvas threadStackGraphCanvas"
-          onMouseUp={[Function]}
-        />
-      </div>
-    </div>
-    <div
-      className="chartViewportShiftScroll hidden"
-    >
-      Zoom Chart:
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Shift
-      </kbd>
-      <kbd
-        className="chartViewportShiftScrollKbd"
-      >
-        Scroll
-      </kbd>
-    </div>
-  </div>
   <div
     className="treeView"
   >
