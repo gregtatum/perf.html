@@ -17,8 +17,14 @@ import type {
   CategoryList,
   IndexIntoSamplesTable,
   IndexIntoCategoryList,
+  SamplesTable,
+  StackTable,
 } from '../../../types/profile';
-import type { Milliseconds } from '../../../types/units';
+import type {
+  Milliseconds,
+  DevicePixels,
+  CssPixels,
+} from '../../../types/units';
 
 type Props = {|
   +className: string,
@@ -41,40 +47,159 @@ type CategoryFill = {|
   fillStyle: string | CanvasPattern,
 |};
 
-type PaintSettings = {|
-  categoryFills: CategoryFill[],
-  pixelWidth: number,
-  pixelHeight: number,
-  devicePixelRatio: number,
-|};
-
 type SampleContributionToPixel = {|
   sample: IndexIntoSamplesTable,
   contribution: number,
 |};
 
-function createDiagonalStripePattern(ctx, color) {
-  const c = document.createElement('canvas');
-  const dpr = Math.round(window.devicePixelRatio);
-  c.width = 4 * dpr;
-  c.height = 4 * dpr;
-  const cctx = c.getContext('2d');
-  cctx.scale(dpr, dpr);
-  const linear = cctx.createLinearGradient(0, 0, 4, 4);
-  linear.addColorStop(0, color);
-  linear.addColorStop(0.25, color);
-  linear.addColorStop(0.25, 'transparent');
-  linear.addColorStop(0.5, 'transparent');
-  linear.addColorStop(0.5, color);
-  linear.addColorStop(0.75, color);
-  linear.addColorStop(0.75, 'transparent');
-  linear.addColorStop(1, 'transparent');
-  cctx.fillStyle = linear;
-  cctx.fillRect(0, 0, 4, 4);
-  return ctx.createPattern(c, 'repeat');
+type CategoryDrawStyle = {|
+  +category: number,
+  +gravity: number,
+  +selectedFillStyle: string,
+  +unselectedFillStyle: string,
+  +filteredOutFillStyle: CanvasPattern,
+|};
+
+type SelectedPercentageAtPixelBuffers = {|
+  // The following arrays get recreated when the canvas gets resized.
+  +beforeSelectedPercentageAtPixel: Float32Array,
+  +selectedPercentageAtPixel: Float32Array,
+  +afterSelectedPercentageAtPixel: Float32Array,
+  +filteredOutPercentageAtPixel: Float32Array,
+|};
+
+const BOX_BLUR_RADII = [3, 2, 2];
+const SMOOTHING_RADIUS = 3 + 2 + 2;
+const SMOOTHING_KERNEL: Float32Array = _getSmoothingKernel(
+  SMOOTHING_RADIUS,
+  BOX_BLUR_RADII
+);
+
+class ThreadActivityGraph extends PureComponent<Props> {
+  _canvas: null | HTMLCanvasElement = null;
+  _resizeListener = () => this.forceUpdate();
+  _categoryDrawStyles: null | CategoryDrawStyle[] = null;
+  _lastDrawer: null | ActivityGraphDrawer = null;
+
+  _takeCanvasRef = (canvas: HTMLCanvasElement | null) => {
+    this._canvas = canvas;
+  };
+
+  _renderCanvas() {
+    const canvas = this._canvas;
+    if (canvas !== null) {
+      timeCode('ThreadActivityGraph render', () => {
+        this.drawCanvas(canvas);
+      });
+    }
+  }
+
+  componentDidMount() {
+    window.addEventListener('resize', this._resizeListener);
+    this.forceUpdate(); // for initial size
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this._resizeListener);
+  }
+
+  /**
+   * Get or lazily create the category info. It requires the 2d ctx to exist in order
+   * to create the fill patterns.
+   */
+  _getCategoryDrawStyles(ctx: CanvasRenderingContext2D): CategoryDrawStyle[] {
+    if (this._categoryDrawStyles === null) {
+      // Lazily initialize this list.
+      this._categoryDrawStyles = this.props.categories.map(
+        ({ color: colorName }, categoryIndex) => {
+          const styles = _mapColorNameToStyles(colorName);
+          return {
+            ...styles,
+            category: categoryIndex,
+            filteredOutFillStyle: _createDiagonalStripePattern(
+              ctx,
+              styles.unselectedFillStyle
+            ),
+          };
+        }
+      );
+    }
+
+    return this._categoryDrawStyles;
+  }
+
+  drawCanvas(canvas: HTMLCanvasElement) {
+    const { fullThread } = this.props;
+    const { samples } = fullThread;
+
+    if (samples.length === 0) {
+      // Do not attempt to render when there are no samples.
+      return;
+    }
+    const r = canvas.getBoundingClientRect();
+    const canvasPixelWidth = Math.round(r.width * window.devicePixelRatio);
+    const canvasPixelHeight = Math.round(r.height * window.devicePixelRatio);
+    canvas.width = canvasPixelWidth;
+    canvas.height = canvasPixelHeight;
+    const ctx = canvas.getContext('2d');
+    const drawer = new ActivityGraphDrawer(
+      ctx,
+      this.props,
+      this._getCategoryDrawStyles(ctx)
+    );
+
+    drawer.accumulateSampleCategories();
+    drawer.drawFills();
+
+    this._lastDrawer = drawer;
+  }
+
+  _onMouseUp = (e: SyntheticMouseEvent<>) => {
+    const drawer = this._lastDrawer;
+    const canvas = this._canvas;
+    if (!canvas || !drawer) {
+      return;
+    }
+    // Re-measure the canvas and get the coordinates and time for the click.
+    const { rangeStart, rangeEnd } = this.props;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.pageX - rect.left;
+    const y = e.pageY - rect.top;
+    const time = rangeStart + x / rect.width * (rangeEnd - rangeStart);
+
+    const sample = drawer.getSampleAtClick(x, y, time);
+    if (sample !== null) {
+      this.props.onSampleClick(sample);
+    }
+  };
+
+  render() {
+    this._renderCanvas();
+    return (
+      <div className={this.props.className}>
+        <canvas
+          className={classNames(
+            `${this.props.className}Canvas`,
+            'threadActivityGraphCanvas'
+          )}
+          ref={this._takeCanvasRef}
+          onMouseUp={this._onMouseUp}
+        />
+      </div>
+    );
+  }
 }
 
-function boxBlur1D(srcArray, destArray, radius) {
+export default ThreadActivityGraph;
+
+/**
+ * Apply a 1d box blur to a destination array.
+ */
+function _boxBlur1D(
+  srcArray: Float32Array,
+  destArray: Float32Array,
+  radius: number
+): void {
   if (srcArray.length < radius) {
     destArray.set(srcArray);
     return;
@@ -102,236 +227,271 @@ function boxBlur1D(srcArray, destArray, radius) {
   }
 }
 
-function gaussianBlur1D(srcArray, boxBlurRadii) {
-  let destArray = new Float32Array(srcArray.length);
+/**
+ * Apply a blur with a gaussian distribution to a destination array.
+ */
+function _applyGaussianBlur1D(
+  srcArray: Float32Array,
+  boxBlurRadii: number[]
+): void {
+  let a = srcArray;
+  let b = new Float32Array(srcArray.length);
   for (const radius of boxBlurRadii) {
-    boxBlur1D(srcArray, destArray, radius);
-    [destArray, srcArray] = [srcArray, destArray];
+    _boxBlur1D(a, b, radius);
+    [b, a] = [a, b];
   }
-  return srcArray;
+
+  if (b === srcArray) {
+    // The last blur was applied to the temporary array, blit the final values back
+    // to the srcArray. This ensures that we are always mutating the values of the
+    // src array, and not returning the newly created array.
+    for (let i = 0; i < srcArray.length; i++) {
+      srcArray[i] = a[i];
+    }
+  }
 }
 
-class ActivityGraph extends PureComponent<Props> {
-  _canvas: null | HTMLCanvasElement;
-  _lastPaintSettings: PaintSettings | null;
-  _resizeListener: () => void;
-  _boxBlurRadii = [3, 2, 2];
-  _smoothingRadius = 3 + 2 + 2;
-  _takeCanvasRef = (canvas: HTMLCanvasElement | null) =>
-    (this._canvas = canvas);
+/**
+ * Filtered out samples use a diagonal stripe pattern, create that here.
+ */
+function _createDiagonalStripePattern(
+  chartCtx: CanvasRenderingContext2D,
+  color: string
+): CanvasPattern {
+  // Create a second canvas, draw to it in order to create a pattern. This canvas
+  // and context will be discarded after the pattern is created.
+  const patternCanvas = document.createElement('canvas');
+  const dpr = Math.round(window.devicePixelRatio);
+  patternCanvas.width = 4 * dpr;
+  patternCanvas.height = 4 * dpr;
+  const patternContext = patternCanvas.getContext('2d');
+  patternContext.scale(dpr, dpr);
 
-  constructor(props: Props) {
-    super(props);
-    this._resizeListener = () => this.forceUpdate();
-    this._canvas = null;
-    this._lastPaintSettings = null;
-  }
+  const linear = patternContext.createLinearGradient(0, 0, 4, 4);
+  linear.addColorStop(0, color);
+  linear.addColorStop(0.25, color);
+  linear.addColorStop(0.25, 'transparent');
+  linear.addColorStop(0.5, 'transparent');
+  linear.addColorStop(0.5, color);
+  linear.addColorStop(0.75, color);
+  linear.addColorStop(0.75, 'transparent');
+  linear.addColorStop(1, 'transparent');
+  patternContext.fillStyle = linear;
+  patternContext.fillRect(0, 0, 4, 4);
 
-  _renderCanvas() {
-    const canvas = this._canvas;
-    if (canvas !== null) {
-      timeCode('ActivityGraph render', () => {
-        this.drawCanvas(canvas);
-      });
-    }
-  }
+  return chartCtx.createPattern(patternCanvas, 'repeat');
+}
 
-  componentDidMount() {
-    window.addEventListener('resize', this._resizeListener);
-    this.forceUpdate(); // for initial size
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this._resizeListener);
-  }
-
-  drawCanvas(canvas: HTMLCanvasElement) {
-    const {
-      categories,
-      fullThread,
-      interval,
-      rangeStart,
-      rangeEnd,
-      samplesSelectedStates,
-    } = this.props;
-    const { samples, stackTable } = fullThread;
-
-    if (samples.length === 0) {
-      // Do not attempt to render when there are no samples.
-      return;
-    }
-
-    const rangeLength = rangeEnd - rangeStart;
-
-    const devicePixelRatio = canvas.ownerDocument
-      ? canvas.ownerDocument.defaultView.devicePixelRatio
-      : 1;
-    const r = canvas.getBoundingClientRect();
-    const pixelWidth = Math.round(r.width * devicePixelRatio);
-    const pixelHeight = Math.round(r.height * devicePixelRatio);
-    canvas.width = pixelWidth;
-    canvas.height = pixelHeight;
-    const ctx = canvas.getContext('2d');
-    const xPixelsPerMs = pixelWidth / rangeLength;
-
-    // Category color names come from https://searchfox.org/mozilla-central/rev/0b8ed772d24605d7cb44c1af6d59e4ca023bd5f5/tools/profiler/core/platform.cpp#1593-1627
-    // and can not be changed here without an additional change in the core.
-    const colorMap = {
-      transparent: {
+/**
+ * Map a color name, which comes from Gecko, into a CSS style color. These colors cannot
+ * be changed without considering the values coming from Gecko, and from old profiles
+ * that already have their category colors saved into the profile.
+ *
+ * Category color names come from:
+ * https://searchfox.org/mozilla-central/rev/0b8ed772d24605d7cb44c1af6d59e4ca023bd5f5/tools/profiler/core/platform.cpp#1593-1627
+ */
+function _mapColorNameToStyles(colorName: string) {
+  switch (colorName) {
+    case 'transparent':
+      return {
         selectedFillStyle: 'transparent',
         unselectedFillStyle: 'transparent',
         gravity: 0,
-      },
-      purple: {
+      };
+    case 'purple':
+      return {
         selectedFillStyle: photonColors.PURPLE_70,
         unselectedFillStyle: photonColors.PURPLE_70 + '60',
         gravity: 5,
-      },
-      green: {
+      };
+    case 'green':
+      return {
         selectedFillStyle: photonColors.GREEN_60,
         unselectedFillStyle: photonColors.GREEN_60 + '60',
         gravity: 4,
-      },
-      orange: {
+      };
+    case 'orange':
+      return {
         selectedFillStyle: photonColors.ORANGE_50,
         unselectedFillStyle: photonColors.ORANGE_50 + '60',
         gravity: 2,
-      },
-      yellow: {
+      };
+    case 'yellow':
+      return {
         selectedFillStyle: photonColors.YELLOW_50,
         unselectedFillStyle: photonColors.YELLOW_50 + '60',
         gravity: 6,
-      },
-      lightblue: {
+      };
+    case 'lightblue':
+      return {
         selectedFillStyle: photonColors.BLUE_40,
         unselectedFillStyle: photonColors.BLUE_40 + '60',
         gravity: 1,
-      },
-      grey: {
+      };
+    case 'grey':
+      return {
         selectedFillStyle: photonColors.GREY_30,
         unselectedFillStyle: photonColors.GREY_30 + '60',
         gravity: 8,
-      },
-      blue: {
+      };
+    case 'blue':
+      return {
         selectedFillStyle: photonColors.BLUE_60,
         unselectedFillStyle: photonColors.BLUE_60 + '60',
         gravity: 3,
-      },
-      brown: {
+      };
+    case 'brown':
+      return {
         selectedFillStyle: photonColors.MAGENTA_60,
         unselectedFillStyle: photonColors.MAGENTA_60 + '60',
         gravity: 7,
-      },
-    };
-
-    const categoryInfos = categories.map(({ color: colorName }, category) => {
-      const { selectedFillStyle, unselectedFillStyle, gravity } = colorMap[
-        colorName
-      ];
-      const filteredOutFillStyle = createDiagonalStripePattern(
-        ctx,
-        unselectedFillStyle
+      };
+    default:
+      console.error(
+        'Unknown color name encountered. Consider updating this code to handle it.'
       );
       return {
-        category,
-        gravity,
-        selectedFillStyle,
-        unselectedFillStyle,
-        filteredOutFillStyle,
-        beforeSelectedPercentageAtPixel: new Float32Array(pixelWidth),
-        selectedPercentageAtPixel: new Float32Array(pixelWidth),
-        afterSelectedPercentageAtPixel: new Float32Array(pixelWidth),
-        filteredOutPercentageAtPixel: new Float32Array(pixelWidth),
+        selectedFillStyle: photonColors.GREY_30,
+        unselectedFillStyle: photonColors.GREY_30 + '60',
+        gravity: 8,
       };
-    });
+  }
+}
 
-    function pickSelectedPercentage(categoryInfo, _sampleIndex) {
-      return categoryInfo.selectedPercentageAtPixel;
-    }
+function _getSmoothingKernel(
+  smoothingRadius: number,
+  boxBlurRadii: number[]
+): Float32Array {
+  const kernelWidth = smoothingRadius + 1 + smoothingRadius;
+  const kernel = new Float32Array(kernelWidth);
+  kernel[smoothingRadius] = 1;
+  _applyGaussianBlur1D(kernel, boxBlurRadii);
+  return kernel;
+}
 
-    function pickCategoryArrayWhenHaveSelectedSamples(
-      categoryInfo,
-      sampleIndex
-    ) {
-      if (!samplesSelectedStates) {
-        return categoryInfo.selectedPercentageAtPixel;
+/**
+ * A lot is going on with the drawing of this graph. Break out the canvas calls
+ * separately from the component logic. This makes it easier to assume that
+ * the context always exists, and it makes it easy to share lots of shared state
+ * between various methods.
+ */
+class ActivityGraphDrawer {
+  ctx: CanvasRenderingContext2D;
+  rangeStart: Milliseconds;
+  rangeEnd: Milliseconds;
+  rangeLength: Milliseconds;
+  canvasPixelWidth: DevicePixels;
+  canvasPixelHeight: DevicePixels;
+  devicePixelRatio: number;
+  xPixelsPerMs: number;
+  categoryDrawStyles: CategoryDrawStyle[];
+  buffers: SelectedPercentageAtPixelBuffers[];
+  samples: SamplesTable;
+  stackTable: StackTable;
+  interval: Milliseconds;
+  greyCategoryIndex: IndexIntoCategoryList;
+  samplesSelectedStates: ?Array<boolean>;
+  categoryFills: CategoryFill[];
+  categories: CategoryList;
+  treeOrderSampleComparator: ?(
+    IndexIntoSamplesTable,
+    IndexIntoSamplesTable
+  ) => number;
+
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    {
+      rangeEnd,
+      rangeStart,
+      categories,
+      interval,
+      samplesSelectedStates,
+      fullThread: { samples, stackTable },
+    }: Props,
+    categoryDrawStyles: CategoryDrawStyle[]
+  ) {
+    // Collect the common variables used on the various methods.
+    this.canvasPixelWidth = ctx.canvas.width;
+    this.canvasPixelHeight = ctx.canvas.height;
+    this.rangeEnd = rangeEnd;
+    this.rangeStart = rangeStart;
+    this.rangeLength = rangeEnd - rangeStart;
+    this.categoryDrawStyles = categoryDrawStyles;
+    this.interval = interval;
+    this.xPixelsPerMs = this.canvasPixelWidth / this.rangeLength;
+    this.samples = samples;
+    this.stackTable = stackTable;
+    this.samplesSelectedStates = samplesSelectedStates;
+    this.greyCategoryIndex = categories.findIndex(c => c.color === 'grey') || 0;
+    this.devicePixelRatio = window.devicePixelRatio;
+    this.ctx = ctx;
+    // TODO - Consider making all initialization functions into pure functions.
+    this.buffers = this._createSelectedPercentageAtPixelBuffers();
+    this.categoryFills = this._getFills();
+  }
+
+  _createSelectedPercentageAtPixelBuffers(): SelectedPercentageAtPixelBuffers[] {
+    return this.categoryDrawStyles.map(() => ({
+      beforeSelectedPercentageAtPixel: new Float32Array(this.canvasPixelWidth),
+      selectedPercentageAtPixel: new Float32Array(this.canvasPixelWidth),
+      afterSelectedPercentageAtPixel: new Float32Array(this.canvasPixelWidth),
+      filteredOutPercentageAtPixel: new Float32Array(this.canvasPixelWidth),
+    }));
+  }
+
+  _getFills(): CategoryFill[] {
+    // Sort all of the categories by their gravity.
+    const categoryIndexesByGravity = this.categoryDrawStyles
+      .map((_, i) => i)
+      .sort(
+        (a, b) =>
+          this.categoryDrawStyles[b].gravity -
+          this.categoryDrawStyles[a].gravity
+      );
+
+    // For each category, create a fill style for each of 4 draw states. These fill styles
+    // are sorted by their gravity.
+    //
+    // * 'UNSELECTED_ORDERED_BEFORE_SELECTED',
+    // * 'SELECTED',
+    // * 'UNSELECTED_ORDERED_AFTER_SELECTED',
+    // * 'FILTERED_OUT'
+    const nestedFills: CategoryFill[][] = categoryIndexesByGravity.map(
+      categoryIndex => {
+        const categoryDrawStyle = this.categoryDrawStyles[categoryIndex];
+        const buffers = this.buffers[categoryIndex];
+        // For every category we draw four fills, for the four selection kinds:
+        return [
+          {
+            category: categoryDrawStyle.category,
+            fillStyle: categoryDrawStyle.unselectedFillStyle,
+            perPixelContribution: buffers.beforeSelectedPercentageAtPixel,
+          },
+          {
+            category: categoryDrawStyle.category,
+            fillStyle: categoryDrawStyle.selectedFillStyle,
+            perPixelContribution: buffers.selectedPercentageAtPixel,
+          },
+          {
+            category: categoryDrawStyle.category,
+            fillStyle: categoryDrawStyle.unselectedFillStyle,
+            perPixelContribution: buffers.afterSelectedPercentageAtPixel,
+          },
+          {
+            category: categoryDrawStyle.category,
+            fillStyle: categoryDrawStyle.filteredOutFillStyle,
+            perPixelContribution: buffers.filteredOutPercentageAtPixel,
+          },
+        ];
       }
-      switch (samplesSelectedStates[sampleIndex]) {
-        case 'FILTERED_OUT':
-          return categoryInfo.filteredOutPercentageAtPixel;
-        case 'UNSELECTED_ORDERED_BEFORE_SELECTED':
-          return categoryInfo.beforeSelectedPercentageAtPixel;
-        case 'SELECTED':
-          return categoryInfo.selectedPercentageAtPixel;
-        case 'UNSELECTED_ORDERED_AFTER_SELECTED':
-          return categoryInfo.afterSelectedPercentageAtPixel;
-        default:
-          throw new Error('Unexpected samplesSelectedStates value');
-      }
-    }
+    );
 
-    const pickCategoryArray = samplesSelectedStates
-      ? pickCategoryArrayWhenHaveSelectedSamples
-      : pickSelectedPercentage;
+    // Flatten out the fills into a single array.
+    return [].concat(...nestedFills);
+  }
 
-    const greyCategoryIndex =
-      categories.findIndex(c => c.color === 'grey') || 0;
-
-    function accumulateIntoCategory(
-      category,
-      sampleIndex,
-      prevSampleTime,
-      sampleTime,
-      nextSampleTime
-    ) {
-      if (sampleTime < rangeStart || sampleTime >= rangeEnd) {
-        return;
-      }
-
-      const categoryInfo = categoryInfos[category];
-      if (categoryInfo.selectedFillStyle === 'transparent') {
-        return;
-      }
-
-      const sampleStart = (prevSampleTime + sampleTime) / 2;
-      const sampleEnd = (sampleTime + nextSampleTime) / 2;
-      let pixelStart = (sampleStart - rangeStart) * xPixelsPerMs;
-      let pixelEnd = (sampleEnd - rangeStart) * xPixelsPerMs;
-      pixelStart = Math.max(0, pixelStart);
-      pixelEnd = Math.min(pixelWidth - 1, pixelEnd);
-      const intPixelStart = pixelStart | 0;
-      const intPixelEnd = pixelEnd | 0;
-
-      // For every sample, we have a fractional interval of this sample's
-      // contribution to the graph's pixels.
-      //
-      // v       v       v       v       v       v       v       v       v
-      // +-------+-------+-----+-+-------+-------+-----+-+-------+-------+
-      // |       |       |     |///////////////////////| |       |       |
-      // |       |       |     |///////////////////////| |       |       |
-      // |       |       |     |///////////////////////| |       |       |
-      // +-------+-------+-----+///////////////////////+-+-------+-------+
-      //
-      // We have a device-pixel array of contributions. We map the fractional
-      // interval to this array of device pixels: Fully overlapping pixels are
-      // 1, and the partial overlapping pixels are the degree of overlap.
-
-      //                                 |
-      //                                 v
-      //
-      // +-------+-------+-------+-------+-------+-------+-------+-------+
-      // |       |       |       |///////////////+-------+       |       |
-      // |       |       |       |///////////////////////|       |       |
-      // |       |       +-------+///////////////////////|       |       |
-      // +-------+-------+///////////////////////////////+-------+-------+
-      const categoryArray = pickCategoryArray(categoryInfo, sampleIndex);
-      for (let i = intPixelStart; i <= intPixelEnd; i++) {
-        categoryArray[i] += 1;
-      }
-      categoryArray[intPixelStart] -= pixelStart - intPixelStart;
-      categoryArray[intPixelEnd] -= 1 - (pixelEnd - intPixelEnd);
-    }
-
+  accumulateSampleCategories() {
+    const { samples, interval, stackTable, greyCategoryIndex } = this;
     let prevSampleTime = samples.time[0] - interval;
     let sampleTime = samples.time[0];
     for (let i = 0; i < samples.length - 1; i++) {
@@ -341,7 +501,7 @@ class ActivityGraph extends PureComponent<Props> {
         stackIndex !== null
           ? stackTable.category[stackIndex]
           : greyCategoryIndex;
-      accumulateIntoCategory(
+      this._accumulateInCategory(
         category,
         i,
         prevSampleTime,
@@ -357,59 +517,272 @@ class ActivityGraph extends PureComponent<Props> {
         ? stackTable.category[lastSampleStack]
         : greyCategoryIndex;
 
-    accumulateIntoCategory(
+    this._accumulateInCategory(
       lastSampleCategory,
       samples.length - 1,
       prevSampleTime,
       sampleTime,
       sampleTime + interval
     );
+  }
 
-    categoryInfos.sort((a, b) => b.gravity - a.gravity);
-
-    const fills: CategoryFill[] = [].concat(
-      ...categoryInfos.map(categoryInfo => {
-        // For every category we draw four fills, for the four selection kinds:
-        // 'UNSELECTED_ORDERED_BEFORE_SELECTED',
-        // 'SELECTED',
-        // 'UNSELECTED_ORDERED_AFTER_SELECTED',
-        // 'FILTERED_OUT'
-        return [
-          {
-            category: categoryInfo.category,
-            fillStyle: categoryInfo.unselectedFillStyle,
-            perPixelContribution: categoryInfo.beforeSelectedPercentageAtPixel,
-          },
-          {
-            category: categoryInfo.category,
-            fillStyle: categoryInfo.selectedFillStyle,
-            perPixelContribution: categoryInfo.selectedPercentageAtPixel,
-          },
-          {
-            category: categoryInfo.category,
-            fillStyle: categoryInfo.unselectedFillStyle,
-            perPixelContribution: categoryInfo.afterSelectedPercentageAtPixel,
-          },
-          {
-            category: categoryInfo.category,
-            fillStyle: categoryInfo.filteredOutFillStyle,
-            perPixelContribution: categoryInfo.filteredOutPercentageAtPixel,
-          },
-        ];
-      })
-    );
-
-    // Smooth the graphs by applying a 1D gaussian blur to the per-pixel
-    // contribution of each fill.
-    for (const fill of fills) {
-      fill.perPixelContribution = this._createSmoothedContribution(
-        fill.perPixelContribution
-      );
+  _accumulateInCategory(
+    category: IndexIntoCategoryList,
+    sampleIndex: IndexIntoSamplesTable,
+    prevSampleTime: Milliseconds,
+    sampleTime: Milliseconds,
+    nextSampleTime: Milliseconds
+  ) {
+    const {
+      rangeEnd,
+      rangeStart,
+      categoryDrawStyles,
+      xPixelsPerMs,
+      canvasPixelWidth,
+    } = this;
+    if (sampleTime < rangeStart || sampleTime >= rangeEnd) {
+      return;
     }
 
-    let lastCumulativeArray = fills[0].perPixelContribution;
-    for (const { perPixelContribution } of fills.slice(1)) {
-      for (let i = 0; i < pixelWidth; i++) {
+    const categoryDrawStyle = categoryDrawStyles[category];
+    const buffers = this.buffers[category];
+
+    if (categoryDrawStyle.selectedFillStyle === 'transparent') {
+      return;
+    }
+
+    const sampleStart = (prevSampleTime + sampleTime) / 2;
+    const sampleEnd = (sampleTime + nextSampleTime) / 2;
+    let pixelStart = (sampleStart - rangeStart) * xPixelsPerMs;
+    let pixelEnd = (sampleEnd - rangeStart) * xPixelsPerMs;
+    pixelStart = Math.max(0, pixelStart);
+    pixelEnd = Math.min(canvasPixelWidth - 1, pixelEnd);
+    const intPixelStart = pixelStart | 0;
+    const intPixelEnd = pixelEnd | 0;
+
+    // For every sample, we have a fractional interval of this sample's
+    // contribution to the graph's pixels.
+    //
+    // v       v       v       v       v       v       v       v       v
+    // +-------+-------+-----+-+-------+-------+-----+-+-------+-------+
+    // |       |       |     |///////////////////////| |       |       |
+    // |       |       |     |///////////////////////| |       |       |
+    // |       |       |     |///////////////////////| |       |       |
+    // +-------+-------+-----+///////////////////////+-+-------+-------+
+    //
+    // We have a device-pixel array of contributions. We map the fractional
+    // interval to this array of device pixels: Fully overlapping pixels are
+    // 1, and the partial overlapping pixels are the degree of overlap.
+
+    //                                 |
+    //                                 v
+    //
+    // +-------+-------+-------+-------+-------+-------+-------+-------+
+    // |       |       |       |///////////////+-------+       |       |
+    // |       |       |       |///////////////////////|       |       |
+    // |       |       +-------+///////////////////////|       |       |
+    // +-------+-------+///////////////////////////////+-------+-------+
+    const categoryArray = this._pickCategoryArray(buffers, sampleIndex);
+    for (let i = intPixelStart; i <= intPixelEnd; i++) {
+      categoryArray[i] += 1;
+    }
+    categoryArray[intPixelStart] -= pixelStart - intPixelStart;
+    categoryArray[intPixelEnd] -= 1 - (pixelEnd - intPixelEnd);
+  }
+
+  _pickCategoryArray(
+    buffers: SelectedPercentageAtPixelBuffers,
+    sampleIndex: IndexIntoSamplesTable
+  ): Float32Array {
+    const { samplesSelectedStates } = this;
+    if (!samplesSelectedStates) {
+      return buffers.selectedPercentageAtPixel;
+    }
+    switch (samplesSelectedStates[sampleIndex]) {
+      case 'FILTERED_OUT':
+        return buffers.filteredOutPercentageAtPixel;
+      case 'UNSELECTED_ORDERED_BEFORE_SELECTED':
+        return buffers.beforeSelectedPercentageAtPixel;
+      case 'SELECTED':
+        return buffers.selectedPercentageAtPixel;
+      case 'UNSELECTED_ORDERED_AFTER_SELECTED':
+        return buffers.afterSelectedPercentageAtPixel;
+      default:
+        throw new Error('Unexpected samplesSelectedStates value');
+    }
+  }
+
+  categoryAtPixel(
+    x: number,
+    y: number
+  ): null | {
+    category: IndexIntoCategoryList,
+    offsetToCategoryStart: DevicePixels,
+  } {
+    const deviceX = Math.round(x * this.devicePixelRatio);
+    const deviceY = Math.round(y * this.devicePixelRatio);
+
+    if (
+      !this.categoryFills ||
+      deviceX < 0 ||
+      deviceX >= this.canvasPixelWidth ||
+      deviceY < 0 ||
+      deviceY >= this.canvasPixelHeight
+    ) {
+      return null;
+    }
+
+    const valueToFind = 1 - deviceY / this.canvasPixelHeight;
+    let currentCategory = null;
+    let currentCategoryStart = 0.0;
+    let previousFillEnd = 0.0;
+    for (const { category, perPixelContribution } of this.categoryFills) {
+      const fillEnd = perPixelContribution[deviceX];
+
+      if (category !== currentCategory) {
+        currentCategory = category;
+        currentCategoryStart = previousFillEnd;
+      }
+
+      if (fillEnd >= valueToFind) {
+        return {
+          category,
+          offsetToCategoryStart: valueToFind - currentCategoryStart,
+        };
+      }
+
+      previousFillEnd = fillEnd;
+    }
+
+    return null;
+  }
+
+  _orderedSmoothedSampleContributionsToPixel(
+    time: number,
+    canvasPixelWidth: number,
+    category: IndexIntoCategoryList
+  ): Array<SampleContributionToPixel> {
+    const {
+      rangeStart,
+      rangeEnd,
+      treeOrderSampleComparator,
+      categories,
+      samples,
+      stackTable,
+    } = this;
+
+    const rangeLength = rangeEnd - rangeStart;
+    const xPixelsPerMs = canvasPixelWidth / rangeLength;
+    const xPixel = ((time - rangeStart) * xPixelsPerMs) | 0;
+    const [
+      sampleRangeStart,
+      sampleRangeEnd,
+    ] = this._sampleRangeContributingToPixelWhenSmoothed(xPixel, xPixelsPerMs);
+
+    const sampleContributions = [];
+    for (let sample = sampleRangeStart; sample < sampleRangeEnd; sample++) {
+      const stackIndex = samples.stack[sample];
+      const sampleCategory =
+        stackIndex !== null
+          ? stackTable.category[stackIndex]
+          : categories.findIndex(c => c.color === 'grey') || 0;
+      if (sampleCategory === category) {
+        sampleContributions.push({
+          sample,
+          contribution: this._smoothedContributionFromSampleToPixel(
+            xPixel,
+            xPixelsPerMs,
+            sample
+          ),
+        });
+      }
+    }
+    if (treeOrderSampleComparator) {
+      sampleContributions.sort((a, b) => {
+        const sampleA = a.sample;
+        const sampleB = b.sample;
+        return treeOrderSampleComparator(sampleA, sampleB);
+      });
+    }
+    return sampleContributions;
+  }
+
+  _sampleRangeContributingToPixelWhenSmoothed(
+    xPixel: number,
+    xPixelsPerMs: number
+  ): [IndexIntoSamplesTable, IndexIntoSamplesTable] {
+    const { samples, rangeStart } = this;
+    const contributionTimeRange = {
+      start: rangeStart + (xPixel - SMOOTHING_RADIUS) / xPixelsPerMs,
+      end: rangeStart + (xPixel + SMOOTHING_RADIUS) / xPixelsPerMs,
+    };
+    // Now find the samples where the range [mid(previousSample.time, thisSample.time), mid(thisSample.time, nextSample.time)]
+    // overlaps with contributionTimeRange.
+    const firstSampleAfterContributionTimeRangeStart = bisection.right(
+      samples.time,
+      contributionTimeRange.start
+    );
+    const firstSampleAfterContributionTimeRangeEnd = bisection.right(
+      samples.time,
+      contributionTimeRange.end
+    );
+    return [
+      Math.max(0, firstSampleAfterContributionTimeRangeStart - 1),
+      Math.min(samples.length - 1, firstSampleAfterContributionTimeRangeEnd) +
+        1,
+    ];
+  }
+
+  _smoothedContributionFromSampleToPixel(
+    xPixel: number,
+    xPixelsPerMs: number,
+    sample: IndexIntoSamplesTable
+  ): number {
+    const { samples, rangeStart } = this;
+    const kernelPos = xPixel - SMOOTHING_RADIUS;
+    const pixelsAroundX = new Float32Array(SMOOTHING_KERNEL.length);
+    const sampleTime = samples.time[sample];
+    // xPixel in graph space maps to kernel[smoothingRadius]
+    const sampleTimeRangeStart =
+      sample > 0 ? (samples.time[sample - 1] + sampleTime) / 2 : -Infinity;
+    const sampleTimeRangeEnd =
+      sample < samples.length
+        ? (samples.time[sample + 1] + sampleTime) / 2
+        : Infinity;
+
+    let pixelStart =
+      (sampleTimeRangeStart - rangeStart) * xPixelsPerMs - kernelPos;
+    let pixelEnd = (sampleTimeRangeEnd - rangeStart) * xPixelsPerMs - kernelPos;
+    pixelStart = clamp(pixelStart, 0, SMOOTHING_KERNEL.length - 1);
+    pixelEnd = clamp(pixelEnd, 0, SMOOTHING_KERNEL.length - 1);
+    const intPixelStart = pixelStart | 0;
+    const intPixelEnd = pixelEnd | 0;
+
+    for (let i = intPixelStart; i <= intPixelEnd; i++) {
+      pixelsAroundX[i] += 1;
+    }
+    pixelsAroundX[intPixelStart] -= pixelStart - intPixelStart;
+    pixelsAroundX[intPixelEnd] -= 1 - (pixelEnd - intPixelEnd);
+
+    let sum = 0;
+    for (let i = 0; i < SMOOTHING_KERNEL.length; i++) {
+      sum += SMOOTHING_KERNEL[i] * pixelsAroundX[i];
+    }
+
+    return sum;
+  }
+
+  drawFills() {
+    const { categoryFills, ctx, canvasPixelWidth, canvasPixelHeight } = this;
+    // Smooth the graphs by applying a 1D gaussian blur to the per-pixel
+    // contribution of each fill.
+    for (const fill of categoryFills) {
+      _applyGaussianBlur1D(fill.perPixelContribution, BOX_BLUR_RADII);
+    }
+
+    let lastCumulativeArray = categoryFills[0].perPixelContribution;
+    for (const { perPixelContribution } of categoryFills.slice(1)) {
+      for (let i = 0; i < canvasPixelWidth; i++) {
         perPixelContribution[i] += lastCumulativeArray[i];
       }
       lastCumulativeArray = perPixelContribution;
@@ -428,30 +801,31 @@ class ActivityGraph extends PureComponent<Props> {
     // This avoids any bleeding and seams.
     // lighter === OP_ADD
     ctx.globalCompositeOperation = 'lighter';
-    lastCumulativeArray = new Float32Array(pixelWidth);
-    for (const { fillStyle, perPixelContribution } of fills) {
+    lastCumulativeArray = new Float32Array(canvasPixelWidth);
+    for (const { fillStyle, perPixelContribution } of categoryFills) {
       const cumulativeArray = perPixelContribution;
       ctx.fillStyle = fillStyle;
       let lastNonZeroRangeEnd = 0;
-      while (lastNonZeroRangeEnd < pixelWidth) {
+      while (lastNonZeroRangeEnd < canvasPixelWidth) {
         const currentNonZeroRangeStart = findNextDifferentIndex(
           cumulativeArray,
           lastCumulativeArray,
           lastNonZeroRangeEnd
         );
-        if (currentNonZeroRangeStart >= pixelWidth) {
+        if (currentNonZeroRangeStart >= canvasPixelWidth) {
           break;
         }
-        let currentNonZeroRangeEnd = pixelWidth;
+        let currentNonZeroRangeEnd = canvasPixelWidth;
         ctx.beginPath();
         ctx.moveTo(
           currentNonZeroRangeStart,
-          (1 - lastCumulativeArray[currentNonZeroRangeStart]) * pixelHeight
+          (1 - lastCumulativeArray[currentNonZeroRangeStart]) *
+            canvasPixelHeight
         );
-        for (let i = currentNonZeroRangeStart + 1; i < pixelWidth; i++) {
+        for (let i = currentNonZeroRangeStart + 1; i < canvasPixelWidth; i++) {
           const lastVal = lastCumulativeArray[i];
           const thisVal = cumulativeArray[i];
-          ctx.lineTo(i, (1 - lastVal) * pixelHeight);
+          ctx.lineTo(i, (1 - lastVal) * canvasPixelHeight);
           if (lastVal === thisVal) {
             currentNonZeroRangeEnd = i;
             break;
@@ -462,7 +836,7 @@ class ActivityGraph extends PureComponent<Props> {
           i >= currentNonZeroRangeStart;
           i--
         ) {
-          ctx.lineTo(i, (1 - cumulativeArray[i]) * pixelHeight);
+          ctx.lineTo(i, (1 - cumulativeArray[i]) * canvasPixelHeight);
         }
         ctx.closePath();
         ctx.fill();
@@ -471,232 +845,33 @@ class ActivityGraph extends PureComponent<Props> {
       }
       lastCumulativeArray = cumulativeArray;
     }
-
-    this._lastPaintSettings = {
-      categoryFills: fills,
-      pixelWidth,
-      pixelHeight,
-      devicePixelRatio,
-    };
   }
 
-  _createSmoothedContribution(input: Float32Array): Float32Array {
-    return gaussianBlur1D(input, this._boxBlurRadii);
-  }
-
-  _getSmoothingKernel(): Float32Array {
-    const smoothingRadius = this._smoothingRadius;
-    const kernelWidth = smoothingRadius + 1 + smoothingRadius;
-    const kernel = new Float32Array(kernelWidth);
-    kernel[smoothingRadius] = 1;
-    const smoothedKernel = this._createSmoothedContribution(kernel);
-    return smoothedKernel;
-  }
-
-  _onMouseUp = (e: SyntheticMouseEvent<>) => {
-    const canvas = this._canvas;
-    if (!canvas) {
-      return;
-    }
-    const { rangeStart, rangeEnd, fullThread, categories } = this.props;
-    const { treeOrderSampleComparator } = this.props;
-    const smoothingRadius = this._smoothingRadius;
-    const r = canvas.getBoundingClientRect();
-
-    const x = e.pageX - r.left;
-    const y = e.pageY - r.top;
-    const time = rangeStart + x / r.width * (rangeEnd - rangeStart);
-
-    const lastPaintSettings = this._lastPaintSettings;
-    if (lastPaintSettings === null) {
-      return;
-    }
-
-    const {
-      categoryFills,
-      pixelWidth,
-      pixelHeight,
-      devicePixelRatio,
-    } = lastPaintSettings;
-
-    const kernel = this._getSmoothingKernel();
-    const greyCategoryIndex =
-      categories.findIndex(c => c.color === 'grey') || 0;
-    const { samples, stackTable } = fullThread;
-
-    const rangeLength = rangeEnd - rangeStart;
-    const xPixelsPerMs = pixelWidth / rangeLength;
-
-    function categoryAtPixel(x, y) {
-      const deviceX = Math.round(x * devicePixelRatio);
-      const deviceY = Math.round(y * devicePixelRatio);
-
-      if (
-        !categoryFills ||
-        deviceX < 0 ||
-        deviceX >= pixelWidth ||
-        deviceY < 0 ||
-        deviceY >= pixelHeight
-      ) {
-        return null;
-      }
-
-      const valueToFind = 1 - deviceY / pixelHeight;
-      let currentCategory = null;
-      let currentCategoryStart = 0.0;
-      let previousFillEnd = 0.0;
-      for (const { category, perPixelContribution } of categoryFills) {
-        const fillEnd = perPixelContribution[deviceX];
-
-        if (category !== currentCategory) {
-          currentCategory = category;
-          currentCategoryStart = previousFillEnd;
-        }
-
-        if (fillEnd >= valueToFind) {
-          return {
-            category,
-            offsetToCategoryStart: valueToFind - currentCategoryStart,
-          };
-        }
-
-        previousFillEnd = fillEnd;
-      }
-
+  getSampleAtClick(
+    x: CssPixels,
+    y: CssPixels,
+    time: Milliseconds
+  ): IndexIntoSamplesTable | null {
+    const categoryUnderMouse = this.categoryAtPixel(x, y);
+    if (categoryUnderMouse === null) {
       return null;
     }
 
-    function sampleRangeContributingToPixelWhenSmoothed(
-      xPixel: number
-    ): [IndexIntoSamplesTable, IndexIntoSamplesTable] {
-      const contributionTimeRange = {
-        start: rangeStart + (xPixel - smoothingRadius) / xPixelsPerMs,
-        end: rangeStart + (xPixel + smoothingRadius) / xPixelsPerMs,
-      };
-      // Now find the samples where the range [mid(previousSample.time, thisSample.time), mid(thisSample.time, nextSample.time)]
-      // overlaps with contributionTimeRange.
-      const firstSampleAfterContributionTimeRangeStart = bisection.right(
-        samples.time,
-        contributionTimeRange.start
-      );
-      const firstSampleAfterContributionTimeRangeEnd = bisection.right(
-        samples.time,
-        contributionTimeRange.end
-      );
-      return [
-        Math.max(0, firstSampleAfterContributionTimeRangeStart - 1),
-        Math.min(samples.length - 1, firstSampleAfterContributionTimeRangeEnd) +
-          1,
-      ];
-    }
-
-    function smoothedContributionFromSampleToPixel(
-      xPixel: number,
-      sample: IndexIntoSamplesTable
-    ): number {
-      const kernelPos = xPixel - smoothingRadius;
-      const pixelsAroundX = new Float32Array(kernel.length);
-      const sampleTime = samples.time[sample];
-      // xPixel in graph space maps to kernel[smoothingRadius]
-      const sampleTimeRangeStart =
-        sample > 0 ? (samples.time[sample - 1] + sampleTime) / 2 : -Infinity;
-      const sampleTimeRangeEnd =
-        sample < samples.length
-          ? (samples.time[sample + 1] + sampleTime) / 2
-          : Infinity;
-
-      let pixelStart =
-        (sampleTimeRangeStart - rangeStart) * xPixelsPerMs - kernelPos;
-      let pixelEnd =
-        (sampleTimeRangeEnd - rangeStart) * xPixelsPerMs - kernelPos;
-      pixelStart = clamp(pixelStart, 0, kernel.length - 1);
-      pixelEnd = clamp(pixelEnd, 0, kernel.length - 1);
-      const intPixelStart = pixelStart | 0;
-      const intPixelEnd = pixelEnd | 0;
-
-      for (let i = intPixelStart; i <= intPixelEnd; i++) {
-        pixelsAroundX[i] += 1;
-      }
-      pixelsAroundX[intPixelStart] -= pixelStart - intPixelStart;
-      pixelsAroundX[intPixelEnd] -= 1 - (pixelEnd - intPixelEnd);
-
-      let sum = 0;
-      for (let i = 0; i < kernel.length; i++) {
-        sum += kernel[i] * pixelsAroundX[i];
-      }
-
-      return sum;
-    }
-
-    function orderedSmoothedSampleContributionsToPixel(
-      time: number,
-      category: IndexIntoCategoryList
-    ): Array<SampleContributionToPixel> {
-      const xPixel = ((time - rangeStart) * xPixelsPerMs) | 0;
-      const [
-        sampleRangeStart,
-        sampleRangeEnd,
-      ] = sampleRangeContributingToPixelWhenSmoothed(xPixel);
-      const sampleContributions = [];
-      for (let sample = sampleRangeStart; sample < sampleRangeEnd; sample++) {
-        const stackIndex = samples.stack[sample];
-        const sampleCategory =
-          stackIndex !== null
-            ? stackTable.category[stackIndex]
-            : greyCategoryIndex;
-        if (sampleCategory === category) {
-          sampleContributions.push({
-            sample,
-            contribution: smoothedContributionFromSampleToPixel(xPixel, sample),
-          });
-        }
-      }
-      if (treeOrderSampleComparator) {
-        sampleContributions.sort((a, b) => {
-          const sampleA = a.sample;
-          const sampleB = b.sample;
-          return treeOrderSampleComparator(sampleA, sampleB);
-        });
-      }
-      return sampleContributions;
-    }
-
-    const categoryUnderMouse = categoryAtPixel(x, y);
-    if (categoryUnderMouse === null) {
-      return;
-    }
-
     let offsetToCategoryStart = categoryUnderMouse.offsetToCategoryStart;
-    const candidateSamples = orderedSmoothedSampleContributionsToPixel(
+    const candidateSamples = this._orderedSmoothedSampleContributionsToPixel(
       time,
+      this.canvasPixelWidth,
       categoryUnderMouse.category
     );
 
     for (let i = 0; i < candidateSamples.length; i++) {
       const { sample, contribution } = candidateSamples[i];
       if (offsetToCategoryStart <= contribution) {
-        this.props.onSampleClick(sample);
-        return;
+        return sample;
       }
       offsetToCategoryStart -= contribution;
     }
-  };
 
-  render() {
-    this._renderCanvas();
-    return (
-      <div className={this.props.className}>
-        <canvas
-          className={classNames(
-            `${this.props.className}Canvas`,
-            'threadActivityGraphCanvas'
-          )}
-          ref={this._takeCanvasRef}
-          onMouseUp={this._onMouseUp}
-        />
-      </div>
-    );
+    return null;
   }
 }
-
-export default ActivityGraph;

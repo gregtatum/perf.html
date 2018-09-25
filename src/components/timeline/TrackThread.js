@@ -55,7 +55,8 @@ type OwnProps = {|
 |};
 
 type StateProps = {|
-  +thread: Thread,
+  +fullThread: Thread,
+  +filteredThread: Thread,
   +callNodeInfo: CallNodeInfo,
   +selectedCallNodeIndex: IndexIntoCallNodeTable | null,
   +unfilteredSamplesRange: StartEndRange | null,
@@ -78,14 +79,14 @@ type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
 class TimelineTrackThread extends PureComponent<Props> {
   _onSampleClick = (sampleIndex: IndexIntoSamplesTable) => {
     const {
-      thread,
+      filteredThread,
       threadIndex,
       callNodeInfo,
       changeSelectedCallNode,
       focusCallTree,
     } = this.props;
 
-    const newSelectedStack = thread.samples.stack[sampleIndex];
+    const newSelectedStack = filteredThread.samples.stack[sampleIndex];
     const newSelectedCallNode =
       newSelectedStack === null
         ? -1
@@ -113,7 +114,8 @@ class TimelineTrackThread extends PureComponent<Props> {
 
   render() {
     const {
-      thread,
+      filteredThread,
+      fullThread,
       threadIndex,
       interval,
       rangeStart,
@@ -125,12 +127,12 @@ class TimelineTrackThread extends PureComponent<Props> {
       timelineType,
     } = this.props;
 
-    const processType = thread.processType;
+    const processType = filteredThread.processType;
     const displayJank = processType !== 'plugin';
     const displayTracingMarkers =
-      (thread.name === 'GeckoMain' ||
-        thread.name === 'Compositor' ||
-        thread.name === 'Renderer') &&
+      (filteredThread.name === 'GeckoMain' ||
+        filteredThread.name === 'Compositor' ||
+        filteredThread.name === 'Renderer') &&
       processType !== 'plugin';
 
     return (
@@ -152,7 +154,9 @@ class TimelineTrackThread extends PureComponent<Props> {
             // JavaScript and props instead.
             className={`
               timelineTrackThreadIntervalMarkerOverview
-              timelineTrackThreadIntervalMarkerOverviewThread${thread.name}
+              timelineTrackThreadIntervalMarkerOverviewThread${
+                filteredThread.name
+              }
             `}
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}
@@ -164,7 +168,7 @@ class TimelineTrackThread extends PureComponent<Props> {
           <ThreadActivityGraph
             className="threadActivityGraph"
             interval={interval}
-            fullThread={thread}
+            fullThread={fullThread}
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}
             onSampleClick={this._onSampleClick}
@@ -174,7 +178,7 @@ class TimelineTrackThread extends PureComponent<Props> {
           <ThreadStackGraph
             className="threadStackGraph"
             interval={interval}
-            thread={thread}
+            thread={filteredThread}
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}
             callNodeInfo={callNodeInfo}
@@ -184,7 +188,7 @@ class TimelineTrackThread extends PureComponent<Props> {
           />
         )}
         <EmptyThreadIndicator
-          thread={thread}
+          thread={filteredThread}
           interval={interval}
           rangeStart={rangeStart}
           rangeEnd={rangeEnd}
@@ -202,7 +206,8 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
     const selectedThread = getSelectedThreadIndex(state);
     const committedRange = getCommittedRange(state);
     return {
-      thread: selectors.getFilteredThread(state),
+      filteredThread: selectors.getFilteredThread(state),
+      fullThread: selectors.getRangeFilteredThread(state),
       callNodeInfo: selectors.getCallNodeInfo(state),
       selectedCallNodeIndex:
         threadIndex === selectedThread
