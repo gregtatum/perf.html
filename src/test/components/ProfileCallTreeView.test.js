@@ -42,7 +42,7 @@ describe('calltree/ProfileCallTreeView', function() {
   it('renders an unfiltered call tree', () => {
     const calltree = mount(
       <Provider store={storeWithProfile(profile)}>
-        <ProfileCallTreeView />
+        <ProfileCallTreeView hideThreadActivityGraph={true} />
       </Provider>
     );
 
@@ -63,7 +63,7 @@ describe('calltree/ProfileCallTreeView', function() {
 
     const calltree = mount(
       <Provider store={store}>
-        <ProfileCallTreeView />
+        <ProfileCallTreeView hideThreadActivityGraph={true} />
       </Provider>
     );
 
@@ -74,7 +74,7 @@ describe('calltree/ProfileCallTreeView', function() {
     const store = storeWithProfile(profile);
     const calltree = mount(
       <Provider store={store}>
-        <ProfileCallTreeView />
+        <ProfileCallTreeView hideThreadActivityGraph={true} />
       </Provider>
     );
 
@@ -105,7 +105,7 @@ describe('calltree/ProfileCallTreeView', function() {
     const store = storeWithProfile(profile);
     const calltree = mount(
       <Provider store={store}>
-        <ProfileCallTreeView />
+        <ProfileCallTreeView hideThreadActivityGraph={true} />
       </Provider>
     );
 
@@ -133,7 +133,7 @@ describe('calltree/ProfileCallTreeView EmptyReasons', function() {
   function renderWithStore(store) {
     return mount(
       <Provider store={store}>
-        <ProfileCallTreeView />
+        <ProfileCallTreeView hideThreadActivityGraph={true} />
       </Provider>
     );
   }
@@ -180,7 +180,7 @@ describe('calltree/ProfileCallTreeView navigation keys', () => {
     const store = storeWithProfile(profile);
     const callTree = mount(
       <Provider store={store}>
-        <ProfileCallTreeView />
+        <ProfileCallTreeView hideThreadActivityGraph={true} />
       </Provider>
     );
 
