@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-.stackSettings {
+.jsTracerSettings {
   height: 25px;
   padding: 0;
   line-height: 25px;
@@ -11,7 +11,7 @@
   color: var(--ink-70);
 }
 
-.stackSettingsList {
+.jsTracerSettingsList {
   display: block;
   flex: 1;
   list-style: none;
@@ -21,12 +21,12 @@
   align-items: flex-start;
 }
 
-.stackSettingsListItem {
+.jsTracerSettingsListItem {
   margin: 0 5px;
   padding: 0;
 }
 
-.stackSettingsLabel {
+.jsTracerSettingsLabel {
   -webkit-user-select: none;
   -moz-user-select: none;
   user-select: none;
@@ -36,11 +36,22 @@
   height: 25px;
 }
 
-.stackSettingsSelect {
+.jsTracerSettingsCheckbox {
   margin: 0 5px;
-  font-size: 11px;
 }
 
-.stackSettingsCheckbox {
-  margin: 0 5px;
+.jsTracerSettingsFilter {
+  border-right: 1px solid var(--grey-20);
+  padding-right: 10px;
+  white-space: nowrap;
+}
+
+.jsTracerSettingsFilterLabel {
+  display: inline-flex;
+  align-items: center;
+  padding-right: 5px;
+}
+
+.jsTracerSettingsFilterInput {
+  margin: 0 4px;
 }

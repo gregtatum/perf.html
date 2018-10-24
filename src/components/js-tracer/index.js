@@ -4,6 +4,10 @@
 
 // @flow
 import * as React from 'react';
+import {
+  TIMELINE_MARGIN_LEFT,
+  TIMELINE_MARGIN_RIGHT,
+} from '../../app-logic/constants';
 import explicitConnect from '../../utils/connect';
 import JsTracerCanvas from './Canvas';
 import EmptyReasons from './EmptyReasons';
@@ -86,6 +90,8 @@ class JsTracerChart extends React.PureComponent<Props> {
               maxViewportHeight,
               viewportNeedsUpdate,
               maximumZoom: this.getMaximumZoom(),
+              marginLeft: TIMELINE_MARGIN_LEFT,
+              marginRight: TIMELINE_MARGIN_RIGHT,
             }}
             chartProps={{
               jsTracerTimingRows,

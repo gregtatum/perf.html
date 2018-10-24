@@ -6,16 +6,8 @@
 
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import {
-  changeImplementationFilter,
-  changeInvertCallstack,
-} from '../../actions/profile-view';
-import {
-  getImplementationFilter,
-  getInvertCallstack,
-} from '../../reducers/url-state';
-import StackSearchField from '../shared/StackSearchField';
-import { toValidImplementationFilter } from '../../profile-logic/profile-data';
+import { changeShowJsTracerSummary } from '../../actions/profile-view';
+import { getShowJsTracerSummary } from '../../reducers/url-state';
 
 import './Settings.css';
 
@@ -23,64 +15,33 @@ import type { ImplementationFilter } from '../../types/actions';
 
 type Props = {|
   +implementationFilter: ImplementationFilter,
-  +invertCallstack: boolean,
-  +hideInvertCallstack?: boolean,
-  +changeImplementationFilter: typeof changeImplementationFilter,
-  +changeInvertCallstack: typeof changeInvertCallstack,
+  +showJsTracerSummary: boolean,
+  +changeShowJsTracerSummary: typeof changeShowJsTracerSummary,
 |};
 
-class JsTracerSettings extends PureComponent<Props> {
-  _onImplementationFilterChange = (e: SyntheticEvent<HTMLSelectElement>) => {
-    this.props.changeImplementationFilter(
-      // This function is here to satisfy Flow that we are getting a valid
-      // implementation filter.
-      toValidImplementationFilter(e.currentTarget.value)
-    );
-  };
-
-  _onInvertCallstackClick = (e: SyntheticEvent<HTMLInputElement>) => {
-    this.props.changeInvertCallstack(e.currentTarget.checked);
+class StackSettings extends PureComponent<Props> {
+  _onCheckboxChange = (e: SyntheticEvent<HTMLInputElement>) => {
+    this.props.changeShowJsTracerSummary(e.currentTarget.checked);
   };
 
   render() {
-    const {
-      implementationFilter,
-      invertCallstack,
-      hideInvertCallstack,
-    } = this.props;
+    const { showJsTracerSummary } = this.props;
 
     return (
-      <div className="stackSettings">
-        <ul className="stackSettingsList">
-          <li className="stackSettingsListItem">
-            <label className="stackSettingsLabel">
-              Filter:
-              <select
-                className="stackSettingsSelect"
-                onChange={this._onImplementationFilterChange}
-                value={implementationFilter}
-              >
-                <option value="combined">Combined stacks</option>
-                <option value="js">JS only</option>
-                <option value="cpp">C++ only</option>
-              </select>
+      <div className="jsTracerSettings">
+        <ul className="jsTracerSettingsList">
+          <li className="jsTracerSettingsListItem">
+            <label className="jsTracerSettingsLabel">
+              <input
+                type="checkbox"
+                className="jsTracerSettingsCheckbox"
+                onChange={this._onCheckboxChange}
+                checked={showJsTracerSummary}
+              />
+              {' Summarize'}
             </label>
           </li>
-          {hideInvertCallstack ? null : (
-            <li className="stackSettingsListItem">
-              <label className="stackSettingsLabel">
-                <input
-                  type="checkbox"
-                  className="stackSettingsCheckbox"
-                  onChange={this._onInvertCallstackClick}
-                  checked={invertCallstack}
-                />
-                {' Invert call stack'}
-              </label>
-            </li>
-          )}
         </ul>
-        <StackSearchField className="stackSettingsSearchField" />
       </div>
     );
   }
@@ -88,11 +49,9 @@ class JsTracerSettings extends PureComponent<Props> {
 
 export default connect(
   state => ({
-    invertCallstack: getInvertCallstack(state),
-    implementationFilter: getImplementationFilter(state),
+    showJsTracerSummary: getShowJsTracerSummary(state),
   }),
   {
-    changeImplementationFilter,
-    changeInvertCallstack,
+    changeShowJsTracerSummary,
   }
-)(JsTracerSettings);
+)(StackSettings);
