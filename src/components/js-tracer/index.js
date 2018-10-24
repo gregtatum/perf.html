@@ -40,7 +40,7 @@ type DispatchProps = {|
 type StateProps = {|
   +jsTracerTable: JsTracerTable | null,
   +jsTracerTimingRows: JsTracerTiming[] | null,
-  +maxMarkerRows: number,
+  +maxRows: number,
   +timeRange: { start: Milliseconds, end: Milliseconds },
   +interval: Milliseconds,
   +threadIndex: number,
@@ -60,7 +60,7 @@ class JsTracerChart extends React.PureComponent<Props> {
 
   render() {
     const {
-      maxMarkerRows,
+      maxRows,
       timeRange,
       threadIndex,
       jsTracerTimingRows,
@@ -71,10 +71,10 @@ class JsTracerChart extends React.PureComponent<Props> {
 
     // The viewport needs to know about the height of what it's drawing, calculate
     // that here at the top level component.
-    const maxViewportHeight = maxMarkerRows * ROW_HEIGHT;
+    const maxViewportHeight = maxRows * ROW_HEIGHT;
 
     return (
-      <div className="markerChart">
+      <div className="jsTracerChart">
         {jsTracerTable === null || jsTracerTimingRows === null ? (
           <EmptyReasons />
         ) : (
@@ -117,8 +117,7 @@ const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
     return {
       jsTracerTable: selectedThreadSelectors.getJsTracerTable(state),
       jsTracerTimingRows,
-      maxMarkerRows:
-        jsTracerTimingRows === null ? 0 : jsTracerTimingRows.length,
+      maxRows: jsTracerTimingRows === null ? 0 : jsTracerTimingRows.length,
       timeRange: getCommittedRange(state),
       interval: getProfileInterval(state),
       threadIndex: getSelectedThreadIndex(state),

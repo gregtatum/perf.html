@@ -31,7 +31,7 @@ import type {
 import type { JsTracerTiming } from '../../types/profile-derived';
 import type { Viewport } from '../shared/chart/Viewport';
 
-type MarkerDrawingInformation = {
+type DrawingInformation = {
   x: CssPixels,
   y: CssPixels,
   w: CssPixels,
@@ -61,9 +61,8 @@ type State = {|
 |};
 
 const TEXT_OFFSET_TOP = 11;
-const TWO_PI = Math.PI * 2;
-const MARKER_DOT_RADIUS = 0.25;
 const TEXT_OFFSET_START = 3;
+const DOT_RADIUS = 0.25;
 
 class JsTracerCanvas extends React.PureComponent<Props, State> {
   _textMeasurement: null | TextMeasurement;
@@ -178,7 +177,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
         TIMELINE_MARGIN_RIGHT *
           (viewportLength * rangeLength / markerContainerWidth);
 
-      let hoveredElement: MarkerDrawingInformation | null = null;
+      let hoveredElement: DrawingInformation | null = null;
       for (let i = 0; i < markerTiming.length; i++) {
         // Only draw samples that are in bounds.
         if (
@@ -288,7 +287,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
   }
 
   hitTest = (x: CssPixels, y: CssPixels): IndexIntoJsTracerEvents | null => {
-    if (x < TIMELINE_MARGIN_LEFT - MARKER_DOT_RADIUS) {
+    if (x < TIMELINE_MARGIN_LEFT - DOT_RADIUS) {
       return null;
     }
     const {
@@ -312,7 +311,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     const minDuration =
       rangeLength *
       viewportLength *
-      (rowHeight * 2 * MARKER_DOT_RADIUS / markerContainerWidth);
+      (rowHeight * 2 * DOT_RADIUS / markerContainerWidth);
     const markerTiming = jsTracerTimingRows[rowIndex];
 
     if (!markerTiming) {
@@ -360,9 +359,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     ctx.fillRect(x + c, bottom - c, width - 2 * c, c);
   }
 
-  getHoveredMarkerInfo = (
-    _hoveredItem: IndexIntoJsTracerEvents
-  ): React.Node => {
+  getHoveredItemInfo = (_hoveredItem: IndexIntoJsTracerEvents): React.Node => {
     return null;
     // const marker = this.props.markers[hoveredItem];
     // return (
@@ -378,12 +375,12 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
 
     return (
       <ChartCanvas
-        className="markerChartCanvas"
+        className="jsTracerCanvas"
         containerWidth={containerWidth}
         containerHeight={containerHeight}
         isDragging={isDragging}
         onDoubleClickItem={this.onDoubleClickMarker}
-        getHoveredItemInfo={this.getHoveredMarkerInfo}
+        getHoveredItemInfo={this.getHoveredItemInfo}
         drawCanvas={this.drawCanvas}
         hitTest={this.hitTest}
         scaleCtxToCssPixels={true}
