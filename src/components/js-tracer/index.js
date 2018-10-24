@@ -10,6 +10,7 @@ import {
 } from '../../app-logic/constants';
 import explicitConnect from '../../utils/connect';
 import JsTracerCanvas from './Canvas';
+import JsTracerSettings from './Settings';
 import EmptyReasons from './EmptyReasons';
 
 import {
@@ -53,7 +54,7 @@ type StateProps = {|
 
 type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
-class JsTracerChart extends React.PureComponent<Props> {
+class JsTracer extends React.PureComponent<Props> {
   /**
    * Determine the maximum zoom of the viewport.
    */
@@ -78,31 +79,34 @@ class JsTracerChart extends React.PureComponent<Props> {
     const maxViewportHeight = maxRows * ROW_HEIGHT;
 
     return (
-      <div className="jsTracerChart">
+      <div className="jsTracer">
         {jsTracerTable === null || jsTracerTimingRows === null ? (
           <EmptyReasons />
         ) : (
-          <JsTracerCanvas
-            key={threadIndex}
-            viewportProps={{
-              timeRange,
-              previewSelection,
-              maxViewportHeight,
-              viewportNeedsUpdate,
-              maximumZoom: this.getMaximumZoom(),
-              marginLeft: TIMELINE_MARGIN_LEFT,
-              marginRight: TIMELINE_MARGIN_RIGHT,
-            }}
-            chartProps={{
-              jsTracerTimingRows,
-              jsTracerTable,
-              updatePreviewSelection,
-              rangeStart: timeRange.start,
-              rangeEnd: timeRange.end,
-              rowHeight: ROW_HEIGHT,
-              threadIndex,
-            }}
-          />
+          <>
+            <JsTracerSettings />
+            <JsTracerCanvas
+              key={threadIndex}
+              viewportProps={{
+                timeRange,
+                previewSelection,
+                maxViewportHeight,
+                viewportNeedsUpdate,
+                maximumZoom: this.getMaximumZoom(),
+                marginLeft: TIMELINE_MARGIN_LEFT,
+                marginRight: TIMELINE_MARGIN_RIGHT,
+              }}
+              chartProps={{
+                jsTracerTimingRows,
+                jsTracerTable,
+                updatePreviewSelection,
+                rangeStart: timeRange.start,
+                rangeEnd: timeRange.end,
+                rowHeight: ROW_HEIGHT,
+                threadIndex,
+              }}
+            />
+          </>
         )}
       </div>
     );
@@ -131,6 +135,6 @@ const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
     };
   },
   mapDispatchToProps: { updatePreviewSelection },
-  component: JsTracerChart,
+  component: JsTracer,
 };
 export default explicitConnect(options);

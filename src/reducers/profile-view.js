@@ -1259,10 +1259,11 @@ export const selectorsForThread = (
     };
     const getJsTracerTiming = createSelector(
       getJsTracerTable,
-      jsTracerTable =>
+      UrlState.getShowJsTracerSummary,
+      (jsTracerTable, showSummary) =>
         jsTracerTable === null
           ? null
-          : JsTracer.getJsTracerTiming(jsTracerTable)
+          : JsTracer.getJsTracerTiming(jsTracerTable, showSummary)
     );
 
     selectorsForThreads[threadIndex] = {

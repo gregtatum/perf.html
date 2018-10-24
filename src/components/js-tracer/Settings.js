@@ -19,7 +19,7 @@ type Props = {|
   +changeShowJsTracerSummary: typeof changeShowJsTracerSummary,
 |};
 
-class StackSettings extends PureComponent<Props> {
+class JsTracerSettings extends PureComponent<Props> {
   _onCheckboxChange = (e: SyntheticEvent<HTMLInputElement>) => {
     this.props.changeShowJsTracerSummary(e.currentTarget.checked);
   };
@@ -54,4 +54,4 @@ export default connect(
   {
     changeShowJsTracerSummary,
   }
-)(StackSettings);
+)(JsTracerSettings);

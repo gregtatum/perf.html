@@ -11,14 +11,15 @@ import { ensureExists } from '../utils/flow';
 // Arbitrarily set an upper limit for adding marker depths, avoiding an infinite loop.
 const MAX_STACKING_DEPTH = 300;
 
-export function getJsTracerTiming({
-  events: tracerEvents,
-  stringTable,
-}: JsTracerTable): JsTracerTiming[] {
+export function getJsTracerTiming(
+  { events: tracerEvents, stringTable }: JsTracerTable,
+  showSummary: boolean
+): JsTracerTiming[] {
   // Each marker type will have it's own timing information, later collapse these into
   // a single array.
   const jsTracerTimingMap: Map<string, JsTracerTiming[]> = new Map();
   const isUrl = stringTable._array.map(string => /:\/\//.test(string));
+
   // Go through all of the markers.
   for (
     let tracerEventIndex = 0;
@@ -27,8 +28,13 @@ export function getJsTracerTiming({
   ) {
     const stringIndex = tracerEvents.events[tracerEventIndex];
     const displayName = stringTable.getString(stringIndex);
-    // const rowName = isUrl[stringIndex] ? 'Script' : displayName;
-    const rowName = 'Tracer';
+    let rowName;
+
+    if (showSummary) {
+      rowName = isUrl[stringIndex] ? 'Script' : displayName;
+    } else {
+      rowName = 'Tracing Information';
+    }
     let markerTimingsByName = jsTracerTimingMap.get(rowName);
     if (markerTimingsByName === undefined) {
       markerTimingsByName = [];
@@ -70,18 +76,19 @@ export function getJsTracerTiming({
     }
   }
 
-  // Sort the URLs last.
-  const keys = [...jsTracerTimingMap.keys()].sort((a, b) => {
-    const isUrlA = a === 'Script';
-    const isUrlB = b === 'Script';
-    // const isUrl = /:\/\//;
-    // const isUrlA = isUrl.test(a);
-    // const isUrlB = isUrl.test(b);
-    if (isUrlA === isUrlB) {
-      return a > b ? 1 : -1;
-    }
-    return isUrlA ? 1 : -1;
-  });
+  const keys = [...jsTracerTimingMap.keys()];
+  if (showSummary) {
+    // Sort the URLs last if doing a summary view.
+    const isUrl = /:\/\//;
+    keys.sort((a, b) => {
+      const isUrlA = isUrl.test(a);
+      const isUrlB = isUrl.test(b);
+      if (isUrlA === isUrlB) {
+        return a > b ? 1 : -1;
+      }
+      return isUrlA ? 1 : -1;
+    });
+  }
 
   const jsTracerTiming = [];
   for (const key of keys) {
