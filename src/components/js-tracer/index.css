@@ -8,6 +8,34 @@
   flex-flow: column nowrap;
 }
 
+.jsTracerLoader {
+  flex: 1;
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  vertical-align: middle;
+  background-color: var(--grey-10);
+  border-top: solid 1px var(--grey-20);
+  font-size: 12px;
+  justify-content: center;
+}
+
+@keyframes jsTracerCanvasFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 .jsTracerCanvas {
-  border-top: 1px solid var(--grey-30);
+  background-color: #fff;
+  opacity: 0;
+}
+
+.jsTracerCanvasDrawn {
+  opacity: 1;
+  animation-name: jsTracerCanvasFadeIn;
+  animation-duration: 200ms;
 }

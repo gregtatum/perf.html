@@ -5,8 +5,9 @@
 .jsTracerSettings {
   height: 25px;
   padding: 0;
-  line-height: 25px;
   display: flex;
+  border-bottom: 1px solid var(--grey-30);
+  line-height: 25px;
   flex-flow: row nowrap;
   color: var(--ink-70);
 }

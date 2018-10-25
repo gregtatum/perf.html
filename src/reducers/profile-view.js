@@ -23,6 +23,7 @@ import * as JsTracer from '../profile-logic/js-tracer';
 import * as CallTree from '../profile-logic/call-tree';
 import { assertExhaustiveCheck, ensureExists } from '../utils/flow';
 import { arePathsEqual, PathSet } from '../utils/path';
+import { timeCode } from '../utils/time-code';
 
 import type {
   Profile,
@@ -821,7 +822,8 @@ export type SelectorsForThread = {
   getJsTracerTable: State => JsTracerTable | null,
   getJsTracerEvents: State => JsTracerEvents | null,
   getJsTracerStringTable: State => UniqueStringArray | null,
-  getJsTracerTiming: State => JsTracerTiming[] | null,
+  getExpensiveJsTracerTiming: State => null | JsTracerTiming[],
+  getJsTracerInvalidationChecker: State => () => boolean,
 };
 
 const selectorsForThreads: { [key: ThreadIndex]: SelectorsForThread } = {};
@@ -1257,13 +1259,33 @@ export const selectorsForThread = (
       const tracerTable = getJsTracerTable(state);
       return tracerTable === null ? null : tracerTable.stringTable;
     };
-    const getJsTracerTiming = createSelector(
+    // The JS tracer information takes awhile to compute. Provide a mechanism to know
+    // if this information hasn't been computed yet so the UI can reflect that it is
+    // being computed.
+    //
+    // Warning! This selector doesn't follow the typical update cycle
+    let _previousJsTracerTable;
+    let _previousShowJsTracerSummary;
+    const getJsTracerInvalidationChecker = createSelector(
+      getJsTracerTable,
+      UrlState.getShowJsTracerSummary,
+      (jsTracerTable, showSummary) => () =>
+        _previousJsTracerTable !== jsTracerTable ||
+        _previousShowJsTracerSummary !== showSummary
+    );
+
+    const getExpensiveJsTracerTiming = createSelector(
       getJsTracerTable,
       UrlState.getShowJsTracerSummary,
       (jsTracerTable, showSummary) =>
         jsTracerTable === null
           ? null
-          : JsTracer.getJsTracerTiming(jsTracerTable, showSummary)
+          : timeCode('getExpensiveJsTracerTiming', () => {
+              // Remember the last time this was computed.
+              _previousJsTracerTable = jsTracerTable;
+              _previousShowJsTracerSummary = showSummary;
+              return JsTracer.getJsTracerTiming(jsTracerTable, showSummary);
+            })
     );
 
     selectorsForThreads[threadIndex] = {
@@ -1310,7 +1332,8 @@ export const selectorsForThread = (
       getJsTracerTable,
       getJsTracerEvents,
       getJsTracerStringTable,
-      getJsTracerTiming,
+      getExpensiveJsTracerTiming,
+      getJsTracerInvalidationChecker,
     };
   }
   return selectorsForThreads[threadIndex];

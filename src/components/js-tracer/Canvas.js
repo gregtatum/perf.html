@@ -5,6 +5,7 @@
 // @flow
 import { GREY_20 } from 'photon-colors';
 import * as React from 'react';
+import classNames from 'classnames';
 import {
   TIMELINE_MARGIN_LEFT,
   TIMELINE_MARGIN_RIGHT,
@@ -57,7 +58,8 @@ type Props = {|
 |};
 
 type State = {|
-  hoveredItem: null | number,
+  // hoveredItem: null | number,
+  hasFirstDraw: boolean,
 |};
 
 const TEXT_OFFSET_TOP = 11;
@@ -66,8 +68,10 @@ const DOT_RADIUS = 0.25;
 
 class JsTracerCanvas extends React.PureComponent<Props, State> {
   _textMeasurement: null | TextMeasurement;
-
   _previousFillColor: null | string = null;
+  state: State = {
+    hasFirstDraw: false,
+  };
 
   /**
    * Most of the draw calls are tiny tiny boxes, so it takes too long to split up the
@@ -113,6 +117,10 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
 
     this.drawMarkers(ctx, hoveredItem, startRow, endRow);
     this.drawSeparatorsAndLabels(ctx, startRow, endRow);
+
+    if (!this.state.hasFirstDraw) {
+      this.setState({ hasFirstDraw: true });
+    }
   };
 
   // Note: we used a long argument list instead of an object parameter on
@@ -374,10 +382,12 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
 
   render() {
     const { containerWidth, containerHeight, isDragging } = this.props.viewport;
-
     return (
       <ChartCanvas
-        className="jsTracerCanvas"
+        className={classNames({
+          jsTracerCanvas: true,
+          jsTracerCanvasDrawn: this.state.hasFirstDraw,
+        })}
         containerWidth={containerWidth}
         containerHeight={containerHeight}
         isDragging={isDragging}

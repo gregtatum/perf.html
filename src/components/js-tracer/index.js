@@ -4,31 +4,15 @@
 
 // @flow
 import * as React from 'react';
-import {
-  TIMELINE_MARGIN_LEFT,
-  TIMELINE_MARGIN_RIGHT,
-} from '../../app-logic/constants';
 import explicitConnect from '../../utils/connect';
-import JsTracerCanvas from './Canvas';
+import JsTracerExpensiveChart from './ExpensiveChart';
 import JsTracerSettings from './Settings';
 import EmptyReasons from './EmptyReasons';
 
-import {
-  selectedThreadSelectors,
-  getCommittedRange,
-  getProfileInterval,
-  getPreviewSelection,
-} from '../../reducers/profile-view';
-import { getSelectedThreadIndex } from '../../reducers/url-state';
+import { selectedThreadSelectors } from '../../reducers/profile-view';
 import { updatePreviewSelection } from '../../actions/profile-view';
 
 import type { JsTracerTable } from '../../types/profile';
-import type { JsTracerTiming } from '../../types/profile-derived';
-import type {
-  Milliseconds,
-  UnitIntervalOfProfileRange,
-} from '../../types/units';
-import type { PreviewSelection } from '../../types/actions';
 import type {
   ExplicitConnectOptions,
   ConnectedProps,
@@ -36,76 +20,72 @@ import type {
 
 require('./index.css');
 
-const ROW_HEIGHT = 16;
-
 type DispatchProps = {|
   +updatePreviewSelection: typeof updatePreviewSelection,
 |};
 
 type StateProps = {|
+  +jsTracerInvalidationChecker: () => boolean,
   +jsTracerTable: JsTracerTable | null,
-  +jsTracerTimingRows: JsTracerTiming[] | null,
-  +maxRows: number,
-  +timeRange: { start: Milliseconds, end: Milliseconds },
-  +interval: Milliseconds,
-  +threadIndex: number,
-  +previewSelection: PreviewSelection,
 |};
 
 type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
+type State = {|
+  wasLoaderMounted: boolean,
+|};
 
-class JsTracer extends React.PureComponent<Props> {
-  /**
-   * Determine the maximum zoom of the viewport.
-   */
-  getMaximumZoom(): UnitIntervalOfProfileRange {
-    const { timeRange: { start, end }, interval } = this.props;
-    return interval / (end - start);
+const LOADER_WAS_MOUNTED = { wasLoaderMounted: true };
+const LOADER_HAS_NOT_BEEN_MOUNTED = { wasLoaderMounted: false };
+
+class JsTracer extends React.PureComponent<Props, State> {
+  state: State = LOADER_HAS_NOT_BEEN_MOUNTED;
+
+  _rafGeneration: number = 0;
+
+  componentDidMount() {
+    this._checkInvalidation(this.props);
+  }
+
+  componentWillReceiveProps(props: Props) {
+    this._checkInvalidation(props);
+  }
+
+  _checkInvalidation(props: Props) {
+    if (props.jsTracerInvalidationChecker()) {
+      const rafGeneration = ++this._rafGeneration;
+      requestAnimationFrame(() => {
+        // Ensure the requested frame is the one after the React update.
+        requestAnimationFrame(() => {
+          if (rafGeneration === this._rafGeneration) {
+            this.setState(LOADER_WAS_MOUNTED);
+          }
+        });
+      });
+      this.setState(LOADER_HAS_NOT_BEEN_MOUNTED);
+    } else {
+      this.setState(LOADER_WAS_MOUNTED);
+    }
   }
 
   render() {
-    const {
-      maxRows,
-      timeRange,
-      threadIndex,
-      jsTracerTimingRows,
-      jsTracerTable,
-      previewSelection,
-      updatePreviewSelection,
-    } = this.props;
-
-    // The viewport needs to know about the height of what it's drawing, calculate
-    // that here at the top level component.
-    const maxViewportHeight = maxRows * ROW_HEIGHT;
+    const { jsTracerTable } = this.props;
 
     return (
       <div className="jsTracer">
-        {jsTracerTable === null || jsTracerTimingRows === null ? (
+        {jsTracerTable === null ? (
           <EmptyReasons />
         ) : (
           <>
             <JsTracerSettings />
-            <JsTracerCanvas
-              key={threadIndex}
-              viewportProps={{
-                timeRange,
-                previewSelection,
-                maxViewportHeight,
-                viewportNeedsUpdate,
-                maximumZoom: this.getMaximumZoom(),
-                marginLeft: TIMELINE_MARGIN_LEFT,
-                marginRight: TIMELINE_MARGIN_RIGHT,
-              }}
-              chartProps={{
-                jsTracerTimingRows,
-                jsTracerTable,
-                updatePreviewSelection,
-                rangeStart: timeRange.start,
-                rangeEnd: timeRange.end,
-                rowHeight: ROW_HEIGHT,
-                threadIndex,
-              }}
-            />
+            {this.state.wasLoaderMounted ? (
+              <JsTracerExpensiveChart />
+            ) : (
+              <div className="jsTracerLoader">
+                Re-constructing tracing information from{' '}
+                {jsTracerTable.events.length.toLocaleString()} events. This
+                might take a moment.
+              </div>
+            )}
           </>
         )}
       </div>
@@ -113,25 +93,13 @@ class JsTracer extends React.PureComponent<Props> {
   }
 }
 
-// This function is given the JsTracerCanvas's chartProps.
-function viewportNeedsUpdate(
-  prevProps: { +jsTracerTimingRows: JsTracerTiming[] },
-  newProps: { +jsTracerTimingRows: JsTracerTiming[] }
-) {
-  return prevProps.jsTracerTimingRows !== newProps.jsTracerTimingRows;
-}
-
 const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => {
-    const jsTracerTimingRows = selectedThreadSelectors.getJsTracerTiming(state);
     return {
+      jsTracerInvalidationChecker: selectedThreadSelectors.getJsTracerInvalidationChecker(
+        state
+      ),
       jsTracerTable: selectedThreadSelectors.getJsTracerTable(state),
-      jsTracerTimingRows,
-      maxRows: jsTracerTimingRows === null ? 0 : jsTracerTimingRows.length,
-      timeRange: getCommittedRange(state),
-      interval: getProfileInterval(state),
-      threadIndex: getSelectedThreadIndex(state),
-      previewSelection: getPreviewSelection(state),
     };
   },
   mapDispatchToProps: { updatePreviewSelection },
