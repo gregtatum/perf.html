@@ -17,7 +17,10 @@ import {
   getProfileInterval,
   getPreviewSelection,
 } from '../../reducers/profile-view';
-import { getSelectedThreadIndex } from '../../reducers/url-state';
+import {
+  getSelectedThreadIndex,
+  getShowJsTracerSummary,
+} from '../../reducers/url-state';
 import { updatePreviewSelection } from '../../actions/profile-view';
 
 import type { JsTracerTable } from '../../types/profile';
@@ -42,6 +45,8 @@ type DispatchProps = {|
 
 type StateProps = {|
   +jsTracerTable: JsTracerTable | null,
+  // Unused directly, but used in the computation of the timing information.
+  +showJsTracerSummary: boolean,
   +timeRange: { start: Milliseconds, end: Milliseconds },
   +interval: Milliseconds,
   +threadIndex: number,
@@ -50,7 +55,8 @@ type StateProps = {|
 
 type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
-const _computeTimingWeakmap = new WeakMap();
+const _computeFullTimingWeakmap = new WeakMap();
+const _computeSummaryTimingWeakmap = new WeakMap();
 
 class JsTracerExpensiveChart extends React.PureComponent<Props> {
   /**
@@ -68,6 +74,7 @@ class JsTracerExpensiveChart extends React.PureComponent<Props> {
       jsTracerTable,
       previewSelection,
       updatePreviewSelection,
+      showJsTracerSummary,
     } = this.props;
 
     if (!jsTracerTable) {
@@ -77,9 +84,9 @@ class JsTracerExpensiveChart extends React.PureComponent<Props> {
       return null;
     }
 
-    const computeExpensiveJsTracerTiming = _computeTimingWeakmap.get(
-      jsTracerTable
-    );
+    const computeExpensiveJsTracerTiming = showJsTracerSummary
+      ? _computeSummaryTimingWeakmap.get(jsTracerTable)
+      : _computeFullTimingWeakmap.get(jsTracerTable);
     if (!computeExpensiveJsTracerTiming) {
       console.error(
         'Expected to have a computeTiming function from the given jsTracerTable'
@@ -136,14 +143,19 @@ function viewportNeedsUpdate(
 const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
   mapStateToProps: state => {
     const jsTracerTable = selectedThreadSelectors.getJsTracerTable(state);
-    const computeTiming = _computeTimingWeakmap.get(jsTracerTable);
+    const showJsTracerSummary = getShowJsTracerSummary(state);
+    const computeTimingWeakmap = showJsTracerSummary
+      ? _computeSummaryTimingWeakmap
+      : _computeFullTimingWeakmap;
+    const computeTiming = computeTimingWeakmap.get(jsTracerTable);
     if (!computeTiming) {
-      _computeTimingWeakmap.set(jsTracerTable, () =>
+      computeTimingWeakmap.set(jsTracerTable, () =>
         selectedThreadSelectors.getExpensiveJsTracerTiming(state)
       );
     }
     return {
       jsTracerTable,
+      showJsTracerSummary,
       timeRange: getCommittedRange(state),
       interval: getProfileInterval(state),
       threadIndex: getSelectedThreadIndex(state),

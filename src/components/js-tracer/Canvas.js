@@ -64,7 +64,6 @@ type State = {|
 
 const TEXT_OFFSET_TOP = 11;
 const TEXT_OFFSET_START = 3;
-const DOT_RADIUS = 0.25;
 
 class JsTracerCanvas extends React.PureComponent<Props, State> {
   _textMeasurement: null | TextMeasurement;
@@ -204,6 +203,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
           (viewportLength * rangeLength / markerContainerWidth);
 
       let hoveredElement: DrawingInformation | null = null;
+      let lastDrawnPixelX = -1;
       for (let i = 0; i < markerTiming.length; i++) {
         // Only draw samples that are in bounds.
         if (
@@ -215,24 +215,23 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
           const endTime: UnitIntervalOfProfileRange =
             (markerTiming.end[i] - rangeStart) / rangeLength;
 
-          let x: CssPixels =
+          let x: CssPixels = Math.round(
             (startTime - viewportLeft) * markerContainerWidth / viewportLength +
-            TIMELINE_MARGIN_LEFT;
+              TIMELINE_MARGIN_LEFT
+          );
           const y: CssPixels = rowIndex * rowHeight - viewportTop;
           const uncutWidth: CssPixels =
             (endTime - startTime) * markerContainerWidth / viewportLength;
           const h: CssPixels = rowHeight - 1;
 
-          let w = uncutWidth;
+          let w = Math.max(1, Math.round(uncutWidth));
           if (x < TIMELINE_MARGIN_LEFT) {
             // Adjust markers that are before the left margin.
             w = w - TIMELINE_MARGIN_LEFT + x;
             x = TIMELINE_MARGIN_LEFT;
           }
-          if (uncutWidth < 10) {
-            // Ensure that small durations render as a dot, but markers cut by the margins
-            // are rendered as squares.
-            w = 10;
+          if (uncutWidth < 1) {
+            w = 1;
           }
 
           const tracingMarkerIndex = markerTiming.index[i];
@@ -241,7 +240,13 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
           if (isHovered) {
             hoveredElement = { x, y, w, h, uncutWidth, text };
           } else {
-            this.drawOneMarker(ctx, x, y, w, h, uncutWidth, text);
+            if (x > lastDrawnPixelX || uncutWidth > 1) {
+              // This view can have lots of small markers. Only draw markers that either
+              // can start to be drawn on an empty pixel, or ones that are larger than
+              // a single pixel.
+              this.drawOneMarker(ctx, x, y, w, h, uncutWidth, text);
+              lastDrawnPixelX = x + w - 1;
+            }
           }
         }
       }
@@ -313,7 +318,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
   }
 
   hitTest = (x: CssPixels, y: CssPixels): IndexIntoJsTracerEvents | null => {
-    if (x < TIMELINE_MARGIN_LEFT - DOT_RADIUS) {
+    if (x < TIMELINE_MARGIN_LEFT) {
       return null;
     }
     const {
@@ -334,10 +339,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       viewportLength * ((x - TIMELINE_MARGIN_LEFT) / markerContainerWidth);
     const time: Milliseconds = rangeStart + unitIntervalTime * rangeLength;
     const rowIndex = Math.floor((y + viewportTop) / rowHeight);
-    const minDuration =
-      rangeLength *
-      viewportLength *
-      (rowHeight * 2 * DOT_RADIUS / markerContainerWidth);
+    const minDuration = rangeLength * viewportLength / markerContainerWidth;
     const markerTiming = jsTracerTimingRows[rowIndex];
 
     if (!markerTiming) {
