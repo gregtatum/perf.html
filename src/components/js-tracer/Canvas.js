@@ -67,6 +67,22 @@ const DOT_RADIUS = 0.25;
 class JsTracerCanvas extends React.PureComponent<Props, State> {
   _textMeasurement: null | TextMeasurement;
 
+  _previousFillColor: null | string = null;
+
+  /**
+   * Most of the draw calls are tiny tiny boxes, so it takes too long to split up the
+   * draw calls into multiple passes. It turns out that we are mostly drawing the same
+   * color boxes over and over. This method makes sure we only set the fillStyle once
+   * we actually change the value. This saves a lot of processing time on computing the
+   * CSS color in the CanvasRenderingContext2D.
+   */
+  _setFillStyle(ctx: CanvasRenderingContext2D, fillStyle: string) {
+    if (fillStyle !== this._previousFillColor) {
+      ctx.fillStyle = fillStyle;
+      this._previousFillColor = fillStyle;
+    }
+  }
+
   drawCanvas = (
     ctx: CanvasRenderingContext2D,
     hoveredItem: IndexIntoJsTracerEvents | null
@@ -81,6 +97,10 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
         containerHeight,
       },
     } = this.props;
+
+    // Invalidate the previously cached fillStyle.
+    this._previousFillColor = null;
+
     // Convert CssPixels to Stack Depth
     const startRow = Math.floor(viewportTop / rowHeight);
     const endRow = Math.min(
@@ -88,7 +108,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       jsTracerTimingRows.length
     );
 
-    ctx.fillStyle = '#ffffff';
+    this._setFillStyle(ctx, '#ffffff');
     ctx.fillRect(0, 0, containerWidth, containerHeight);
 
     this.drawMarkers(ctx, hoveredItem, startRow, endRow);
@@ -108,14 +128,12 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     backgroundColor: string = BLUE_40,
     foregroundColor: string = 'white'
   ) {
-    ctx.fillStyle = backgroundColor;
+    this._setFillStyle(ctx, backgroundColor);
 
     const textMeasurement = this._getTextMeasurement(ctx);
 
     if (uncutWidth >= 1) {
-      // We want the rectangle to have a clear margin, that's why we increment y
-      // and decrement h (twice, for both margins).
-      this.drawRoundedRect(ctx, x, y + 1, w, h - 2, 1);
+      ctx.fillRect(x, y + 1, w, h - 2);
 
       // Draw the text label
       // TODO - L10N RTL.
@@ -126,7 +144,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       if (w2 > textMeasurement.minWidth) {
         const fittedText = textMeasurement.getFittedText(text, w2);
         if (fittedText) {
-          ctx.fillStyle = foregroundColor;
+          this._setFillStyle(ctx, foregroundColor);
           ctx.fillText(fittedText, x2, y + TEXT_OFFSET_TOP);
         }
       }
@@ -258,7 +276,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     } = this.props;
 
     // Draw separators
-    ctx.fillStyle = GREY_20;
+    this._setFillStyle(ctx, GREY_20);
     ctx.fillRect(TIMELINE_MARGIN_LEFT - 1, 0, 1, containerHeight);
     for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
       // `- 1` at the end, because the top separator is not drawn in the canvas,
@@ -270,7 +288,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     const textMeasurement = this._getTextMeasurement(ctx);
 
     // Draw the text
-    ctx.fillStyle = '#000000';
+    this._setFillStyle(ctx, '#000000');
     for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
       // Get the timing information for a row of stack frames.
       const { name } = jsTracerTimingRows[rowIndex];
@@ -342,22 +360,6 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     //   selectionEnd: marker.start + marker.dur,
     // });
   };
-
-  drawRoundedRect(
-    ctx: CanvasRenderingContext2D,
-    x: CssPixels,
-    y: CssPixels,
-    width: CssPixels,
-    height: CssPixels,
-    cornerSize: CssPixels
-  ) {
-    // Cut out c x c -sized squares in the corners.
-    const c = Math.min(width / 2, height / 2, cornerSize);
-    const bottom = y + height;
-    ctx.fillRect(x + c, y, width - 2 * c, c);
-    ctx.fillRect(x, y + c, width, height - 2 * c);
-    ctx.fillRect(x + c, bottom - c, width - 2 * c, c);
-  }
 
   getHoveredItemInfo = (_hoveredItem: IndexIntoJsTracerEvents): React.Node => {
     return null;
