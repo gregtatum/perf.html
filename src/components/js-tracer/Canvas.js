@@ -244,8 +244,13 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
               // This view can have lots of small markers. Only draw markers that either
               // can start to be drawn on an empty pixel, or ones that are larger than
               // a single pixel.
-              this.drawOneMarker(ctx, x, y, w, h, uncutWidth, text);
-              lastDrawnPixelX = x + w - 1;
+              if (x === lastDrawnPixelX) {
+                // Enforce 1px separation for long boxes by adding one pixel to the right.
+                this.drawOneMarker(ctx, x + 1, y, w - 1, h, uncutWidth, text);
+              } else {
+                this.drawOneMarker(ctx, x, y, w, h, uncutWidth, text);
+              }
+              lastDrawnPixelX = x + w;
             }
           }
         }
