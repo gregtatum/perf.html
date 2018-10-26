@@ -937,6 +937,13 @@ export function serializeProfile(
         }
       }
       newThread.stringArray = stringArray;
+
+      if (thread.jsTracer) {
+        const deserializedJsTracer: Object = { ...thread.jsTracer };
+        deserializedJsTracer.stringArray = deserializedJsTracer.stringTable.serializeToArray();
+        delete deserializedJsTracer.stringTable;
+        newThread.jsTracer = deserializedJsTracer;
+      }
       return newThread;
     }),
   });
@@ -951,10 +958,19 @@ function _unserializeProfile(profile: Object): Profile {
   // stringArray -> stringTable
   const newProfile = Object.assign({}, profile, {
     threads: profile.threads.map(thread => {
-      const stringArray = thread.stringArray;
-      const newThread = Object.assign({}, thread);
+      const { stringArray, jsTracer } = thread;
+      const newThread = { ...thread };
+
       delete newThread.stringArray;
       newThread.stringTable = new UniqueStringArray(stringArray);
+
+      if (jsTracer) {
+        const newJsTracer = { ...jsTracer };
+        newJsTracer.stringTable = new UniqueStringArray(jsTracer.stringArray);
+        delete newJsTracer.stringArray;
+        newThread.jsTracer = newJsTracer;
+      }
+
       return newThread;
     }),
   });
