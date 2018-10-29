@@ -1273,7 +1273,12 @@ export const selectorsForThread = (
         _previousJsTracerTable !== jsTracerTable ||
         _previousShowJsTracerSummary !== showSummary
     );
-
+    const _getJsTracerTiming = memoize(jsTracerTable =>
+      JsTracer.getJsTracerTiming(jsTracerTable)
+    );
+    const _getJsTracerLeafTiming = memoize(jsTracerTable =>
+      JsTracer.getJsTracerLeafTiming(jsTracerTable)
+    );
     const getExpensiveJsTracerTiming = createSelector(
       getJsTracerTable,
       UrlState.getShowJsTracerSummary,
@@ -1284,7 +1289,9 @@ export const selectorsForThread = (
               // Remember the last time this was computed.
               _previousJsTracerTable = jsTracerTable;
               _previousShowJsTracerSummary = showSummary;
-              return JsTracer.getJsTracerTiming(jsTracerTable, showSummary);
+              return showSummary
+                ? _getJsTracerLeafTiming(jsTracerTable)
+                : _getJsTracerTiming(jsTracerTable);
             })
     );
 

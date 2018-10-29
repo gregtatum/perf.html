@@ -38,7 +38,7 @@ class JsTracerSettings extends PureComponent<Props> {
                 onChange={this._onCheckboxChange}
                 checked={showJsTracerSummary}
               />
-              {' Summarize'}
+              {' Show only self time'}
             </label>
           </li>
         </ul>

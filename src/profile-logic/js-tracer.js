@@ -5,20 +5,20 @@
 
 import type { JsTracerTable } from '../types/profile';
 import type { JsTracerTiming } from '../types/profile-derived';
+import type { Microseconds } from '../types/units';
 
 import { ensureExists } from '../utils/flow';
 
 // Arbitrarily set an upper limit for adding marker depths, avoiding an infinite loop.
 const MAX_STACKING_DEPTH = 300;
 
-export function getJsTracerTiming(
-  { events: tracerEvents, stringTable }: JsTracerTable,
-  showSummary: boolean
-): JsTracerTiming[] {
+export function getJsTracerTiming({
+  events: tracerEvents,
+  stringTable,
+}: JsTracerTable): JsTracerTiming[] {
   // Each marker type will have it's own timing information, later collapse these into
   // a single array.
   const jsTracerTimingMap: Map<string, JsTracerTiming[]> = new Map();
-  const isUrl = stringTable._array.map(string => /:\/\//.test(string));
 
   // Go through all of the markers.
   for (
@@ -28,13 +28,8 @@ export function getJsTracerTiming(
   ) {
     const stringIndex = tracerEvents.events[tracerEventIndex];
     const displayName = stringTable.getString(stringIndex);
-    let rowName;
+    const rowName = 'Tracing Information';
 
-    if (showSummary) {
-      rowName = isUrl[stringIndex] ? 'Script' : displayName;
-    } else {
-      rowName = 'Tracing Information';
-    }
     let markerTimingsByName = jsTracerTimingMap.get(rowName);
     if (markerTimingsByName === undefined) {
       markerTimingsByName = [];
@@ -76,23 +71,276 @@ export function getJsTracerTiming(
     }
   }
 
+  // TODO - Simplify this not to use a Map probably.
   const keys = [...jsTracerTimingMap.keys()];
-  if (showSummary) {
-    // Sort the URLs last if doing a summary view.
-    const isUrl = /:\/\//;
-    keys.sort((a, b) => {
-      const isUrlA = isUrl.test(a);
-      const isUrlB = isUrl.test(b);
-      if (isUrlA === isUrlB) {
-        return a > b ? 1 : -1;
-      }
-      return isUrlA ? 1 : -1;
-    });
-  }
-
   const jsTracerTiming = [];
   for (const key of keys) {
     jsTracerTiming.push(...ensureExists(jsTracerTimingMap.get(key)));
   }
   return jsTracerTiming;
+}
+
+/**
+ * Determine the self time for JS Tracer events. This generates a row of timing
+ * information for each type event. This function walks the stack structure of JS Tracer
+ * events, and determines what's actually executing at a given time.
+ */
+export function getJsTracerLeafTiming({
+  events: tracerEvents,
+  stringTable,
+}: JsTracerTable): JsTracerTiming[] {
+  for (let i = 1; i < tracerEvents.length; i++) {
+    if (tracerEvents.timestamps[i] < tracerEvents.timestamps[i - 1]) {
+      throw new Error('tracerEvents.start[i] < tracerEvents.start[i - 1]');
+    }
+  }
+  // Each marker type will have it's own timing information, later collapse these into
+  // a single array.
+  const jsTracerTimingMap: Map<string, JsTracerTiming> = new Map();
+  const isUrl = stringTable._array.map(string => /:\/\//.test(string));
+
+  function reportSelfTime(
+    tracerEventIndex: number,
+    start: Microseconds,
+    end: Microseconds
+  ): void {
+    const stringIndex = tracerEvents.events[tracerEventIndex];
+    const displayName = stringTable.getString(stringIndex);
+    const rowName = isUrl[stringIndex] ? 'Script' : displayName;
+    let markerTimingsRow = jsTracerTimingMap.get(rowName);
+    if (markerTimingsRow === undefined) {
+      markerTimingsRow = {
+        start: [],
+        end: [],
+        index: [],
+        label: [],
+        name: rowName,
+        length: 0,
+      };
+      jsTracerTimingMap.set(rowName, markerTimingsRow);
+    }
+    // Convert the timing to milliseconds.
+    const division = 1000;
+    if (end < start) {
+      throw new Error('end is less than the start');
+    }
+    markerTimingsRow.start.push(start / division);
+    markerTimingsRow.end.push(end / division);
+    markerTimingsRow.label.push(displayName);
+    markerTimingsRow.index.push(tracerEventIndex);
+    markerTimingsRow.length++;
+
+    if (markerTimingsRow.length > 1) {
+      const currStart = markerTimingsRow.start[markerTimingsRow.length - 1];
+      const currEnd = markerTimingsRow.end[markerTimingsRow.length - 1];
+      const prevEnd = markerTimingsRow.end[markerTimingsRow.length - 2];
+      if (currEnd < currStart) {
+        console.error(
+          `currEnd < currStart "${displayName} - ${currEnd} < ${currStart}"`
+        );
+        throw new Error(
+          `currEnd < currStart "${displayName} - ${currEnd} < ${currStart}"`
+        );
+      }
+      if (currStart < prevEnd) {
+        console.error(
+          `currStart < prevEnd "${displayName} - ${currStart} < ${prevEnd}"`
+        );
+        throw new Error(
+          `currStart < prevEnd "${displayName} - ${currStart} < ${prevEnd}"`
+        );
+      }
+      if (currEnd < prevEnd) {
+        console.error(
+          `currEnd < prevEnd "${displayName} - ${currEnd} < ${prevEnd}"`
+        );
+        throw new Error(
+          `currEnd < prevEnd "${displayName} - ${currEnd} < ${prevEnd}"`
+        );
+      }
+    }
+  }
+
+  // Determine the self time of the various events. These values are all the stack
+  // of "prefix" events. The event details will be pushed on to these stacks until
+  // they are clearly self time.
+  const prefixesStarts = [];
+  const prefixesEnds = [];
+  const prefixesEventIndexes = [];
+  let prefixesTip = -1;
+
+  // Go through all of the events. Each if branch is documented with a small diagram
+  // that includes a little bit of ascii art to help explain the step.
+  //
+  // Legend:
+  // xxxxxxxx - Already reported information, not part of the prefix stack.
+  // [======] - Some event on the stack that has not been reported.
+  // [prefix] - The prefix event to consider, the top of the prefix stack. This
+  //            could also be only part of an event, that has been split into multiple
+  //            pieces.
+  // [current] - The current event to add.
+
+  for (
+    let currentEventIndex = 0;
+    currentEventIndex < tracerEvents.length;
+    currentEventIndex++
+  ) {
+    const currentStart = tracerEvents.timestamps[currentEventIndex];
+    const durationRaw = tracerEvents.durations[currentEventIndex];
+    const duration = durationRaw === -1 ? 0 : durationRaw;
+    const currentEnd = currentStart + duration;
+
+    if (prefixesTip === -1) {
+      // Nothing has been added yet, add this "current" event to to the stack of prefixes.
+      prefixesTip = 0;
+      prefixesStarts[prefixesTip] = currentStart;
+      prefixesEnds[prefixesTip] = currentEnd;
+      prefixesEventIndexes[prefixesTip] = currentEventIndex;
+      continue;
+    }
+
+    while (prefixesTip >= 0) {
+      const prefixStart = prefixesStarts[prefixesTip];
+      const prefixEnd = prefixesEnds[prefixesTip];
+      const prefixEventIndex = prefixesEventIndexes[prefixesTip];
+
+      if (prefixEventIndex >= 34) {
+        // debugger;
+      }
+      if (prefixEnd <= currentStart) {
+        // In this case, the "current" event has passed the other "prefix" event.
+        //
+        //    xxxxxxxxxxxxxxxx[================]
+        //    xxxxxxxx[======]     [current]
+        //    [prefix]
+        //
+        // This next step would match too:
+        //
+        //    xxxxxxxxxxxxxxxx[================]
+        //    xxxxxxxx[prefix]     [current]
+        //    xxxxxxxx
+
+        // Commit the previous "prefix" event, then continue on with this loop.
+        reportSelfTime(prefixEventIndex, prefixStart, prefixEnd);
+
+        // Move the tip towards the prefix.
+        // DEBUG ONLY!, reset everything to -1
+        prefixesEventIndexes[prefixesTip] = -1;
+        prefixesStarts[prefixesTip] = -1;
+        prefixesEnds[prefixesTip] = -1;
+        prefixesTip--;
+
+        if (prefixesTip === -1) {
+          // This next step would match too:
+          //
+          //   [prefix]     [current]
+
+          // There are no more "prefix" events to commit. Add the "current" event on, and
+          // break out of this loop.
+          prefixesTip = 0;
+          prefixesEventIndexes[prefixesTip] = currentEventIndex;
+          prefixesStarts[prefixesTip] = currentStart;
+          prefixesEnds[prefixesTip] = currentEnd;
+          break;
+        }
+
+        // This is the only branch that has a `continue`, and not a `break`.
+        continue;
+      }
+
+      if (prefixEnd > currentEnd) {
+        // The current event occludes the prefix event.
+        //
+        //   [prefix=================]
+        //           [current]
+        //
+        // Split the reported self time of the prefix.
+        //
+        //   [prefix]xxxxxxxxx[prefix]
+        //           [current]
+        //
+        //                    ^leave the second prefix piece on the "prefixes" stack
+        //   ^report the first prefix piece
+        //
+        //   After reporting we are left with:
+        //
+        //   xxxxxxxxxxxxxxxxx[======]
+        //           [current]
+
+        // Report the first part of the prefix's self time.
+        reportSelfTime(prefixEventIndex, prefixStart, currentStart);
+
+        // Shorten the prefix's start time.
+        prefixesStarts[prefixesTip] = currentEnd;
+
+        // Now add on the "current" event to the stack of prefixes.
+        prefixesTip++;
+        prefixesStarts[prefixesTip] = currentStart;
+        prefixesEnds[prefixesTip] = currentEnd;
+        prefixesEventIndexes[prefixesTip] = currentEventIndex;
+        break;
+      }
+
+      if (prefixEnd === currentEnd) {
+        if (prefixStart !== currentStart) {
+          // The current event splits the event above it, so split the reported self
+          // time of the prefix.
+          //
+          //   [prefix]xxxxxxxxx
+          //           [current]
+
+          // Report the prefix's self time.
+          reportSelfTime(prefixEventIndex, prefixStart, currentStart);
+
+          // Update both the index and the start time.
+          prefixesStarts[prefixesTip] = currentStart;
+          prefixesEventIndexes[prefixesTip] = currentEventIndex;
+        } else {
+          // The prefix and current events completely match, so don't report any
+          // self time from the prefix. Replace the prefix's index.
+          prefixesEventIndexes[prefixesTip] = currentEventIndex;
+        }
+        break;
+      }
+
+      // The data appears to be malformed, report a nice error to the console.
+      const prefixName = stringTable.getString(
+        tracerEvents.events[prefixEventIndex]
+      );
+      const currentName = stringTable.getString(
+        tracerEvents.events[currentEventIndex]
+      );
+      console.error('Current JS Tracer information:', {
+        tracerEvents,
+        stringTable,
+        prefixEventIndex,
+        currentEventIndex,
+      });
+      console.error(
+        `Prefix (parent) times for "${prefixName}": ${prefixStart}ms to ${prefixEnd}ms`
+      );
+      console.error(
+        `Current (child) times for "${currentName}": ${currentStart}ms to ${currentEnd}ms`
+      );
+      throw new Error(
+        'The JS Tracer information was malformed. Some event lasted longer than its parent event.'
+      );
+    }
+  }
+
+  // Drain off the remaining "prefixes" from the stack, and report the self time.
+  for (let i = prefixesTip; i >= 0; i--) {
+    reportSelfTime(
+      prefixesEventIndexes[prefixesTip],
+      prefixesStarts[prefixesTip],
+      prefixesEnds[prefixesTip]
+    );
+  }
+
+  // Return the list of events, sorted alphabetically.
+  const rows = [...jsTracerTimingMap.values()].sort(
+    (a, b) => (a.name > b.name ? 1 : -1)
+  );
+
+  return rows;
 }
