@@ -203,7 +203,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
           (viewportLength * rangeLength / markerContainerWidth);
 
       let hoveredElement: DrawingInformation | null = null;
-      let lastDrawnPixelX = -1;
+      let lastDrawnPixelX = 0;
       for (let i = 0; i < markerTiming.length; i++) {
         // Only draw samples that are in bounds.
         if (
@@ -215,16 +215,15 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
           const endTime: UnitIntervalOfProfileRange =
             (markerTiming.end[i] - rangeStart) / rangeLength;
 
-          let x: CssPixels = Math.round(
+          let x: CssPixels =
             (startTime - viewportLeft) * markerContainerWidth / viewportLength +
-              TIMELINE_MARGIN_LEFT
-          );
+            TIMELINE_MARGIN_LEFT;
           const y: CssPixels = rowIndex * rowHeight - viewportTop;
           const uncutWidth: CssPixels =
             (endTime - startTime) * markerContainerWidth / viewportLength;
           const h: CssPixels = rowHeight - 1;
 
-          let w = Math.max(1, Math.round(uncutWidth));
+          let w = Math.max(1, uncutWidth);
           if (x < TIMELINE_MARGIN_LEFT) {
             // Adjust markers that are before the left margin.
             w = w - TIMELINE_MARGIN_LEFT + x;
@@ -240,18 +239,20 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
           if (isHovered) {
             hoveredElement = { x, y, w, h, uncutWidth, text };
           } else {
-            if (x > lastDrawnPixelX || uncutWidth > 1) {
-              // This view can have lots of small markers. Only draw markers that either
-              // can start to be drawn on an empty pixel, or ones that are larger than
-              // a single pixel.
-              if (x === lastDrawnPixelX) {
-                // Enforce 1px separation for long boxes by adding one pixel to the right.
-                this.drawOneMarker(ctx, x + 1, y, w - 1, h, uncutWidth, text);
-              } else {
-                this.drawOneMarker(ctx, x, y, w, h, uncutWidth, text);
-              }
-              lastDrawnPixelX = x + w;
+            let skipDraw = true;
+            if (x > lastDrawnPixelX + 1) {
+              skipDraw = false;
+            } else if (w > 1) {
+              w = w - (lastDrawnPixelX + 1 - x);
+              x = lastDrawnPixelX + 1;
+              skipDraw = false;
             }
+            if (skipDraw) {
+              continue;
+            }
+
+            this.drawOneMarker(ctx, x, y, w, h, uncutWidth, text);
+            lastDrawnPixelX = x + w;
           }
         }
       }
