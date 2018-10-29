@@ -114,7 +114,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     this._setFillStyle(ctx, '#ffffff');
     ctx.fillRect(0, 0, containerWidth, containerHeight);
 
-    this.drawMarkers(ctx, hoveredItem, startRow, endRow);
+    this.drawEvents(ctx, hoveredItem, startRow, endRow);
     this.drawSeparatorsAndLabels(ctx, startRow, endRow);
 
     if (!this.state.hasFirstDraw) {
@@ -124,7 +124,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
 
   // Note: we used a long argument list instead of an object parameter on
   // purpose, to reduce GC pressure while drawing.
-  drawOneMarker(
+  drawOneEvent(
     ctx: CanvasRenderingContext2D,
     x: CssPixels,
     y: CssPixels,
@@ -160,7 +160,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     }
   }
 
-  drawMarkers(
+  drawEvents(
     ctx: CanvasRenderingContext2D,
     hoveredItem: IndexIntoJsTracerEvents | null,
     startRow: number,
@@ -239,25 +239,23 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
           if (isHovered) {
             hoveredElement = { x, y, w, h, uncutWidth, text };
           } else {
-            let skipDraw = true;
+            let canDraw = false;
             if (x > lastDrawnPixelX + 1) {
-              skipDraw = false;
+              canDraw = true;
             } else if (w > 1) {
               w = w - (lastDrawnPixelX + 1 - x);
               x = lastDrawnPixelX + 1;
-              skipDraw = false;
+              canDraw = true;
             }
-            if (skipDraw) {
-              continue;
+            if (canDraw) {
+              this.drawOneEvent(ctx, x, y, w, h, uncutWidth, text);
+              lastDrawnPixelX = x + w;
             }
-
-            this.drawOneMarker(ctx, x, y, w, h, uncutWidth, text);
-            lastDrawnPixelX = x + w;
           }
         }
       }
       if (hoveredElement) {
-        this.drawOneMarker(
+        this.drawOneEvent(
           ctx,
           hoveredElement.x,
           hoveredElement.y,
