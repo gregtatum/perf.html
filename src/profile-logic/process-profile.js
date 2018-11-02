@@ -783,6 +783,27 @@ function _adjustSampleTimestamps(
 }
 
 /**
+ * Adjust the "timestamp" field by the given delta. This is needed when integrating
+ * subprocess profiles into the parent process profile; each profile's process
+ * has its own timebase, and we don't want to keep converting timestamps when
+ * we deal with the integrated profile.
+ */
+function _adjustJsTracerTimestamps(
+  jsTracer: JsTracerTable,
+  delta: Milliseconds
+): JsTracerTable {
+  const deltaMicroseconds = delta * 1000;
+  return {
+    ...jsTracer,
+    events: {
+      ...jsTracer.events,
+      timestamps: jsTracer.events.timestamps.map(
+        time => time + deltaMicroseconds
+      ),
+    },
+  };
+}
+/**
  * Adjust all timestamp fields by the given delta. This is needed when
  * integrating subprocess profiles into the parent process profile; each
  * profile's process has its own timebase, and we don't want to keep
@@ -857,6 +878,12 @@ export function processProfile(
           newThread.markers,
           adjustTimestampsBy
         );
+        if (newThread.jsTracer) {
+          newThread.jsTracer = _adjustJsTracerTimestamps(
+            newThread.jsTracer,
+            adjustTimestampsBy
+          );
+        }
         newThread.processStartupTime += adjustTimestampsBy;
         if (newThread.processShutdownTime !== null) {
           newThread.processShutdownTime += adjustTimestampsBy;
