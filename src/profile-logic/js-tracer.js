@@ -20,7 +20,7 @@ export function getJsTracerTiming({
   // a single array.
   const jsTracerTimingMap: Map<string, JsTracerTiming[]> = new Map();
 
-  // Go through all of the markers.
+  // Go through all of the events.
   for (
     let tracerEventIndex = 0;
     tracerEventIndex < tracerEvents.length;
@@ -135,25 +135,16 @@ export function getJsTracerLeafTiming({
       const currEnd = markerTimingsRow.end[markerTimingsRow.length - 1];
       const prevEnd = markerTimingsRow.end[markerTimingsRow.length - 2];
       if (currEnd < currStart) {
-        console.error(
-          `currEnd < currStart "${displayName} - ${currEnd} < ${currStart}"`
-        );
         throw new Error(
           `currEnd < currStart "${displayName} - ${currEnd} < ${currStart}"`
         );
       }
       if (currStart < prevEnd) {
-        console.error(
-          `currStart < prevEnd "${displayName} - ${currStart} < ${prevEnd}"`
-        );
         throw new Error(
           `currStart < prevEnd "${displayName} - ${currStart} < ${prevEnd}"`
         );
       }
       if (currEnd < prevEnd) {
-        console.error(
-          `currEnd < prevEnd "${displayName} - ${currEnd} < ${prevEnd}"`
-        );
         throw new Error(
           `currEnd < prevEnd "${displayName} - ${currEnd} < ${prevEnd}"`
         );
@@ -169,7 +160,7 @@ export function getJsTracerLeafTiming({
   const prefixesEventIndexes = [];
   let prefixesTip = -1;
 
-  // Go through all of the events. Each if branch is documented with a small diagram
+  // Go through all of the events. Each `if` branch is documented with a small diagram
   // that includes a little bit of ascii art to help explain the step.
   //
   // Legend:
@@ -204,9 +195,6 @@ export function getJsTracerLeafTiming({
       const prefixEnd = prefixesEnds[prefixesTip];
       const prefixEventIndex = prefixesEventIndexes[prefixesTip];
 
-      if (prefixEventIndex >= 34) {
-        // debugger;
-      }
       if (prefixEnd <= currentStart) {
         // In this case, the "current" event has passed the other "prefix" event.
         //
@@ -224,10 +212,13 @@ export function getJsTracerLeafTiming({
         reportSelfTime(prefixEventIndex, prefixStart, prefixEnd);
 
         // Move the tip towards the prefix.
-        // DEBUG ONLY!, reset everything to -1
-        prefixesEventIndexes[prefixesTip] = -1;
-        prefixesStarts[prefixesTip] = -1;
-        prefixesEnds[prefixesTip] = -1;
+        if (process.env.NODE_ENV === 'development') {
+          // To aid in debugging locally, reset the values to -1 when they are no
+          // longer valid. In production don't do this extra work.
+          prefixesEventIndexes[prefixesTip] = -1;
+          prefixesStarts[prefixesTip] = -1;
+          prefixesEnds[prefixesTip] = -1;
+        }
         prefixesTip--;
 
         if (prefixesTip === -1) {
@@ -329,7 +320,7 @@ export function getJsTracerLeafTiming({
   }
 
   // Drain off the remaining "prefixes" from the stack, and report the self time.
-  for (let i = prefixesTip; i >= 0; i--) {
+  for (; prefixesTip >= 0; prefixesTip--) {
     reportSelfTime(
       prefixesEventIndexes[prefixesTip],
       prefixesStarts[prefixesTip],
@@ -338,9 +329,7 @@ export function getJsTracerLeafTiming({
   }
 
   // Return the list of events, sorted alphabetically.
-  const rows = [...jsTracerTimingMap.values()].sort(
+  return [...jsTracerTimingMap.values()].sort(
     (a, b) => (a.name > b.name ? 1 : -1)
   );
-
-  return rows;
 }
