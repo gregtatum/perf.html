@@ -734,18 +734,7 @@ function _processThread(
   const markers = _processMarkers(geckoMarkers);
   const samples = _processSamples(geckoSamples);
 
-  // Optionally extract the JS Tracer information, if they exist.
-  let jsTracer;
-  const { jsTracerEvents } = thread;
-  const { jsTracerDictionary } = processProfile;
-  if (jsTracerEvents && jsTracerDictionary) {
-    jsTracer = ({
-      events: jsTracerEvents,
-      stringTable: new UniqueStringArray(jsTracerDictionary),
-    }: JsTracerTable);
-  }
-
-  return {
+  const newThread: Thread = {
     name: thread.name,
     processType: thread.processType,
     processStartupTime: 0,
@@ -763,8 +752,19 @@ function _processThread(
     markers,
     stringTable,
     samples,
-    jsTracer,
   };
+
+  // Optionally extract the JS Tracer information, if they exist.
+  const { jsTracerEvents } = thread;
+  const { jsTracerDictionary } = processProfile;
+  if (jsTracerEvents && jsTracerDictionary) {
+    newThread.jsTracer = ({
+      events: jsTracerEvents,
+      stringTable: new UniqueStringArray(jsTracerDictionary),
+    }: JsTracerTable);
+  }
+
+  return newThread;
 }
 
 /**
