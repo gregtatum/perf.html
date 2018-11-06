@@ -16,6 +16,7 @@ import {
 } from '../shared/chart/Viewport';
 import ChartCanvas from '../shared/chart/Canvas';
 import TextMeasurement from '../../utils/text-measurement';
+import { FastFillStyle } from '../../utils';
 import { updatePreviewSelection } from '../../actions/profile-view';
 import { BLUE_40 } from '../../utils/colors';
 
@@ -63,34 +64,40 @@ type State = {|
   hasFirstDraw: boolean,
 |};
 
+/**
+ * Collect all of values that are dependent on the current rendering pass.
+ * These values will be reset on every draw call.
+ */
+type RenderPass = {|
+  +ctx: CanvasRenderingContext2D,
+  +textMeasurement: TextMeasurement,
+  +fastFillStyle: FastFillStyle,
+  +startRow: number,
+  +endRow: number,
+  +devicePixels: {|
+    +rowHeight: DevicePixels,
+    +containerWidth: DevicePixels,
+    +innerContainerWidth: DevicePixels,
+    +containerHeight: DevicePixels,
+    +viewportTop: DevicePixels,
+    +textOffsetStart: DevicePixels,
+    +textOffsetTop: DevicePixels,
+    +timelineMarginLeft: DevicePixels,
+    +timelineMarginRight: DevicePixels,
+    +oneCssPixel: DevicePixels,
+    +rowLabelOffsetLeft: DevicePixels,
+  |},
+|};
+
 const TEXT_OFFSET_TOP: CssPixels = 11;
 const TEXT_OFFSET_START: CssPixels = 3;
 const ROW_LABEL_OFFSET_LEFT: CssPixels = 5;
 const FONT_SIZE: CssPixels = 10;
 
-opaque type ID = number;
-
-console.log((window.devicePixelRatio: ID));
-
 class JsTracerCanvas extends React.PureComponent<Props, State> {
-  _previousFillColor: null | string = null;
   state: State = {
     hasFirstDraw: false,
   };
-
-  /**
-   * Most of the draw calls are tiny tiny boxes, so it takes too long to split up the
-   * draw calls into multiple passes. It turns out that we are mostly drawing the same
-   * color boxes over and over. This method makes sure we only set the fillStyle once
-   * we actually change the value. This saves a lot of processing time on computing the
-   * CSS color in the CanvasRenderingContext2D.
-   */
-  _setFillStyle(ctx: CanvasRenderingContext2D, fillStyle: string) {
-    if (fillStyle !== this._previousFillColor) {
-      ctx.fillStyle = fillStyle;
-      this._previousFillColor = fillStyle;
-    }
-  }
 
   drawCanvas = (
     ctx: CanvasRenderingContext2D,
@@ -111,28 +118,48 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
 
     // Set the font size before creating a text measurer.
     ctx.font = `${FONT_SIZE * devicePixelRatio}px sans-serif`;
-    const textMeasurement = new TextMeasurement(ctx);
 
-    // Invalidate the previously cached fillStyle.
-    this._previousFillColor = null;
+    const renderPass: RenderPass = {
+      ctx,
+      textMeasurement: new TextMeasurement(ctx),
+      fastFillStyle: new FastFillStyle(ctx),
+      startRow: Math.floor(viewportTop / rowHeight),
+      endRow: Math.min(
+        Math.ceil(viewportBottom / rowHeight),
+        jsTracerTimingRows.length
+      ),
+      devicePixels: {
+        // Convert many of the common values provided by the Props into DevicePixels.
+        containerWidth: containerWidth * devicePixelRatio,
+        innerContainerWidth:
+          (containerWidth - TIMELINE_MARGIN_LEFT - TIMELINE_MARGIN_RIGHT) *
+          devicePixelRatio,
+        containerHeight: containerHeight * devicePixelRatio,
+        textOffsetStart: TEXT_OFFSET_START * devicePixelRatio,
+        textOffsetTop: TEXT_OFFSET_TOP * devicePixelRatio,
+        rowHeight: rowHeight * devicePixelRatio,
+        viewportTop: viewportTop * devicePixelRatio,
+        timelineMarginLeft: TIMELINE_MARGIN_LEFT * devicePixelRatio,
+        timelineMarginRight: TIMELINE_MARGIN_RIGHT * devicePixelRatio,
+        oneCssPixel: devicePixelRatio,
+        rowLabelOffsetLeft: ROW_LABEL_OFFSET_LEFT * devicePixelRatio,
+      },
+    };
 
-    // Convert CssPixels to Stack Depth
-    const startRow = Math.floor(viewportTop / rowHeight);
-    const endRow = Math.min(
-      Math.ceil(viewportBottom / rowHeight),
-      jsTracerTimingRows.length
-    );
+    {
+      // Clear out any previous events.
+      const { fastFillStyle, devicePixels } = renderPass;
+      fastFillStyle.set('#ffffff');
+      ctx.fillRect(
+        0,
+        0,
+        devicePixels.containerWidth,
+        devicePixels.containerHeight
+      );
+    }
 
-    this._setFillStyle(ctx, '#ffffff');
-    ctx.fillRect(
-      0,
-      0,
-      containerWidth * devicePixelRatio,
-      containerHeight * devicePixelRatio
-    );
-
-    this.drawEvents(ctx, textMeasurement, hoveredItem, startRow, endRow);
-    this.drawSeparatorsAndLabels(ctx, textMeasurement, startRow, endRow);
+    this.drawEvents(renderPass, hoveredItem);
+    this.drawSeparatorsAndLabels(renderPass);
 
     if (!this.state.hasFirstDraw) {
       this.setState({ hasFirstDraw: true });
@@ -142,8 +169,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
   // Note: we used a long argument list instead of an object parameter on
   // purpose, to reduce GC pressure while drawing.
   drawOneEvent(
-    ctx: CanvasRenderingContext2D,
-    textMeasurement: TextMeasurement,
+    renderPass: RenderPass,
     x: DevicePixels,
     y: DevicePixels,
     w: DevicePixels,
@@ -153,7 +179,9 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     backgroundColor: string = BLUE_40,
     foregroundColor: string = 'white'
   ) {
-    this._setFillStyle(ctx, backgroundColor);
+    const { ctx, textMeasurement, fastFillStyle, devicePixels } = renderPass;
+
+    fastFillStyle.set(backgroundColor);
 
     if (uncutWidth >= 1) {
       ctx.fillRect(x, y + 1, w, h - 2);
@@ -161,18 +189,14 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       // Draw the text label
       // TODO - L10N RTL.
       // Constrain the x coordinate to the leftmost area.
-      const x2: DevicePixels = x + TEXT_OFFSET_START * window.devicePixelRatio;
+      const x2: DevicePixels = x + devicePixels.textOffsetStart;
       const w2: DevicePixels = Math.max(0, w - (x2 - x));
 
       if (w2 > textMeasurement.minWidth) {
         const fittedText = textMeasurement.getFittedText(text, w2);
         if (fittedText) {
-          this._setFillStyle(ctx, foregroundColor);
-          ctx.fillText(
-            fittedText,
-            x2,
-            y + TEXT_OFFSET_TOP * window.devicePixelRatio
-          );
+          fastFillStyle.set(foregroundColor);
+          ctx.fillText(fittedText, x2, y + devicePixels.textOffsetTop);
         }
       }
     } else {
@@ -181,30 +205,16 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
   }
 
   drawEvents(
-    ctx: CanvasRenderingContext2D,
-    textMeasurement: TextMeasurement,
-    hoveredItem: IndexIntoJsTracerEvents | null,
-    startRow: number,
-    endRow: number
+    renderPass: RenderPass,
+    hoveredItem: IndexIntoJsTracerEvents | null
   ) {
+    const { startRow, endRow, devicePixels } = renderPass;
     const {
       rangeStart,
       rangeEnd,
       jsTracerTimingRows,
-      rowHeight,
-      viewport: { containerWidth, viewportLeft, viewportRight, viewportTop },
+      viewport: { viewportLeft, viewportRight },
     } = this.props;
-    const { devicePixelRatio } = window;
-
-    const timelineMarginLeft: DevicePixels =
-      TIMELINE_MARGIN_LEFT * devicePixelRatio;
-    const timelineMarginRight: DevicePixels =
-      TIMELINE_MARGIN_RIGHT * devicePixelRatio;
-
-    const markerContainerWidthCssPixels: CssPixels =
-      containerWidth - TIMELINE_MARGIN_LEFT - TIMELINE_MARGIN_RIGHT;
-    const markerContainerWidthDevicePixels: CssPixels =
-      markerContainerWidthCssPixels * devicePixelRatio;
 
     const rangeLength: Milliseconds = rangeEnd - rangeStart;
     const viewportLength: UnitIntervalOfProfileRange =
@@ -226,8 +236,8 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
         rangeStart +
         rangeLength * viewportRight +
         // This represents the amount of seconds in the right margin:
-        timelineMarginRight *
-          (viewportLength * rangeLength / markerContainerWidthDevicePixels);
+        devicePixels.timelineMarginRight *
+          (viewportLength * rangeLength / devicePixels.containerWidth);
 
       let hoveredElement: DrawingInformation | null = null;
       let lastDrawnPixelX = 0;
@@ -243,24 +253,24 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
             (markerTiming.end[i] - rangeStart) / rangeLength;
 
           let x: DevicePixels =
-            devicePixelRatio *
-            ((startTime - viewportLeft) *
-              markerContainerWidthCssPixels /
+            (startTime - viewportLeft) *
+              devicePixels.innerContainerWidth /
               viewportLength +
-              TIMELINE_MARGIN_LEFT);
+            devicePixels.timelineMarginLeft;
           const y: CssPixels =
-            (rowIndex * rowHeight - viewportTop) * devicePixelRatio;
+            rowIndex * devicePixels.rowHeight - devicePixels.viewportTop;
           const uncutWidth: DevicePixels =
             (endTime - startTime) *
-            markerContainerWidthDevicePixels /
+            devicePixels.innerContainerWidth /
             viewportLength;
-          const h: DevicePixels = (rowHeight - 1) * devicePixelRatio;
+          const h: DevicePixels =
+            devicePixels.rowHeight - devicePixels.oneCssPixel;
 
           let w = Math.max(1, uncutWidth);
-          if (x < timelineMarginLeft) {
+          if (x < devicePixels.timelineMarginLeft) {
             // Adjust markers that are before the left margin.
-            w = w - timelineMarginLeft + x;
-            x = timelineMarginLeft;
+            w = w - devicePixels.timelineMarginLeft + x;
+            x = devicePixels.timelineMarginLeft;
           }
           if (uncutWidth < 1) {
             w = 1;
@@ -269,37 +279,28 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
           const tracingMarkerIndex = markerTiming.index[i];
           const isHovered = hoveredItem === tracingMarkerIndex;
           const text = markerTiming.label[i];
+          let canDraw = false;
+          if (x > lastDrawnPixelX + 1) {
+            canDraw = true;
+          } else if (w > 1) {
+            w = w - (lastDrawnPixelX + 1 - x);
+            x = lastDrawnPixelX + 1;
+            canDraw = true;
+          }
           if (isHovered) {
             hoveredElement = { x, y, w, h, uncutWidth, text };
-          } else {
-            let canDraw = false;
-            if (x > lastDrawnPixelX + 1) {
-              canDraw = true;
-            } else if (w > 1) {
-              w = w - (lastDrawnPixelX + 1 - x);
-              x = lastDrawnPixelX + 1;
-              canDraw = true;
-            }
-            if (canDraw) {
-              this.drawOneEvent(
-                ctx,
-                textMeasurement,
-                x,
-                y,
-                w,
-                h,
-                uncutWidth,
-                text
-              );
-              lastDrawnPixelX = x + w;
-            }
+          } else if (canDraw) {
+            this.drawOneEvent(renderPass, x, y, w, h, uncutWidth, text);
+          }
+          if (canDraw) {
+            // Only shift the last drawn pixel if the hover changed.
+            lastDrawnPixelX = x + w;
           }
         }
       }
       if (hoveredElement) {
         this.drawOneEvent(
-          ctx,
-          textMeasurement,
+          renderPass,
           hoveredElement.x,
           hoveredElement.y,
           hoveredElement.w,
@@ -313,44 +314,37 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     }
   }
 
-  drawSeparatorsAndLabels(
-    ctx: CanvasRenderingContext2D,
-    textMeasurement: TextMeasurement,
-    startRow: number,
-    endRow: number
-  ) {
+  drawSeparatorsAndLabels(renderPass: RenderPass) {
     const {
-      jsTracerTimingRows,
-      rowHeight,
-      viewport: { viewportTop, containerWidth, containerHeight },
-    } = this.props;
-
-    const { devicePixelRatio } = window;
-    const oneCssPixelInDevicePixels = devicePixelRatio;
+      ctx,
+      textMeasurement,
+      fastFillStyle,
+      startRow,
+      endRow,
+      devicePixels,
+    } = renderPass;
+    const { jsTracerTimingRows } = this.props;
 
     // Draw separators
-    this._setFillStyle(ctx, GREY_20);
+    fastFillStyle.set(GREY_20);
     ctx.fillRect(
-      TIMELINE_MARGIN_LEFT * devicePixelRatio - oneCssPixelInDevicePixels,
+      devicePixels.timelineMarginLeft - devicePixels.oneCssPixel,
       0,
-      oneCssPixelInDevicePixels,
-      containerHeight * devicePixelRatio
+      devicePixels.oneCssPixel,
+      devicePixels.containerHeight
     );
     for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
       // `- 1` at the end, because the top separator is not drawn in the canvas,
       // it's drawn using CSS' border property. And canvas positioning is 0-based.
       const y =
-        ((rowIndex + 1) * rowHeight - viewportTop - 1) * devicePixelRatio;
-      ctx.fillRect(
-        0,
-        y,
-        containerWidth * devicePixelRatio,
-        oneCssPixelInDevicePixels
-      );
+        (rowIndex + 1) * devicePixels.rowHeight -
+        devicePixels.viewportTop -
+        devicePixels.oneCssPixel;
+      ctx.fillRect(0, y, devicePixels.containerWidth, devicePixels.oneCssPixel);
     }
 
     // Draw the text
-    this._setFillStyle(ctx, '#000000');
+    fastFillStyle.set('#000000');
     for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
       // Get the timing information for a row of stack frames.
       const { name } = jsTracerTimingRows[rowIndex];
@@ -359,13 +353,13 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       }
       const fittedText = textMeasurement.getFittedText(
         name,
-        TIMELINE_MARGIN_LEFT * devicePixelRatio
+        devicePixels.timelineMarginLeft
       );
-      const y = (rowIndex * rowHeight - viewportTop) * devicePixelRatio;
+      const y = rowIndex * devicePixels.rowHeight - devicePixels.viewportTop;
       ctx.fillText(
         fittedText,
-        ROW_LABEL_OFFSET_LEFT * devicePixelRatio,
-        y + TEXT_OFFSET_TOP * devicePixelRatio
+        devicePixels.rowLabelOffsetLeft,
+        y + devicePixels.textOffsetTop
       );
     }
   }
