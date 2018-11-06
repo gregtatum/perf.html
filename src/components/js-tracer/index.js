@@ -30,6 +30,7 @@ type StateProps = {|
 |};
 
 type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
+
 type State = {|
   wasLoaderMounted: boolean,
 |};

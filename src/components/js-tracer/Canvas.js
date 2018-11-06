@@ -23,6 +23,7 @@ import type {
   Milliseconds,
   CssPixels,
   UnitIntervalOfProfileRange,
+  DevicePixels,
 } from '../../types/units';
 import type {
   ThreadIndex,
@@ -62,11 +63,16 @@ type State = {|
   hasFirstDraw: boolean,
 |};
 
-const TEXT_OFFSET_TOP = 11;
-const TEXT_OFFSET_START = 3;
+const TEXT_OFFSET_TOP: CssPixels = 11;
+const TEXT_OFFSET_START: CssPixels = 3;
+const ROW_LABEL_OFFSET_LEFT: CssPixels = 5;
+const FONT_SIZE: CssPixels = 10;
+
+opaque type ID = number;
+
+console.log((window.devicePixelRatio: ID));
 
 class JsTracerCanvas extends React.PureComponent<Props, State> {
-  _textMeasurement: null | TextMeasurement;
   _previousFillColor: null | string = null;
   state: State = {
     hasFirstDraw: false,
@@ -101,6 +107,12 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       },
     } = this.props;
 
+    const { devicePixelRatio } = window;
+
+    // Set the font size before creating a text measurer.
+    ctx.font = `${FONT_SIZE * devicePixelRatio}px sans-serif`;
+    const textMeasurement = new TextMeasurement(ctx);
+
     // Invalidate the previously cached fillStyle.
     this._previousFillColor = null;
 
@@ -112,10 +124,15 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     );
 
     this._setFillStyle(ctx, '#ffffff');
-    ctx.fillRect(0, 0, containerWidth, containerHeight);
+    ctx.fillRect(
+      0,
+      0,
+      containerWidth * devicePixelRatio,
+      containerHeight * devicePixelRatio
+    );
 
-    this.drawEvents(ctx, hoveredItem, startRow, endRow);
-    this.drawSeparatorsAndLabels(ctx, startRow, endRow);
+    this.drawEvents(ctx, textMeasurement, hoveredItem, startRow, endRow);
+    this.drawSeparatorsAndLabels(ctx, textMeasurement, startRow, endRow);
 
     if (!this.state.hasFirstDraw) {
       this.setState({ hasFirstDraw: true });
@@ -126,18 +143,17 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
   // purpose, to reduce GC pressure while drawing.
   drawOneEvent(
     ctx: CanvasRenderingContext2D,
-    x: CssPixels,
-    y: CssPixels,
-    w: CssPixels,
-    h: CssPixels,
-    uncutWidth: CssPixels,
+    textMeasurement: TextMeasurement,
+    x: DevicePixels,
+    y: DevicePixels,
+    w: DevicePixels,
+    h: DevicePixels,
+    uncutWidth: DevicePixels,
     text: string,
     backgroundColor: string = BLUE_40,
     foregroundColor: string = 'white'
   ) {
     this._setFillStyle(ctx, backgroundColor);
-
-    const textMeasurement = this._getTextMeasurement(ctx);
 
     if (uncutWidth >= 1) {
       ctx.fillRect(x, y + 1, w, h - 2);
@@ -145,14 +161,18 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       // Draw the text label
       // TODO - L10N RTL.
       // Constrain the x coordinate to the leftmost area.
-      const x2: CssPixels = x + TEXT_OFFSET_START;
-      const w2: CssPixels = Math.max(0, w - (x2 - x));
+      const x2: DevicePixels = x + TEXT_OFFSET_START * window.devicePixelRatio;
+      const w2: DevicePixels = Math.max(0, w - (x2 - x));
 
       if (w2 > textMeasurement.minWidth) {
         const fittedText = textMeasurement.getFittedText(text, w2);
         if (fittedText) {
           this._setFillStyle(ctx, foregroundColor);
-          ctx.fillText(fittedText, x2, y + TEXT_OFFSET_TOP);
+          ctx.fillText(
+            fittedText,
+            x2,
+            y + TEXT_OFFSET_TOP * window.devicePixelRatio
+          );
         }
       }
     } else {
@@ -162,6 +182,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
 
   drawEvents(
     ctx: CanvasRenderingContext2D,
+    textMeasurement: TextMeasurement,
     hoveredItem: IndexIntoJsTracerEvents | null,
     startRow: number,
     endRow: number
@@ -173,15 +194,21 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       rowHeight,
       viewport: { containerWidth, viewportLeft, viewportRight, viewportTop },
     } = this.props;
+    const { devicePixelRatio } = window;
 
-    const markerContainerWidth =
+    const timelineMarginLeft: DevicePixels =
+      TIMELINE_MARGIN_LEFT * devicePixelRatio;
+    const timelineMarginRight: DevicePixels =
+      TIMELINE_MARGIN_RIGHT * devicePixelRatio;
+
+    const markerContainerWidthCssPixels: CssPixels =
       containerWidth - TIMELINE_MARGIN_LEFT - TIMELINE_MARGIN_RIGHT;
+    const markerContainerWidthDevicePixels: CssPixels =
+      markerContainerWidthCssPixels * devicePixelRatio;
 
     const rangeLength: Milliseconds = rangeEnd - rangeStart;
     const viewportLength: UnitIntervalOfProfileRange =
       viewportRight - viewportLeft;
-
-    ctx.lineWidth = 1;
 
     // Only draw the stack frames that are vertically within view.
     for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
@@ -199,8 +226,8 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
         rangeStart +
         rangeLength * viewportRight +
         // This represents the amount of seconds in the right margin:
-        TIMELINE_MARGIN_RIGHT *
-          (viewportLength * rangeLength / markerContainerWidth);
+        timelineMarginRight *
+          (viewportLength * rangeLength / markerContainerWidthDevicePixels);
 
       let hoveredElement: DrawingInformation | null = null;
       let lastDrawnPixelX = 0;
@@ -215,19 +242,25 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
           const endTime: UnitIntervalOfProfileRange =
             (markerTiming.end[i] - rangeStart) / rangeLength;
 
-          let x: CssPixels =
-            (startTime - viewportLeft) * markerContainerWidth / viewportLength +
-            TIMELINE_MARGIN_LEFT;
-          const y: CssPixels = rowIndex * rowHeight - viewportTop;
-          const uncutWidth: CssPixels =
-            (endTime - startTime) * markerContainerWidth / viewportLength;
-          const h: CssPixels = rowHeight - 1;
+          let x: DevicePixels =
+            devicePixelRatio *
+            ((startTime - viewportLeft) *
+              markerContainerWidthCssPixels /
+              viewportLength +
+              TIMELINE_MARGIN_LEFT);
+          const y: CssPixels =
+            (rowIndex * rowHeight - viewportTop) * devicePixelRatio;
+          const uncutWidth: DevicePixels =
+            (endTime - startTime) *
+            markerContainerWidthDevicePixels /
+            viewportLength;
+          const h: DevicePixels = (rowHeight - 1) * devicePixelRatio;
 
           let w = Math.max(1, uncutWidth);
-          if (x < TIMELINE_MARGIN_LEFT) {
+          if (x < timelineMarginLeft) {
             // Adjust markers that are before the left margin.
-            w = w - TIMELINE_MARGIN_LEFT + x;
-            x = TIMELINE_MARGIN_LEFT;
+            w = w - timelineMarginLeft + x;
+            x = timelineMarginLeft;
           }
           if (uncutWidth < 1) {
             w = 1;
@@ -248,7 +281,16 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
               canDraw = true;
             }
             if (canDraw) {
-              this.drawOneEvent(ctx, x, y, w, h, uncutWidth, text);
+              this.drawOneEvent(
+                ctx,
+                textMeasurement,
+                x,
+                y,
+                w,
+                h,
+                uncutWidth,
+                text
+              );
               lastDrawnPixelX = x + w;
             }
           }
@@ -257,6 +299,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       if (hoveredElement) {
         this.drawOneEvent(
           ctx,
+          textMeasurement,
           hoveredElement.x,
           hoveredElement.y,
           hoveredElement.w,
@@ -270,19 +313,9 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     }
   }
 
-  /**
-   * Lazily create the text measurement tool, as a valid 2d rendering context must
-   * exist before it is created.
-   */
-  _getTextMeasurement(ctx: CanvasRenderingContext2D): TextMeasurement {
-    if (!this._textMeasurement) {
-      this._textMeasurement = new TextMeasurement(ctx);
-    }
-    return this._textMeasurement;
-  }
-
   drawSeparatorsAndLabels(
     ctx: CanvasRenderingContext2D,
+    textMeasurement: TextMeasurement,
     startRow: number,
     endRow: number
   ) {
@@ -292,17 +325,29 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       viewport: { viewportTop, containerWidth, containerHeight },
     } = this.props;
 
+    const { devicePixelRatio } = window;
+    const oneCssPixelInDevicePixels = devicePixelRatio;
+
     // Draw separators
     this._setFillStyle(ctx, GREY_20);
-    ctx.fillRect(TIMELINE_MARGIN_LEFT - 1, 0, 1, containerHeight);
+    ctx.fillRect(
+      TIMELINE_MARGIN_LEFT * devicePixelRatio - oneCssPixelInDevicePixels,
+      0,
+      oneCssPixelInDevicePixels,
+      containerHeight * devicePixelRatio
+    );
     for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
       // `- 1` at the end, because the top separator is not drawn in the canvas,
       // it's drawn using CSS' border property. And canvas positioning is 0-based.
-      const y = (rowIndex + 1) * rowHeight - viewportTop - 1;
-      ctx.fillRect(0, y, containerWidth, 1);
+      const y =
+        ((rowIndex + 1) * rowHeight - viewportTop - 1) * devicePixelRatio;
+      ctx.fillRect(
+        0,
+        y,
+        containerWidth * devicePixelRatio,
+        oneCssPixelInDevicePixels
+      );
     }
-
-    const textMeasurement = this._getTextMeasurement(ctx);
 
     // Draw the text
     this._setFillStyle(ctx, '#000000');
@@ -314,10 +359,14 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       }
       const fittedText = textMeasurement.getFittedText(
         name,
-        TIMELINE_MARGIN_LEFT
+        TIMELINE_MARGIN_LEFT * devicePixelRatio
       );
-      const y = rowIndex * rowHeight - viewportTop;
-      ctx.fillText(fittedText, 5, y + TEXT_OFFSET_TOP);
+      const y = (rowIndex * rowHeight - viewportTop) * devicePixelRatio;
+      ctx.fillText(
+        fittedText,
+        ROW_LABEL_OFFSET_LEFT * devicePixelRatio,
+        y + TEXT_OFFSET_TOP * devicePixelRatio
+      );
     }
   }
 
@@ -343,7 +392,8 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       viewportLength * ((x - TIMELINE_MARGIN_LEFT) / markerContainerWidth);
     const time: Milliseconds = rangeStart + unitIntervalTime * rangeLength;
     const rowIndex = Math.floor((y + viewportTop) / rowHeight);
-    const minDuration = rangeLength * viewportLength / markerContainerWidth;
+    const minDuration: Milliseconds =
+      rangeLength * viewportLength / markerContainerWidth;
     const markerTiming = jsTracerTimingRows[rowIndex];
 
     if (!markerTiming) {
@@ -401,7 +451,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
         getHoveredItemInfo={this.getHoveredItemInfo}
         drawCanvas={this.drawCanvas}
         hitTest={this.hitTest}
-        scaleCtxToCssPixels={true}
+        scaleCtxToCssPixels={false}
       />
     );
   }

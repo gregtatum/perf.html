@@ -28,6 +28,7 @@ import type { JsTracerTiming } from '../../types/profile-derived';
 import type {
   Milliseconds,
   UnitIntervalOfProfileRange,
+  CssPixels,
 } from '../../types/units';
 import type { PreviewSelection } from '../../types/actions';
 import type {
@@ -37,7 +38,7 @@ import type {
 
 require('./index.css');
 
-const ROW_HEIGHT = 16;
+const ROW_HEIGHT: CssPixels = 16;
 
 type DispatchProps = {|
   +updatePreviewSelection: typeof updatePreviewSelection,
