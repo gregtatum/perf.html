@@ -200,7 +200,9 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
         }
       }
     } else {
-      ctx.fillRect(x, y + 2, 1, h - 4);
+      // Make dimmer rectangles easier to see by providing a minimum brightness value.
+      const easedW = w * 0.9 + 0.1;
+      ctx.fillRect(x, y + 2, easedW, h - 4);
     }
   }
 
@@ -223,11 +225,36 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     // Only draw the stack frames that are vertically within view.
     for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
       // Get the timing information for a row of stack frames.
-      const markerTiming = jsTracerTimingRows[rowIndex];
+      const timing = jsTracerTimingRows[rowIndex];
 
-      if (!markerTiming) {
+      if (!timing) {
         continue;
       }
+
+      // Consider this diagram.
+      //
+      // A.  |0---1|1---2|2---3|3---4|4---5|
+      // B.   XXXXX XXXXX  0.2
+      // C.                 [2.9-----4.9]
+      //
+      // Row A is a series of pixels, where the left and right hand side of each pixel
+      // is indexed.
+      // Row B, XXXXX represents a drawn pixel. 0.2 represents partially applied pixels
+      // where events have contributed to that pixel.
+      // Row C is the next event to apply, with the left hand pixel position, and right
+      // hand side pixel position. These are float values.
+      //
+      // nextPixel: |2---3|
+      // nextPixelLeftSide: 2
+      // nextPixelRightSide: 3
+      // nextPixelPartialValue: 0.2
+      //
+      // |0---1|1---2|2---3|3---4|4---5|
+      //  XXXXX XXXXX  0.3
+      //                    [3----4.9]
+      //
+      // The first step is to clip off the float value, of the event and add it to
+      // nextPixelPartialValue
 
       // Decide which samples to actually draw
       const timeAtViewportLeft: Milliseconds =
@@ -238,72 +265,145 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
         // This represents the amount of seconds in the right margin:
         devicePixels.timelineMarginRight *
           (viewportLength * rangeLength / devicePixels.containerWidth);
+      const h: DevicePixels = devicePixels.rowHeight - devicePixels.oneCssPixel;
+      const y: CssPixels =
+        rowIndex * devicePixels.rowHeight - devicePixels.viewportTop;
 
       let hoveredElement: DrawingInformation | null = null;
-      let lastDrawnPixelX = 0;
-      for (let i = 0; i < markerTiming.length; i++) {
+      let nextPixelLeftSide: DevicePixels = devicePixels.timelineMarginLeft;
+      let nextPixelRightSide: DevicePixels = nextPixelLeftSide + 1;
+      // This value ranges from 0 to 1:
+      let nextPixelPartialValue: DevicePixels = 0;
+
+      const commitPartialPixel = (y: number) => {
+        if (nextPixelPartialValue > 0) {
+          if (nextPixelPartialValue > 1) {
+            // throw new Error('nextPixelPartialValue is larger than 0');
+          }
+          this.drawOneEvent(
+            renderPass,
+            nextPixelLeftSide,
+            y,
+            nextPixelPartialValue,
+            h,
+            nextPixelPartialValue,
+            ''
+          );
+          nextPixelLeftSide++;
+          nextPixelRightSide++;
+          nextPixelPartialValue = 0;
+        }
+      };
+
+      for (let i = 0; i < timing.length; i++) {
+        const eventStartTime = timing.start[i];
+        const eventEndTime = timing.end[i];
+
         // Only draw samples that are in bounds.
         if (
-          markerTiming.end[i] > timeAtViewportLeft &&
-          markerTiming.start[i] < timeAtViewportRightPlusMargin
+          eventEndTime > timeAtViewportLeft &&
+          eventStartTime < timeAtViewportRightPlusMargin
         ) {
-          const startTime: UnitIntervalOfProfileRange =
-            (markerTiming.start[i] - rangeStart) / rangeLength;
-          const endTime: UnitIntervalOfProfileRange =
-            (markerTiming.end[i] - rangeStart) / rangeLength;
+          const unitIntervalStartTime: UnitIntervalOfProfileRange =
+            (eventStartTime - rangeStart) / rangeLength;
+          const unitIntervalEndTime: UnitIntervalOfProfileRange =
+            (timing.end[i] - rangeStart) / rangeLength;
 
           let x: DevicePixels =
-            (startTime - viewportLeft) *
+            (unitIntervalStartTime - viewportLeft) *
               devicePixels.innerContainerWidth /
               viewportLength +
             devicePixels.timelineMarginLeft;
-          const y: CssPixels =
-            rowIndex * devicePixels.rowHeight - devicePixels.viewportTop;
           const uncutWidth: DevicePixels =
-            (endTime - startTime) *
+            (unitIntervalEndTime - unitIntervalStartTime) *
             devicePixels.innerContainerWidth /
             viewportLength;
-          const h: DevicePixels =
-            devicePixels.rowHeight - devicePixels.oneCssPixel;
+          const tracingMarkerIndex = timing.index[i];
+          const isHovered = hoveredItem === tracingMarkerIndex;
+          if (uncutWidth === 0) {
+            continue;
+          }
 
-          let w = Math.max(1, uncutWidth);
+          let w = uncutWidth;
+          if (x + w < devicePixels.timelineMarginLeft) {
+            continue;
+          }
+          if (
+            x >
+            devicePixels.containerWidth - devicePixels.timelineMarginRight
+          ) {
+            continue;
+          }
           if (x < devicePixels.timelineMarginLeft) {
             // Adjust markers that are before the left margin.
-            w = w - devicePixels.timelineMarginLeft + x;
+            w = w + x - devicePixels.timelineMarginLeft;
             x = devicePixels.timelineMarginLeft;
           }
-          if (uncutWidth < 1) {
-            w = 1;
+
+          const text = timing.label[i];
+          if (isHovered) {
+            console.log('!!! hovered', { rowIndex, i });
+            hoveredElement = { x, y, w, h, uncutWidth, text };
+            continue;
           }
 
-          const tracingMarkerIndex = markerTiming.index[i];
-          const isHovered = hoveredItem === tracingMarkerIndex;
-          const text = markerTiming.label[i];
-          let canDraw = false;
-          if (x > lastDrawnPixelX + 1) {
-            canDraw = true;
-          } else if (w > 1) {
-            w = w - (lastDrawnPixelX + 1 - x);
-            x = lastDrawnPixelX + 1;
-            canDraw = true;
+          const ceilX = Math.ceil(x);
+          if (ceilX < x + w) {
+            if (x >= nextPixelRightSide) {
+              // This value skips the partial pixel. Commit that last partial pixel
+              // |0---1|1---2|2---3|3---4|4---5|
+              //  XXXXX XXXXX  0.2
+              //                             [4.9---6.2]
+              commitPartialPixel(y);
+              nextPixelLeftSide = ceilX - 1;
+              nextPixelRightSide = ceilX;
+            } else {
+              // |0---1|1---2|2---3|3---4|4---5|
+              //  XXXXX XXXXX  0.2
+              //                 [2.9------6.2]
+              //
+              // or
+              //
+              // |0---1|1---2|2---3|3---4|4---5|
+              //  XXXXX XXXXX  0.2
+              //                   [3------6.2]
+            }
+            const leftOfPixelDivide = ceilX - x;
+            x = ceilX;
+            nextPixelPartialValue += leftOfPixelDivide;
+            commitPartialPixel(y);
+          } else {
+            if (x > nextPixelRightSide) {
+              // |0---1|1---2|2---3|3---4|4---5|
+              //  XXXXX XXXXX  0.2
+              //                     []
+              commitPartialPixel(y);
+              nextPixelLeftSide = Math.floor(x);
+              nextPixelRightSide = nextPixelLeftSide + 1;
+            }
+            // |0---1|1---2|2---3|3---4|4---5|
+            //  XXXXX XXXXX  0.2
+            //               []
+            nextPixelPartialValue += w;
+            continue;
           }
-          if (isHovered) {
-            hoveredElement = { x, y, w, h, uncutWidth, text };
-          } else if (canDraw) {
-            this.drawOneEvent(renderPass, x, y, w, h, uncutWidth, text);
-          }
-          if (canDraw) {
-            // Only shift the last drawn pixel if the hover changed.
-            lastDrawnPixelX = x + w;
-          }
+
+          const floorW = Math.floor(w);
+          this.drawOneEvent(renderPass, x, y, floorW, h, uncutWidth, text);
+          nextPixelLeftSide = x + floorW;
+          nextPixelRightSide = x + floorW + 1;
+          nextPixelPartialValue = w - floorW;
         }
+        // Commit the last partial pixel.
+        commitPartialPixel(y);
       }
+
       if (hoveredElement) {
         this.drawOneEvent(
           renderPass,
           hoveredElement.x,
           hoveredElement.y,
-          hoveredElement.w,
+          Math.max(1, hoveredElement.w),
           hoveredElement.h,
           hoveredElement.uncutWidth,
           hoveredElement.text,
@@ -388,18 +488,18 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     const rowIndex = Math.floor((y + viewportTop) / rowHeight);
     const minDuration: Milliseconds =
       rangeLength * viewportLength / markerContainerWidth;
-    const markerTiming = jsTracerTimingRows[rowIndex];
+    const timing = jsTracerTimingRows[rowIndex];
 
-    if (!markerTiming) {
+    if (!timing) {
       return null;
     }
 
-    for (let i = 0; i < markerTiming.length; i++) {
-      const start = markerTiming.start[i];
+    for (let i = 0; i < timing.length; i++) {
+      const start = timing.start[i];
       // Ensure that really small markers are hoverable with a minDuration.
-      const end = Math.max(start + minDuration, markerTiming.end[i]);
+      const end = Math.max(start + minDuration, timing.end[i]);
       if (start < time && end > time) {
-        return markerTiming.index[i];
+        return timing.index[i];
       }
     }
     return null;
