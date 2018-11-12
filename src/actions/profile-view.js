@@ -898,6 +898,24 @@ export function changeInvertCallstack(
   };
 }
 
+export function changeShowJsTracerSummary(
+  showSummary: boolean
+): ThunkAction<void> {
+  return dispatch => {
+    sendAnalytics({
+      hitType: 'event',
+      eventCategory: 'profile',
+      eventAction: showSummary
+        ? 'show JS tracer summary'
+        : 'show JS tracer stacks',
+    });
+    dispatch({
+      type: 'CHANGE_SHOW_JS_TRACER_SUMMARY',
+      showSummary,
+    });
+  };
+}
+
 export function updatePreviewSelection(
   previewSelection: PreviewSelection
 ): ThunkAction<void> {
