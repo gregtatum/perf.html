@@ -585,14 +585,11 @@ export function getEmptyJsTracerTable(): JsTracerTable {
   };
 }
 
-export function getThreadWithJsTracerEvents(
+export function getJsTracerTable(
   events: TestDefinedJsTracerEvent[]
-): Thread {
-  const thread = getEmptyThread();
+): JsTracerTable {
   const jsTracer = getEmptyJsTracerTable();
-  thread.jsTracer = jsTracer;
 
-  let endOfEvents = 0;
   for (const [event, start, end] of events) {
     const stringIndex = jsTracer.stringTable.indexForString(event);
     jsTracer.events.events.push(stringIndex);
@@ -601,13 +598,26 @@ export function getThreadWithJsTracerEvents(
     jsTracer.events.lines.push(-1);
     jsTracer.events.columns.push(-1);
     jsTracer.events.length++;
+  }
+
+  return jsTracer;
+}
+
+export function getThreadWithJsTracerEvents(
+  events: TestDefinedJsTracerEvent[]
+): Thread {
+  const thread = getEmptyThread();
+  thread.jsTracer = getJsTracerTable(events);
+
+  let endOfEvents = 0;
+  for (const [, , end] of events) {
     endOfEvents = Math.max(endOfEvents, end);
   }
 
   // Create a sample table that is of the same length as the tracer data
   endOfEvents = Number.isInteger
     ? // The profile end range adds on one profiling interval length. Assume that it is
-      // values as 1 here.
+      // value 1 here.
       Math.floor(endOfEvents)
     : endOfEvents - 1;
 
