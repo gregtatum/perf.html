@@ -34,7 +34,6 @@ import type {
   Pid,
   MarkersTable,
   IndexIntoSamplesTable,
-  JsTracerEvents,
   JsTracerTable,
 } from '../types/profile';
 import type {
@@ -68,7 +67,7 @@ import type {
   TimingsForPath,
   SelectedState,
 } from '../profile-logic/profile-data';
-import type { UniqueStringArray } from '../utils/unique-string-array';
+import { type UniqueStringArray } from '../utils/unique-string-array';
 
 function profile(state: Profile | null = null, action: Action): Profile | null {
   switch (action.type) {
@@ -776,6 +775,7 @@ const _getDefaultCategoryWrappedInObject = createSelector(
 
 export type SelectorsForThread = {
   getThread: State => Thread,
+  getStringTable: State => UniqueStringArray,
   getViewOptions: State => ThreadViewOptions,
   getTransformStack: State => TransformStack,
   getTransformLabels: State => string[],
@@ -819,8 +819,6 @@ export type SelectorsForThread = {
   getPreviewFilteredTracingMarkers: State => TracingMarker[],
   unfilteredSamplesRange: State => StartEndRange | null,
   getJsTracerTable: State => JsTracerTable | null,
-  getJsTracerEvents: State => JsTracerEvents | null,
-  getJsTracerStringTable: State => UniqueStringArray | null,
   getExpensiveJsTracerTiming: State => null | JsTracerTiming[],
 };
 
@@ -833,7 +831,7 @@ export const selectorsForThread = (
     const getThread = (state: State): Thread =>
       getProfile(state).threads[threadIndex];
     const _getMarkersTable = (state: State) => getThread(state).markers;
-    const _getStringTable = (state: State) => getThread(state).stringTable;
+    const getStringTable = (state: State) => getThread(state).stringTable;
 
     /**
      * The first per-thread selectors filter out and transform a thread based on user's
@@ -1013,12 +1011,12 @@ export const selectorsForThread = (
      */
     const getProcessedMarkersTable = createSelector(
       _getMarkersTable,
-      _getStringTable,
+      getStringTable,
       MarkerData.extractMarkerDataFromName
     );
     const getTracingMarkers = createSelector(
       getProcessedMarkersTable,
-      _getStringTable,
+      getStringTable,
       MarkerData.getTracingMarkers
     );
     const getCommittedRangeFilteredTracingMarkers = createSelector(
@@ -1099,7 +1097,7 @@ export const selectorsForThread = (
     );
     const getScreenshotsById = createSelector(
       _getMarkersTable,
-      _getStringTable,
+      getStringTable,
       getProfileRootRange,
       MarkerData.extractScreenshotsById
     );
@@ -1249,33 +1247,27 @@ export const selectorsForThread = (
 
     const getJsTracerTable = (state: State) =>
       getThread(state).jsTracer || null;
-    const getJsTracerEvents = (state: State) => {
-      const tracerTable = getJsTracerTable(state);
-      return tracerTable === null ? null : tracerTable.events;
-    };
-    const getJsTracerStringTable = (state: State) => {
-      const tracerTable = getJsTracerTable(state);
-      return tracerTable === null ? null : tracerTable.stringTable;
-    };
     /**
      * This selector may not be good to run in components directly, as it is so expensive
      * that it janks the browser. It is provided here for convenience in tests.
      */
     const getExpensiveJsTracerTiming = createSelector(
       getJsTracerTable,
+      getStringTable,
       UrlState.getShowJsTracerSummary,
-      (jsTracerTable, showSummary) => {
+      (jsTracerTable, stringTable, showSummary) => {
         if (jsTracerTable === null) {
           return null;
         }
         return showSummary
-          ? JsTracer.getJsTracerLeafTiming(jsTracerTable)
-          : JsTracer.getJsTracerTiming(jsTracerTable);
+          ? JsTracer.getJsTracerLeafTiming(jsTracerTable, stringTable)
+          : JsTracer.getJsTracerTiming(jsTracerTable, stringTable);
       }
     );
 
     selectorsForThreads[threadIndex] = {
       getThread,
+      getStringTable,
       getViewOptions,
       getTransformStack,
       getTransformLabels,
@@ -1316,8 +1308,6 @@ export const selectorsForThread = (
       getPreviewFilteredTracingMarkers,
       unfilteredSamplesRange,
       getJsTracerTable,
-      getJsTracerEvents,
-      getJsTracerStringTable,
       getExpensiveJsTracerTiming,
     };
   }
