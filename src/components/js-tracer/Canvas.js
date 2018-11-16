@@ -34,14 +34,14 @@ import type {
 import type { JsTracerTiming } from '../../types/profile-derived';
 import type { Viewport } from '../shared/chart/Viewport';
 
-type DrawingInformation = {
-  x: CssPixels,
-  y: CssPixels,
-  w: CssPixels,
-  h: CssPixels,
-  uncutWidth: CssPixels,
-  text: string,
-};
+type DrawingInformation = {|
+  +x: CssPixels,
+  +y: CssPixels,
+  +w: CssPixels,
+  +h: CssPixels,
+  +uncutWidth: CssPixels,
+  +text: string,
+|};
 
 type OwnProps = {|
   +rangeStart: Milliseconds,
@@ -96,10 +96,14 @@ const ROW_LABEL_OFFSET_LEFT: CssPixels = 5;
 const FONT_SIZE: CssPixels = 10;
 
 class JsTracerCanvas extends React.PureComponent<Props, State> {
-  state: State = {
+  state = {
     hasFirstDraw: false,
   };
 
+  /**
+   * This method is called by the ChartCanvas component whenever the canvas needs to
+   * be painted.
+   */
   drawCanvas = (
     ctx: CanvasRenderingContext2D,
     hoveredItem: IndexIntoJsTracerEvents | null
@@ -124,6 +128,8 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       ctx,
       textMeasurement: new TextMeasurement(ctx),
       fastFillStyle: new FastFillStyle(ctx),
+      // Define a start and end row, so that we only draw the events
+      // that are vertically within view.
       startRow: Math.floor(viewportTop / rowHeight),
       endRow: Math.min(
         Math.ceil(viewportBottom / rowHeight),
@@ -162,13 +168,19 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     this.drawEvents(renderPass, hoveredItem);
     this.drawSeparatorsAndLabels(renderPass);
 
-    if (!this.state.hasFirstDraw) {
-      this.setState({ hasFirstDraw: true });
-    }
+    this.setState(
+      state => (state.hasFirstDraw ? null : { hasFirstDraw: true })
+    );
   };
 
-  // Note: we used a long argument list instead of an object parameter on
-  // purpose, to reduce GC pressure while drawing.
+  /**
+   * This method collects the logic to draw a single event to the screen. It is
+   * called thousands to millions of time per draw call, so it is an extremely
+   * hot function.
+   *
+   * Note: we used a long argument list instead of an object parameter on
+   * purpose, to reduce GC pressure while drawing.
+   */
   drawOneEvent(
     renderPass: RenderPass,
     x: DevicePixels,
@@ -185,28 +197,44 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     fastFillStyle.set(backgroundColor);
 
     if (uncutWidth >= 1) {
-      ctx.fillRect(x, y + 1, w, h - 2);
+      ctx.fillRect(
+        x,
+        // Create margin at the top of 1 pixel.
+        y + 1,
+        w,
+        // Account for the top and bottom margin for a combined 2 pixels.
+        h - 2
+      );
 
       // Draw the text label
       // TODO - L10N RTL.
       // Constrain the x coordinate to the leftmost area.
-      const x2: DevicePixels = x + devicePixels.textOffsetStart;
-      const w2: DevicePixels = Math.max(0, w - (x2 - x));
+      const contentX: DevicePixels = x + devicePixels.textOffsetStart;
+      const contentWidth: DevicePixels = Math.max(
+        0,
+        w - devicePixels.textOffsetStart
+      );
 
-      if (w2 > textMeasurement.minWidth) {
-        const fittedText = textMeasurement.getFittedText(text, w2);
+      if (contentWidth > textMeasurement.minWidth) {
+        const fittedText = textMeasurement.getFittedText(text, contentWidth);
         if (fittedText) {
           fastFillStyle.set(foregroundColor);
-          ctx.fillText(fittedText, x2, y + devicePixels.textOffsetTop);
+          ctx.fillText(fittedText, contentX, y + devicePixels.textOffsetTop);
         }
       }
     } else {
       // Make dimmer rectangles easier to see by providing a minimum brightness value.
       const easedW = w * 0.9 + 0.1;
+
+      // Draw a rect with top and bottom margins of 2px (hence the -4).
       ctx.fillRect(x, y + 2, easedW, h - 4);
     }
   }
 
+  /**
+   * This method goes through the tracing information, with the current information
+   * from the renderPass, and draws all of the events to the canvas.
+   */
   drawEvents(
     renderPass: RenderPass,
     hoveredItem: IndexIntoJsTracerEvents | null
@@ -223,27 +251,56 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     const viewportLength: UnitIntervalOfProfileRange =
       viewportRight - viewportLeft;
 
-    // Only draw the stack frames that are vertically within view.
+    const h: DevicePixels = devicePixels.rowHeight - devicePixels.oneCssPixel;
+    let hoveredElement: DrawingInformation | null = null;
+    let nextPixelLeftSide: DevicePixels = devicePixels.timelineMarginLeft;
+    let nextPixelRightSide: DevicePixels = nextPixelLeftSide + 1;
+    // This value ranges from 0 to 1:
+    let nextPixelPartialValue: DevicePixels = 0;
+
+    const commitPartialPixel = (y: number) => {
+      if (nextPixelPartialValue > 0) {
+        this.drawOneEvent(
+          renderPass,
+          nextPixelLeftSide,
+          y,
+          nextPixelPartialValue,
+          h,
+          nextPixelPartialValue,
+          ''
+        );
+        nextPixelLeftSide++;
+        nextPixelRightSide++;
+        nextPixelPartialValue = 0;
+      }
+    };
+
+    // Only draw the events that are vertically within view.
     for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
-      // Get the timing information for a row of stack frames.
+      // Get the timing information for a row of events.
       const timing = jsTracerTimingRows[rowIndex];
 
       if (!timing) {
         continue;
       }
 
-      // Consider this diagram.
+      // The following diagram represents a step in the for loop that's further below, not
+      // a step in the loop we're in. It is documented here to explain all of the code
+      // comments that follow in the loop.
       //
       // A.  |0---1|1---2|2---3|3---4|4---5|
       // B.   XXXXX XXXXX  0.2
       // C.                 [2.9-----4.9]
       //
-      // Row A is a series of pixels, where the left and right hand side of each pixel
+      // Line "A." is a series of pixels, where the left and right hand side of each pixel
       // is indexed.
-      // Row B, XXXXX represents a drawn pixel. 0.2 represents partially applied pixels
-      // where events have contributed to that pixel.
-      // Row C is the next event to apply, with the left hand pixel position, and right
-      // hand side pixel position. These are float values.
+      // Line "B.", 1 block of XXXXX represents 1 drawn pixel. 0.2 represents partially
+      // applied pixels where events have contributed to that pixel.
+      // Line "C." is the next event to apply, with the left hand pixel position, and
+      // right hand side pixel position. These are float values.
+      //
+      // The following variables are used below as well, but are provided as a reference
+      // with the example diagram above.
       //
       // nextPixel: |2---3|
       // nextPixelLeftSide: 2
@@ -254,8 +311,8 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       //  XXXXX XXXXX  0.3
       //                    [3----4.9]
       //
-      // The first step is to clip off the float value, of the event and add it to
-      // nextPixelPartialValue
+      // The above diagram shows the first step in the for loop logic below, which is
+      // to clip off the float value of the event and add it to nextPixelPartialValue.
 
       // Decide which samples to actually draw
       const timeAtViewportLeft: Milliseconds =
@@ -266,32 +323,8 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
         // This represents the amount of seconds in the right margin:
         devicePixels.timelineMarginRight *
           (viewportLength * rangeLength / devicePixels.containerWidth);
-      const h: DevicePixels = devicePixels.rowHeight - devicePixels.oneCssPixel;
       const y: CssPixels =
         rowIndex * devicePixels.rowHeight - devicePixels.viewportTop;
-
-      let hoveredElement: DrawingInformation | null = null;
-      let nextPixelLeftSide: DevicePixels = devicePixels.timelineMarginLeft;
-      let nextPixelRightSide: DevicePixels = nextPixelLeftSide + 1;
-      // This value ranges from 0 to 1:
-      let nextPixelPartialValue: DevicePixels = 0;
-
-      const commitPartialPixel = (y: number) => {
-        if (nextPixelPartialValue > 0) {
-          this.drawOneEvent(
-            renderPass,
-            nextPixelLeftSide,
-            y,
-            nextPixelPartialValue,
-            h,
-            nextPixelPartialValue,
-            ''
-          );
-          nextPixelLeftSide++;
-          nextPixelRightSide++;
-          nextPixelPartialValue = 0;
-        }
-      };
 
       for (let i = 0; i < timing.length; i++) {
         const eventStartTime = timing.start[i];
@@ -443,7 +476,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     // Draw the text
     fastFillStyle.set('#000000');
     for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
-      // Get the timing information for a row of stack frames.
+      // Get the timing information for a row of events.
       const { name } = jsTracerTimingRows[rowIndex];
       if (rowIndex > 0 && name === jsTracerTimingRows[rowIndex - 1].name) {
         continue;

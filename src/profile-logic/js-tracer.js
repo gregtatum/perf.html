@@ -3,10 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 // @flow
 
-import type { JsTracerTable } from '../types/profile';
+import type { JsTracerTable, IndexIntoStringTable } from '../types/profile';
 import type { JsTracerTiming } from '../types/profile-derived';
 import type { Microseconds } from '../types/units';
 import type { UniqueStringArray } from '../utils/unique-string-array';
+
 /**
  * This function is very similar in implementation as getStackTimingByDepth.
  * It creates a list of JsTracerTiming entries that represent the underlying
@@ -54,10 +55,9 @@ export function getJsTracerTiming(
       }
 
       // The timing is converted here from Microseconds to Milliseconds.
-      const division = 1000;
-      const start = jsTracer.timestamps[tracerEventIndex] / division;
+      const start = jsTracer.timestamps[tracerEventIndex] / 1000;
       const durationRaw = jsTracer.durations[tracerEventIndex];
-      const duration = durationRaw === null ? 0 : durationRaw / division;
+      const duration = durationRaw === null ? 0 : durationRaw / 1000;
 
       // Since the events are sorted, look at the last added event in this row. If
       // the new event fits, go ahead and insert it.
@@ -98,7 +98,18 @@ export function getJsTracerLeafTiming(
   // Each event type will have it's own timing information, later collapse these into
   // a single array.
   const jsTracerTimingMap: Map<string, JsTracerTiming> = new Map();
-  const isUrl = stringTable._array.map(string => /:\/\//.test(string));
+  const isUrlCache = [];
+  const isUrlRegex = /:\/\//;
+
+  function isUrl(index: IndexIntoStringTable): boolean {
+    const cachedIsUrl = isUrlCache[index];
+    if (cachedIsUrl !== undefined) {
+      return cachedIsUrl;
+    }
+    const booleanValue = isUrlRegex.test(stringTable.getString(index));
+    isUrlCache[index] = booleanValue;
+    return booleanValue;
+  }
 
   function reportSelfTime(
     tracerEventIndex: number,
@@ -111,7 +122,10 @@ export function getJsTracerLeafTiming(
     }
     const stringIndex = jsTracer.events[tracerEventIndex];
     const displayName = stringTable.getString(stringIndex);
-    const rowName = isUrl[stringIndex] ? 'Script' : displayName;
+    // Event names are either some specific event in the JS engine, or it is the URL
+    // of the script that is executing. Put all of the URL events into a single row
+    // labeled 'Script'.
+    const rowName = isUrl(stringIndex) ? 'Script' : displayName;
     let timingRow = jsTracerTimingMap.get(rowName);
     if (timingRow === undefined) {
       timingRow = {
@@ -124,21 +138,15 @@ export function getJsTracerLeafTiming(
       };
       jsTracerTimingMap.set(rowName, timingRow);
     }
-    // Convert the timing to milliseconds.
-    const division = 1000;
-    if (end < start) {
-      throw new Error('end is less than the start');
-    }
-    timingRow.start.push(start / division);
-    timingRow.end.push(end / division);
-    timingRow.label.push(displayName);
-    timingRow.index.push(tracerEventIndex);
-    timingRow.length++;
 
-    if (timingRow.length > 1) {
+    {
+      // Perform sanity checks on the data that is being added.
       const currStart = timingRow.start[timingRow.length - 1];
       const currEnd = timingRow.end[timingRow.length - 1];
       const prevEnd = timingRow.end[timingRow.length - 2];
+      if (end < start) {
+        throw new Error('end is less than the start');
+      }
       if (currEnd < currStart) {
         throw new Error(
           `currEnd < currStart "${displayName} - ${currEnd} < ${currStart}"`
@@ -155,6 +163,13 @@ export function getJsTracerLeafTiming(
         );
       }
     }
+
+    // Convert the timing to milliseconds.
+    timingRow.start.push(start / 1000);
+    timingRow.end.push(end / 1000);
+    timingRow.label.push(displayName);
+    timingRow.index.push(tracerEventIndex);
+    timingRow.length++;
   }
 
   // Determine the self time of the various events. These values are all the stack
