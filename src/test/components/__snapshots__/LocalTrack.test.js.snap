@@ -38,6 +38,10 @@ exports[`timeline/LocalTrack with a network track matches the snapshot of the ne
         <canvas
           className="timelineTrackNetworkCanvas"
         />
+        <div
+          className="timelineVerticalIndicators"
+          key="3-5.9"
+        />
       </div>
     </div>
   </div>

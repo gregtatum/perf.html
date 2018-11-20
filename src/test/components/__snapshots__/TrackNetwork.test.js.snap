@@ -55,5 +55,9 @@ exports[`timeline/TrackNetwork matches the component snapshot 1`] = `
   <canvas
     className="timelineTrackNetworkCanvas"
   />
+  <div
+    className="timelineVerticalIndicators"
+    key="0-91"
+  />
 </div>
 `;

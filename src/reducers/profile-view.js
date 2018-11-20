@@ -797,6 +797,7 @@ export type SelectorsForThread = {
   getMergedNetworkChartTracingMarkers: State => TracingMarker[],
   getCommittedRangeFilteredTracingMarkers: State => TracingMarker[],
   getCommittedRangeFilteredTracingMarkersForHeader: State => TracingMarker[],
+  getTimelineVerticalMarkers: State => TracingMarker[],
   getNetworkTracingMarkers: State => TracingMarker[],
   getNetworkTrackTiming: State => MarkerTimingRows,
   getRangeFilteredScreenshotsById: State => Map<string, TracingMarker[]>,
@@ -1065,6 +1066,37 @@ export const selectorsForThread = (
             !MarkerData.isNetworkMarker(tm)
         )
     );
+    const getTimelineVerticalMarkers = createSelector(
+      getCommittedRangeFilteredTracingMarkers,
+      (markers): TracingMarker[] => {
+        return markers.filter(({ name, data }) => {
+          if (name === 'TTI') {
+            // TTI has untrustworthy payloads.
+            // See: https://bugzilla.mozilla.org/show_bug.cgi?id=1508837
+            return true;
+          }
+          if (!data) {
+            // This marker has no payload, only consider the name.
+            if (name === 'Navigation::Start') {
+              return true;
+            }
+            if (name.startsWith('Contentful paint ')) {
+              // This is a long plaintext marker.
+              // e.g. "Contentful paint after 322ms for URL https://developer.mozilla.org/en-US/, foreground tab"
+              return true;
+            }
+            return false;
+          }
+          if (data.category === 'Navigation') {
+            // Filter by payloads.
+            if (name === 'Load' || name === 'DOMContentLoaded') {
+              return true;
+            }
+          }
+          return false;
+        });
+      }
+    );
     const getSearchFilteredTracingMarkers = createSelector(
       getCommittedRangeFilteredTracingMarkers,
       UrlState.getMarkersSearchString,
@@ -1291,6 +1323,7 @@ export const selectorsForThread = (
       getNetworkChartTiming,
       getCommittedRangeFilteredTracingMarkers,
       getCommittedRangeFilteredTracingMarkersForHeader,
+      getTimelineVerticalMarkers,
       getNetworkTracingMarkers,
       getNetworkTrackTiming,
       getMergedNetworkChartTracingMarkers,

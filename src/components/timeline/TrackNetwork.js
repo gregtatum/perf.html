@@ -11,7 +11,9 @@ import explicitConnect from '../../utils/connect';
 import {
   selectorsForThread,
   getCommittedRange,
+  getZeroAt,
 } from '../../reducers/profile-view';
+import VerticalIndicators from './VerticalIndicators';
 
 import type { ThreadIndex } from '../../types/profile';
 import type {} from '../../types/markers';
@@ -21,6 +23,7 @@ import type {
   ExplicitConnectOptions,
   ConnectedProps,
 } from '../../utils/connect';
+import type { TracingMarker } from '../../types/profile-derived';
 
 import './TrackNetwork.css';
 
@@ -32,9 +35,11 @@ type OwnProps = {|
 type StateProps = {|
   +rangeStart: Milliseconds,
   +rangeEnd: Milliseconds,
+  +zeroAt: Milliseconds,
   +networkMarkers: *,
   +networkTiming: *,
   +containerHeight: number,
+  +verticalMarkers: TracingMarker[],
 |};
 type DispatchProps = {||};
 type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
@@ -116,7 +121,13 @@ class Network extends PureComponent<Props, State> {
   }
 
   render() {
-    const { containerHeight } = this.props;
+    const {
+      containerHeight,
+      rangeStart,
+      rangeEnd,
+      verticalMarkers,
+      zeroAt,
+    } = this.props;
     this._scheduleDraw();
 
     return (
@@ -129,6 +140,12 @@ class Network extends PureComponent<Props, State> {
         <canvas
           className="timelineTrackNetworkCanvas"
           ref={this._takeCanvasRef}
+        />
+        <VerticalIndicators
+          verticalMarkers={verticalMarkers}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          zeroAt={zeroAt}
         />
       </div>
     );
@@ -146,8 +163,10 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
       networkTiming: networkTiming,
       rangeStart: start,
       rangeEnd: end,
+      zeroAt: getZeroAt(state),
       containerHeight:
         ROW_HEIGHT * clamp(networkTiming.length, MIN_ROW_REPEAT, ROW_REPEAT),
+      verticalMarkers: selectors.getTimelineVerticalMarkers(state),
     };
   },
   component: Network,
