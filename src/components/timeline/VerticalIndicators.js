@@ -3,21 +3,32 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import React from 'react';
+import * as React from 'react';
 import DivWithTooltip from '../shared/DivWithTooltip';
 import { withSize } from '../shared/WithSize';
+import {
+  getStringPropertyOrNull,
+  getNumberPropertyOrNull,
+} from '../../utils/flow';
+import { displayNiceUrl } from '../../utils';
 
 import type { SizeProps } from '../shared/WithSize';
+import type { PageList } from '../../types/profile';
 import type { TracingMarker } from '../../types/profile-derived';
 import type { Milliseconds } from '../../types/units';
 
 import './VerticalIndicators.css';
 
-type Props = {|
+type OwnProps = {|
   +verticalMarkers: TracingMarker[],
+  +pages: PageList | null,
   +rangeStart: Milliseconds,
   +rangeEnd: Milliseconds,
   +zeroAt: Milliseconds,
+|};
+
+type Props = {|
+  ...OwnProps,
   ...SizeProps,
 |};
 
@@ -27,6 +38,7 @@ type Props = {|
  */
 const VerticalIndicators = ({
   verticalMarkers,
+  pages,
   rangeStart,
   rangeEnd,
   zeroAt,
@@ -61,6 +73,27 @@ const VerticalIndicators = ({
         const xPixelsPerMs = width / rangeLength;
         const left = (marker.start - rangeStart) * xPixelsPerMs;
 
+        // Optionally compute a url.
+        let url = null;
+        const { data } = marker;
+        if (pages && data) {
+          const docshellId = getStringPropertyOrNull(data, 'docShellId');
+          const historyId = getNumberPropertyOrNull(data, 'docshellHistoryId');
+          if (docshellId) {
+            const page = pages.find(
+              page =>
+                page.docshellId === docshellId && page.historyId === historyId
+            );
+            if (page) {
+              url = (
+                <div className="timelineVerticalIndicatorsUrl">
+                  {displayNiceUrl(page.url)}
+                </div>
+              );
+            }
+          }
+        }
+
         // Create the div with a tooltip.
         return (
           <DivWithTooltip
@@ -68,16 +101,22 @@ const VerticalIndicators = ({
             style={{ backgroundColor, left }}
             className="timelineVerticalIndicatorsLine"
             tooltip={
-              <span>
-                <span
-                  className="timelineVerticalIndicatorsSwatch"
-                  style={{ backgroundColor }}
-                />{' '}
-                <span className="timelineVerticalIndicatorsTime">
-                  {_getFormattedTime(marker.start - zeroAt)}
-                </span>{' '}
-                {marker.name}
-              </span>
+              <>
+                <div>
+                  <span
+                    className="timelineVerticalIndicatorsSwatch"
+                    style={{ backgroundColor }}
+                  />{' '}
+                  {marker.name}
+                  <span className="timelineVerticalIndicatorsDim">
+                    {' at '}
+                  </span>
+                  <span className="timelineVerticalIndicatorsTime">
+                    {_getFormattedTime(marker.start - zeroAt)}
+                  </span>{' '}
+                </div>
+                {url}
+              </>
             }
           />
         );
@@ -87,7 +126,8 @@ const VerticalIndicators = ({
 };
 
 function _getFormattedTime(length: number): string {
-  return `${(length / 1000).toFixed(1)}s`;
+  return `${(length / 1000).toFixed(3)}s`;
 }
 
-export default withSize(VerticalIndicators);
+// The withSize type coercion is not happening correctly.
+export default (withSize(VerticalIndicators): React.ComponentType<OwnProps>);

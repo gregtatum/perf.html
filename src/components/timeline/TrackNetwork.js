@@ -12,10 +12,11 @@ import {
   selectorsForThread,
   getCommittedRange,
   getZeroAt,
+  getPageList,
 } from '../../reducers/profile-view';
 import VerticalIndicators from './VerticalIndicators';
 
-import type { ThreadIndex } from '../../types/profile';
+import type { ThreadIndex, PageList } from '../../types/profile';
 import type {} from '../../types/markers';
 import type { Milliseconds } from '../../types/units';
 import type { SizeProps } from '../shared/WithSize';
@@ -33,6 +34,7 @@ type OwnProps = {|
 |};
 
 type StateProps = {|
+  +pages: PageList | null,
   +rangeStart: Milliseconds,
   +rangeEnd: Milliseconds,
   +zeroAt: Milliseconds,
@@ -122,6 +124,7 @@ class Network extends PureComponent<Props, State> {
 
   render() {
     const {
+      pages,
       containerHeight,
       rangeStart,
       rangeEnd,
@@ -143,6 +146,7 @@ class Network extends PureComponent<Props, State> {
         />
         <VerticalIndicators
           verticalMarkers={verticalMarkers}
+          pages={pages}
           rangeStart={rangeStart}
           rangeEnd={rangeEnd}
           zeroAt={zeroAt}
@@ -159,6 +163,7 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
     const { start, end } = getCommittedRange(state);
     const networkTiming = selectors.getNetworkTrackTiming(state);
     return {
+      pages: getPageList(state),
       networkMarkers: selectors.getNetworkTracingMarkers(state),
       networkTiming: networkTiming,
       rangeStart: start,

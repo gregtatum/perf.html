@@ -25,7 +25,16 @@
   background-color: #000;
 }
 
+.timelineVerticalIndicatorsDim {
+  color: var(--grey-50);
+}
+
 .timelineVerticalIndicatorsTime {
   font-weight: bold;
   color: var(--grey-70);
+}
+
+.timelineVerticalIndicatorsUrl {
+  margin-top: 6px;
+  color: var(--grey-60);
 }

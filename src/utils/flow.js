@@ -161,7 +161,7 @@ export function getNumberPropertyOrNull<T: Object>(
 
 /**
  * Flow doesn't want us to access potentitally non-existent properties on unions of
- * of objects. This function creates a safe interface to access number properties
+ * of objects. This function creates a safe interface to access string properties
  * if they might exist.
  */
 export function getStringPropertyOrNull<T: Object>(
