@@ -15,6 +15,8 @@ import type {
   Thread,
   ThreadIndex,
   Pid,
+  Counter,
+  CounterIndex,
 } from '../types/profile';
 import type {
   LocalTrack,
@@ -96,6 +98,16 @@ export const getRightClickedTrack: Selector<TrackReference> = state =>
   getProfileViewOptions(state).rightClickedTrack;
 export const getPreviewSelection: Selector<PreviewSelection> = state =>
   getProfileViewOptions(state).previewSelection;
+export const getCounters: Selector<Counter[] | null> = state =>
+  getProfile(state).counters || null;
+export const getCounterByIndex: DangerousSelectorWithArguments<
+  Counter,
+  CounterIndex
+> = (state, counterIndex) =>
+  ensureExists(
+    getProfile(state).counters,
+    'Attempting to get a counter by index, but no counters exist.'
+  )[counterIndex];
 
 /**
  * Tracks
