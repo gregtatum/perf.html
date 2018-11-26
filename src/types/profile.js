@@ -18,6 +18,7 @@ export type IndexIntoLibs = number;
 export type IndexIntoCategoryList = number;
 export type resourceTypeEnum = number;
 export type ThreadIndex = number;
+export type CounterIndex = number;
 
 /**
  * If a pid is a number, then it is the int value that came from the profiler.
@@ -212,6 +213,27 @@ export type PausedRange = {
   reason: 'profiler-paused' | 'collecting',
 };
 
+export type CounterSamples = {|
+  time: Milliseconds[],
+  // The number of times the counter was changed.
+  number: number[],
+  // The count of the data, for instance for memory this would be bytes.
+  count: number[],
+  length: number,
+|};
+
+export type Counter = {|
+  name: string,
+  category: string,
+  description: string,
+  pid: Pid,
+  mainThreadIndex: ThreadIndex,
+  sampleGroups: {|
+    id: number,
+    samples: CounterSamples,
+  |},
+|};
+
 /**
  * Gecko has one or more processes. There can be multiple threads per processes. Each
  * thread has a unique set of tables for its data.
@@ -338,5 +360,8 @@ export type ProfileMeta = {|
 export type Profile = {
   meta: ProfileMeta,
   pages?: PageList,
+  // The counters list is optional only because old profilers may not have them.
+  // An upgrader could be written to make this non-optional.
+  counters?: Counter[],
   threads: Thread[],
 };

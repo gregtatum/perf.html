@@ -29,11 +29,13 @@ import type {
   IndexIntoCategoryList,
   Thread,
   ThreadIndex,
+  Counter,
   SamplesTable,
   Pid,
   MarkersTable,
   IndexIntoSamplesTable,
   IndexIntoMarkersTable,
+  CounterIndex,
 } from '../types/profile';
 import type {
   TracingMarker,
@@ -623,6 +625,16 @@ export const getRightClickedTrack = (state: State) =>
   getProfileViewOptions(state).rightClickedTrack;
 export const getPreviewSelection = (state: State) =>
   getProfileViewOptions(state).previewSelection;
+export const getCounters = (state: State): Counter[] | null =>
+  getProfile(state).counters || null;
+export const getCounterByIndex = (
+  state: State,
+  counterIndex: CounterIndex
+): Counter =>
+  ensureExists(
+    getProfile(state).counters,
+    'Attempting to get a counter by index, but no counters exist.'
+  )[counterIndex];
 
 /**
  * Tracks

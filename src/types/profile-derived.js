@@ -5,7 +5,12 @@
 // @flow
 import type { Milliseconds } from './units';
 import type { MarkerPayload } from './markers';
-import type { IndexIntoFuncTable, ThreadIndex, Pid } from './profile';
+import type {
+  IndexIntoFuncTable,
+  CounterIndex,
+  ThreadIndex,
+  Pid,
+} from './profile';
 export type IndexIntoCallNodeTable = number;
 
 /**
@@ -122,7 +127,7 @@ export type GlobalTrack =
 export type LocalTrack =
   | {| +type: 'thread', +threadIndex: ThreadIndex |}
   | {| +type: 'network', +threadIndex: ThreadIndex |}
-  | {| +type: 'memory', +threadIndex: ThreadIndex |};
+  | {| +type: 'memory', +counterIndex: CounterIndex |};
 
 export type Track = GlobalTrack | LocalTrack;
 export type TrackIndex = number;

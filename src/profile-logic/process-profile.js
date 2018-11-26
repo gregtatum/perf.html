@@ -26,6 +26,7 @@ import { convertPhaseTimes } from './convert-markers';
 import type {
   Profile,
   Thread,
+  Counter,
   ExtensionTable,
   CategoryList,
   FrameTable,
@@ -691,6 +692,29 @@ function _processSamples(geckoSamples: GeckoSampleStruct): SamplesTable {
   };
 }
 
+function _processCounters(
+  geckoProfile: GeckoProfile,
+  delta: Milliseconds
+): Counter[] {
+  const anyThread = geckoProfile.threads[0];
+  const geckoCounters = geckoProfile.counters;
+  return geckoCounters && anyThread
+    ? geckoCounters.map(({ name, category, description, sample_groups }) => ({
+        name,
+        category,
+        description,
+        pid: anyThread.pid,
+        sampleGroups: {
+          id: sample_groups.id,
+          samples: _adjustCounterTimestamps(
+            _toStructOfArrays(sample_groups.samples),
+            delta
+          ),
+        },
+      }))
+    : [];
+}
+
 /**
  * Convert the given thread into processed form. See docs-developer/gecko-profile-format for more
  * information.
@@ -813,6 +837,13 @@ function _adjustMarkerTimestamps(
   });
 }
 
+function _adjustCounterTimestamps(sampleGroups: *, delta: Milliseconds): * {
+  return {
+    ...sampleGroups,
+    time: sampleGroups.time.map(time => time + delta),
+  };
+}
+
 /**
  * Convert a profile from the Gecko format into the processed format.
  * Throws an exception if it encounters an incompatible profile.
@@ -829,6 +860,7 @@ export function processProfile(
   upgradeGeckoProfileToCurrentVersion(geckoProfile);
 
   let threads = [];
+  const counters: Counter[] = _processCounters(geckoProfile, 0);
 
   const extensions: ExtensionTable = geckoProfile.meta.extensions
     ? _toStructOfArrays(geckoProfile.meta.extensions)
@@ -841,6 +873,7 @@ export function processProfile(
   for (const subprocessProfile of geckoProfile.processes) {
     const adjustTimestampsBy =
       subprocessProfile.meta.startTime - geckoProfile.meta.startTime;
+    counters.push(..._processCounters(subprocessProfile, adjustTimestampsBy));
     threads = threads.concat(
       subprocessProfile.threads.map(thread => {
         const newThread = _processThread(thread, subprocessProfile, extensions);
@@ -898,6 +931,7 @@ export function processProfile(
   const result = {
     meta,
     pages,
+    counters,
     threads,
   };
   return result;
