@@ -253,25 +253,25 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
 
     const h: DevicePixels = devicePixels.rowHeight - devicePixels.oneCssPixel;
     let hoveredElement: DrawingInformation | null = null;
-    let nextPixelLeftSide: DevicePixels = devicePixels.timelineMarginLeft;
-    let nextPixelRightSide: DevicePixels = nextPixelLeftSide + 1;
+    let currentPixelLeftSide: DevicePixels = devicePixels.timelineMarginLeft;
+    let currentPixelRightSide: DevicePixels = currentPixelLeftSide + 1;
     // This value ranges from 0 to 1:
-    let nextPixelPartialValue: DevicePixels = 0;
+    let currentPixelPartialValue: DevicePixels = 0;
 
-    const commitPartialPixel = (y: number) => {
-      if (nextPixelPartialValue > 0) {
+    const commitAndDrawPartialPixel = (y: number) => {
+      if (currentPixelPartialValue > 0) {
         this.drawOneEvent(
           renderPass,
-          nextPixelLeftSide,
+          currentPixelLeftSide, // x
           y,
-          nextPixelPartialValue,
+          currentPixelPartialValue, // w
           h,
-          nextPixelPartialValue,
-          ''
+          currentPixelPartialValue, // uncutWidth
+          '' // text
         );
-        nextPixelLeftSide++;
-        nextPixelRightSide++;
-        nextPixelPartialValue = 0;
+        currentPixelLeftSide++;
+        currentPixelRightSide++;
+        currentPixelPartialValue = 0;
       }
     };
 
@@ -296,23 +296,16 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       // is indexed.
       // Line "B.", 1 block of XXXXX represents 1 drawn pixel. 0.2 represents partially
       // applied pixels where events have contributed to that pixel.
-      // Line "C." is the next event to apply, with the left hand pixel position, and
+      // Line "C." is the current event to apply, with the left hand pixel position, and
       // right hand side pixel position. These are float values.
       //
       // The following variables are used below as well, but are provided as a reference
       // with the example diagram above.
       //
-      // nextPixel: |2---3|
-      // nextPixelLeftSide: 2
-      // nextPixelRightSide: 3
-      // nextPixelPartialValue: 0.2
-      //
-      // |0---1|1---2|2---3|3---4|4---5|
-      //  XXXXX XXXXX  0.3
-      //                    [3----4.9]
-      //
-      // The above diagram shows the first step in the for loop logic below, which is
-      // to clip off the float value of the event and add it to nextPixelPartialValue.
+      // currentPixel: |2---3|
+      // currentPixelLeftSide: 2
+      // currentPixelRightSide: 3
+      // currentPixelPartialValue: 0.2
 
       // Decide which samples to actually draw
       const timeAtViewportLeft: Milliseconds =
@@ -338,56 +331,123 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
           const unitIntervalStartTime: UnitIntervalOfProfileRange =
             (eventStartTime - rangeStart) / rangeLength;
           const unitIntervalEndTime: UnitIntervalOfProfileRange =
-            (timing.end[i] - rangeStart) / rangeLength;
+            (eventEndTime - rangeStart) / rangeLength;
 
           let x: DevicePixels =
             (unitIntervalStartTime - viewportLeft) *
               devicePixels.innerContainerWidth /
               viewportLength +
             devicePixels.timelineMarginLeft;
+          // If a viewport is smaller than the width of a box, it gets cut off so only
+          // a smaller box is drawn. This variable holds the width of the event before
+          // it is potentially "cut" by a smaller viewport.
           const uncutWidth: DevicePixels =
             (unitIntervalEndTime - unitIntervalStartTime) *
             devicePixels.innerContainerWidth /
             viewportLength;
           const eventIndex = timing.index[i];
           const isHovered = hoveredItem === eventIndex;
+
+          // Perform some checks to see if we can skip drawing this event.
           if (uncutWidth === 0) {
+            // This event width is 0, so there is nothing to draw. This may not happen
+            // in practice with JS tracer data, but perform a check anyway.
             continue;
           }
-
-          let w = uncutWidth;
-          if (x + w < devicePixels.timelineMarginLeft) {
+          if (x + uncutWidth < devicePixels.timelineMarginLeft) {
+            // The right hand side of the box is not in the viewport range.
             continue;
           }
           if (
             x >
             devicePixels.containerWidth - devicePixels.timelineMarginRight
           ) {
+            // Start of the box is not in the viewport rage.
             continue;
           }
+
+          // Adjust the width if this box is cut by the viewport.
+          let w = uncutWidth;
           if (x < devicePixels.timelineMarginLeft) {
             // Adjust events that are before the left margin.
-            w = w + x - devicePixels.timelineMarginLeft;
+            w = w - (devicePixels.timelineMarginLeft - x);
             x = devicePixels.timelineMarginLeft;
           }
 
           const text = timing.label[i];
           if (isHovered) {
+            // Defer the drawing of the hovered element until after drawing all the other
+            // events, so that it is always on top.
             hoveredElement = { x, y, w, h, uncutWidth, text };
             continue;
           }
 
+          // Now determine if we can draw the event or commit partial pixels.
           const ceilX = Math.ceil(x);
-          if (ceilX < x + w) {
-            if (x >= nextPixelRightSide) {
-              // This value skips the partial pixel. Commit that last partial pixel
+          if (x + w <= ceilX) {
+            // This event does not cross a pixel boundary. It will need to be partially
+            // applied, but not drawn.
+
+            if (x >= currentPixelRightSide) {
+              // However, this event is in a new pixel, so commit the previous partially
+              // applied pixel.
+              //
+              // |0---1|1---2|2---3|3---4|4---5|
+              //  XXXXX XXXXX  0.2
+              //                     []
+              commitAndDrawPartialPixel(y);
+              currentPixelLeftSide = Math.floor(x);
+              currentPixelRightSide = currentPixelLeftSide + 1;
+              // Now the pixels look like this:
+              //
+              // |0---1|1---2|2---3|3---4|4---5|
+              //  XXXXX XXXXX XXXXX  0.0
+              //                     []
+            } else {
+              // This `else` block is intentionally blank, but shows the current state
+              // of the for loop.
+              //
+              // |0---1|1---2|2---3|3---4|4---5|
+              //  XXXXX XXXXX  0.2
+              //               []
+            }
+            // Partially apply the value.
+            currentPixelPartialValue += w;
+          } else {
+            // This event crosses from one pixel, into another pixel. At least some
+            // pixels will need to be drawn.
+
+            if (x > currentPixelRightSide) {
+              // The current value is located beyond the partial pixel. Commit that
+              // last partial pixel.
+              //
               // |0---1|1---2|2---3|3---4|4---5|
               //  XXXXX XXXXX  0.2
               //                             [4.9---6.2]
-              commitPartialPixel(y);
-              nextPixelLeftSide = ceilX - 1;
-              nextPixelRightSide = ceilX;
+              // or
+              //
+              // |0---1|1---2|2---3|3---4|4---5|
+              //  XXXXX XXXXX  0.2
+              //                    [3.1--4.9]
+              commitAndDrawPartialPixel(y);
+              currentPixelLeftSide = ceilX - 1;
+              currentPixelRightSide = ceilX;
+              // After this operation, the current state looks like this. We still
+              // need to chop off the 4.9 to 5.0 and commit the 0.1 partial pixel.
+              // This happens after this if/else block.
+              //
+              // |0---1|1---2|2---3|3---4|4---5|
+              //  XXXXX XXXXX XXXXX XXXXX  0.0
+              //                             [4.9---6.2]
+              // or
+              //
+              // |0---1|1---2|2---3|3---4|4---5|
+              //  XXXXX XXXXX XXXXX
+              //                    [3.1--4.9]
             } else {
+              // This `else` block is intentionally blank, but the following diagram
+              // explains what the state of the loop is inside this block.
+              //
               // |0---1|1---2|2---3|3---4|4---5|
               //  XXXXX XXXXX  0.2
               //                 [2.9------6.2]
@@ -398,34 +458,28 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
               //  XXXXX XXXXX  0.2
               //                   [3------6.2]
             }
-            const leftOfPixelDivide = ceilX - x;
+            // Cut off the transition to the next pixel, and apply it.
             x = ceilX;
-            nextPixelPartialValue += leftOfPixelDivide;
-            commitPartialPixel(y);
-          } else {
-            if (x > nextPixelRightSide) {
-              // |0---1|1---2|2---3|3---4|4---5|
-              //  XXXXX XXXXX  0.2
-              //                     []
-              commitPartialPixel(y);
-              nextPixelLeftSide = Math.floor(x);
-              nextPixelRightSide = nextPixelLeftSide + 1;
-            }
-            // |0---1|1---2|2---3|3---4|4---5|
-            //  XXXXX XXXXX  0.2
-            //               []
-            nextPixelPartialValue += w;
-            continue;
-          }
+            currentPixelPartialValue += ceilX - x;
+            commitAndDrawPartialPixel(y);
 
-          const floorW = Math.floor(w);
-          this.drawOneEvent(renderPass, x, y, floorW, h, uncutWidth, text);
-          nextPixelLeftSide = x + floorW;
-          nextPixelRightSide = x + floorW + 1;
-          nextPixelPartialValue = w - floorW;
+            // Now determine if we need to draw a large event.
+            const floorW = Math.floor(w);
+            if (floorW > 0) {
+              // This event spans multiple pixels. Draw it and adjust the current
+              // pixel sides.
+              this.drawOneEvent(renderPass, x, y, floorW, h, uncutWidth, text);
+              currentPixelLeftSide = x + floorW;
+              currentPixelRightSide = x + floorW + 1;
+            }
+
+            // Add on the remaining partial value to the current pixel.
+            currentPixelPartialValue = w - floorW;
+          }
         }
-        // Commit the last partial pixel.
-        commitPartialPixel(y);
+
+        // Commit the last partial pixel of this row.
+        commitAndDrawPartialPixel(y);
       }
 
       if (hoveredElement) {
@@ -455,7 +509,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     } = renderPass;
     const { jsTracerTimingRows } = this.props;
 
-    // Draw separators
+    // Draw a line to separate the left margin.
     fastFillStyle.set(GREY_20);
     ctx.fillRect(
       devicePixels.timelineMarginLeft - devicePixels.oneCssPixel,
@@ -463,9 +517,11 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       devicePixels.oneCssPixel,
       devicePixels.containerHeight
     );
+
+    // Draw the row separators.
     for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
-      // `- 1` at the end, because the top separator is not drawn in the canvas,
-      // it's drawn using CSS' border property. And canvas positioning is 0-based.
+      // Subtract a CSS Pixel at the end, because the top separator is not drawn in the
+      // canvas, it's drawn using CSS' border property. And canvas positioning is 0-based.
       const y =
         (rowIndex + 1) * devicePixels.rowHeight -
         devicePixels.viewportTop -
@@ -473,12 +529,13 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       ctx.fillRect(0, y, devicePixels.containerWidth, devicePixels.oneCssPixel);
     }
 
-    // Draw the text
+    // Draw the labels for the rows.
     fastFillStyle.set('#000000');
     for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
       // Get the timing information for a row of events.
       const { name } = jsTracerTimingRows[rowIndex];
       if (rowIndex > 0 && name === jsTracerTimingRows[rowIndex - 1].name) {
+        // Do not draw a label if it's the same as the previous one.
         continue;
       }
       const fittedText = textMeasurement.getFittedText(
