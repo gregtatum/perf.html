@@ -251,30 +251,6 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
     const viewportLength: UnitIntervalOfProfileRange =
       viewportRight - viewportLeft;
 
-    const h: DevicePixels = devicePixels.rowHeight - devicePixels.oneCssPixel;
-    let hoveredElement: DrawingInformation | null = null;
-    let currentPixelLeftSide: DevicePixels = devicePixels.timelineMarginLeft;
-    let currentPixelRightSide: DevicePixels = currentPixelLeftSide + 1;
-    // This value ranges from 0 to 1:
-    let currentPixelPartialValue: DevicePixels = 0;
-
-    const commitAndDrawPartialPixel = (y: number) => {
-      if (currentPixelPartialValue > 0) {
-        this.drawOneEvent(
-          renderPass,
-          currentPixelLeftSide, // x
-          y,
-          currentPixelPartialValue, // w
-          h,
-          currentPixelPartialValue, // uncutWidth
-          '' // text
-        );
-        currentPixelLeftSide++;
-        currentPixelRightSide++;
-        currentPixelPartialValue = 0;
-      }
-    };
-
     // Only draw the events that are vertically within view.
     for (let rowIndex = startRow; rowIndex < endRow; rowIndex++) {
       // Get the timing information for a row of events.
@@ -316,8 +292,32 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
         // This represents the amount of seconds in the right margin:
         devicePixels.timelineMarginRight *
           (viewportLength * rangeLength / devicePixels.containerWidth);
+      const h: DevicePixels = devicePixels.rowHeight - devicePixels.oneCssPixel;
       const y: CssPixels =
         rowIndex * devicePixels.rowHeight - devicePixels.viewportTop;
+
+      let hoveredElement: DrawingInformation | null = null;
+      let currentPixelLeftSide: DevicePixels = devicePixels.timelineMarginLeft;
+      let currentPixelRightSide: DevicePixels = currentPixelLeftSide + 1;
+      // This value ranges from 0 to 1:
+      let currentPixelPartialValue: DevicePixels = 0;
+
+      const commitAndDrawPartialPixel = (y: number) => {
+        if (currentPixelPartialValue > 0) {
+          this.drawOneEvent(
+            renderPass,
+            currentPixelLeftSide,
+            y,
+            currentPixelPartialValue,
+            h,
+            currentPixelPartialValue,
+            ''
+          );
+          currentPixelLeftSide++;
+          currentPixelRightSide++;
+          currentPixelPartialValue = 0;
+        }
+      };
 
       for (let i = 0; i < timing.length; i++) {
         const eventStartTime = timing.start[i];
@@ -346,36 +346,40 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
             devicePixels.innerContainerWidth /
             viewportLength;
           const eventIndex = timing.index[i];
-          const isHovered = hoveredItem === eventIndex;
+          const text = timing.label[i];
 
           // Perform some checks to see if we can skip drawing this event.
-          if (uncutWidth === 0) {
-            // This event width is 0, so there is nothing to draw. This may not happen
-            // in practice with JS tracer data, but perform a check anyway.
-            continue;
-          }
-          if (x + uncutWidth < devicePixels.timelineMarginLeft) {
-            // The right hand side of the box is not in the viewport range.
-            continue;
-          }
-          if (
-            x >
-            devicePixels.containerWidth - devicePixels.timelineMarginRight
-          ) {
-            // Start of the box is not in the viewport rage.
-            continue;
+          {
+            if (uncutWidth === 0) {
+              // This event width is 0, so there is nothing to draw. This may not happen
+              // in practice with JS tracer data, but perform a check anyway.
+              continue;
+            }
+            if (x + uncutWidth < devicePixels.timelineMarginLeft) {
+              // The right hand side of the box is not in the viewport range.
+              continue;
+            }
+            if (
+              x >
+              devicePixels.containerWidth - devicePixels.timelineMarginRight
+            ) {
+              // Start of the box is not in the viewport rage.
+              continue;
+            }
           }
 
           // Adjust the width if this box is cut by the viewport.
           let w = uncutWidth;
-          if (x < devicePixels.timelineMarginLeft) {
-            // Adjust events that are before the left margin.
-            w = w - (devicePixels.timelineMarginLeft - x);
-            x = devicePixels.timelineMarginLeft;
+          {
+            if (x < devicePixels.timelineMarginLeft) {
+              // Adjust events that are before the left margin.
+              w = w - (devicePixels.timelineMarginLeft - x);
+              x = devicePixels.timelineMarginLeft;
+            }
           }
 
-          const text = timing.label[i];
-          if (isHovered) {
+          // Is this event hovered?
+          if (hoveredItem === eventIndex) {
             // Defer the drawing of the hovered element until after drawing all the other
             // events, so that it is always on top.
             hoveredElement = { x, y, w, h, uncutWidth, text };
@@ -413,6 +417,7 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
             }
             // Partially apply the value.
             currentPixelPartialValue += w;
+            continue;
           } else {
             // This event crosses from one pixel, into another pixel. At least some
             // pixels will need to be drawn.
@@ -462,20 +467,12 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
             x = ceilX;
             currentPixelPartialValue += ceilX - x;
             commitAndDrawPartialPixel(y);
-
-            // Now determine if we need to draw a large event.
-            const floorW = Math.floor(w);
-            if (floorW > 0) {
-              // This event spans multiple pixels. Draw it and adjust the current
-              // pixel sides.
-              this.drawOneEvent(renderPass, x, y, floorW, h, uncutWidth, text);
-              currentPixelLeftSide = x + floorW;
-              currentPixelRightSide = x + floorW + 1;
-            }
-
-            // Add on the remaining partial value to the current pixel.
-            currentPixelPartialValue = w - floorW;
           }
+          const floorW = Math.floor(w);
+          this.drawOneEvent(renderPass, x, y, floorW, h, uncutWidth, text);
+          currentPixelLeftSide = x + floorW;
+          currentPixelRightSide = x + floorW + 1;
+          currentPixelPartialValue = w - floorW;
         }
 
         // Commit the last partial pixel of this row.
@@ -578,9 +575,9 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
       viewportLength * ((x - TIMELINE_MARGIN_LEFT) / innerContainerWidth);
     const time: Milliseconds = rangeStart + unitIntervalTime * rangeLength;
     const rowIndex = Math.floor((y + viewportTop) / rowHeight);
+    const timing = jsTracerTimingRows[rowIndex];
     const minDuration: Milliseconds =
       rangeLength * viewportLength / innerContainerWidth;
-    const timing = jsTracerTimingRows[rowIndex];
 
     if (!timing) {
       return null;
@@ -588,10 +585,10 @@ class JsTracerCanvas extends React.PureComponent<Props, State> {
 
     for (let i = 0; i < timing.length; i++) {
       const start = timing.start[i];
-      // Ensure that really small events are hoverable with a minDuration.
       const end = Math.max(start + minDuration, timing.end[i]);
-      if (start < time && end > time) {
-        return timing.index[i];
+      if (start <= time && time < end) {
+        const index = timing.index[i];
+        return index;
       }
     }
     return null;
