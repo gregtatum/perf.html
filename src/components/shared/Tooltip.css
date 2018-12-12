@@ -89,3 +89,10 @@
   white-space: nowrap;
   align-self: flex-end;
 }
+
+.tooltipFunctionName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 200px;
+  white-space: nowrap;
+}
