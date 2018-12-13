@@ -197,7 +197,7 @@ body,
   color: highlighttext;
 }
 
-.treeViewCategoryKnob {
+.category-swatch {
   display: inline-block;
   box-sizing: border-box;
   width: 9px;
@@ -205,31 +205,31 @@ body,
   border: 0.5px solid rgba(0, 0, 0, 0.1);
   margin-right: 3px;
 }
-.treeViewCategoryKnob.category-color-transparent {
+.category-swatch.category-color-transparent {
   background-color: transparent;
 }
-.treeViewCategoryKnob.category-color-purple {
+.category-swatch.category-color-purple {
   background-color: var(--purple-70);
 }
-.treeViewCategoryKnob.category-color-green {
+.category-swatch.category-color-green {
   background-color: var(--green-60);
 }
-.treeViewCategoryKnob.category-color-orange {
+.category-swatch.category-color-orange {
   background-color: var(--orange-50);
 }
-.treeViewCategoryKnob.category-color-yellow {
+.category-swatch.category-color-yellow {
   background-color: var(--yellow-50);
 }
-.treeViewCategoryKnob.category-color-lightblue {
+.category-swatch.category-color-lightblue {
   background-color: var(--blue-40);
 }
-.treeViewCategoryKnob.category-color-grey {
+.category-swatch.category-color-grey {
   background-color: var(--grey-30);
 }
-.treeViewCategoryKnob.category-color-blue {
+.category-swatch.category-color-blue {
   background-color: var(--blue-60);
 }
-.treeViewCategoryKnob.category-color-brown {
+.category-swatch.category-color-brown {
   background-color: var(--magenta-60);
 }
 

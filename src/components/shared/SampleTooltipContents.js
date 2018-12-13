@@ -9,6 +9,7 @@ import type {
   CategoryList,
   Thread,
 } from '../../types/profile';
+import Backtrace from './Backtrace';
 
 type Props = {|
   +sampleIndex: IndexIntoSamplesTable,
@@ -23,41 +24,34 @@ type Props = {|
 export default class SampleTooltipContents extends React.PureComponent<Props> {
   render() {
     const { sampleIndex, fullThread, categories } = this.props;
-    const {
-      samples,
-      stackTable,
-      frameTable,
-      funcTable,
-      stringTable,
-    } = fullThread;
+    const { samples, stackTable } = fullThread;
     const stackIndex = samples.stack[sampleIndex];
     if (stackIndex === null) {
       return 'No stack information';
     }
     const categoryIndex = stackTable.category[stackIndex];
     const category = categories[categoryIndex];
-    const frameIndex = stackTable.frame[stackIndex];
-    const funcIndex = frameTable.func[frameIndex];
-    const nameIndex = funcTable.name[funcIndex];
-    const name = stringTable.getString(nameIndex);
 
     return (
       <>
         <div className="tooltipDetails">
-          <div className="tooltipLabel">Function:</div>
-          <div className="tooltipFunctionName">{name}</div>
-        </div>
-        <div className="tooltipDetails">
           <div className="tooltipLabel">Category:</div>
           <div>
             <span
-              className={`treeViewCategoryKnob category-color-${
-                category.color
-              }`}
+              className={`category-swatch category-color-${category.color}`}
             />
             {category.name}
           </div>
         </div>
+        <div className="tooltipDetails">
+          <div className="tooltipLabel">Stack:</div>
+        </div>
+        <Backtrace
+          maxHeight="90px"
+          stackIndex={stackIndex}
+          thread={fullThread}
+          implementationFilter="combined"
+        />
       </>
     );
   }
