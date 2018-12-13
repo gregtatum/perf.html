@@ -23,8 +23,8 @@ import { assertSetContainsOnly } from '../fixtures/custom-assertions';
 import * as App from '../../actions/app';
 import * as ProfileView from '../../actions/profile-view';
 import { viewProfile } from '../../actions/receive-profile';
-import * as ProfileViewSelectors from '../../reducers/profile-view';
-import * as UrlStateSelectors from '../../reducers/url-state';
+import * as ProfileViewSelectors from '../../selectors/profile-view';
+import * as UrlStateSelectors from '../../selectors/url-state';
 import { stateFromLocation } from '../../app-logic/url-handling';
 
 const { selectedThreadSelectors, selectedNodeSelectors } = ProfileViewSelectors;
