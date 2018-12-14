@@ -10,12 +10,11 @@ import * as Tracks from '../profile-logic/tracks';
 import * as Transforms from '../profile-logic/transforms';
 import * as UrlState from './url-state';
 import * as ProfileData from '../profile-logic/profile-data';
-import * as MarkerData from '../profile-logic/marker-data';
 import * as StackTiming from '../profile-logic/stack-timing';
 import * as FlameGraph from '../profile-logic/flame-graph';
-import * as MarkerTiming from '../profile-logic/marker-timing';
 import * as JsTracer from '../profile-logic/js-tracer';
 import * as CallTree from '../profile-logic/call-tree';
+import { getMarkerSelectorsForThread } from './markers';
 import { assertExhaustiveCheck, ensureExists } from '../utils/flow';
 import { PathSet } from '../utils/path';
 
@@ -25,7 +24,6 @@ import type {
   IndexIntoCategoryList,
   Thread,
   ThreadIndex,
-  SamplesTable,
   Pid,
   MarkersTable,
   IndexIntoSamplesTable,
@@ -333,8 +331,6 @@ export const selectorsForThread = (
   if (!(threadIndex in selectorsForThreads)) {
     const getThread: Selector<Thread> = state =>
       getProfile(state).threads[threadIndex];
-    const _getMarkersTable: Selector<MarkersTable> = state =>
-      getThread(state).markers;
     const getStringTable: Selector<UniqueStringArray> = state =>
       getThread(state).stringTable;
 
@@ -501,171 +497,6 @@ export const selectorsForThread = (
       Transforms.getTransformLabels
     );
 
-    const _getRangeFilteredThreadSamples: Selector<
-      SamplesTable
-    > = createSelector(getRangeFilteredThread, thread => thread.samples);
-
-    const getJankInstances: Selector<TracingMarker[]> = createSelector(
-      _getRangeFilteredThreadSamples,
-      (samples): TracingMarker[] => MarkerData.getJankInstances(samples, 50)
-    );
-
-    /**
-     * Similar to thread filtering, the markers can be filtered as well, and it's
-     * important to use the right type of filtering for the view. The steps for filtering
-     * markers are a bit different, since markers can be valid over ranges, and need a
-     * bit more processing in order to get into a correct state. There are a few
-     * variants of the selectors that are created for specific views that have been
-     * omitted, but the ordered steps below give the general picture.
-     *
-     * 1. _getMarkersTable - Get the MarkersTable from the current thread.
-     * 2. getProcessedMarkersTable - Process marker payloads out of raw strings, and other
-     *                               future processing needs. This returns a MarkersTable
-     *                               still.
-     * 3. getTracingMarkers - Match up start/end markers, and start returning
-     *                        TracingMarkers.
-     * 4. getCommittedRangeFilteredTracingMarkers - Apply the commited range.
-     * 5. getSearchFilteredTracingMarkers - Apply the search string
-     * 6. getPreviewFilteredTracingMarkers - Apply the preview range
-     */
-    const getProcessedMarkersTable: Selector<MarkersTable> = createSelector(
-      _getMarkersTable,
-      getStringTable,
-      MarkerData.extractMarkerDataFromName
-    );
-
-    const getTracingMarkers: Selector<TracingMarker[]> = createSelector(
-      getProcessedMarkersTable,
-      getStringTable,
-      MarkerData.getTracingMarkers
-    );
-
-    const getCommittedRangeFilteredTracingMarkers: Selector<
-      TracingMarker[]
-    > = createSelector(
-      getTracingMarkers,
-      getCommittedRange,
-      (markers, range): TracingMarker[] => {
-        const { start, end } = range;
-        return MarkerData.filterTracingMarkersToRange(markers, start, end);
-      }
-    );
-
-    const getCommittedRangeFilteredTracingMarkersForHeader: Selector<
-      TracingMarker[]
-    > = createSelector(
-      getCommittedRangeFilteredTracingMarkers,
-      (markers): TracingMarker[] =>
-        markers.filter(
-          tm =>
-            tm.name !== 'GCMajor' &&
-            tm.name !== 'BHR-detected hang' &&
-            tm.name !== 'LongTask' &&
-            tm.name !== 'LongIdleTask' &&
-            !MarkerData.isNetworkMarker(tm)
-        )
-    );
-
-    const getSearchFilteredTracingMarkers: Selector<
-      TracingMarker[]
-    > = createSelector(
-      getCommittedRangeFilteredTracingMarkers,
-      UrlState.getMarkersSearchString,
-      MarkerData.getSearchFilteredTracingMarkers
-    );
-
-    const getPreviewFilteredTracingMarkers: Selector<
-      TracingMarker[]
-    > = createSelector(
-      getSearchFilteredTracingMarkers,
-      getPreviewSelection,
-      (markers, previewSelection) => {
-        if (!previewSelection.hasSelection) {
-          return markers;
-        }
-        const { selectionStart, selectionEnd } = previewSelection;
-        return MarkerData.filterTracingMarkersToRange(
-          markers,
-          selectionStart,
-          selectionEnd
-        );
-      }
-    );
-
-    const getIsNetworkChartEmptyInFullRange: Selector<boolean> = createSelector(
-      getTracingMarkers,
-      markers => markers.filter(MarkerData.isNetworkMarker).length === 0
-    );
-
-    const getNetworkChartTracingMarkers: Selector<
-      TracingMarker[]
-    > = createSelector(getSearchFilteredTracingMarkers, markers =>
-      markers.filter(MarkerData.isNetworkMarker)
-    );
-
-    const getMergedNetworkChartTracingMarkers: Selector<
-      TracingMarker[]
-    > = createSelector(
-      getNetworkChartTracingMarkers,
-      MarkerData.mergeStartAndEndNetworkMarker
-    );
-
-    const getIsMarkerChartEmptyInFullRange: Selector<boolean> = createSelector(
-      getTracingMarkers,
-      markers => MarkerData.filterForMarkerChart(markers).length === 0
-    );
-
-    const getMarkerChartTracingMarkers: Selector<
-      TracingMarker[]
-    > = createSelector(
-      getSearchFilteredTracingMarkers,
-      MarkerData.filterForMarkerChart
-    );
-
-    const getMarkerChartTiming: Selector<MarkerTimingRows> = createSelector(
-      getMarkerChartTracingMarkers,
-      MarkerTiming.getMarkerTiming
-    );
-
-    const getNetworkChartTiming: Selector<MarkerTimingRows> = createSelector(
-      getNetworkChartTracingMarkers,
-      MarkerTiming.getMarkerTiming
-    );
-
-    const getNetworkTracingMarkers: Selector<TracingMarker[]> = createSelector(
-      getCommittedRangeFilteredTracingMarkers,
-      tracingMarkers => tracingMarkers.filter(MarkerData.isNetworkMarker)
-    );
-
-    const getNetworkTrackTiming: Selector<MarkerTimingRows> = createSelector(
-      getNetworkTracingMarkers,
-      MarkerTiming.getMarkerTiming
-    );
-
-    const getScreenshotsById = createSelector(
-      _getMarkersTable,
-      getStringTable,
-      getProfileRootRange,
-      MarkerData.extractScreenshotsById
-    );
-
-    const getRangeFilteredScreenshotsById: Selector<
-      Map<string, TracingMarker[]>
-    > = createSelector(
-      getScreenshotsById,
-      getCommittedRange,
-      (screenshotsById, { start, end }) => {
-        const newMap = new Map();
-        for (const [id, screenshots] of screenshotsById) {
-          newMap.set(
-            id,
-            MarkerData.filterTracingMarkersToRange(screenshots, start, end)
-          );
-        }
-        return newMap;
-      }
-    );
-
     const getCallNodeInfo: Selector<CallNodeInfo> = createSelector(
       getFilteredThread,
       getDefaultCategory,
@@ -814,10 +645,6 @@ export const selectorsForThread = (
       }
     );
 
-    const getSelectedMarkerIndex: Selector<
-      IndexIntoMarkersTable | -1
-    > = state => getViewOptions(state).selectedMarker;
-
     const getJsTracerTable: Selector<JsTracerTable | null> = state =>
       getThread(state).jsTracer || null;
 
@@ -853,29 +680,21 @@ export const selectorsForThread = (
           : JsTracer.getJsTracerLeafTiming(jsTracerTable, stringTable)
     );
 
-    selectorsForThreads[threadIndex] = {
+    const threadSelectors = {
       getThread,
       getStringTable,
       getViewOptions,
       getTransformStack,
       getTransformLabels,
+      getFriendlyThreadName,
+      getThreadProcessDetails,
+      unfilteredSamplesRange,
+      getJsTracerTable,
+      getExpensiveJsTracerTiming,
+      getExpensiveJsTracerLeafTiming,
+      // Thread-based selectors:
       getRangeFilteredThread,
       getRangeAndTransformFilteredThread,
-      getJankInstances,
-      getProcessedMarkersTable,
-      getTracingMarkers,
-      getIsNetworkChartEmptyInFullRange,
-      getNetworkChartTracingMarkers,
-      getIsMarkerChartEmptyInFullRange,
-      getMarkerChartTracingMarkers,
-      getMarkerChartTiming,
-      getNetworkChartTiming,
-      getCommittedRangeFilteredTracingMarkers,
-      getCommittedRangeFilteredTracingMarkersForHeader,
-      getNetworkTracingMarkers,
-      getNetworkTrackTiming,
-      getMergedNetworkChartTracingMarkers,
-      getRangeFilteredScreenshotsById,
       getFilteredThread,
       getPreviewFilteredThread,
       getCallNodeInfo,
@@ -890,15 +709,11 @@ export const selectorsForThread = (
       getStackTimingByDepth,
       getCallNodeMaxDepthForFlameGraph,
       getFlameGraphTiming,
-      getFriendlyThreadName,
-      getThreadProcessDetails,
-      getSearchFilteredTracingMarkers,
-      getPreviewFilteredTracingMarkers,
-      unfilteredSamplesRange,
-      getSelectedMarkerIndex,
-      getJsTracerTable,
-      getExpensiveJsTracerTiming,
-      getExpensiveJsTracerLeafTiming,
+    };
+
+    selectorsForThreads[threadIndex] = {
+      ...threadSelectors,
+      ...getMarkerSelectorsForThread(threadSelectors),
     };
   }
   return selectorsForThreads[threadIndex];
