@@ -4,20 +4,36 @@
 
 // @flow
 import { createSelector } from 'reselect';
-import * as UrlState from './url-state';
-import * as MarkerData from '../profile-logic/marker-data';
-import * as MarkerTiming from '../profile-logic/marker-timing';
-import * as ProfileView from './profile-view';
+import * as UrlState from '../url-state';
+import * as MarkerData from '../../profile-logic/marker-data';
+import * as MarkerTiming from '../../profile-logic/marker-timing';
+import * as ProfileSelectors from '../profile';
 
 import type {
   SamplesTable,
   MarkersTable,
   IndexIntoMarkersTable,
-} from '../types/profile';
-import type { TracingMarker, MarkerTimingRows } from '../types/profile-derived';
-import type { Selector } from '../types/store';
+} from '../../types/profile';
+import type {
+  TracingMarker,
+  MarkerTimingRows,
+} from '../../types/profile-derived';
+import type { Selector } from '../../types/store';
+import type { $ReturnType } from '../../types/utils';
 
-export function getMarkerSelectorsForThread(threadSelectors: *) {
+/**
+ * Infer the return type from the getMarkerSelectorsPerThread function. This
+ * is done that so that the local type definition with `Selector<T>` is the canonical
+ * definition for the type of the selector.
+ */
+export type MarkerSelectorsPerThread = $ReturnType<
+  typeof getMarkerSelectorsPerThread
+>;
+
+/**
+ * Create the selectors for a thread that have to do with either markers.
+ */
+export function getMarkerSelectorsPerThread(threadSelectors: *) {
   const _getMarkersTable: Selector<MarkersTable> = state =>
     threadSelectors.getThread(state).markers;
 
@@ -65,7 +81,7 @@ export function getMarkerSelectorsForThread(threadSelectors: *) {
     TracingMarker[]
   > = createSelector(
     getTracingMarkers,
-    ProfileView.getCommittedRange,
+    ProfileSelectors.getCommittedRange,
     (markers, range): TracingMarker[] => {
       const { start, end } = range;
       return MarkerData.filterTracingMarkersToRange(markers, start, end);
@@ -99,7 +115,7 @@ export function getMarkerSelectorsForThread(threadSelectors: *) {
     TracingMarker[]
   > = createSelector(
     getSearchFilteredTracingMarkers,
-    ProfileView.getPreviewSelection,
+    ProfileSelectors.getPreviewSelection,
     (markers, previewSelection) => {
       if (!previewSelection.hasSelection) {
         return markers;
@@ -166,7 +182,7 @@ export function getMarkerSelectorsForThread(threadSelectors: *) {
   const getScreenshotsById = createSelector(
     _getMarkersTable,
     threadSelectors.getStringTable,
-    ProfileView.getProfileRootRange,
+    ProfileSelectors.getProfileRootRange,
     MarkerData.extractScreenshotsById
   );
 
@@ -174,7 +190,7 @@ export function getMarkerSelectorsForThread(threadSelectors: *) {
     Map<string, TracingMarker[]>
   > = createSelector(
     getScreenshotsById,
-    ProfileView.getCommittedRange,
+    ProfileSelectors.getCommittedRange,
     (screenshotsById, { start, end }) => {
       const newMap = new Map();
       for (const [id, screenshots] of screenshotsById) {

@@ -7,7 +7,7 @@
  * @jest-environment jsdom
  */
 import * as urlStateReducers from '../selectors/url-state';
-import * as profileViewSelectors from '../selectors/profile-view';
+import * as profileViewSelectors from '../selectors/profile';
 import {
   changeCallTreeSearchString,
   changeMarkersSearchString,
@@ -31,8 +31,7 @@ import {
   getProfileWithNiceTracks,
 } from './fixtures/profiles/tracks';
 import { getProfileFromTextSamples } from './fixtures/profiles/make-profile';
-
-const { selectedThreadSelectors } = profileViewSelectors;
+import { selectedThreadSelectors } from '../selectors/per-thread';
 
 function _getStoreWithURL(
   settings: {
