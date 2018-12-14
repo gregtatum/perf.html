@@ -18,6 +18,22 @@ import type { State as StateRef } from './state';
 export type Action = ActionsRef;
 export type State = StateRef;
 
+/**
+ * The selector type enforces the selector pattern, and should be used when
+ * defining selectors. These selectors can be simple functions, or created using
+ * the reselect library.
+ */
+export type Selector<T> = State => T;
+
+/**
+ * When selectors use multiple arguments, they break memoization. Use these type
+ * definitions to help show that these are not memoized. In addition, Flow doesn't
+ * support generics with multiple arguments (variadic functions). Manually choose
+ * the number of arguments.
+ */
+export type NonMemoizedSelector1<T, Arg1> = (State, Arg1) => T;
+export type NonMemoizedSelector2<T, Arg1, Arg2> = (State, Arg1, Arg2) => T;
+
 type ThunkDispatch = <Returns>(action: ThunkAction<Returns>) => Returns;
 type PlainDispatch = (action: Action) => Action;
 export type GetState = () => State;
