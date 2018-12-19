@@ -12,12 +12,12 @@ import type {
   CategoryList,
   FrameTable,
   FuncTable,
-  MarkersTable,
+  RawMarkerTable,
   ResourceTable,
   IndexIntoCategoryList,
   IndexIntoFuncTable,
   IndexIntoSamplesTable,
-  IndexIntoMarkersTable,
+  IndexIntoRawMarkersTable,
   IndexIntoStackTable,
   ThreadIndex,
 } from '../types/profile';
@@ -968,10 +968,10 @@ function _getSampleIndexRangeForSelection(
 }
 
 function _getMarkerIndexRangeForSelection(
-  markers: MarkersTable,
+  markers: RawMarkerTable,
   rangeStart: number,
   rangeEnd: number
-): [IndexIntoMarkersTable, IndexIntoMarkersTable] {
+): [IndexIntoRawMarkersTable, IndexIntoRawMarkersTable] {
   // TODO: This should really use bisect. samples.time is sorted.
   const firstMarker = markers.time.findIndex(t => t >= rangeStart);
   if (firstMarker === -1) {

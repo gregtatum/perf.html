@@ -16,7 +16,7 @@ import { withSize, type SizeProps } from '../shared/WithSize';
 
 import type { ThreadIndex, Thread } from '../../types/profile';
 import type { ScreenshotPayload } from '../../types/markers';
-import type { TracingMarker } from '../../types/profile-derived';
+import type { Marker } from '../../types/profile-derived';
 import type { Milliseconds } from '../../types/units';
 import type {
   ExplicitConnectOptions,
@@ -35,7 +35,7 @@ type StateProps = {|
   +thread: Thread,
   +rangeStart: Milliseconds,
   +rangeEnd: Milliseconds,
-  +screenshots: TracingMarker[],
+  +screenshots: Marker[],
   +threadName: string,
   +isMakingPreviewSelection: boolean,
 |};

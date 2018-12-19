@@ -9,7 +9,7 @@ import type {
   Profile,
   Thread,
   ThreadIndex,
-  IndexIntoMarkersTable,
+  IndexIntoRawMarkersTable,
   IndexIntoFuncTable,
   Pid,
 } from './profile';
@@ -102,7 +102,7 @@ type ProfileAction =
   | {|
       +type: 'CHANGE_SELECTED_MARKER',
       +threadIndex: ThreadIndex,
-      +selectedMarker: IndexIntoMarkersTable | -1,
+      +selectedMarker: IndexIntoRawMarkersTable | -1,
     |}
   | {|
       +type: 'UPDATE_PREVIEW_SELECTION',

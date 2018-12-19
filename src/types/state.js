@@ -16,7 +16,7 @@ import type {
 import type { TabSlug } from '../app-logic/tabs-handling';
 import type { StartEndRange } from './units';
 import type {
-  IndexIntoMarkersTable,
+  IndexIntoRawMarkersTable,
   Profile,
   ThreadIndex,
   Pid,
@@ -42,7 +42,7 @@ export type SymbolicationStatus = 'DONE' | 'SYMBOLICATING';
 export type ThreadViewOptions = {|
   +selectedCallNodePath: CallNodePath,
   +expandedCallNodePaths: PathSet,
-  +selectedMarker: IndexIntoMarkersTable | -1,
+  +selectedMarker: IndexIntoRawMarkersTable | -1,
 |};
 
 export type ProfileSharingStatus = {|
