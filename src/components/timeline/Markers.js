@@ -17,7 +17,7 @@ import { getSelectedThreadIndex } from '../../selectors/url-state';
 import './Markers.css';
 
 import type { Milliseconds, CssPixels } from '../../types/units';
-import type { Marker } from '../../types/profile-derived';
+import type { Marker } from '../../types/markers';
 import type { SizeProps } from '../shared/WithSize';
 import type {
   ExplicitConnectOptions,
@@ -350,9 +350,9 @@ const jankOptions: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
     const { threadIndex } = props;
     const selectors = getThreadSelectors(threadIndex);
     const selectedThread = getSelectedThreadIndex(state);
-
+    const markers: Marker[] = selectors.getJankMarkers(state);
     return {
-      markers: selectors.getJankMarkers(state),
+      markers,
       isSelected: threadIndex === selectedThread,
       styles: styles,
       overlayFills: overlayFills,

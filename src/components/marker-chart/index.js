@@ -22,7 +22,8 @@ import { selectedThreadSelectors } from '../../selectors/per-thread';
 import { getSelectedThreadIndex } from '../../selectors/url-state';
 import { updatePreviewSelection } from '../../actions/profile-view';
 
-import type { Marker, MarkerTimingRows } from '../../types/profile-derived';
+import type { MarkerTimingRows } from '../../types/profile-derived';
+import type { Marker } from '../../types/markers';
 import type {
   Milliseconds,
   UnitIntervalOfProfileRange,

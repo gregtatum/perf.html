@@ -16,7 +16,7 @@ import type {
   ExplicitConnectOptions,
 } from '../../utils/connect';
 import type { ThreadIndex } from '../../types/profile';
-import type { Marker } from '../../types/profile-derived';
+import type { Marker } from '../../types/markers';
 
 type StateProps = {|
   +selectedThreadIndex: ThreadIndex,

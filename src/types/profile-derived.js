@@ -3,8 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import type { Milliseconds } from './units';
-import type { MarkerPayload } from './markers';
+import type { IndexIntoMarkers } from './markers';
 import type {
   IndexIntoFuncTable,
   ThreadIndex,
@@ -69,17 +68,6 @@ export type CallNodeInfo = {
  * that goes from tip to root.
  */
 export type CallNodePath = IndexIntoFuncTable[];
-
-export type Marker = {|
-  start: Milliseconds,
-  dur: Milliseconds,
-  name: string,
-  title: string | null,
-  data: MarkerPayload,
-  incomplete?: boolean,
-|};
-
-export type IndexIntoMarkers = number;
 
 export type CallNodeData = {
   funcName: string,

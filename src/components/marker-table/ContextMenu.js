@@ -14,7 +14,7 @@ import {
 import { selectedThreadSelectors } from '../../selectors/per-thread';
 import copy from 'copy-to-clipboard';
 
-import type { Marker, IndexIntoMarkers } from '../../types/profile-derived';
+import type { Marker, IndexIntoMarkers } from '../../types/markers';
 import type { StartEndRange } from '../../types/units';
 import type { PreviewSelection } from '../../types/actions';
 import type {

@@ -8,8 +8,13 @@ import type {
   RawMarkerTable,
   IndexIntoStringTable,
 } from '../types/profile';
-import type { Marker } from '../types/profile-derived';
-import type { BailoutPayload, ScreenshotPayload } from '../types/markers';
+import type {
+  Marker,
+  MarkerWithPayload,
+  BailoutPayload,
+  ScreenshotPayload,
+  MarkerPayload,
+} from '../types/markers';
 import type { StartEndRange } from '../types/units';
 import type { UniqueStringArray } from '../utils/unique-string-array';
 import { getNumberPropertyOrNull } from '../utils/flow';
@@ -37,7 +42,7 @@ import { getNumberPropertyOrNull } from '../utils/flow';
 export function getJankMarkers(
   samples: SamplesTable,
   thresholdInMs: number
-): Marker[] {
+): MarkerWithPayload<null>[] {
   const addMarker = () =>
     jankInstances.push({
       start: lastTimestamp - lastResponsiveness,
@@ -255,13 +260,12 @@ export function deriveMarkersFromRawMarkerTable(
           markerBucket = [];
           openMarkers.set(nameStringIndex, markerBucket);
         }
-
         markerBucket.push({
           start: time,
           name: stringTable.getString(nameStringIndex),
           dur: 0,
           title: null,
-          data,
+          data: (data: MarkerPayload),
         });
       } else if (data.interval === 'end') {
         const markerBucket = openMarkers.get(nameStringIndex);

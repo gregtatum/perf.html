@@ -412,10 +412,23 @@ export type DummyForTestsMarkerPayload = {|
   endTime: Milliseconds,
 |};
 
+export type MarkerWithPayload<Payload> = {|
+  start: Milliseconds,
+  dur: Milliseconds,
+  name: string,
+  title: string | null,
+  data: Payload,
+  incomplete?: boolean,
+|};
+
+export type IndexIntoMarkers = number;
+
 /**
  * The union of all the different marker payloads that perf.html knows about, this is
  * not guaranteed to be all the payloads that we actually get from the profiler.
  */
+export type Marker = MarkerWithPayload<MarkerPayload | null>;
+
 export type MarkerPayload =
   | GPUMarkerPayload
   | BailoutPayload
@@ -433,8 +446,7 @@ export type MarkerPayload =
   | VsyncTimestampPayload
   | ScreenshotPayload
   | FrameConstructionMarkerPayload
-  | DummyForTestsMarkerPayload
-  | null;
+  | DummyForTestsMarkerPayload;
 
 export type MarkerPayload_Gecko =
   | GPUMarkerPayload

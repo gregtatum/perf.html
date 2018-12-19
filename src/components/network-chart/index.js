@@ -25,8 +25,8 @@ import { getSelectedThreadIndex } from '../../selectors/url-state';
 import { updatePreviewSelection } from '../../actions/profile-view';
 
 import type { SizeProps } from '../shared/WithSize';
-import type { NetworkPayload } from '../../types/markers';
-import type { Marker, MarkerTimingRows } from '../../types/profile-derived';
+import type { NetworkPayload, Marker } from '../../types/markers';
+import type { MarkerTimingRows } from '../../types/profile-derived';
 import type { Milliseconds, CssPixels } from '../../types/units';
 import type {
   ExplicitConnectOptions,

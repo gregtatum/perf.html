@@ -589,7 +589,7 @@ function _processMarkers(geckoMarkers: GeckoMarkerStruct): RawMarkerTable {
   return {
     data: geckoMarkers.data.map(function(
       m: MarkerPayload_Gecko
-    ): MarkerPayload {
+    ): MarkerPayload | null {
       if (m) {
         switch (m.type) {
           /*

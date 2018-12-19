@@ -20,7 +20,7 @@ import { formatSeconds } from '../../utils/format-numbers';
 import './index.css';
 
 import type { ThreadIndex } from '../../types/profile';
-import type { Marker, IndexIntoMarkers } from '../../types/profile-derived';
+import type { Marker, IndexIntoMarkers } from '../../types/markers';
 import type { Milliseconds } from '../../types/units';
 import type {
   ExplicitConnectOptions,

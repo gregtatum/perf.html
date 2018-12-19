@@ -9,8 +9,7 @@ import Tooltip from '../shared/Tooltip';
 
 import type { CssPixels } from '../../types/units';
 import type { ThreadIndex } from '../../types/profile';
-import type { Marker } from '../../types/profile-derived';
-import type { NetworkPayload } from '../../types/markers';
+import type { NetworkPayload, Marker } from '../../types/markers';
 
 export type NetworkChartRowProps = {
   +index: number,

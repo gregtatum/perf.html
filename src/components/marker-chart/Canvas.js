@@ -22,10 +22,10 @@ import type {
 } from '../../types/units';
 import type { ThreadIndex } from '../../types/profile';
 import type {
-  Marker,
   MarkerTimingRows,
   IndexIntoMarkerTiming,
 } from '../../types/profile-derived';
+import type { Marker } from '../../types/markers';
 import type { Viewport } from '../shared/chart/Viewport';
 
 type MarkerDrawingInformation = {

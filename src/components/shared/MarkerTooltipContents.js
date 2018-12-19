@@ -23,7 +23,6 @@ import Backtrace from './Backtrace';
 
 import { bailoutTypeInformation } from '../../profile-logic/marker-info';
 import type { Microseconds } from '../../types/units';
-import type { Marker } from '../../types/profile-derived';
 import type { NotVoidOrNull } from '../../types/utils';
 import type { ImplementationFilter } from '../../types/actions';
 import type { Thread, ThreadIndex } from '../../types/profile';
@@ -33,6 +32,7 @@ import type {
   PaintProfilerMarkerTracing,
   PhaseTimes,
   StyleMarkerPayload,
+  Marker,
 } from '../../types/markers';
 import type {
   ExplicitConnectOptions,

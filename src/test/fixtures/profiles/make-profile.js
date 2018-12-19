@@ -20,7 +20,7 @@ type MarkerName = string;
 type MarkerTime = Milliseconds;
 type MockPayload = {| startTime: Milliseconds, endTime: Milliseconds |};
 type TestDefinedMarkers = Array<
-  [MarkerName, MarkerTime, MarkerPayload | MockPayload]
+  [MarkerName, MarkerTime, MarkerPayload | MockPayload | null]
 >;
 export type TestDefinedJsTracerEvent = [
   // Event name:
@@ -38,7 +38,7 @@ export type TestDefinedJsTracerEvent = [
  * dummy test-defined markers, since we don't have to add a `type` to the payload.
  */
 function _refineMockPayload(
-  payload: MarkerPayload | MockPayload
+  payload: MarkerPayload | MockPayload | null
 ): MarkerPayload {
   if (
     // Check for a MockPayload.

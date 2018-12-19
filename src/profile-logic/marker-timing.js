@@ -3,12 +3,9 @@ import type {
   DOMEventMarkerPayload,
   UserTimingMarkerPayload,
   MarkerPayload,
-} from '../types/markers';
-import type {
   Marker,
-  MarkerTiming,
-  MarkerTimingRows,
-} from '../types/profile-derived';
+} from '../types/markers';
+import type { MarkerTiming, MarkerTimingRows } from '../types/profile-derived';
 
 // Arbitrarily set an upper limit for adding marker depths, avoiding an infinite loop.
 const MAX_STACKING_DEPTH = 300;
@@ -107,7 +104,7 @@ export function getMarkerTiming(markers: Marker[]): MarkerTimingRows {
   return [].concat(...markerTimingsMap.values());
 }
 
-function computeMarkerLabel(data: MarkerPayload): string {
+function computeMarkerLabel(data: MarkerPayload | null): string {
   // Satisfy flow's type checker.
   if (data !== null && typeof data === 'object') {
     // Handle different marker payloads.

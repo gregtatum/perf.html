@@ -15,8 +15,7 @@ import { getThreadSelectors } from '../../selectors/per-thread';
 import { withSize, type SizeProps } from '../shared/WithSize';
 
 import type { ThreadIndex, Thread } from '../../types/profile';
-import type { ScreenshotPayload } from '../../types/markers';
-import type { Marker } from '../../types/profile-derived';
+import type { ScreenshotPayload, Marker } from '../../types/markers';
 import type { Milliseconds } from '../../types/units';
 import type {
   ExplicitConnectOptions,

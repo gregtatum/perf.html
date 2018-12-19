@@ -31,7 +31,7 @@ export type GeckoMarkers = {
 export type GeckoMarkerStruct = {
   name: IndexIntoStringTable[],
   time: Milliseconds[],
-  data: MarkerPayload_Gecko[],
+  data: Array<MarkerPayload_Gecko | null>,
   length: number,
 };
 

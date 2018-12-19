@@ -14,10 +14,11 @@ import type {
   RawMarkerTable,
   IndexIntoRawMarkersTable,
 } from '../../types/profile';
-import type { Marker, MarkerTimingRows } from '../../types/profile-derived';
+import type { MarkerTimingRows } from '../../types/profile-derived';
 import type { Selector } from '../../types/store';
 import type { $ReturnType } from '../../types/utils';
 import type { Milliseconds } from '../../types/units';
+import type { Marker, MarkerWithPayload } from '../../types/markers';
 
 /**
  * Infer the return type from the getMarkerSelectorsPerThread function. This
@@ -40,9 +41,10 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
     thread => thread.samples
   );
 
-  const getJankMarkers: Selector<Marker[]> = createSelector(
+  const getJankMarkers: Selector<MarkerWithPayload<null>[]> = createSelector(
     _getRangeFilteredThreadSamples,
-    (samples): Marker[] => MarkerData.getJankMarkers(samples, 50)
+    (samples): MarkerWithPayload<null>[] =>
+      MarkerData.getJankMarkers(samples, 50)
   );
 
   /**
