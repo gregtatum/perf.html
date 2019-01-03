@@ -208,7 +208,7 @@ class TrackMemory extends React.PureComponent<Props, State> {
     }
     const bytes = accumulatedCounts[counterIndex] - minCount;
     return (
-      <div>
+      <div className="timelineTrackMemoryTooltip">
         <div className="timelineTrackMemoryTooltipLine">
           <span className="timelineTrackMemoryTooltipNumber">
             {formatBytesAsMegabytes(bytes)}
@@ -235,6 +235,7 @@ class TrackMemory extends React.PureComponent<Props, State> {
     const rangeLength = rangeEnd - rangeStart;
     const left =
       width * (samples.time[counterIndex] - rangeStart) / rangeLength;
+
     const { minCount, countRange, accumulatedCounts } = this._accumulateSamples(
       samples
     );
