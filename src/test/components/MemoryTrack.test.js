@@ -123,10 +123,12 @@ describe('TrackMemory', function() {
   });
 
   it('can create a tooltip', function() {
-    const { moveMouseAtCounter, getTooltipContents } = setup();
+    const { moveMouseAtCounter, getTooltipContents, view } = setup();
     expect(getTooltipContents().exists()).toBe(false);
     moveMouseAtCounter(1);
     expect(getTooltipContents().exists()).toBe(true);
+    view.simulate('mouseleave');
+    expect(getTooltipContents().exists()).toBe(false);
   });
 
   it('has a tooltip that matches the snapshot', function() {
