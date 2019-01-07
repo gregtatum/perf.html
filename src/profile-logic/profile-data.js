@@ -26,6 +26,7 @@ import type {
   CallNodeTable,
   CallNodePath,
   IndexIntoCallNodeTable,
+  AccumulatedCounterSamples,
 } from '../types/profile-derived';
 import { CURRENT_VERSION as GECKO_PROFILE_VERSION } from './gecko-profile-versioning';
 import { CURRENT_VERSION as PROCESSED_PROFILE_VERSION } from './processed-profile-versioning';
@@ -1017,6 +1018,30 @@ export function filterCountersToRange(
       },
     },
   };
+}
+
+/**
+ * The memory counters are relative offsets of memory. In order to draw an interesting
+ * graph, take the memory in the counters, and find the minimum and maximum values, by
+ * accumulating them over the entire profile range. Then, map those values to the
+ * accumulatedCounts array.
+ */
+export function accumulateCounterSamples(
+  samples: CounterSamples
+): AccumulatedCounterSamples {
+  let minCount = 0;
+  let maxCount = 0;
+  let accumulated = 0;
+  const accumulatedCounts = [];
+  for (let i = 0; i < samples.length; i++) {
+    accumulated += samples.count[i];
+    minCount = Math.min(accumulated, minCount);
+    maxCount = Math.max(accumulated, maxCount);
+    accumulatedCounts[i] = accumulated;
+  }
+  const countRange = maxCount - minCount;
+
+  return { minCount, maxCount, countRange, accumulatedCounts };
 }
 
 // --------------- CallNodePath and CallNodeIndex manipulations ---------------

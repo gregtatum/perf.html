@@ -1315,4 +1315,28 @@ describe('counter selectors', function() {
     ).getCommittedRangeFilteredCounters(getState());
     expect(filteredCounters.sampleGroups.samples.time).toEqual([3, 4, 5, 6]);
   });
+
+  it('can accumulate samples', function() {
+    const { getState, counterA } = setup();
+    counterA.sampleGroups.samples.count = [
+      1,
+      -2,
+      3,
+      -5,
+      7,
+      -11,
+      13,
+      -17,
+      19,
+      23,
+    ];
+    expect(
+      getCounterSelectors(0).getAccumulateCounterSamples(getState())
+    ).toEqual({
+      accumulatedCounts: [1, -1, 2, -3, 4, -7, 6, -11, 8, 31],
+      countRange: 42,
+      maxCount: 31,
+      minCount: -11,
+    });
+  });
 });

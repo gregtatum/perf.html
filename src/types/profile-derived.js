@@ -131,6 +131,17 @@ export type JsTracerTiming = {
   length: number,
 };
 
+/**
+ * The memory counters are relative offsets of memory. This type provides a data
+ * structure that can be used to see the total range of change over all the samples.
+ */
+export type AccumulatedCounterSamples = {|
+  +minCount: number,
+  +maxCount: number,
+  +countRange: number,
+  +accumulatedCounts: number[],
+|};
+
 export type StackType = 'js' | 'native' | 'unsymbolicated';
 
 export type GlobalTrack =

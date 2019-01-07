@@ -7,7 +7,10 @@ import { createSelector } from 'reselect';
 import * as Tracks from '../profile-logic/tracks';
 import * as UrlState from './url-state';
 import { ensureExists } from '../utils/flow';
-import { filterCountersToRange } from '../profile-logic/profile-data';
+import {
+  filterCountersToRange,
+  accumulateCounterSamples,
+} from '../profile-logic/profile-data';
 
 import type {
   Profile,
@@ -23,6 +26,7 @@ import type {
   LocalTrack,
   TrackIndex,
   GlobalTrack,
+  AccumulatedCounterSamples,
 } from '../types/profile-derived';
 import type { Milliseconds, StartEndRange } from '../types/units';
 import type {
@@ -130,11 +134,18 @@ function _createCounterSelectors(counterIndex: CounterIndex) {
     (counters, range) => filterCountersToRange(counters, range.start, range.end)
   );
 
+  const getAccumulateCounterSamples: Selector<
+    AccumulatedCounterSamples
+  > = createSelector(getCommittedRangeFilteredCounters, counters =>
+    accumulateCounterSamples(counters.sampleGroups.samples)
+  );
+
   return {
     getCounters,
     getDescription,
     getPid,
     getCommittedRangeFilteredCounters,
+    getAccumulateCounterSamples,
   };
 }
 

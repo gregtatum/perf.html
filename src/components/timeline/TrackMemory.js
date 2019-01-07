@@ -5,7 +5,6 @@
 // @flow
 
 import * as React from 'react';
-import memoize from 'memoize-immutable';
 import { withSize } from '../shared/WithSize';
 import explicitConnect from '../../utils/connect';
 import {
@@ -19,12 +18,8 @@ import Tooltip from '../shared/Tooltip';
 import EmptyThreadIndicator from './EmptyThreadIndicator';
 import bisection from 'bisection';
 
-import type {
-  CounterIndex,
-  Counter,
-  CounterSamples,
-  Thread,
-} from '../../types/profile';
+import type { CounterIndex, Counter, Thread } from '../../types/profile';
+import type { AccumulatedCounterSamples } from '../../types/profile-derived';
 import type { Milliseconds, CssPixels, StartEndRange } from '../../types/units';
 import type { SizeProps } from '../shared/WithSize';
 import type {
@@ -43,6 +38,7 @@ type StateProps = {|
   +rangeStart: Milliseconds,
   +rangeEnd: Milliseconds,
   +counter: Counter,
+  +accumulatedSamples: AccumulatedCounterSamples,
   +interval: Milliseconds,
   +filteredThread: Thread,
   +unfilteredSamplesRange: StartEndRange | null,
@@ -117,7 +113,14 @@ class TrackMemory extends React.PureComponent<Props, State> {
   }
 
   drawCanvas(canvas: HTMLCanvasElement): void {
-    const { rangeStart, rangeEnd, counter, width, interval } = this.props;
+    const {
+      rangeStart,
+      rangeEnd,
+      counter,
+      width,
+      interval,
+      accumulatedSamples,
+    } = this.props;
     if (width === 0) {
       // This is attempting to draw before the canvas was laid out.
       return;
@@ -145,9 +148,7 @@ class TrackMemory extends React.PureComponent<Props, State> {
     // Take the sample information, and convert it into chart coordinates. Use a slightly
     // smaller space than the deviceHeight, so that the stroke will be fully visible
     // both at the top and bottom of the chart.
-    const { minCount, countRange, accumulatedCounts } = this._accumulateSamples(
-      samples
-    );
+    const { minCount, countRange, accumulatedCounts } = accumulatedSamples;
 
     {
       // Draw the chart.
@@ -195,13 +196,12 @@ class TrackMemory extends React.PureComponent<Props, State> {
     }
   }
 
-  _accumulateSamples = memoize(accumulateSamples);
-
   _renderTooltip(counterIndex: number): React.Node {
-    const { samples } = this.props.counter.sampleGroups;
-    const { minCount, countRange, accumulatedCounts } = this._accumulateSamples(
-      samples
-    );
+    const {
+      minCount,
+      countRange,
+      accumulatedCounts,
+    } = this.props.accumulatedSamples;
     function formatBytesAsMegabytes(bytes: number, precision = 2) {
       const mb = bytes / 1024 / 1024;
       return `${parseFloat(mb.toFixed(precision))}mb`;
@@ -230,15 +230,19 @@ class TrackMemory extends React.PureComponent<Props, State> {
    * height of the graph.
    */
   _renderMemoryDot(counterIndex: number): React.Node {
-    const { counter, rangeStart, rangeEnd, width } = this.props;
+    const {
+      counter,
+      rangeStart,
+      rangeEnd,
+      width,
+      accumulatedSamples,
+    } = this.props;
     const { samples } = counter.sampleGroups;
     const rangeLength = rangeEnd - rangeStart;
     const left =
       width * (samples.time[counterIndex] - rangeStart) / rangeLength;
 
-    const { minCount, countRange, accumulatedCounts } = this._accumulateSamples(
-      samples
-    );
+    const { minCount, countRange, accumulatedCounts } = accumulatedSamples;
     const unitSampleCount =
       (accumulatedCounts[counterIndex] - minCount) / countRange;
     const innerTrackHeight = TRACK_HEIGHT - LINE_WIDTH / 2;
@@ -293,13 +297,13 @@ class TrackMemory extends React.PureComponent<Props, State> {
 const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: (state, ownProps) => {
     const { counterIndex } = ownProps;
-    const counter = getCounterSelectors(
-      counterIndex
-    ).getCommittedRangeFilteredCounters(state);
+    const counterSelectors = getCounterSelectors(counterIndex);
+    const counter = counterSelectors.getCommittedRangeFilteredCounters(state);
     const { start, end } = getCommittedRange(state);
     const selectors = getThreadSelectors(counter.mainThreadIndex);
     return {
       counter,
+      accumulatedSamples: counterSelectors.getAccumulateCounterSamples(state),
       rangeStart: start,
       rangeEnd: end,
       interval: getProfileInterval(state),
@@ -311,32 +315,3 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
 };
 
 export default withSize(explicitConnect(options));
-
-type AccumulatedSamples = {|
-  +minCount: number,
-  +maxCount: number,
-  +countRange: number,
-  +accumulatedCounts: number[],
-|};
-
-/**
- * The memory counters are relative offsets of memory. In order to draw an interesting
- * graph, take the memory in the counters, and find the minimum and maximum values, by
- * accumulating them over the entire profile range. Then, map those values to the
- * accumulatedCounts array.
- */
-function accumulateSamples(samples: CounterSamples): AccumulatedSamples {
-  let minCount = 0;
-  let maxCount = 0;
-  let accumulated = 0;
-  const accumulatedCounts = [];
-  for (let i = 0; i < samples.length; i++) {
-    accumulated += samples.count[i];
-    minCount = Math.min(accumulated, minCount);
-    maxCount = Math.max(accumulated, maxCount);
-    accumulatedCounts[i] = accumulated;
-  }
-  const countRange = maxCount - minCount;
-
-  return { minCount, maxCount, countRange, accumulatedCounts };
-}
