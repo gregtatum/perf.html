@@ -10,7 +10,7 @@ import { withSize } from '../shared/WithSize';
 import explicitConnect from '../../utils/connect';
 import {
   getCommittedRange,
-  getCounterByIndex,
+  getCounterSelectors,
   getProfileInterval,
 } from '../../selectors/profile';
 import { getThreadSelectors } from '../../selectors/per-thread';
@@ -293,11 +293,12 @@ class TrackMemory extends React.PureComponent<Props, State> {
 const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
   mapStateToProps: (state, ownProps) => {
     const { counterIndex } = ownProps;
-    const counter = getCounterByIndex(state, counterIndex);
+    const counter = getCounterSelectors(
+      counterIndex
+    ).getCommittedRangeFilteredCounters(state);
     const { start, end } = getCommittedRange(state);
     const selectors = getThreadSelectors(counter.mainThreadIndex);
     return {
-      // TODO - Counters should be committed range filtered.
       counter,
       rangeStart: start,
       rangeEnd: end,

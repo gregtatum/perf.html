@@ -77,11 +77,14 @@ export function getHumanReadableTracks(state: State): string[] {
 
       for (const trackIndex of trackOrder) {
         const track = tracks[trackIndex];
-        const trackName =
-          track.type !== 'memory'
-            ? threads[track.threadIndex].name
-            : profileViewSelectors.getCounterByIndex(state, track.counterIndex)
-                .pid;
+        let trackName;
+        if (track.type === 'memory') {
+          trackName = profileViewSelectors
+            .getCounterSelectors(track.counterIndex)
+            .getPid(state);
+        } else {
+          trackName = threads[track.threadIndex].name;
+        }
         const hiddenTracks = urlStateReducers.getHiddenLocalTracks(
           state,
           globalTrack.pid

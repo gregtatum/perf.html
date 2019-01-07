@@ -18,7 +18,10 @@ import {
   getSelectedTab,
 } from '../../selectors/url-state';
 import explicitConnect from '../../utils/connect';
-import { getLocalTrackName, getCounterByIndex } from '../../selectors/profile';
+import {
+  getLocalTrackName,
+  getCounterSelectors,
+} from '../../selectors/profile';
 import { getThreadSelectors } from '../../selectors/per-thread';
 import TrackThread from './TrackThread';
 import TrackNetwork from './TrackNetwork';
@@ -158,8 +161,9 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
         break;
       }
       case 'memory': {
-        const counter = getCounterByIndex(state, localTrack.counterIndex);
-        titleText = counter.description;
+        titleText = getCounterSelectors(localTrack.counterIndex).getDescription(
+          state
+        );
         break;
       }
       default:

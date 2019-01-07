@@ -7,6 +7,7 @@ import { createSelector } from 'reselect';
 import * as Tracks from '../profile-logic/tracks';
 import * as UrlState from './url-state';
 import { ensureExists } from '../utils/flow';
+import { filterCountersToRange } from '../profile-logic/profile-data';
 
 import type {
   Profile,
@@ -100,14 +101,42 @@ export const getPreviewSelection: Selector<PreviewSelection> = state =>
   getProfileViewOptions(state).previewSelection;
 export const getCounters: Selector<Counter[] | null> = state =>
   getProfile(state).counters || null;
-export const getCounterByIndex: DangerousSelectorWithArguments<
-  Counter,
-  CounterIndex
-> = (state, counterIndex) =>
-  ensureExists(
-    getProfile(state).counters,
-    'Attempting to get a counter by index, but no counters exist.'
-  )[counterIndex];
+
+const _counterSelectors = {};
+export const getCounterSelectors = (index: CounterIndex) => {
+  let selectors = _counterSelectors[index];
+  if (!selectors) {
+    selectors = _createCounterSelectors(index);
+    _counterSelectors[index] = selectors;
+  }
+  return selectors;
+};
+
+function _createCounterSelectors(counterIndex: CounterIndex) {
+  const getCounters: Selector<Counter> = state =>
+    ensureExists(
+      getProfile(state).counters,
+      'Attempting to get a counter by index, but no counters exist.'
+    )[counterIndex];
+
+  const getDescription: Selector<string> = state =>
+    getCounters(state).description;
+
+  const getPid: Selector<Pid> = state => getCounters(state).pid;
+
+  const getCommittedRangeFilteredCounters: Selector<Counter> = createSelector(
+    getCounters,
+    getCommittedRange,
+    (counters, range) => filterCountersToRange(counters, range.start, range.end)
+  );
+
+  return {
+    getCounters,
+    getDescription,
+    getPid,
+    getCommittedRangeFilteredCounters,
+  };
+}
 
 /**
  * Tracks

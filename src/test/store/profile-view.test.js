@@ -13,6 +13,7 @@ import {
   getNetworkTrackProfile,
   getScreenshotTrackProfile,
   getNetworkMarker,
+  getCounter,
 } from '../fixtures/profiles/processed-profile';
 import { withAnalyticsMock } from '../fixtures/mocks/analytics';
 import { getEmptyProfile } from '../../profile-logic/profile-data';
@@ -1254,5 +1255,64 @@ describe('getFriendlyThreadName', function() {
       'B (3/3)',
       'C (2/2)',
     ]);
+  });
+});
+
+describe('counter selectors', function() {
+  const { getCounterSelectors } = ProfileViewSelectors;
+  function setup() {
+    const { profile } = getProfileFromTextSamples(
+      Array(10)
+        .fill('A')
+        .join('  ')
+    );
+    const threadIndex = 0;
+    const thread = profile.threads[threadIndex];
+    const counterA = getCounter(thread, threadIndex, 1000);
+    const counterB = getCounter(thread, threadIndex, 1000);
+    profile.counters = [counterA, counterB];
+    const { getState, dispatch } = storeWithProfile(profile);
+    return { getState, dispatch, counterA, counterB };
+  }
+
+  it('can get the counters', function() {
+    const { counterA, counterB, getState } = setup();
+    expect(getCounterSelectors(0).getCounters(getState())).toBe(counterA);
+    expect(getCounterSelectors(1).getCounters(getState())).toBe(counterB);
+  });
+
+  it('can get the counter description', function() {
+    const { getState } = setup();
+    expect(getCounterSelectors(0).getDescription(getState())).toBe(
+      'My Description'
+    );
+  });
+
+  it('can get the counter pid', function() {
+    const { getState } = setup();
+    expect(getCounterSelectors(0).getPid(getState())).toBe(0);
+  });
+
+  it('can get the commited range filtered counters', function() {
+    const { getState, dispatch } = setup();
+    dispatch(ProfileView.commitRange(2.5, 6.5));
+    const originalCounters = getCounterSelectors(0).getCounters(getState());
+    expect(originalCounters.sampleGroups.samples.time).toEqual([
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+    ]);
+
+    const filteredCounters = getCounterSelectors(
+      0
+    ).getCommittedRangeFilteredCounters(getState());
+    expect(filteredCounters.sampleGroups.samples.time).toEqual([3, 4, 5, 6]);
   });
 });

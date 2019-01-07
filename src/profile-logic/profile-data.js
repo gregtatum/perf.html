@@ -18,6 +18,8 @@ import type {
   IndexIntoSamplesTable,
   IndexIntoStackTable,
   ThreadIndex,
+  Counter,
+  CounterSamples,
 } from '../types/profile';
 import type {
   CallNodeInfo,
@@ -946,8 +948,11 @@ export function filterThreadToSearchString(
   });
 }
 
+/**
+ * This function takes both a SamplesTable and can be used on CounterSamples.
+ */
 function _getSampleIndexRangeForSelection(
-  samples: SamplesTable,
+  samples: SamplesTable | CounterSamples,
   rangeStart: number,
   rangeEnd: number
 ): [IndexIntoSamplesTable, IndexIntoSamplesTable] {
@@ -987,6 +992,31 @@ export function filterThreadSamplesToRange(
   return Object.assign({}, thread, {
     samples: newSamples,
   });
+}
+
+export function filterCountersToRange(
+  counters: Counter,
+  rangeStart: number,
+  rangeEnd: number
+): Counter {
+  const samples = counters.sampleGroups.samples;
+  const [sBegin, sEnd] = _getSampleIndexRangeForSelection(
+    samples,
+    rangeStart,
+    rangeEnd
+  );
+  return {
+    ...counters,
+    sampleGroups: {
+      ...counters.sampleGroups,
+      samples: {
+        time: samples.time.slice(sBegin, sEnd),
+        number: samples.number.slice(sBegin, sEnd),
+        count: samples.count.slice(sBegin, sEnd),
+        length: sEnd - sBegin,
+      },
+    },
+  };
 }
 
 // --------------- CallNodePath and CallNodeIndex manipulations ---------------
