@@ -4,7 +4,6 @@
 // @flow
 
 import {
-  getEmptyProfile,
   getEmptyFuncTable,
   getEmptyFrameTable,
   getEmptyStackTable,
@@ -17,7 +16,6 @@ import type {
   IndexIntoStringTable,
   IndexIntoJsTracerEvents,
   IndexIntoFuncTable,
-  IndexIntoFrameTable,
   Thread,
   CategoryList,
 } from '../types/profile';
@@ -93,13 +91,39 @@ export function getJsTracerTiming(
   return jsTracerTiming;
 }
 
-export function jsTracerToProfile(
+/**
+ * Given JS tracer data:
+ *
+ *   [A------------------------------]
+ *      [B-------][D--------------]
+ *         [C--]      [E-------]
+ *
+ * Build this StackTable:
+ *
+ *   A -> B -> C
+ *     \
+ *        D -> E
+ *
+ * This data would then have the following self time:
+ *
+ *            0         10        20        30
+ *   Time:    |123456789|123456789|123456789|12
+ *   Node:    AAABBBCCCCBBBDDDDEEEEEEEEEEDDDAAA
+ *   Sample:  ⎣A⎦⎣B⎦⎣C-⎦⎣B⎦⎣D-⎦⎣E-------⎦⎣D⎦⎣A⎦
+ *
+ * Insert a sample for each discrete bit of self time.
+ *
+ *   SampleTable = {
+ *     stack:  [A,  B,  C,  B,  D,  E,  D,  A ],
+ *     time:   [0,  3,  6,  10, 14, 17, 27, 30],
+ *     weight: [3,  3,  4,  3,  4,  10, 3,  3 ]
+ *   }
+ */
+export function convertJsTracerToThread(
   fromThread: Thread,
   jsTracer: JsTracerTable,
-  categories: CategoryList,
-  stringTable: UniqueStringArray
-) {
-  const profile = getEmptyProfile();
+  categories: CategoryList
+): Thread {
   const funcTable = getEmptyFuncTable();
   const frameTable = getEmptyFrameTable();
   const stackTable = getEmptyStackTable();
@@ -111,28 +135,21 @@ export function jsTracerToProfile(
   samples.weightType = 'microseconds';
 
   const thread: Thread = {
+    ...fromThread,
     markers,
     funcTable,
     stackTable,
     frameTable,
-    stringTable,
     samples,
-    ...fromThread,
   };
 
-  profile.threads.push(thread);
   let unmatchedIndex = 0;
   // Start with a -1 value, which signals no prefix.
-  const unmatchedEventIndexes = [-1];
+  const unmatchedEventIndexes = [null];
   const unmatchedEventEnds = [0];
-  const stringIndexToFuncIndex: Map<
-    IndexIntoStringTable,
-    IndexIntoFuncTable
-  > = new Map();
-  const stringIndexToFrameIndex: Map<
-    IndexIntoStringTable,
-    IndexIntoFrameTable
-  > = new Map();
+
+  const { stringTable } = fromThread;
+  const funcMap: Map<IndexIntoStringTable, IndexIntoFuncTable> = new Map();
   const blankStringIndex = stringTable.indexForString('');
   const otherCategory = categories.findIndex(c => c.name === 'Other');
   if (otherCategory === -1) {
@@ -145,10 +162,10 @@ export function jsTracerToProfile(
     tracerEventIndex++
   ) {
     const stringIndex = jsTracer.events[tracerEventIndex];
-    let funcIndex = stringIndexToFuncIndex.get(stringIndex);
-    let frameIndex = stringIndexToFrameIndex.get(stringIndex);
+    let funcIndex = funcMap.get(stringIndex);
 
-    if (funcIndex === undefined || frameIndex === undefined) {
+    if (funcIndex === undefined) {
+      // Create a new function only if the event string is different.
       funcIndex = funcTable.length++;
       funcTable.address.push(0);
       funcTable.name.push(stringIndex);
@@ -159,15 +176,18 @@ export function jsTracerToProfile(
       funcTable.lineNumber.push(null);
       funcTable.columnNumber.push(null);
 
-      frameIndex = frameTable.length++;
-      frameTable.address.push(blankStringIndex);
-      frameTable.category.push(null);
-      frameTable.func.push(funcIndex);
-      frameTable.implementation.push(null);
-      frameTable.line.push(null);
-      frameTable.column.push(null);
-      frameTable.optimizations.push(null);
+      funcMap.set(stringIndex, funcIndex);
     }
+
+    const frameIndex = frameTable.length++;
+    frameTable.address.push(blankStringIndex);
+    frameTable.category.push(otherCategory);
+    frameTable.func.push(funcIndex);
+    // TODO - We could figure this out, by tracking what the callee was.
+    frameTable.implementation.push(null);
+    frameTable.line.push(null);
+    frameTable.column.push(null);
+    frameTable.optimizations.push(null);
 
     const start = jsTracer.timestamps[tracerEventIndex];
     const durationRaw = jsTracer.durations[tracerEventIndex];
@@ -176,10 +196,9 @@ export function jsTracerToProfile(
 
     // Try to find the current prefix.
     let prefixIndex = unmatchedEventIndexes[unmatchedIndex];
-    while (prefixIndex !== -1) {
+    while (prefixIndex !== null) {
       const otherEnd = unmatchedEventEnds[unmatchedIndex];
       if (end <= otherEnd) {
-        // Found the prefix
         break;
       }
       // Keep on searching for the next prefix.
@@ -201,11 +220,12 @@ export function jsTracerToProfile(
     samples.length++;
 
     // All done, keep going
-    unmatchedEventIndexes.push(tracerEventIndex);
-    unmatchedEventEnds.push(end);
+    unmatchedIndex++;
+    unmatchedEventIndexes[unmatchedIndex] = tracerEventIndex;
+    unmatchedEventEnds[unmatchedIndex] = end;
   }
 
-  return profile;
+  return thread;
 }
 
 /**
