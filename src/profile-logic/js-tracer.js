@@ -3,10 +3,23 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 // @flow
 
+import {
+  getEmptyProfile,
+  getEmptyFuncTable,
+  getEmptyFrameTable,
+  getEmptyStackTable,
+  getEmptySamplesTable,
+  getEmptyRawMarkerTable,
+} from './data-structures';
+
 import type {
   JsTracerTable,
   IndexIntoStringTable,
   IndexIntoJsTracerEvents,
+  IndexIntoFuncTable,
+  IndexIntoFrameTable,
+  Thread,
+  CategoryList,
 } from '../types/profile';
 import type { JsTracerTiming } from '../types/profile-derived';
 import type { Microseconds } from '../types/units';
@@ -78,6 +91,121 @@ export function getJsTracerTiming(
   }
 
   return jsTracerTiming;
+}
+
+export function jsTracerToProfile(
+  fromThread: Thread,
+  jsTracer: JsTracerTable,
+  categories: CategoryList,
+  stringTable: UniqueStringArray
+) {
+  const profile = getEmptyProfile();
+  const funcTable = getEmptyFuncTable();
+  const frameTable = getEmptyFrameTable();
+  const stackTable = getEmptyStackTable();
+  const samples = getEmptySamplesTable();
+  const markers = getEmptyRawMarkerTable();
+
+  const sampleWeights = [];
+  samples.weight = sampleWeights;
+  samples.weightType = 'microseconds';
+
+  const thread: Thread = {
+    markers,
+    funcTable,
+    stackTable,
+    frameTable,
+    stringTable,
+    samples,
+    ...fromThread,
+  };
+
+  profile.threads.push(thread);
+  let unmatchedIndex = 0;
+  // Start with a -1 value, which signals no prefix.
+  const unmatchedEventIndexes = [-1];
+  const unmatchedEventEnds = [0];
+  const stringIndexToFuncIndex: Map<
+    IndexIntoStringTable,
+    IndexIntoFuncTable
+  > = new Map();
+  const stringIndexToFrameIndex: Map<
+    IndexIntoStringTable,
+    IndexIntoFrameTable
+  > = new Map();
+  const blankStringIndex = stringTable.indexForString('');
+  const otherCategory = categories.findIndex(c => c.name === 'Other');
+  if (otherCategory === -1) {
+    throw new Error("Expected to find an 'Other' category.");
+  }
+
+  for (
+    let tracerEventIndex = 0;
+    tracerEventIndex < jsTracer.length;
+    tracerEventIndex++
+  ) {
+    const stringIndex = jsTracer.events[tracerEventIndex];
+    let funcIndex = stringIndexToFuncIndex.get(stringIndex);
+    let frameIndex = stringIndexToFrameIndex.get(stringIndex);
+
+    if (funcIndex === undefined || frameIndex === undefined) {
+      funcIndex = funcTable.length++;
+      funcTable.address.push(0);
+      funcTable.name.push(stringIndex);
+      funcTable.isJS.push(false);
+      funcTable.resource.push(-1);
+      funcTable.relevantForJS.push(true);
+      funcTable.fileName.push(null);
+      funcTable.lineNumber.push(null);
+      funcTable.columnNumber.push(null);
+
+      frameIndex = frameTable.length++;
+      frameTable.address.push(blankStringIndex);
+      frameTable.category.push(null);
+      frameTable.func.push(funcIndex);
+      frameTable.implementation.push(null);
+      frameTable.line.push(null);
+      frameTable.column.push(null);
+      frameTable.optimizations.push(null);
+    }
+
+    const start = jsTracer.timestamps[tracerEventIndex];
+    const durationRaw = jsTracer.durations[tracerEventIndex];
+    const duration = durationRaw === null ? 0 : durationRaw;
+    const end = start + duration;
+
+    // Try to find the current prefix.
+    let prefixIndex = unmatchedEventIndexes[unmatchedIndex];
+    while (prefixIndex !== -1) {
+      const otherEnd = unmatchedEventEnds[unmatchedIndex];
+      if (end <= otherEnd) {
+        // Found the prefix
+        break;
+      }
+      // Keep on searching for the next prefix.
+      prefixIndex = unmatchedEventIndexes[unmatchedIndex];
+      unmatchedIndex--;
+    }
+
+    const stackIndex = stackTable.length++;
+    stackTable.frame.push(frameIndex);
+    stackTable.category.push(otherCategory);
+    stackTable.prefix.push(prefixIndex);
+
+    // samples.responsiveness.push();
+    samples.stack.push(stackIndex);
+    samples.time.push(start);
+    samples.rss.push(null);
+    samples.uss.push(null);
+    sampleWeights.push(duration);
+    samples.length++;
+
+    // All done, keep going
+    unmatchedEventIndexes.push(tracerEventIndex);
+    unmatchedEventEnds.push(end);
+  }
+
+  return profile;
 }
 
 /**
