@@ -6,7 +6,7 @@ import { storeWithProfile } from '../fixtures/stores';
 import { selectedThreadSelectors } from '../../selectors/per-thread';
 import { ensureExists } from '../../utils/flow';
 import { changeShowJsTracerSummary } from '../../actions/profile-view';
-import { convertJsTracerToThread } from '../../profile-logic/js-tracer';
+import { convertJsTracerToThread2 } from '../../profile-logic/js-tracer';
 import { getEmptyProfile } from '../../profile-logic/data-structures';
 import { formatTree } from '../fixtures/utils';
 
@@ -16,7 +16,7 @@ import {
   type TestDefinedJsTracerEvent,
 } from '../fixtures/profiles/processed-profile';
 
-describe('convertJsTracerToThread', function() {
+fdescribe('convertJsTracerToThread2', function() {
   it('can generate stacks correctly', function() {
     const {
       meta: { categories },
@@ -34,7 +34,10 @@ describe('convertJsTracerToThread', function() {
 
     const profile = getEmptyProfile();
     const jsTracer = ensureExists(thread.jsTracer);
-    profile.threads.push(convertJsTracerToThread(thread, jsTracer, categories));
+    profile.threads.push(
+      convertJsTracerToThread2(thread, jsTracer, categories)
+    );
+    // console.log('!!! thread', profile.threads[0]);
     const { getState } = storeWithProfile(profile);
     const callTree = selectedThreadSelectors.getCallTree(getState());
 
