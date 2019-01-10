@@ -131,3 +131,12 @@ export function formatValueTotal(
 
   return value_total + percent;
 }
+
+/**
+ * Format bytes exclusively as megabytes to a certain precision.
+ * e.g. 12345 => "+12.35mb"
+ */
+export function formatBytesAsMegabytes(bytes: number, precision: number = 2) {
+  const mb = bytes / 1024 / 1024;
+  return `${parseFloat(mb.toFixed(precision))}mb`;
+}
