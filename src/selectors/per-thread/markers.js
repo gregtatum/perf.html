@@ -191,6 +191,11 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
     }
   );
 
+  const getGcMarkers: Selector<Marker[]> = createSelector(
+    getCommittedRangeFilteredMarkers,
+    markers => markers.filter(MarkerData.isGCMarker)
+  );
+
   const getSelectedMarkerIndex: Selector<
     IndexIntoRawMarkerTable | -1
   > = state => threadSelectors.getViewOptions(state).selectedMarker;
@@ -213,6 +218,7 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
     getSearchFilteredMarkers,
     getPreviewFilteredMarkers,
     getSelectedMarkerIndex,
+    getGcMarkers,
     getIsNetworkChartEmptyInFullRange,
   };
 }

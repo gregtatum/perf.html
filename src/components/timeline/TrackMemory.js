@@ -20,7 +20,10 @@ import EmptyThreadIndicator from './EmptyThreadIndicator';
 import bisection from 'bisection';
 
 import type { CounterIndex, Counter, Thread } from '../../types/profile';
-import type { AccumulatedCounterSamples } from '../../types/profile-derived';
+import type {
+  AccumulatedCounterSamples,
+  Marker,
+} from '../../types/profile-derived';
 import type { Milliseconds, CssPixels, StartEndRange } from '../../types/units';
 import type { SizeProps } from '../shared/WithSize';
 import type {
@@ -29,6 +32,9 @@ import type {
 } from '../../utils/connect';
 
 import './TrackMemory.css';
+
+export const TRACK_HEIGHT = 25;
+export const LINE_WIDTH = 2;
 
 type OwnProps = {|
   +counterIndex: CounterIndex,
@@ -43,6 +49,7 @@ type StateProps = {|
   +interval: Milliseconds,
   +filteredThread: Thread,
   +unfilteredSamplesRange: StartEndRange | null,
+  +gcMarkers: Marker[],
 |};
 
 type DispatchProps = {||};
@@ -55,9 +62,175 @@ type State = {|
   mouseY: CssPixels,
 |};
 
-export const TRACK_HEIGHT = 25;
-export const LINE_WIDTH = 2;
+/**
+ * The memory track takes memory information from counters, and renders it as a graph
+ * in the timeline.
+ */
+class TrackMemory extends React.PureComponent<Props, State> {
+  state = {
+    hoveredCounter: null,
+    mouseX: 0,
+    mouseY: 0,
+  };
 
+  _onMouseLeave = () => {
+    this.setState({ hoveredCounter: null });
+  };
+
+  _onMouseMove = (event: SyntheticMouseEvent<HTMLDivElement>) => {
+    const { pageX: mouseX, pageY: mouseY } = event;
+    // Get the offset from here, and apply it to the time lookup.
+    const { left } = event.currentTarget.getBoundingClientRect();
+    const { width, rangeStart, rangeEnd, counter, interval } = this.props;
+    const rangeLength = rangeEnd - rangeStart;
+    const timeAtMouse = rangeStart + (mouseX - left) / width * rangeLength;
+    const { samples } = counter.sampleGroups;
+    if (
+      timeAtMouse < samples.time[0] ||
+      timeAtMouse > samples.time[samples.length - 1] + interval
+    ) {
+      // We are outside the range of the samples, do not display hover information.
+      this.setState({ hoveredCounter: null });
+    } else {
+      const hoveredCounter = bisection.right(samples.time, timeAtMouse);
+      this.setState({
+        mouseX,
+        mouseY,
+        hoveredCounter,
+      });
+    }
+  };
+
+  _renderTooltip(counterIndex: number): React.Node {
+    const {
+      minCount,
+      countRange,
+      accumulatedCounts,
+    } = this.props.accumulatedSamples;
+    const bytes = accumulatedCounts[counterIndex] - minCount;
+    return (
+      <div className="timelineTrackMemoryTooltip">
+        <div className="timelineTrackMemoryTooltipLine">
+          <span className="timelineTrackMemoryTooltipNumber">
+            {formatBytesAsMegabytes(bytes)}
+          </span>
+          {' relative memory at this time'}
+        </div>
+        <div className="timelineTrackMemoryTooltipLine">
+          <span className="timelineTrackMemoryTooltipNumber">
+            {formatBytesAsMegabytes(countRange)}
+          </span>
+          {' memory range in graph'}
+        </div>
+      </div>
+    );
+  }
+
+  /**
+   * Create a div that is a dot on top of the graph representing the current
+   * height of the graph.
+   */
+  _renderMemoryDot(counterIndex: number): React.Node {
+    const {
+      counter,
+      rangeStart,
+      rangeEnd,
+      width,
+      accumulatedSamples,
+    } = this.props;
+    const { samples } = counter.sampleGroups;
+    const rangeLength = rangeEnd - rangeStart;
+    const left =
+      width * (samples.time[counterIndex] - rangeStart) / rangeLength;
+
+    const { minCount, countRange, accumulatedCounts } = accumulatedSamples;
+    const unitSampleCount =
+      (accumulatedCounts[counterIndex] - minCount) / countRange;
+    const innerTrackHeight = TRACK_HEIGHT - LINE_WIDTH / 2;
+    const top =
+      innerTrackHeight - unitSampleCount * innerTrackHeight + LINE_WIDTH / 2;
+
+    return <div style={{ left, top }} className="timelineTrackMemoryDot" />;
+  }
+
+  renderGcMarkers() {}
+
+  render() {
+    const { hoveredCounter, mouseX, mouseY } = this.state;
+    const {
+      filteredThread,
+      interval,
+      rangeStart,
+      rangeEnd,
+      unfilteredSamplesRange,
+      counter,
+      width,
+      accumulatedSamples,
+    } = this.props;
+
+    return (
+      <div
+        className="timelineTrackMemory"
+        style={{ height: TRACK_HEIGHT }}
+        onMouseMove={this._onMouseMove}
+        onMouseLeave={this._onMouseLeave}
+      >
+        <TrackMemoryCanvas
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          counter={counter}
+          width={width}
+          interval={interval}
+          accumulatedSamples={accumulatedSamples}
+        />
+        {hoveredCounter === null ? null : (
+          <>
+            {this._renderMemoryDot(hoveredCounter)}
+            <Tooltip mouseX={mouseX} mouseY={mouseY}>
+              {this._renderTooltip(hoveredCounter)}
+            </Tooltip>
+          </>
+        )}
+        <EmptyThreadIndicator
+          thread={filteredThread}
+          interval={interval}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          unfilteredSamplesRange={unfilteredSamplesRange}
+        />
+      </div>
+    );
+  }
+}
+
+const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
+  mapStateToProps: (state, ownProps) => {
+    const { counterIndex } = ownProps;
+    const counterSelectors = getCounterSelectors(counterIndex);
+    const counter = counterSelectors.getCommittedRangeFilteredCounter(state);
+    const { start, end } = getCommittedRange(state);
+    const selectors = getThreadSelectors(counter.mainThreadIndex);
+    const gcMarkers = selectors.getGcMarkers(state);
+    console.log(`!!! gcMarkers`, gcMarkers);
+    return {
+      gcMarkers,
+      counter,
+      accumulatedSamples: counterSelectors.getAccumulateCounterSamples(state),
+      rangeStart: start,
+      rangeEnd: end,
+      interval: getProfileInterval(state),
+      filteredThread: selectors.getFilteredThread(state),
+      unfilteredSamplesRange: selectors.unfilteredSamplesRange(state),
+    };
+  },
+  component: TrackMemory,
+};
+
+export default withSize(explicitConnect(options));
+
+/**
+ * When adding properties to these props, please consider the comment above the component.
+ */
 type CanvasProps = {|
   +rangeStart: Milliseconds,
   +rangeEnd: Milliseconds,
@@ -67,6 +240,11 @@ type CanvasProps = {|
   +width: CssPixels,
 |};
 
+/**
+ * This component controls the rendering of the canvas. Every render call through
+ * React triggers a new canvas render. Because of this, it's important to only pass
+ * in the props that are needed for the canvas draw call.
+ */
 class TrackMemoryCanvas extends React.PureComponent<CanvasProps> {
   _canvas: null | HTMLCanvasElement = null;
   _requestedAnimationFrame: boolean = false;
@@ -181,164 +359,3 @@ class TrackMemoryCanvas extends React.PureComponent<CanvasProps> {
     );
   }
 }
-
-/**
- * The memory track takes memory information from counters, and renders it as a graph
- * in the timeline.
- */
-class TrackMemory extends React.PureComponent<Props, State> {
-  state = {
-    hoveredCounter: null,
-    mouseX: 0,
-    mouseY: 0,
-  };
-
-  _onMouseLeave = () => {
-    this.setState({ hoveredCounter: null });
-  };
-
-  _onMouseMove = (event: SyntheticMouseEvent<HTMLDivElement>) => {
-    const { pageX: mouseX, pageY: mouseY } = event;
-    // Get the offset from here, and apply it to the time lookup.
-    const { left } = event.currentTarget.getBoundingClientRect();
-    const { width, rangeStart, rangeEnd, counter, interval } = this.props;
-    const rangeLength = rangeEnd - rangeStart;
-    const timeAtMouse = rangeStart + (mouseX - left) / width * rangeLength;
-    const { samples } = counter.sampleGroups;
-    if (
-      timeAtMouse < samples.time[0] ||
-      timeAtMouse > samples.time[samples.length - 1] + interval
-    ) {
-      // We are outside the range of the samples, do not display hover information.
-      this.setState({ hoveredCounter: null });
-    } else {
-      const hoveredCounter = bisection.right(samples.time, timeAtMouse);
-      this.setState({
-        mouseX,
-        mouseY,
-        hoveredCounter,
-      });
-    }
-  };
-
-  _renderTooltip(counterIndex: number): React.Node {
-    const {
-      minCount,
-      countRange,
-      accumulatedCounts,
-    } = this.props.accumulatedSamples;
-    const bytes = accumulatedCounts[counterIndex] - minCount;
-    return (
-      <div className="timelineTrackMemoryTooltip">
-        <div className="timelineTrackMemoryTooltipLine">
-          <span className="timelineTrackMemoryTooltipNumber">
-            {formatBytesAsMegabytes(bytes)}
-          </span>
-          {' relative memory at this time'}
-        </div>
-        <div className="timelineTrackMemoryTooltipLine">
-          <span className="timelineTrackMemoryTooltipNumber">
-            {formatBytesAsMegabytes(countRange)}
-          </span>
-          {' memory range in graph'}
-        </div>
-      </div>
-    );
-  }
-
-  /**
-   * Create a div that is a dot on top of the graph representing the current
-   * height of the graph.
-   */
-  _renderMemoryDot(counterIndex: number): React.Node {
-    const {
-      counter,
-      rangeStart,
-      rangeEnd,
-      width,
-      accumulatedSamples,
-    } = this.props;
-    const { samples } = counter.sampleGroups;
-    const rangeLength = rangeEnd - rangeStart;
-    const left =
-      width * (samples.time[counterIndex] - rangeStart) / rangeLength;
-
-    const { minCount, countRange, accumulatedCounts } = accumulatedSamples;
-    const unitSampleCount =
-      (accumulatedCounts[counterIndex] - minCount) / countRange;
-    const innerTrackHeight = TRACK_HEIGHT - LINE_WIDTH / 2;
-    const top =
-      innerTrackHeight - unitSampleCount * innerTrackHeight + LINE_WIDTH / 2;
-
-    return <div style={{ left, top }} className="timelineTrackMemoryDot" />;
-  }
-
-  render() {
-    const { hoveredCounter, mouseX, mouseY } = this.state;
-    const {
-      filteredThread,
-      interval,
-      rangeStart,
-      rangeEnd,
-      unfilteredSamplesRange,
-      counter,
-      width,
-      accumulatedSamples,
-    } = this.props;
-
-    return (
-      <div
-        className="timelineTrackMemory"
-        style={{ height: TRACK_HEIGHT }}
-        onMouseMove={this._onMouseMove}
-        onMouseLeave={this._onMouseLeave}
-      >
-        <TrackMemoryCanvas
-          rangeStart={rangeStart}
-          rangeEnd={rangeEnd}
-          counter={counter}
-          width={width}
-          interval={interval}
-          accumulatedSamples={accumulatedSamples}
-        />
-        {hoveredCounter === null ? null : (
-          <>
-            {this._renderMemoryDot(hoveredCounter)}
-            <Tooltip mouseX={mouseX} mouseY={mouseY}>
-              {this._renderTooltip(hoveredCounter)}
-            </Tooltip>
-          </>
-        )}
-        <EmptyThreadIndicator
-          thread={filteredThread}
-          interval={interval}
-          rangeStart={rangeStart}
-          rangeEnd={rangeEnd}
-          unfilteredSamplesRange={unfilteredSamplesRange}
-        />
-      </div>
-    );
-  }
-}
-
-const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
-  mapStateToProps: (state, ownProps) => {
-    const { counterIndex } = ownProps;
-    const counterSelectors = getCounterSelectors(counterIndex);
-    const counter = counterSelectors.getCommittedRangeFilteredCounter(state);
-    const { start, end } = getCommittedRange(state);
-    const selectors = getThreadSelectors(counter.mainThreadIndex);
-    return {
-      counter,
-      accumulatedSamples: counterSelectors.getAccumulateCounterSamples(state),
-      rangeStart: start,
-      rangeEnd: end,
-      interval: getProfileInterval(state),
-      filteredThread: selectors.getFilteredThread(state),
-      unfilteredSamplesRange: selectors.unfilteredSamplesRange(state),
-    };
-  },
-  component: TrackMemory,
-};
-
-export default withSize(explicitConnect(options));

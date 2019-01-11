@@ -357,6 +357,18 @@ export function isNetworkMarker(marker: Marker): boolean {
   return !!(marker.data && marker.data.type === 'Network');
 }
 
+export function isGCMarker(marker: Marker): boolean {
+  const data = marker.data;
+  if (!data) {
+    return false;
+  }
+  return (
+    marker.data === 'GCMajor' ||
+    marker.data === 'GCMinor' ||
+    marker.data === 'GCSlice'
+  );
+}
+
 export function filterForNetworkChart(markers: Marker[]) {
   return markers.filter(marker => isNetworkMarker(marker));
 }
