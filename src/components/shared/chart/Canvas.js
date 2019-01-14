@@ -176,16 +176,16 @@ export default class ChartCanvas<HoveredItem> extends React.Component<
         pageY: event.pageY,
       });
     } else if (this.state.hoveredItem !== null) {
-      this.setState({
-        hoveredItem: null,
-      });
+      // this.setState({
+      //   hoveredItem: null,
+      // });
     }
   };
 
   _onMouseOut = () => {
-    if (this.state.hoveredItem !== null) {
-      this.setState({ hoveredItem: null });
-    }
+    // if (this.state.hoveredItem !== null) {
+    //   this.setState({ hoveredItem: null });
+    // }
   };
 
   _onDoubleClick = () => {

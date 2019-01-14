@@ -5,6 +5,8 @@
 import * as React from 'react';
 
 import { getStackType } from '../../profile-logic/transforms';
+import { objectEntriesMap, assertExhaustiveCheck } from '../../utils/flow';
+import { formatMilliseconds } from '../../utils/format-numbers';
 import NodeIcon from '../shared/NodeIcon';
 
 import type { CallTree } from '../../profile-logic/call-tree';
@@ -13,6 +15,15 @@ import type {
   IndexIntoCallNodeTable,
   CallNodeInfo,
 } from '../../types/profile-derived';
+import type {
+  TimingsForPath,
+  StackImplementation,
+} from '../../profile-logic/profile-data';
+
+import './CallNode.css';
+
+const GRAPH_WIDTH = 150;
+const GRAPH_HEIGHT = 10;
 
 type Props = {|
   thread: Thread,
@@ -23,13 +34,70 @@ type Props = {|
   // label, e.g. "100ms" or "33%".
   durationText: string,
   callTree?: CallTree,
+  timings?: TimingsForPath,
 |};
+
+function _getFriendlyStackTypeName(
+  implementation: StackImplementation
+): string {
+  switch (implementation) {
+    case 'ion':
+    case 'baseline':
+      return `JS JIT (${implementation})`;
+    case 'interpreter':
+      return 'JS interpreter';
+    case 'native':
+      return 'Native code';
+    case 'unknown':
+      return implementation;
+    default:
+      throw assertExhaustiveCheck(implementation);
+  }
+}
 
 /**
  * This class collects the tooltip rendering for anything that cares about call nodes.
  * This includes the Flame Graph and Stack Chart.
  */
 export class TooltipCallNode extends React.PureComponent<Props> {
+  _renderTimings(timings: ?TimingsForPath) {
+    if (!timings) {
+      return null;
+    }
+    const { breakdownByImplementation } = timings.forPath.totalTime;
+    if (!breakdownByImplementation) {
+      return null;
+    }
+    const sortedBreakdown = objectEntriesMap(breakdownByImplementation).sort(
+      (a, b) => b[1] - a[1]
+    );
+
+    const sum = sortedBreakdown.reduce((memo, [, value]) => memo + value, 0);
+
+    return (
+      <div className="tooltipCallNodeImplementation">
+        {sortedBreakdown.map(([implementation, value]) => (
+          <>
+            <div className="tooltipCallNodeImplementationName tooltipLabel">
+              {_getFriendlyStackTypeName(implementation)}
+            </div>
+            <div className="tooltipCallNodeImplementationGraph">
+              <div
+                className="tooltipCallNodeImplementationGraphBar"
+                style={{
+                  width: GRAPH_WIDTH * value / sum,
+                }}
+              />
+            </div>
+            <div className="tooltipCallNodeImplementationTiming">
+              {formatMilliseconds(value)}
+            </div>
+          </>
+        ))}
+      </div>
+    );
+  }
+
   render() {
     const {
       callNodeIndex,
@@ -37,9 +105,9 @@ export class TooltipCallNode extends React.PureComponent<Props> {
       durationText,
       categories,
       callTree,
+      timings,
       callNodeInfo: { callNodeTable },
     } = this.props;
-
     const categoryIndex = callNodeTable.category[callNodeIndex];
     const category = categories[categoryIndex];
     const funcIndex = callNodeTable.func[callNodeIndex];
@@ -99,7 +167,13 @@ export class TooltipCallNode extends React.PureComponent<Props> {
     }
 
     return (
-      <div className="stackChartCanvasTooltip">
+      <div
+        className="tooltipCallNode"
+        style={{
+          '--graph-width': GRAPH_WIDTH + 'px',
+          '--graph-height': GRAPH_HEIGHT + 'px',
+        }}
+      >
         <div className="tooltipOneLine tooltipHeader">
           <div className="tooltipTiming">{durationText}</div>
           <div className="tooltipTitle">{funcName}</div>
@@ -109,31 +183,34 @@ export class TooltipCallNode extends React.PureComponent<Props> {
             ) : null}
           </div>
         </div>
-        <div className="tooltipDetails">
-          {/* Everything in this div needs to come in pairs of two in order to
-              respect the CSS grid. */}
-          <div className="tooltipLabel">Category:</div>
-          <div>
-            <span
-              className={`category-swatch category-color-${category.color}`}
-            />
-            {category.name}
+        <div className="tooltipCallNodeDetails">
+          {this._renderTimings(timings)}
+          <div className="tooltipDetails tooltipCallNodeDetailsLeft">
+            {/* Everything in this div needs to come in pairs of two in order to
+                respect the CSS grid. */}
+            <div className="tooltipLabel">Category:</div>
+            <div>
+              <span
+                className={`category-swatch category-color-${category.color}`}
+              />
+              {category.name}
+            </div>
+            {/* --------------------------------------------------------------- */}
+            {resourceOrFileName}
+            {/* --------------------------------------------------------------- */}
+            <div className="tooltipLabel">Stack Type:</div>
+            <div>{stackTypeLabel}</div>
+            {/* --------------------------------------------------------------- */}
+            {displayData ? (
+              <>
+                <div className="tooltipLabel">Running Time:</div>
+                <div>{displayData.totalTimeWithUnit}</div>
+                {/* --------------------------------------------------------------- */}
+                <div className="tooltipLabel">Self Time:</div>
+                <div>{displayData.selfTimeWithUnit}</div>
+              </>
+            ) : null}
           </div>
-          {/* --------------------------------------------------------------- */}
-          {resourceOrFileName}
-          {/* --------------------------------------------------------------- */}
-          <div className="tooltipLabel">Stack Type:</div>
-          <div>{stackTypeLabel}</div>
-          {/* --------------------------------------------------------------- */}
-          {displayData ? (
-            <>
-              <div className="tooltipLabel">Running Time:</div>
-              <div>{displayData.totalTimeWithUnit}</div>
-              {/* --------------------------------------------------------------- */}
-              <div className="tooltipLabel">Self Time:</div>
-              <div>{displayData.selfTimeWithUnit}</div>
-            </>
-          ) : null}
         </div>
       </div>
     );

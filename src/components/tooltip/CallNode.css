@@ -1,0 +1,43 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+.tooltipCallNodeImplementation {
+  display: grid;
+  grid-template-columns: min-content min-content min-content;
+  grid-gap: 2px 2px;
+}
+
+.tooltipCallNodeImplementationName {
+  white-space: nowrap;
+}
+
+.tooltipCallNodeImplementationGraph {
+  width: var(--graph-width);
+  height: var(--graph-height);
+  margin-top: 2px;
+  background-color: var(--grey-30);
+  border-radius: 2px;
+}
+
+.tooltipCallNodeImplementationGraphBar {
+  width: 100%;
+  height: var(--graph-height);
+  background-color: var(--blue-40);
+  border-radius: 2px;
+}
+
+.tooltipCallNodeImplementationTiming {
+  white-space: nowrap;
+}
+
+.tooltipCallNodeDetails {
+  display: grid;
+  align-items: start;
+  grid-template-columns: min-content auto;
+  grid-gap: 0 20px;
+}
+
+.tooltipCallNodeDetailsLeft {
+  min-width: 150px
+}
