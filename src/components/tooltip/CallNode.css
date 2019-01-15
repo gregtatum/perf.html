@@ -4,8 +4,15 @@
 
 .tooltipCallNodeImplementation {
   display: grid;
-  grid-template-columns: min-content min-content min-content;
-  grid-gap: 2px 2px;
+  grid-template-columns: repeat(4, min-content);
+  grid-gap: 2px;
+}
+
+.tooltipCallNodeImplementationHeader {
+  padding-right: 5px;
+  border-right: 1px solid var(--grey-30);
+  color: var(--grey-50);
+  white-space: nowrap;
 }
 
 .tooltipCallNodeImplementationName {
@@ -13,6 +20,7 @@
 }
 
 .tooltipCallNodeImplementationGraph {
+  position: relative;
   width: var(--graph-width);
   height: var(--graph-height);
   margin-top: 2px;
@@ -20,10 +28,18 @@
   border-radius: 2px;
 }
 
-.tooltipCallNodeImplementationGraphBar {
-  width: 100%;
+.tooltipCallNodeImplementationGraphRunning {
   height: var(--graph-height);
   background-color: var(--blue-40);
+  border-radius: 2px;
+}
+
+.tooltipCallNodeImplementationGraphSelf {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: var(--graph-height);
+  background-color: var(--blue-60);
   border-radius: 2px;
 }
 
@@ -31,13 +47,35 @@
   white-space: nowrap;
 }
 
-.tooltipCallNodeDetails {
+.tooltipCallNodeImplementationHeaderSwatchRunning,
+.tooltipCallNodeImplementationHeaderSwatchSelf {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 9px;
+  height: 9px;
+  border: .5px solid rgba(0,0,0,.1);
+  margin-right: 3px;
+}
+
+.tooltipCallNodeImplementationHeaderSwatchRunning {
+  background-color: var(--blue-40);
+}
+
+.tooltipCallNodeImplementationHeaderSwatchSelf {
+  background-color: var(--blue-60);
+}
+
+/* .tooltipCallNodeDetails {
   display: grid;
   align-items: start;
   grid-template-columns: min-content auto;
   grid-gap: 0 20px;
-}
+} */
 
 .tooltipCallNodeDetailsLeft {
-  min-width: 150px
+  min-width: 150px;
+  margin-top: 10px;
+  padding: 10px;
+  padding-bottom: 5px;
+  border-top: 1px solid var(--grey-30);
 }

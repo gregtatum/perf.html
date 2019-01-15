@@ -6,12 +6,12 @@
 import type {
   Profile,
   Thread,
+  CategoryList,
   SamplesTable,
   StackTable,
   FrameTable,
   FuncTable,
   ResourceTable,
-  CategoryList,
   IndexIntoCategoryList,
   IndexIntoFuncTable,
   IndexIntoSamplesTable,
@@ -398,6 +398,9 @@ export function getTimingsForPath(
   const { samples, stackTable, funcTable } = thread;
   const needleNodeIndex = getCallNodeIndexFromPath(needlePath, callNodeTable);
   const needleFuncIndex = getLeafFuncIndex(needlePath);
+  const jsCategoryIndex = categories.findIndex(
+    category => category.name === 'JavaScript'
+  );
 
   const pathTimings: ItemTimings = {
     selfTime: {
@@ -443,9 +446,44 @@ export function getTimingsForPath(
     timings.value += interval;
 
     // Step 2: find the implementation value for this stack
-    const implementation = funcTable.isJS[funcIndex]
-      ? getJsImplementationForStack(stackIndex, thread)
-      : 'native';
+    let implementation = 'native';
+    if (stackTable.category[stackIndex] === jsCategoryIndex) {
+      // This stack was labeled as in the JavaScript category. Take care to label it
+      // as Ion, Baseline, or Interpreter.
+      if (funcTable.isJS[funcIndex]) {
+        // This function is JS, get the implementation for it.
+        implementation = getJsImplementationForStack(stackIndex, thread);
+      } else {
+        // This function was not JS, start walking up the stack to find a JS function to
+        // take the implementation from.
+        let nextStackIndex = stackIndex;
+        while (true) {
+          nextStackIndex = stackTable.prefix[nextStackIndex];
+
+          if (
+            // Is this a root stack?
+            nextStackIndex === null ||
+            // Did we walk out of the JavaScript engine.
+            stackTable.category[nextStackIndex] !== jsCategoryIndex
+          ) {
+            // No JS function was found. Treat it as native.
+            break;
+          }
+
+          const frameIndex = stackTable.frame[nextStackIndex];
+          const funcIndex = thread.frameTable.func[frameIndex];
+
+          if (funcTable.isJS[funcIndex]) {
+            // Found a JS frame, take the implementation from it.
+            implementation = getJsImplementationForStack(
+              nextStackIndex,
+              thread
+            );
+            break;
+          }
+        }
+      }
+    }
 
     // Step 3: increment the right value in the implementation breakdown
     if (timings.breakdownByImplementation === null) {
