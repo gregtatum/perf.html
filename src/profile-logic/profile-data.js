@@ -515,6 +515,7 @@ export function getTimingsForPath(
 
     const thisNodeIndex = stackIndexToCallNodeIndex[thisStackIndex];
     const thisFunc = callNodeTable.func[thisNodeIndex];
+    const funcName = thread.stringTable.getString(funcTable.name[thisFunc]);
 
     if (!isInvertedTree) {
       // For non-inverted trees, we compute the self time from the stacks' leaf nodes.
@@ -542,6 +543,7 @@ export function getTimingsForPath(
     ) {
       const currentNodeIndex = stackIndexToCallNodeIndex[currentStackIndex];
       const currentFuncIndex = callNodeTable.func[currentNodeIndex];
+      const currentFuncName = thread.stringTable.getString(currentFuncIndex);
       nextStackIndex = stackTable.prefix[currentStackIndex];
 
       if (currentNodeIndex === needleNodeIndex) {

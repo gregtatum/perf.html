@@ -777,13 +777,13 @@ describe('convertStackToCallNodePath', function() {
 describe('getTimingsForPath in a non-inverted tree', function() {
   function setup() {
     const { profile, funcNamesDictPerThread } = getProfileFromTextSamples(`
-      A                  A             A             A              A
-      B                  B             B             B              B
-      Cjs                Cjs           Cjs           H[cat:Layout]  H[cat:Layout]
-      D                  D             F             I[cat:Idle]
-      Ejs[jit:baseline]  Ejs[jit:ion]  Ejs[jit:ion]
+      A[cat:DOM]                         A[cat:DOM]                    A[cat:DOM]                    A[cat:DOM]  A[cat:DOM]
+      B[cat:DOM]                         B[cat:DOM]                    B[cat:DOM]                    B[cat:DOM]  B[cat:DOM]
+      Cjs[cat:JavaScript]                Cjs[cat:JavaScript]           Cjs[cat:JavaScript]           H[cat:DOM]  H[cat:DOM]
+      D[cat:JavaScript]                  D[cat:JavaScript]             F[cat:JavaScript]             I[cat:DOM]
+      Ejs[cat:JavaScript][jit:baseline]  Ejs[cat:JavaScript][jit:ion]  Ejs[cat:JavaScript][jit:ion]
+                                         J[cat:JavaScript]
     `);
-
     const defaultCategory = profile.meta.categories.findIndex(
       c => c.name === 'Other'
     );
@@ -859,9 +859,8 @@ describe('getTimingsForPath in a non-inverted tree', function() {
     expect(timings).toEqual({
       forPath: {
         selfTime: {
-          value: 2,
-          breakdownByImplementation: { ion: 1, baseline: 1 },
-          breakdownByCategory: [0, 2, 0, 0, 0, 0, 0, 0], // [Idle, Other, ...]
+          value: 1,
+          breakdownByImplementation: { baseline: 1 },
         },
         totalTime: {
           value: 2,
@@ -871,9 +870,8 @@ describe('getTimingsForPath in a non-inverted tree', function() {
       },
       forFunc: {
         selfTime: {
-          value: 3,
-          breakdownByImplementation: { ion: 2, baseline: 1 },
-          breakdownByCategory: [0, 3, 0, 0, 0, 0, 0, 0], // [Idle, Other, ...]
+          value: 2,
+          breakdownByImplementation: { ion: 1, baseline: 1 },
         },
         totalTime: {
           value: 3,
@@ -922,14 +920,15 @@ describe('getTimingsForPath in a non-inverted tree', function() {
   });
 });
 
-describe('getTimingsForPath for an inverted tree', function() {
+fdescribe('getTimingsForPath for an inverted tree', function() {
   function setup() {
     const { profile, funcNamesDictPerThread } = getProfileFromTextSamples(`
-      A                  A             A             A              A
-      B                  B             B             B              B
-      Cjs                Cjs           Cjs           H[cat:Layout]  H[cat:Layout]
-      D                  D             F             I[cat:Idle]
-      Ejs[jit:baseline]  Ejs[jit:ion]  Ejs[jit:ion]
+      A[cat:DOM]                         A[cat:DOM]                    A[cat:DOM]                    A[cat:DOM]  A[cat:DOM]
+      B[cat:DOM]                         B[cat:DOM]                    B[cat:DOM]                    B[cat:DOM]  B[cat:DOM]
+      Cjs[cat:JavaScript]                Cjs[cat:JavaScript]           Cjs[cat:JavaScript]           H[cat:DOM]  H[cat:DOM]
+      D[cat:JavaScript]                  D[cat:JavaScript]             F[cat:JavaScript]             I[cat:DOM]
+      Ejs[cat:JavaScript][jit:baseline]  Ejs[cat:JavaScript][jit:ion]  Ejs[cat:JavaScript][jit:ion]
+                                         J[cat:JavaScript]
     `);
     const defaultCategory = profile.meta.categories.findIndex(
       c => c.name === 'Other'
@@ -937,11 +936,12 @@ describe('getTimingsForPath for an inverted tree', function() {
     const thread = invertCallstack(profile.threads[0], defaultCategory);
     // Now the profile should look like this:
     //
-    // Ejs  Ejs  Ejs  I[cat:Idle]    H[cat:Layout]
-    // D    D    F    H[cat:Layout]  B
-    // Cjs  Cjs  Cjs  B              A
-    // B    B    B    A
-    // A    A    A
+    // Ejs  J    Ejs  I H
+    // D    Ejs  F    H B
+    // Cjs  D    Cjs  B A
+    // B    Cjs  B    A
+    // A    B    A
+    //      A
 
     const callNodeInfo = getCallNodeInfo(
       thread.stackTable,
@@ -969,65 +969,41 @@ describe('getTimingsForPath for an inverted tree', function() {
     const { getTimingsForPath, funcNamesDict: { Ejs } } = setup();
     const timings = getTimingsForPath([Ejs]);
     expect(timings).toEqual({
-      forPath: {
-        selfTime: {
-          value: 3,
-          breakdownByImplementation: null,
-          breakdownByCategory: null,
-        },
-        totalTime: {
-          value: 3,
-          breakdownByImplementation: { ion: 2, baseline: 1 },
-          breakdownByCategory: [0, 3, 0, 0, 0, 0, 0, 0], // [Idle, Other, ...]
-        },
-      },
       forFunc: {
         selfTime: {
-          value: 3,
-          breakdownByImplementation: { ion: 2, baseline: 1 },
-          breakdownByCategory: [0, 3, 0, 0, 0, 0, 0, 0], // [Idle, Other, ...]
+          breakdownByImplementation: { baseline: 1, ion: 1 },
+          value: 2,
         },
         totalTime: {
+          breakdownByImplementation: { baseline: 1, ion: 2 },
           value: 3,
-          breakdownByImplementation: { ion: 2, baseline: 1 },
-          breakdownByCategory: [0, 3, 0, 0, 0, 0, 0, 0], // [Idle, Other, ...]
+        },
+      },
+      forPath: {
+        selfTime: { breakdownByImplementation: null, value: 2 },
+        totalTime: {
+          breakdownByImplementation: { baseline: 1, ion: 1 },
+          value: 2,
         },
       },
       rootTime: 5,
     });
   });
 
-  it('returns good timings for a node present in several stacks without self time', () => {
+  fit('returns good timings for a node present in several stacks without self time', () => {
     const { getTimingsForPath, funcNamesDict: { Ejs, D, Cjs, B } } = setup();
     const timings = getTimingsForPath([Ejs, D, Cjs, B]);
     expect(timings).toEqual({
-      forPath: {
-        selfTime: {
-          value: 0,
-          breakdownByImplementation: null,
-          breakdownByCategory: null,
-        },
+      forFunc: {
+        selfTime: { breakdownByImplementation: null, value: 0 },
         totalTime: {
-          value: 2,
-          breakdownByImplementation: { ion: 1, baseline: 1 },
-          breakdownByCategory: [0, 2, 0, 0, 0, 0, 0, 0], // [Idle, Other, ...]
+          breakdownByImplementation: { baseline: 1, ion: 1, native: 3 },
+          value: 5,
         },
       },
-      forFunc: {
-        selfTime: {
-          value: 0,
-          breakdownByImplementation: null,
-          breakdownByCategory: null,
-        },
-        totalTime: {
-          value: 5,
-          breakdownByImplementation: {
-            ion: 2,
-            baseline: 1,
-            native: 2,
-          },
-          breakdownByCategory: [1, 3, 1, 0, 0, 0, 0, 0], // [Idle, Other, Layout, ...]
-        },
+      forPath: {
+        selfTime: { breakdownByImplementation: null, value: 0 },
+        totalTime: { breakdownByImplementation: { baseline: 1 }, value: 1 },
       },
       rootTime: 5,
     });

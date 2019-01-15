@@ -155,3 +155,33 @@ export function removeRootOverlayElement() {
     )
   );
 }
+
+/**
+ * jsdom does not implement offsetX and pageX. Use Object.defineProperty and some
+ * getters to add support for it. This is a bit risky, as defineProperty can't be
+ * removed.
+ */
+export function polyfillMouseEvent() {
+  // The Flow type definition doesn't understand getters.
+  const defineProperty = (Object.defineProperty: any);
+  defineProperty(MouseEvent.prototype, 'offsetX', {
+    get() {
+      return this.clientX;
+    },
+  });
+  defineProperty(MouseEvent.prototype, 'offsetY', {
+    get() {
+      return this.clientY;
+    },
+  });
+  defineProperty(MouseEvent.prototype, 'pageX', {
+    get() {
+      return this.clientX;
+    },
+  });
+  defineProperty(MouseEvent.prototype, 'pageY', {
+    get() {
+      return this.clientY;
+    },
+  });
+}
