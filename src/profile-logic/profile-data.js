@@ -706,7 +706,8 @@ export function filterThreadByImplementation(
     case 'js':
       return _filterThreadByFunc(
         thread,
-        funcIndex => funcTable.isJS[funcIndex],
+        funcIndex =>
+          funcTable.isJS[funcIndex] || funcTable.relevantForJS[funcIndex],
         defaultCategory
       );
     default:
