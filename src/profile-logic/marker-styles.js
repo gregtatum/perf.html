@@ -5,17 +5,16 @@
 import * as colors from 'photon-colors';
 
 import type { CssPixels } from '../types/units';
+import type { Marker } from '../types/profile-derived';
 
-type MarkerStyles = {
-  +[styleName: string]: {|
-    +top: CssPixels,
-    +height: CssPixels,
-    +background: string,
-    +squareCorners: boolean,
-    +borderLeft: null | string,
-    +borderRight: null | string,
-  |},
-};
+type MarkerStyle = {|
+  +top: CssPixels,
+  +height: CssPixels,
+  +background: string,
+  +squareCorners: boolean,
+  +borderLeft: null | string,
+  +borderRight: null | string,
+|};
 
 const defaultStyle = {
   top: 0,
@@ -26,7 +25,7 @@ const defaultStyle = {
   borderRight: null,
 };
 
-export const markerStyles: MarkerStyles = {
+const markerStyles: { +[styleName: string]: MarkerStyle } = {
   default: defaultStyle,
   RefreshDriverTick: {
     ...defaultStyle,
@@ -145,7 +144,22 @@ export const markerStyles: MarkerStyles = {
     ...defaultStyle,
     background: colors.ORANGE_50,
   },
+  DiskIO: {
+    ...defaultStyle,
+    background: colors.BLUE_50,
+  },
 };
+
+/**
+ * Look up the style from a marker.
+ */
+export function getMarkerStyle(marker: Marker): MarkerStyle {
+  const { data, name } = marker;
+  // Normally only the name is needed, but DiskIO markers put other information in the
+  // name field.
+  const key = data && data.type === 'io' ? 'DiskIO' : name;
+  return key in markerStyles ? markerStyles[key] : markerStyles.default;
+}
 
 export const overlayFills = {
   HOVERED: 'hsla(0,0%,100%,0.3)',
