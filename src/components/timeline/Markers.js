@@ -389,3 +389,23 @@ const markersOptions: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
 };
 
 export const TimelineMarkersOverview = explicitConnect(markersOptions);
+
+/**
+ * Disk IO is an optional marker type. Only add these markers if they exist.
+ */
+const diskIoOptions: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
+  mapStateToProps: (state, props) => {
+    const { threadIndex } = props;
+    const selectors = getThreadSelectors(threadIndex);
+    const selectedThread = getSelectedThreadIndex(state);
+
+    return {
+      markers: selectors.getDiskIoMarkers(state),
+      isSelected: threadIndex === selectedThread,
+      isModifyingSelection: getPreviewSelection(state).isModifying,
+    };
+  },
+  component: TimelineMarkers,
+};
+
+export const TimelineMarkersDiskIo = explicitConnect(diskIoOptions);

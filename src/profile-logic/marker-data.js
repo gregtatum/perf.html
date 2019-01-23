@@ -357,6 +357,10 @@ export function isNetworkMarker(marker: Marker): boolean {
   return !!(marker.data && marker.data.type === 'Network');
 }
 
+export function isDiskIoMarker(marker: Marker): boolean {
+  return !!(marker.data && marker.data.type === 'io');
+}
+
 export function filterForNetworkChart(markers: Marker[]) {
   return markers.filter(marker => isNetworkMarker(marker));
 }
