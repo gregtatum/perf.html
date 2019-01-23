@@ -162,6 +162,11 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
     markers => markers.filter(MarkerData.isNetworkMarker)
   );
 
+  const getDiskIoMarkers: Selector<Marker[]> = createSelector(
+    getCommittedRangeFilteredMarkers,
+    markers => markers.filter(MarkerData.isDiskIoMarker)
+  );
+
   const getNetworkTrackTiming: Selector<MarkerTimingRows> = createSelector(
     getNetworkMarkers,
     MarkerTiming.getMarkerTiming
@@ -206,6 +211,7 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
     getNetworkChartTiming,
     getCommittedRangeFilteredMarkers,
     getCommittedRangeFilteredMarkersForHeader,
+    getDiskIoMarkers,
     getNetworkMarkers,
     getNetworkTrackTiming,
     getMergedNetworkChartMarkers,

@@ -319,6 +319,15 @@ export type NetworkPayload = {|
   responseEnd?: Milliseconds,
 |};
 
+export type DiskIoPayload = {|
+  type: 'io',
+  startTime: number,
+  endTime: number,
+  stack: GeckoMarkerStack,
+  source: string,
+  filename: string,
+|};
+
 /**
  * The payload for the UserTimings API. These are added through performance.measure()
  * and performance.mark(). https://developer.mozilla.org/en-US/docs/Web/API/Performance
