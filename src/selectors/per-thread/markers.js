@@ -91,12 +91,14 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
     Marker[]
   > = createSelector(getCommittedRangeFilteredMarkers, (markers): Marker[] =>
     markers.filter(
-      tm =>
-        tm.name !== 'GCMajor' &&
-        tm.name !== 'BHR-detected hang' &&
-        tm.name !== 'LongTask' &&
-        tm.name !== 'LongIdleTask' &&
-        !MarkerData.isNetworkMarker(tm)
+      marker =>
+        marker.name !== 'GCMajor' &&
+        marker.name !== 'BHR-detected hang' &&
+        marker.name !== 'LongTask' &&
+        marker.name !== 'LongIdleTask' &&
+        marker.name !== 'LongIdleTask' &&
+        !MarkerData.isDiskIoMarker(marker) &&
+        !MarkerData.isNetworkMarker(marker)
     )
   );
 

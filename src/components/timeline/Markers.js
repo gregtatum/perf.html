@@ -9,7 +9,10 @@ import { timeCode } from '../../utils/time-code';
 import { withSize } from '../shared/WithSize';
 import Tooltip from '../shared/Tooltip';
 import MarkerTooltipContents from '../shared/MarkerTooltipContents';
-import { markerStyles, overlayFills } from '../../profile-logic/marker-styles';
+import {
+  getMarkerStyle,
+  overlayFills,
+} from '../../profile-logic/marker-styles';
 import explicitConnect from '../../utils/connect';
 import { getPreviewSelection } from '../../selectors/profile';
 import { getThreadSelectors } from '../../selectors/per-thread';
@@ -117,12 +120,11 @@ class TimelineMarkersImplementation extends React.PureComponent<Props, State> {
     // with the highest array index. So we walk the list of markers
     // from high index to low index, which is front to back in z-order.
     for (let i = markers.length - 1; i >= 0; i--) {
-      const { start, dur, name } = markers[i];
+      const { start, dur } = markers[i];
       if (time < start || time >= start + dur) {
         continue;
       }
-      const markerStyle =
-        name in markerStyles ? markerStyles[name] : markerStyles.default;
+      const markerStyle = getMarkerStyle(markers[i]);
       if (y >= markerStyle.top && y < markerStyle.top + markerStyle.height) {
         return markers[i];
       }
@@ -272,13 +274,12 @@ class TimelineMarkersImplementation extends React.PureComponent<Props, State> {
     ctx.scale(devicePixelRatio, devicePixelRatio);
 
     markers.forEach(marker => {
-      const { start, dur, name } = marker;
+      const { start, dur } = marker;
       const pos = (start - rangeStart) / (rangeEnd - rangeStart) * width;
       const itemWidth = Number.isFinite(dur)
         ? dur / (rangeEnd - rangeStart) * width
         : Number.MAX_SAFE_INTEGER;
-      const markerStyle =
-        name in markerStyles ? markerStyles[name] : markerStyles.default;
+      const markerStyle = getMarkerStyle(marker);
       ctx.fillStyle = markerStyle.background;
       if (markerStyle.squareCorners) {
         ctx.fillRect(pos, markerStyle.top, itemWidth, markerStyle.height);
