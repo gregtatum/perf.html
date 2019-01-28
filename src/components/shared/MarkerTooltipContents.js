@@ -366,6 +366,25 @@ function getMarkerDetails(
 
   if (data) {
     switch (data.type) {
+      case 'io': {
+        return [
+          <div className="tooltipDetails" key="details">
+            {_markerDetail('name', 'Type', marker.name)}
+            {_markerDetailNullable('name', 'Source', data.source)}
+            {_markerDetailNullable('name', 'Filename', data.filename)}
+          </div>,
+          data.cause ? (
+            <div className="tooltipDetailsBackTrace" key="backtrace">
+              <Backtrace
+                maxHeight="30em"
+                stackIndex={data.cause.stack}
+                thread={thread}
+                implementationFilter={implementationFilter}
+              />
+            </div>
+          ) : null,
+        ];
+      }
       case 'UserTiming': {
         return (
           <div className="tooltipDetails">
@@ -809,6 +828,13 @@ function getMarkerDetails(
   return null;
 }
 
+function _getMarkerTitle(marker: Marker) {
+  if (marker.data && marker.data.type === 'io') {
+    return 'Disk IO';
+  }
+  return marker.title || marker.name;
+}
+
 type OwnProps = {|
   +marker: Marker,
   +threadIndex: ThreadIndex,
@@ -843,7 +869,7 @@ class MarkerTooltipContents extends React.PureComponent<Props> {
                 ? formatMilliseconds(marker.dur)
                 : 'unknown duration'}
             </div>
-            <div className="tooltipTitle">{marker.title || marker.name}</div>
+            <div className="tooltipTitle">{_getMarkerTitle(marker)}</div>
           </div>
           {threadName ? (
             <div className="tooltipDetails">
