@@ -22,7 +22,7 @@ import {
 import { UniqueStringArray } from '../utils/unique-string-array';
 import { timeCode } from '../utils/time-code';
 
-export const CURRENT_VERSION = 20; // The current version of the "processed" profile format.
+export const CURRENT_VERSION = 21; // The current version of the "processed" profile format.
 
 // Processed profiles before version 1 did not have a profile.meta.preprocessedProfileVersion
 // field. Treat those as version zero.
@@ -904,6 +904,37 @@ const _upgraders = {
     // rss and uss was removed from the SamplesTable. The version number was bumped
     // to help catch errors of using an outdated version of perf.html with a newer
     // profile. There's no good reason to remove the values for upgrading profiles though.
+  },
+  [21]: profile => {
+    // Disk IO markers have stacks that need to be processed.
+    for (const thread of profile.threads) {
+      const adjustTimestampBy =
+        thread.processType === 'default' ? 0 : thread.processStartupTime;
+      for (let i = 0; i < thread.markers.length; i++) {
+        const data = thread.markers.data[i];
+        if (data) {
+          if (
+            data.type === 'io' &&
+            'stack' in data &&
+            data.stack &&
+            data.stack.samples.data.length > 0
+          ) {
+            const syncProfile = data.stack;
+            const stackIndex =
+              syncProfile.samples.data[0][syncProfile.samples.schema.stack];
+            const timeRelativeToProcess =
+              syncProfile.samples.data[0][syncProfile.samples.schema.time];
+            if (stackIndex !== null) {
+              data.cause = {
+                time: timeRelativeToProcess + adjustTimestampBy,
+                stack: stackIndex,
+              };
+            }
+          }
+          delete data.stack;
+        }
+      }
+    }
   },
 };
 /* eslint-enable no-useless-computed-key */

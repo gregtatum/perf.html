@@ -66,6 +66,7 @@ import type {
   GCMajorCompleted_Gecko,
   GCMajorAborted,
   StyleMarkerPayload,
+  DiskIoPayload,
 } from '../types/markers';
 
 type RegExpResult = null | string[];
@@ -633,6 +634,11 @@ function _processMarkers(geckoMarkers: GeckoMarkerStruct): RawMarkerTable {
                 console.log('Unknown GCMajor status');
                 throw new Error('Unknown GCMajor status');
             }
+          }
+          case 'io': {
+            const newData = { ...m };
+            _convertStackToCause(newData);
+            return ((newData: any): DiskIoPayload);
           }
           /*
            * This type exists in profiles from newer gecko only, while

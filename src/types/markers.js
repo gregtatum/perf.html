@@ -319,11 +319,20 @@ export type NetworkPayload = {|
   responseEnd?: Milliseconds,
 |};
 
+export type DiskIoPayload_Gecko = {|
+  type: 'io',
+  startTime: number,
+  endTime: number,
+  stack?: GeckoMarkerStack,
+  source: string,
+  filename: string,
+|};
+
 export type DiskIoPayload = {|
   type: 'io',
   startTime: number,
   endTime: number,
-  stack: GeckoMarkerStack,
+  cause?: CauseBacktrace,
   source: string,
   filename: string,
 |};
@@ -443,6 +452,7 @@ export type DummyForTestsMarkerPayload = {|
  * not guaranteed to be all the payloads that we actually get from the profiler.
  */
 export type MarkerPayload =
+  | DiskIoPayload
   | GPUMarkerPayload
   | BailoutPayload
   | InvalidationPayload
@@ -465,6 +475,7 @@ export type MarkerPayload =
   | null;
 
 export type MarkerPayload_Gecko =
+  | DiskIoPayload_Gecko
   | GPUMarkerPayload
   | NetworkPayload
   | UserTimingMarkerPayload
