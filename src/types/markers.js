@@ -333,6 +333,15 @@ export type NetworkPayload = {|
   responseEnd?: Milliseconds,
 |};
 
+export type DiskIoPayload_Gecko = {|
+  type: 'io',
+  startTime: number,
+  endTime: number,
+  stack?: GeckoMarkerStack,
+  source: string,
+  filename: string,
+|};
+
 export type DiskIoPayload = {|
   type: 'io',
   startTime: number,
@@ -478,6 +487,7 @@ export type MarkerPayload =
   | null;
 
 export type MarkerPayload_Gecko =
+  | DiskIoPayload_Gecko
   | GPUMarkerPayload
   | NetworkPayload
   | UserTimingMarkerPayload
