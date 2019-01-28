@@ -87,9 +87,9 @@
         "frame": [0, 1, 2, 3, 4]
       },
       "markers": {
-        "length": 8,
-        "name": [4, 5, 10, 10, 5, 8, 9, 14],
-        "time": [0, 2, 4, 5, 8, 9, 11, 13],
+        "length": 9,
+        "name": [4, 5, 10, 10, 5, 8, 9, 14, 15],
+        "time": [0, 2, 4, 5, 8, 9, 11, 13, 13],
         "data": [
           {
             "category": "VsyncTimestamp",
@@ -167,6 +167,36 @@
             "requestStart": 10,
             "responseStart": 11,
             "responseEnd": 12
+          },
+          {
+            "type": "io",
+            "startTime": 11,
+            "endTime": 12,
+            "source": "PoisionOIInterposer",
+            "filename": "/foo/bar/",
+            "stack": {
+              "markers": {
+                "schema": {
+                  "name": 0,
+                  "time": 1,
+                  "data": 2
+                },
+                "data": []
+              },
+              "name": "SyncProfile",
+              "samples": {
+                "schema": {
+                  "stack": 0,
+                  "time": 1,
+                  "responsiveness": 2,
+                  "rss": 3,
+                  "uss": 4,
+                  "frameNumber": 5,
+                  "power": 6
+                },
+                "data": [[2, 1]]
+              }
+            }
           }
         ]
       },
@@ -193,7 +223,8 @@
         "firefox",
         "chrome://blargh",
         "frobnicate",
-        "Load 32: https://github.com/rustwasm/wasm-bindgen/issues/3"
+        "Load 32: https://github.com/rustwasm/wasm-bindgen/issues/3",
+        "create/open"
       ]
     },
     {
