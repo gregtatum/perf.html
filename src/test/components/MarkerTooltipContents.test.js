@@ -394,6 +394,21 @@ describe('MarkerTooltipContents', function() {
           interval: 'end',
         },
       ],
+      [
+        'create/open',
+        114,
+        {
+          type: 'io',
+          startTime: 114,
+          endTime: 115,
+          source: 'PoisonOIInterposer',
+          filename: '/foo/bar',
+          cause: {
+            time: 17.0,
+            stack: funcNames.indexOf('nsRefreshDriver::AddStyleFlushObserver'),
+          },
+        },
+      ],
     ]);
     const store = storeWithProfile(profile);
     const state = store.getState();

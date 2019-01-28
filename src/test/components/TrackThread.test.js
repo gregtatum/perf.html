@@ -8,7 +8,7 @@ import type { Profile } from '../../types/profile';
 
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, queryByTestId } from 'react-testing-library';
 import { oneLine } from 'common-tags';
 
 import { changeTimelineType } from '../../actions/profile-view';
@@ -59,13 +59,15 @@ describe('timeline/TrackThread', function() {
     `).profile;
   }
 
-  function getMarkersProfile() {
-    const profile = getProfileWithMarkers([
+  function getMarkersProfile(
+    testMarkers = [
       ['Marker A', 0, { startTime: 0, endTime: 1 }],
       ['Marker B', 1, { startTime: 1, endTime: 2 }],
       ['Marker C', 2, { startTime: 2, endTime: 3 }],
       ['Marker D', 3, { startTime: 3, endTime: 4 }],
-    ]);
+    ]
+  ) {
+    const profile = getProfileWithMarkers(testMarkers);
     const [thread] = profile.threads;
     thread.name = 'GeckoMain';
     thread.processType = 'default';
@@ -187,5 +189,29 @@ describe('timeline/TrackThread', function() {
       selectionStart: 1,
       selectionEnd: 2,
     });
+  });
+
+  it('does not add disk io markers if none are present', function() {
+    const noMarkers = [];
+    const { container } = setup(getMarkersProfile(noMarkers));
+    expect(queryByTestId(container, 'TimelineMarkersDiskIo')).toBeFalsy();
+  });
+
+  it('adds disk io markers if they are present', function() {
+    const diskIoMarker = [
+      [
+        'create/open',
+        2,
+        {
+          type: 'io',
+          startTime: 2,
+          endTime: 3,
+          source: 'PoisionOIInterposer',
+          filename: '/foo/bar/',
+        },
+      ],
+    ];
+    const { container } = setup(getMarkersProfile(diskIoMarker));
+    expect(queryByTestId(container, 'TimelineMarkersDiskIo')).toBeTruthy();
   });
 });
