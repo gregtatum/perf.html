@@ -13,8 +13,11 @@ type MapStateToProps<OwnProps: Object, StateProps: Object> = (
 ) => StateProps;
 
 type MapDispatchToProps<OwnProps: Object, DispatchProps: Object> =
-  | ((dispatch: Dispatch, ownProps: OwnProps) => DispatchProps)
-  | DispatchProps;
+  | ((
+      dispatch: Dispatch,
+      ownProps: OwnProps
+    ) => UnwrapDispatchProps<DispatchProps>)
+  | UnwrapDispatchProps<DispatchProps>;
 
 type MergeProps<
   StateProps,
@@ -87,6 +90,27 @@ type WrapThunkActionCreator5<Arg1, Arg2, Arg3, Arg4, Arg5, Returns> = (
   (Arg1, Arg2, Arg3, Arg4, Arg5) => ThunkAction<Returns>
 ) => (Arg1, Arg2, Arg3, Arg4, Arg5) => Returns;
 
+type UnwrapThunkActionCreator0<Returns> = (
+  // Take as input a ThunkAction.
+  () => Returns
+  // Return the wrapped action.
+) => () => ThunkAction<Returns>;
+type UnwrapThunkActionCreator1<Arg1, Returns> = (
+  (Arg1) => Returns
+) => Arg1 => ThunkAction<Returns>;
+type UnwrapThunkActionCreator2<Arg1, Arg2, Returns> = (
+  (Arg1, Arg2) => Returns
+) => (Arg1, Arg2) => ThunkAction<Returns>;
+type UnwrapThunkActionCreator3<Arg1, Arg2, Arg3, Returns> = (
+  (Arg1, Arg2, Arg3) => Returns
+) => (Arg1, Arg2, Arg3) => ThunkAction<Returns>;
+type UnwrapThunkActionCreator4<Arg1, Arg2, Arg3, Arg4, Returns> = (
+  (Arg1, Arg2, Arg3, Arg4) => Returns
+) => (Arg1, Arg2, Arg3, Arg4) => ThunkAction<Returns>;
+type UnwrapThunkActionCreator5<Arg1, Arg2, Arg3, Arg4, Arg5, Returns> = (
+  (Arg1, Arg2, Arg3, Arg4, Arg5) => Returns
+) => (Arg1, Arg2, Arg3, Arg4, Arg5) => ThunkAction<Returns>;
+
 /**
  * This type takes a Props object and wraps each function in Redux's connect function.
  * It is primarily exported for testing as explicitConnect should do this for us
@@ -106,6 +130,21 @@ export type WrapDispatchProps<DispatchProps: Object> = $ObjMap<
     WrapThunkActionCreator3<*, *, *, *> &
     WrapThunkActionCreator4<*, *, *, *, *> &
     WrapThunkActionCreator5<*, *, *, *, *, *>
+>;
+
+export type UnwrapDispatchProps<DispatchProps: Object> = $ObjMap<
+  DispatchProps,
+  WrapActionCreator0 &
+    WrapActionCreator1<*> &
+    WrapActionCreator2<*, *> &
+    WrapActionCreator3<*, *, *> &
+    WrapActionCreator4<*, *, *, *> &
+    UnwrapThunkActionCreator0<*> &
+    UnwrapThunkActionCreator1<*, *> &
+    UnwrapThunkActionCreator2<*, *, *> &
+    UnwrapThunkActionCreator3<*, *, *, *> &
+    UnwrapThunkActionCreator4<*, *, *, *, *> &
+    UnwrapThunkActionCreator5<*, *, *, *, *, *>
 >;
 
 /**

@@ -66,14 +66,18 @@ type StateProps = {|
   +timelineType: TimelineType,
 |};
 
-export type Updater = WrapFunctionInDispatch<typeof updatePreviewSelection>;
-
 type DispatchProps = {|
-  +changeRightClickedTrack: typeof changeRightClickedTrack,
-  +updatePreviewSelection: typeof updatePreviewSelection,
-  +changeSelectedCallNode: typeof changeSelectedCallNode,
-  +focusCallTree: typeof focusCallTree,
-  +selectLeafCallNode: typeof selectLeafCallNode,
+  +changeRightClickedTrack: WrapFunctionInDispatch<
+    typeof changeRightClickedTrack
+  >,
+  +updatePreviewSelection: WrapFunctionInDispatch<
+    typeof updatePreviewSelection
+  >,
+  +changeSelectedCallNode: WrapFunctionInDispatch<
+    typeof changeSelectedCallNode
+  >,
+  +focusCallTree: WrapFunctionInDispatch<typeof focusCallTree>,
+  +selectLeafCallNode: WrapFunctionInDispatch<typeof selectLeafCallNode>,
 |};
 
 type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
