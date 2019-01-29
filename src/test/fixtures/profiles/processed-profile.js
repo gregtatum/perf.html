@@ -219,12 +219,20 @@ export function getProfileFromTextSamples(
   return { profile, funcNamesPerThread, funcNamesDictPerThread };
 }
 
-function _getAllMatchRanges(regex, str): Array<{ start: number, end: number }> {
+function _getAllMatchRanges(
+  regex: RegExp,
+  str: string
+): Array<{ start: number, end: number }> {
   const ranges = [];
-  let match;
-  while ((match = regex.exec(str)) !== null) {
+
+  do {
+    const match = regex.exec(str);
+    if (match === null) {
+      break;
+    }
     ranges.push({ start: match.index, end: match.index + match[0].length });
-  }
+  } while (true);
+
   return ranges;
 }
 

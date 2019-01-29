@@ -10,10 +10,14 @@ import icons from './icons';
 import zippedProfiles from './zipped-profiles';
 import { combineReducers } from 'redux';
 
-export default combineReducers({
+import type { Reducer, State } from '../types/state';
+
+const reducers: Reducer<State> = combineReducers({
   app,
   profileView,
   urlState,
   icons,
   zippedProfiles,
 });
+
+export default reducers;

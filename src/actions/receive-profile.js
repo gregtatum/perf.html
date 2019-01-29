@@ -562,9 +562,12 @@ export async function _fetchProfile(
  * information about it.
  */
 function _deduceContentType(
-  url: string,
+  url: string | null,
   contentType: string
 ): 'application/json' | 'application/zip' | null {
+  if (url === null) {
+    return null;
+  }
   if (contentType === 'application/zip' || contentType === 'application/json') {
     return contentType;
   }

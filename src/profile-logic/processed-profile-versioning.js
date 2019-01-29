@@ -264,7 +264,7 @@ const _upgraders = {
               funcTable.name[funcIndex] = stringTable.indexForString(scriptURI);
             }
             fileName = stringTable.indexForString(scriptURI);
-            lineNumber = match[3] | 0;
+            lineNumber = Number(match[3]) | 0;
           }
         }
         funcTable.fileName[funcIndex] = fileName;

@@ -358,11 +358,11 @@ export function isNetworkMarker(marker: Marker): boolean {
   return !!(marker.data && marker.data.type === 'Network');
 }
 
-export function filterForNetworkChart(markers: Marker[]) {
+export function filterForNetworkChart(markers: Marker[]): Marker[] {
   return markers.filter(marker => isNetworkMarker(marker));
 }
 
-export function filterForMarkerChart(markers: Marker[]) {
+export function filterForMarkerChart(markers: Marker[]): Marker[] {
   return markers.filter(marker => !isNetworkMarker(marker));
 }
 // Firefox emits separate start and end markers for each load. It does this so that,

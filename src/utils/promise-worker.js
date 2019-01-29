@@ -18,6 +18,10 @@ type WorkerMessage =
       +msgID: number,
       +type: 'success',
       +result: mixed,
+    |}
+  | {|
+      +type: 'constructor',
+      +constructorArguments: mixed[],
     |};
 
 export function provideHostSide<T: Object>(workerFilename: string, methods: T) {
@@ -28,6 +32,9 @@ export function provideHostSide<T: Object>(workerFilename: string, methods: T) {
 
     worker.onmessage = ({ data }) => {
       const message = ((data: any): WorkerMessage);
+      if (message.type === 'constructor') {
+        throw new Error('Received an unexpected constructor message.');
+      }
       const { msgID } = message;
       const { resolve, reject } = ensureExists(
         callbacks.get(msgID),
