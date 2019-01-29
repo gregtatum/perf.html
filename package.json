@@ -107,7 +107,7 @@
     "express": "^4.16.3",
     "fake-indexeddb": "^2.0.4",
     "file-loader": "^2.0.0",
-    "flow-bin": "^0.70.0",
+    "flow-bin": "^0.71.0",
     "flow-coverage-report": "^0.5.0",
     "flow-typed": "^2.3.0",
     "glob": "^7.1.2",
