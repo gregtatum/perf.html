@@ -43,10 +43,12 @@ type StateProps = {|
 |};
 
 type ExampleActionCreator = string => Action;
+type ExampleMultiArgActionCreator = (string, number) => Action;
 type ExampleThunkActionCreator = string => ThunkAction<number>;
 
 type DispatchProps = {|
   +dispatchString: ExampleActionCreator,
+  +dispatchMultiArg: ExampleMultiArgActionCreator,
   +dispatchThunk: ExampleThunkActionCreator,
 |};
 
@@ -63,6 +65,7 @@ class ExampleComponent extends React.PureComponent<Props> {
     // The action creators are properly wrapped by dispatch.
     (this.props.dispatchString: string => Action);
     (this.props.dispatchThunk: string => number);
+    (this.props.dispatchMultiArg: (string, number) => Action);
     (this.props.dispatchThunk('foo'): number);
 
     return null;
@@ -82,6 +85,7 @@ const validMapStateToProps = (state, ownProps) => {
 declare var validDispatchToProps: {|
   +dispatchString: string => Action,
   +dispatchThunk: string => ThunkAction<number>,
+  +dispatchMultiArg: (string, number) => Action,
 |};
 
 // This value also serves as a test for the common case of creating a component
@@ -99,6 +103,7 @@ const ConnectedExampleComponent = explicitConnect(
   const wrapped: WrapDispatchProps<DispatchProps> = (ANY_VALUE: {|
     +dispatchString: string => Action,
     +dispatchThunk: string => number,
+    +dispatchMultiArg: (string, number) => Action,
   |});
 }
 
@@ -106,6 +111,7 @@ const ConnectedExampleComponent = explicitConnect(
   // Test that the original unwrapped action creators do not work.
   const wrapped: WrapDispatchProps<DispatchProps> = (ANY_VALUE: {|
     +dispatchString: string => Action,
+    +dispatchMultiArg: (string, number) => Action,
     // $FlowExpectError
     +dispatchThunk: string => ThunkAction<number>,
   |});
@@ -175,6 +181,7 @@ const ConnectedExampleComponent = explicitConnect(
   const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
     mapStateToProps: validMapStateToProps,
     mapDispatchToProps: (ANY_VALUE: {|
+      +dispatchMultiArg: (string, number) => Action,
       // $FlowExpectError
       +dispatchString: string => string,
       +dispatchThunk: string => ThunkAction<number>,

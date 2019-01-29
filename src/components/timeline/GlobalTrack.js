@@ -115,7 +115,8 @@ class GlobalTrackComponent extends PureComponent<Props> {
     const { globalTrack, changeLocalTrackOrder } = this.props;
     if (globalTrack.type === 'process') {
       // Only process tracks have local tracks.
-      changeLocalTrackOrder(globalTrack.pid, trackOrder);
+      const pid: number | string = globalTrack.pid;
+      changeLocalTrackOrder(pid, trackOrder);
     }
   };
 

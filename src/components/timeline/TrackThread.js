@@ -30,7 +30,7 @@ import {
 import EmptyThreadIndicator from './EmptyThreadIndicator';
 import './TrackThread.css';
 
-import type { TimelineType } from '../../types/actions';
+import type { PreviewSelection, TimelineType } from '../../types/actions';
 import type {
   Thread,
   ThreadIndex,
@@ -46,6 +46,7 @@ import type { State } from '../../types/state';
 import type {
   ExplicitConnectOptions,
   ConnectedProps,
+  WrapFunctionInDispatch,
 } from '../../utils/connect';
 
 type OwnProps = {|
@@ -64,6 +65,8 @@ type StateProps = {|
   +categories: CategoryList,
   +timelineType: TimelineType,
 |};
+
+export type Updater = WrapFunctionInDispatch<typeof updatePreviewSelection>;
 
 type DispatchProps = {|
   +changeRightClickedTrack: typeof changeRightClickedTrack,
@@ -92,12 +95,14 @@ class TimelineTrackThread extends PureComponent<Props> {
     end: Milliseconds
   ) => {
     const { rangeStart, rangeEnd, updatePreviewSelection } = this.props;
-    updatePreviewSelection({
+    const selection: PreviewSelection = {
       hasSelection: true,
       isModifying: false,
       selectionStart: Math.max(rangeStart, start),
       selectionEnd: Math.min(rangeEnd, end),
-    });
+    };
+
+    updatePreviewSelection(selection);
   };
 
   render() {
