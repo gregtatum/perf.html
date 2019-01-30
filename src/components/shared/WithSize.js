@@ -38,14 +38,17 @@ export function withSize<
   return class WithSizeWrapper extends React.PureComponent<*, State> {
     _isSizeInfoDirty: boolean = false;
     state = { width: 0, height: 0 };
-    _container: ?(Element | Text);
+
+    _getContainer() {
+      try {
+        return findDOMNode(this); // eslint-disable-line react/no-find-dom-node
+      } catch (error) {
+        // findDOMNode throws when it can't find the node.
+        return null;
+      }
+    }
 
     componentDidMount() {
-      const container = findDOMNode(this); // eslint-disable-line react/no-find-dom-node
-      if (!container) {
-        throw new Error('Unable to find the DOMNode');
-      }
-      this._container = container;
       window.addEventListener('resize', this._resizeListener);
       window.addEventListener(
         'visibilitychange',
@@ -55,17 +58,18 @@ export function withSize<
       // Wrapping the first update in a requestAnimationFrame to defer the
       // calculation until the full render is done.
       requestAnimationFrame(() => {
+        const container = this._getContainer();
         // This component could have already been unmounted, check for the existence
         // of the container.
-        if (this._container) {
-          this._updateWidth(this._container);
+        if (container) {
+          this._updateWidth(container);
         }
       });
     }
     // The size is only updated when the document is visible.
     // In other cases resizing is registered in _isSizeInfoDirty.
     _resizeListener = () => {
-      const container = this._container;
+      const container = this._getContainer();
       if (!container) {
         return;
       }
@@ -79,7 +83,7 @@ export function withSize<
     // If resizing was registered when the document wasn't visible,
     // the size will be updated when the document becomes visible
     _visibilityChangeListener = () => {
-      const container = this._container;
+      const container = this._getContainer();
       if (!container) {
         return;
       }
@@ -90,7 +94,6 @@ export function withSize<
     };
 
     componentWillUnmount() {
-      this._container = null;
       window.removeEventListener('resize', this._resizeListener);
       window.removeEventListener(
         'visibilitychange',
