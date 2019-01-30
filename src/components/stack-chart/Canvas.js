@@ -39,7 +39,7 @@ import type {
   IndexIntoStackTiming,
 } from '../../profile-logic/stack-timing';
 import type { Viewport } from '../shared/chart/Viewport';
-import type { WrapFunctionInDispatch } from '../../utils/connect';
+import type { WrappedThunk } from '../../utils/connect';
 
 type OwnProps = {|
   +thread: Thread,
@@ -48,7 +48,7 @@ type OwnProps = {|
   +rangeEnd: Milliseconds,
   +stackTimingByDepth: StackTimingByDepth,
   +stackFrameHeight: CssPixels,
-  +updatePreviewSelection: WrapFunctionInDispatch<
+  +updatePreviewSelection: WrappedThunk<
     typeof updatePreviewSelection
   >,
   +categories: CategoryList,

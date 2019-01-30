@@ -6,7 +6,7 @@
 
 import * as React from 'react';
 
-import explicitConnect from '../../utils/connect';
+import { connect2, type ConnectedProps } from '../../utils/connect';
 import {
   selectedThreadSelectors,
   selectedNodeSelectors,
@@ -17,10 +17,6 @@ import { getFunctionName } from '../../profile-logic/function-info';
 import { assertExhaustiveCheck } from '../../utils/flow';
 import CanSelectContent from './CanSelectContent';
 
-import type {
-  ConnectedProps,
-  ExplicitConnectOptions,
-} from '../../utils/connect';
 import type { ThreadIndex, CategoryList } from '../../types/profile';
 import type {
   CallNodeTable,
@@ -278,7 +274,8 @@ class CallTreeSidebar extends React.PureComponent<Props> {
   }
 }
 
-const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
+// prettier-ignore
+export default connect2/*:: <{||}, StateProps, {||}> */({
   mapStateToProps: state => ({
     selectedNodeIndex: selectedThreadSelectors.getSelectedCallNodeIndex(state),
     callNodeTable: selectedThreadSelectors.getCallNodeInfo(state).callNodeTable,
@@ -288,7 +285,6 @@ const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
     timings: selectedNodeSelectors.getTimingsForSidebar(state),
     categoryList: getCategories(state),
   }),
+  mapDispatchToProps: {},
   component: CallTreeSidebar,
-};
-
-export default explicitConnect(options);
+});

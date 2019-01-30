@@ -5,7 +5,7 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import explicitConnect from '../../utils/connect';
+import { connect2 } from '../../utils/connect';
 import {
   getCommittedRange,
   getPreviewSelection,
@@ -18,10 +18,7 @@ import type { ScreenshotPayload } from '../../types/markers';
 import type { ThreadIndex, Thread } from '../../types/profile';
 import type { Marker } from '../../types/profile-derived';
 import type { Milliseconds } from '../../types/units';
-import type {
-  ExplicitConnectOptions,
-  ConnectedProps,
-} from '../../utils/connect';
+import type { ConnectedProps } from '../../utils/connect';
 
 import { ensureExists } from '../../utils/flow';
 import './TrackScreenshots.css';
@@ -114,8 +111,9 @@ class Screenshots extends PureComponent<Props, State> {
   }
 }
 
-const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
-  mapStateToProps: (state, ownProps) => {
+// prettier-ignore
+const connectedComponent = connect2/*:: <OwnProps, StateProps, DispatchProps> */({
+  mapStateToProps: (state, ownProps: OwnProps) => {
     const { threadIndex, windowId } = ownProps;
     const selectors = getThreadSelectors(threadIndex);
     const { start, end } = getCommittedRange(state);
@@ -133,10 +131,11 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
         previewSelection.hasSelection && previewSelection.isModifying,
     };
   },
+  mapDispatchToProps: {},
   component: Screenshots,
-};
+});
 
-export default withSize(explicitConnect(options));
+export default withSize(connectedComponent);
 
 type HoverPreviewProps = {|
   +thread: Thread,

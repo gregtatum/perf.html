@@ -14,7 +14,7 @@ import {
   hideLocalTrack,
   showLocalTrack,
 } from '../../actions/profile-view';
-import explicitConnect from '../../utils/connect';
+import { connect2 } from '../../utils/connect';
 import { ensureExists } from '../../utils/flow';
 import {
   getThreads,
@@ -42,10 +42,7 @@ import type {
 import type { State } from '../../types/state';
 import type { TrackReference } from '../../types/actions';
 
-import type {
-  ExplicitConnectOptions,
-  ConnectedProps,
-} from '../../utils/connect';
+import type { ConnectedProps } from '../../utils/connect';
 
 type StateProps = {|
   +threads: Thread[],
@@ -391,8 +388,9 @@ class TimelineTrackContextMenu extends PureComponent<Props> {
   }
 }
 
-const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
-  mapStateToProps: (state: State) => ({
+// prettier-ignore
+export default connect2/*:: <{||}, StateProps, DispatchProps> */({
+  mapStateToProps: (state: State): StateProps => ({
     threads: getThreads(state),
     globalTrackOrder: getGlobalTrackOrder(state),
     hiddenGlobalTracks: getHiddenGlobalTracks(state),
@@ -415,5 +413,4 @@ const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
     showLocalTrack,
   },
   component: TimelineTrackContextMenu,
-};
-export default explicitConnect(options);
+});

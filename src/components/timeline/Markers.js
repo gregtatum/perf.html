@@ -10,7 +10,7 @@ import { withSize } from '../shared/WithSize';
 import Tooltip from '../shared/Tooltip';
 import MarkerTooltipContents from '../shared/MarkerTooltipContents';
 import { markerStyles, overlayFills } from '../../profile-logic/marker-styles';
-import explicitConnect from '../../utils/connect';
+import { connect2, type ConnectedProps } from '../../utils/connect';
 import { getPreviewSelection } from '../../selectors/profile';
 import { getThreadSelectors } from '../../selectors/per-thread';
 import { getSelectedThreadIndex } from '../../selectors/url-state';
@@ -19,10 +19,6 @@ import './Markers.css';
 import type { Milliseconds, CssPixels } from '../../types/units';
 import type { Marker } from '../../types/profile-derived';
 import type { SizeProps } from '../shared/WithSize';
-import type {
-  ExplicitConnectOptions,
-  ConnectedProps,
-} from '../../utils/connect';
 import type { ThreadIndex } from '../../types/profile';
 
 type MarkerState = 'PRESSED' | 'HOVERED' | 'NONE';
@@ -349,43 +345,45 @@ export const TimelineMarkers = withSize(TimelineMarkersImplementation);
 /**
  * Create a special connected component for Jank instances.
  */
-const jankOptions: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
-  mapStateToProps: (state, props) => {
-    const { threadIndex } = props;
-    const selectors = getThreadSelectors(threadIndex);
-    const selectedThread = getSelectedThreadIndex(state);
+export const TimelineMarkersJank =
+  // prettier-ignore
+  connect2/*:: <OwnProps, StateProps, {||}> */({
+    mapStateToProps: (state, props: OwnProps) => {
+      const { threadIndex } = props;
+      const selectors = getThreadSelectors(threadIndex);
+      const selectedThread = getSelectedThreadIndex(state);
 
-    return {
-      markers: selectors.getJankMarkers(state),
-      isSelected: threadIndex === selectedThread,
-      isModifyingSelection: getPreviewSelection(state).isModifying,
-    };
-  },
-  component: TimelineMarkers,
-};
-
-export const TimelineMarkersJank = explicitConnect(jankOptions);
+      return {
+        markers: selectors.getJankMarkers(state),
+        isSelected: threadIndex === selectedThread,
+        isModifyingSelection: getPreviewSelection(state).isModifying,
+      };
+    },
+    mapDispatchToProps: {},
+    component: TimelineMarkers,
+  });
 
 /**
  * Create a connected component for all markers.
  */
-const markersOptions: ExplicitConnectOptions<OwnProps, StateProps, {||}> = {
-  mapStateToProps: (state, props) => {
-    const { threadIndex } = props;
-    const selectors = getThreadSelectors(threadIndex);
-    const selectedThread = getSelectedThreadIndex(state);
-    const markers = selectors.getCommittedRangeFilteredMarkersForHeader(state);
-    return {
-      additionalClassName:
-        selectors.getThread(state).name === 'GeckoMain'
-          ? 'timelineMarkersGeckoMain'
-          : null,
-      markers,
-      isSelected: threadIndex === selectedThread,
-      isModifyingSelection: getPreviewSelection(state).isModifying,
-    };
-  },
-  component: TimelineMarkers,
-};
-
-export const TimelineMarkersOverview = explicitConnect(markersOptions);
+export const TimelineMarkersOverview =
+  // prettier-ignore
+  connect2/*:: <OwnProps, StateProps, {||}> */({
+    mapStateToProps: (state, props: OwnProps) => {
+      const { threadIndex } = props;
+      const selectors = getThreadSelectors(threadIndex);
+      const selectedThread = getSelectedThreadIndex(state);
+      const markers = selectors.getCommittedRangeFilteredMarkersForHeader(state);
+      return {
+        additionalClassName:
+          selectors.getThread(state).name === 'GeckoMain'
+            ? 'timelineMarkersGeckoMain'
+            : null,
+        markers,
+        isSelected: threadIndex === selectedThread,
+        isModifyingSelection: getPreviewSelection(state).isModifying,
+      };
+    },
+    mapDispatchToProps: {},
+    component: TimelineMarkers,
+  });

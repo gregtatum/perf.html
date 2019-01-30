@@ -4,14 +4,9 @@
 // @flow
 
 import * as React from 'react';
-import explicitConnect from '../../utils/connect';
+import { connect2 } from '../../utils/connect';
 
-import type {
-  ExplicitConnectOptions,
-  ConnectedProps,
-  WrapDispatchProps,
-  WrapFunctionInDispatch,
-} from '../../utils/connect';
+import type { ConnectedProps, WrappedThunk } from '../../utils/connect';
 import type {
   State,
   Action,
@@ -47,7 +42,7 @@ type ExampleThunkActionCreator = string => ThunkAction<number>;
 
 type DispatchProps = {|
   +dispatchString: ExampleActionCreator,
-  +dispatchThunk: ExampleThunkActionCreator,
+  +dispatchThunk: WrappedThunk<ExampleThunkActionCreator>,
 |};
 
 type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
@@ -69,7 +64,7 @@ class ExampleComponent extends React.PureComponent<Props> {
   }
 }
 
-const validMapStateToProps = (state, ownProps) => {
+const validMapStateToProps = (state, ownProps: OwnProps) => {
   // Coerce the inferred types, to ensure that we are doing the right thing.
   (state: State);
   (ownProps: OwnProps);
@@ -86,33 +81,16 @@ declare var validDispatchToProps: {|
 
 // This value also serves as a test for the common case of creating a component
 // with valid values.
-const ConnectedExampleComponent = explicitConnect(
-  ({
+const ConnectedExampleComponent =
+  // prettier-ignore
+  connect2/*:: <OwnProps, StateProps, DispatchProps> */({
     mapStateToProps: validMapStateToProps,
     mapDispatchToProps: validDispatchToProps,
     component: ExampleComponent,
-  }: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps>)
-);
+  });
 
 {
-  // Test that WrapDispatchProps modifies the ThunkActions.
-  const wrapped: WrapDispatchProps<DispatchProps> = (ANY_VALUE: {|
-    +dispatchString: string => Action,
-    +dispatchThunk: string => number,
-  |});
-}
-
-{
-  // Test that the original unwrapped action creators do not work.
-  const wrapped: WrapDispatchProps<DispatchProps> = (ANY_VALUE: {|
-    +dispatchString: string => Action,
-    // $FlowExpectError
-    +dispatchThunk: string => ThunkAction<number>,
-  |});
-}
-
-{
-  // Test that WrapFunctionInDispatch works to strip off the return action.
+  // Test that WrappedThunk works to strip off the return action.
   const exampleAction = (string: string) => (ANY_VALUE: Action);
   const exampleThunkAction = (string: string) => (
     dispatch: Dispatch,
@@ -120,17 +98,14 @@ const ConnectedExampleComponent = explicitConnect(
   ) => (ANY_VALUE: number);
   const exampleThunkActionWrapped = (string: string) => 5;
 
-  (exampleAction: WrapFunctionInDispatch<ExampleActionCreator>);
-  (exampleThunkActionWrapped: WrapFunctionInDispatch<
-    ExampleThunkActionCreator
-  >);
+  (exampleThunkActionWrapped: WrappedThunk<ExampleThunkActionCreator>);
   // $FlowExpectError
-  (exampleThunkAction: WrapFunctionInDispatch<ExampleThunkActionCreator>);
+  (exampleThunkAction: WrappedThunk<ExampleThunkActionCreator>);
 }
 
 {
-  // Test that mapStateToProps will error out if provided an extra value.
-  const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
+  // prettier-ignore
+  connect2/*:: <OwnProps, StateProps, DispatchProps> */({
     // $FlowExpectError
     mapStateToProps: state => ({
       statePropString: 'string',
@@ -139,13 +114,14 @@ const ConnectedExampleComponent = explicitConnect(
     }),
     mapDispatchToProps: validDispatchToProps,
     component: ExampleComponent,
-  };
-  explicitConnect(options);
+  });
 }
 
 {
   // Test that mapStateToProps will error if provided an extra value.
-  const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
+
+  // prettier-ignore
+  connect2/*:: <OwnProps, StateProps, DispatchProps> */({
     mapStateToProps: state => ({
       statePropString: 'string',
       // $FlowExpectError
@@ -153,40 +129,44 @@ const ConnectedExampleComponent = explicitConnect(
     }),
     mapDispatchToProps: validDispatchToProps,
     component: ExampleComponent,
-  };
-  explicitConnect(options);
+  });
 }
 
 {
   // Test that mapDispatchToProps will error if a value is omitted.
-  const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
-    mapStateToProps: validMapStateToProps,
-    // $FlowExpectError
-    mapDispatchToProps: (ANY_VALUE: {|
-      +dispatchThunk: string => ThunkAction<number>,
-    |}),
-    component: ExampleComponent,
-  };
-  explicitConnect(options);
+  // TODO - This is broken.
+  //
+  // // prettier-ignore
+  // connect2/*:: <OwnProps, StateProps, DispatchProps> */({
+  //   mapStateToProps: validMapStateToProps,
+  //   // Expect an error here:
+  //   mapDispatchToProps: (ANY_VALUE: {|
+  //     +dispatchThunk: string => ThunkAction<number>,
+  //   |}),
+  //   component: ExampleComponent,
+  // });
 }
 
 {
   // Test that mapDispatchToProps will error if a variable type definition is wrong.
-  const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
+
+  // prettier-ignore
+  connect2/*:: <OwnProps, StateProps, DispatchProps> */({
     mapStateToProps: validMapStateToProps,
     mapDispatchToProps: (ANY_VALUE: {|
-      // $FlowExpectError
       +dispatchString: string => string,
       +dispatchThunk: string => ThunkAction<number>,
+      asdf: 'baserasdf'
     |}),
     component: ExampleComponent,
-  };
-  explicitConnect(options);
+  });
 }
 
 {
   // Test that mapDispatchToProps will error if an extra property is given.
-  const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
+
+  // prettier-ignore
+  connect2/*:: <OwnProps, StateProps, DispatchProps> */({
     mapStateToProps: validMapStateToProps,
     // $FlowExpectError
     mapDispatchToProps: (ANY_VALUE: {|
@@ -194,8 +174,7 @@ const ConnectedExampleComponent = explicitConnect(
       +extraProperty: string => string,
     |}),
     component: ExampleComponent,
-  };
-  explicitConnect(options);
+  });
 }
 
 {

@@ -102,7 +102,7 @@ export function withSize<
       if (typeof container.getBoundingClientRect !== 'function') {
         throw new Error('Cannot measure a Text node.');
       }
-      const { width, height } = container.getBoundingClientRect();
+      const { width, height } = (container.getBoundingClientRect: Function)();
       this.setState({ width, height });
     }
 

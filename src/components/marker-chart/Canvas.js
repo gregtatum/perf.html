@@ -27,7 +27,7 @@ import type {
   IndexIntoMarkerTiming,
 } from '../../types/profile-derived';
 import type { Viewport } from '../shared/chart/Viewport';
-import type { WrapFunctionInDispatch } from '../../utils/connect';
+import type { WrappedThunk } from '../../utils/connect';
 
 type MarkerDrawingInformation = {
   x: CssPixels,
@@ -45,7 +45,7 @@ type OwnProps = {|
   +rowHeight: CssPixels,
   +markers: Marker[],
   +threadIndex: ThreadIndex,
-  +updatePreviewSelection: WrapFunctionInDispatch<
+  +updatePreviewSelection: WrappedThunk<
     typeof updatePreviewSelection
   >,
   +marginLeft: CssPixels,

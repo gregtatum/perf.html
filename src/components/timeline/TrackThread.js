@@ -5,7 +5,6 @@
 // @flow
 
 import React, { PureComponent } from 'react';
-import explicitConnect from '../../utils/connect';
 import ThreadStackGraph from '../shared/thread/StackGraph';
 import ThreadActivityGraph from '../shared/thread/ActivityGraph';
 import {
@@ -42,11 +41,7 @@ import type {
   CallNodeInfo,
   IndexIntoCallNodeTable,
 } from '../../types/profile-derived';
-import type { State } from '../../types/state';
-import type {
-  ExplicitConnectOptions,
-  ConnectedProps,
-} from '../../utils/connect';
+import { connect2 } from '../../utils/connect';
 
 type OwnProps = {|
   +threadIndex: ThreadIndex,
@@ -67,13 +62,17 @@ type StateProps = {|
 
 type DispatchProps = {|
   +changeRightClickedTrack: typeof changeRightClickedTrack,
-  +updatePreviewSelection: typeof updatePreviewSelection,
-  +changeSelectedCallNode: typeof changeSelectedCallNode,
   +focusCallTree: typeof focusCallTree,
+  +changeSelectedCallNode: typeof changeSelectedCallNode,
   +selectLeafCallNode: typeof selectLeafCallNode,
+  +updatePreviewSelection: typeof updatePreviewSelection,
 |};
 
-type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
+type Props = {|
+  ...OwnProps,
+  ...StateProps,
+  ...DispatchProps,
+|};
 
 class TimelineTrackThread extends PureComponent<Props> {
   /**
@@ -176,35 +175,36 @@ class TimelineTrackThread extends PureComponent<Props> {
   }
 }
 
-const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
-  mapStateToProps: (state: State, ownProps: OwnProps) => {
-    const { threadIndex } = ownProps;
-    const selectors = getThreadSelectors(threadIndex);
-    const selectedThread = getSelectedThreadIndex(state);
-    const committedRange = getCommittedRange(state);
-    return {
-      filteredThread: selectors.getFilteredThread(state),
-      fullThread: selectors.getRangeFilteredThread(state),
-      callNodeInfo: selectors.getCallNodeInfo(state),
-      selectedCallNodeIndex:
-        threadIndex === selectedThread
-          ? selectors.getSelectedCallNodeIndex(state)
-          : -1,
-      unfilteredSamplesRange: selectors.unfilteredSamplesRange(state),
-      interval: getProfileInterval(state),
-      rangeStart: committedRange.start,
-      rangeEnd: committedRange.end,
-      categories: getCategories(state),
-      timelineType: getTimelineType(state),
-    };
-  },
-  mapDispatchToProps: {
-    updatePreviewSelection,
-    changeRightClickedTrack,
-    changeSelectedCallNode,
-    focusCallTree,
-    selectLeafCallNode,
-  },
-  component: TimelineTrackThread,
-};
-export default explicitConnect(options);
+// prettier-ignore
+export default connect2/*:: <OwnProps, StateProps, DispatchProps> */
+  ({
+    mapStateToProps: (state, ownProps: OwnProps) => {
+      const { threadIndex } = ownProps;
+      const selectors = getThreadSelectors(threadIndex);
+      const selectedThread = getSelectedThreadIndex(state);
+      const committedRange = getCommittedRange(state);
+      return {
+        filteredThread: selectors.getFilteredThread(state),
+        fullThread: selectors.getRangeFilteredThread(state),
+        callNodeInfo: selectors.getCallNodeInfo(state),
+        selectedCallNodeIndex:
+          threadIndex === selectedThread
+            ? selectors.getSelectedCallNodeIndex(state)
+            : -1,
+        unfilteredSamplesRange: selectors.unfilteredSamplesRange(state),
+        interval: getProfileInterval(state),
+        rangeStart: committedRange.start,
+        rangeEnd: committedRange.end,
+        categories: getCategories(state),
+        timelineType: getTimelineType(state),
+      };
+    },
+    mapDispatchToProps: {
+      updatePreviewSelection,
+      changeRightClickedTrack,
+      changeSelectedCallNode,
+      focusCallTree,
+      selectLeafCallNode,
+    },
+    component: TimelineTrackThread
+  });

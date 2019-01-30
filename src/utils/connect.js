@@ -63,23 +63,12 @@ type WrapThunkActionCreator<Args, Returns> = (
 ) => (...Args) => Returns;
 
 /**
- * This type takes a Props object and wraps each function in Redux's connect function.
- * It is primarily exported for testing as explicitConnect should do this for us
- * automatically. It leaves normal action creators alone, but with ThunkActions it
- * removes the (Dispatch, GetState) part of a ThunkAction.
- */
-export type WrapDispatchProps<DispatchProps: Object> = $ObjMap<
-  DispatchProps,
-  WrapActionCreator<*> & WrapThunkActionCreator<*, *>
->;
-
-/**
  * This type takes a single action creator, and returns the type as if the dispatch
  * function was wrapped around it. It leaves normal action creators alone, but with
  * ThunkActions it removes the (Dispatch, GetState) part of a ThunkAction.
  */
-export type WrapFunctionInDispatch<Fn: Function> = $Call<
-  WrapActionCreator<*> & WrapThunkActionCreator<*, *>,
+export type WrappedThunk<Fn: Function> = $Call<
+  WrapThunkActionCreator<*, *>,
   Fn
 >;
 
@@ -88,15 +77,15 @@ export type ExplicitConnectOptions<
   StateProps: Object,
   DispatchProps: Object
 > = {
-  mapStateToProps?: MapStateToProps<OwnProps, StateProps>,
-  mapDispatchToProps?: MapDispatchToProps<OwnProps, DispatchProps>,
-  mergeProps?: MergeProps<
-    StateProps,
-    DispatchProps,
-    OwnProps,
-    ConnectedProps<OwnProps, StateProps, DispatchProps>
-  >,
-  options?: ConnectOptions,
+  mapStateToProps: MapStateToProps<OwnProps, StateProps>,
+  mapDispatchToProps: MapDispatchToProps<OwnProps, DispatchProps>,
+  // mergeProps?: MergeProps<
+  //   StateProps,
+  //   DispatchProps,
+  //   OwnProps,
+  //   ConnectedProps<OwnProps, StateProps, DispatchProps>
+  // >,
+  // options?: ConnectOptions,
   component: React.ComponentType<
     ConnectedProps<OwnProps, StateProps, DispatchProps>
   >,
@@ -109,7 +98,7 @@ export type ConnectedProps<
 > = $ReadOnly<{|
   ...OwnProps,
   ...StateProps,
-  ...WrapDispatchProps<DispatchProps>,
+  ...DispatchProps,
 |}>;
 
 export type ConnectedComponent<
@@ -133,20 +122,47 @@ export default function explicitConnect<
   DispatchProps: Object
 >(
   connectOptions: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps>
-): React.ComponentType<OwnProps> {
+): * {
   const {
     mapStateToProps,
     mapDispatchToProps,
-    mergeProps,
-    options,
+    // TODO
+    // mergeProps,
+    // options,
     component,
   } = connectOptions;
 
-  // Opt out of the flow-typed definition of react-redux's connect, and use our own.
-  return (connect: any)(
+  type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
+
+  // prettier-ignore
+  return connect<
+    Props,
+    OwnProps,
+    StateProps,
+    DispatchProps,
+    State,
+    Dispatch
+  >(
     mapStateToProps,
-    mapDispatchToProps,
-    mergeProps,
-    options
+    mapDispatchToProps
   )(component);
+}
+
+export function connect2<OwnProps, StateProps, DispatchProps>(options: {
+  mapStateToProps?:
+    | ((state: State) => StateProps)
+    | ((state: State, ownProps: OwnProps) => StateProps),
+  mapDispatchToProps: *,
+  component: *,
+}): * {
+  type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
+  // prettier-ignore
+  return connect<
+    Props,
+    OwnProps,
+    StateProps,
+    DispatchProps,
+    State,
+    Dispatch
+  >(options.mapStateToProps, options.mapDispatchToProps)(options.component)
 }

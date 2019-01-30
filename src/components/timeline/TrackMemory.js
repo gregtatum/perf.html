@@ -6,7 +6,7 @@
 
 import * as React from 'react';
 import { withSize } from '../shared/WithSize';
-import explicitConnect from '../../utils/connect';
+import { connect2 } from '../../utils/connect';
 import { formatBytes } from '../../utils/format-numbers';
 import {
   getCommittedRange,
@@ -336,8 +336,9 @@ class TrackMemory extends React.PureComponent<Props, State> {
   }
 }
 
-const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
-  mapStateToProps: (state, ownProps) => {
+// prettier-ignore
+const connectedComponent = connect2/*:: <OwnProps, StateProps, DispatchProps> */({
+  mapStateToProps: (state, ownProps: OwnProps) => {
     const { counterIndex } = ownProps;
     const counterSelectors = getCounterSelectors(counterIndex);
     const counter = counterSelectors.getCommittedRangeFilteredCounter(state);
@@ -353,7 +354,8 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
       unfilteredSamplesRange: selectors.unfilteredSamplesRange(state),
     };
   },
+  mapDispatchToProps: {},
   component: TrackMemory,
-};
+});
 
-export default withSize(explicitConnect(options));
+export default withSize(connectedComponent);

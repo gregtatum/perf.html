@@ -7,7 +7,7 @@
 import React, { PureComponent } from 'react';
 import clamp from 'clamp';
 import { withSize } from '../shared/WithSize';
-import explicitConnect from '../../utils/connect';
+import { connect2 } from '../../utils/connect';
 import { getCommittedRange } from '../../selectors/profile';
 import { getThreadSelectors } from '../../selectors/per-thread';
 
@@ -15,10 +15,7 @@ import type { ThreadIndex } from '../../types/profile';
 import type {} from '../../types/markers';
 import type { Milliseconds } from '../../types/units';
 import type { SizeProps } from '../shared/WithSize';
-import type {
-  ExplicitConnectOptions,
-  ConnectedProps,
-} from '../../utils/connect';
+import type { ConnectedProps } from '../../utils/connect';
 
 import './TrackNetwork.css';
 
@@ -133,8 +130,9 @@ class Network extends PureComponent<Props, State> {
   }
 }
 
-const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
-  mapStateToProps: (state, ownProps) => {
+// prettier-ignore
+const connectedComponent = connect2/*:: <OwnProps, StateProps, DispatchProps> */({
+  mapStateToProps: (state, ownProps: OwnProps) => {
     const { threadIndex } = ownProps;
     const selectors = getThreadSelectors(threadIndex);
     const { start, end } = getCommittedRange(state);
@@ -148,7 +146,8 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
         ROW_HEIGHT * clamp(networkTiming.length, MIN_ROW_REPEAT, ROW_REPEAT),
     };
   },
+  mapDispatchToProps: {},
   component: Network,
-};
+});
 
-export default withSize(explicitConnect(options));
+export default withSize(connectedComponent);

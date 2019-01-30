@@ -33,7 +33,7 @@ import type {
 } from '../../types/profile';
 import type { JsTracerTiming } from '../../types/profile-derived';
 import type { Viewport } from '../shared/chart/Viewport';
-import type { WrapFunctionInDispatch } from '../../utils/connect';
+import type { WrappedThunk } from '../../utils/connect';
 
 type OwnProps = {|
   +rangeStart: Milliseconds,
@@ -43,7 +43,7 @@ type OwnProps = {|
   +rowHeight: CssPixels,
   +threadIndex: ThreadIndex,
   +doFadeIn: boolean,
-  +updatePreviewSelection: WrapFunctionInDispatch<
+  +updatePreviewSelection: WrappedThunk<
     typeof updatePreviewSelection
   >,
 |};

@@ -8,7 +8,11 @@ import {
   TIMELINE_MARGIN_LEFT,
   TIMELINE_MARGIN_RIGHT,
 } from '../../app-logic/constants';
-import explicitConnect from '../../utils/connect';
+import {
+  connect2,
+  type ConnectedProps,
+  type WrappedThunk,
+} from '../../utils/connect';
 import StackChartCanvas from './Canvas';
 import {
   getCommittedRange,
@@ -37,10 +41,6 @@ import type {
 } from '../../types/units';
 import type { StackTimingByDepth } from '../../profile-logic/stack-timing';
 import type { PreviewSelection } from '../../types/actions';
-import type {
-  ExplicitConnectOptions,
-  ConnectedProps,
-} from '../../utils/connect';
 
 require('./index.css');
 
@@ -62,7 +62,9 @@ type StateProps = {|
 
 type DispatchProps = {|
   +changeSelectedCallNode: typeof changeSelectedCallNode,
-  +updatePreviewSelection: typeof updatePreviewSelection,
+  +updatePreviewSelection: WrappedThunk<
+    typeof updatePreviewSelection
+  >,
 |};
 
 type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
@@ -159,7 +161,8 @@ class StackChartGraph extends React.PureComponent<Props> {
   }
 }
 
-const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
+// prettier-ignore
+export default connect2/*:: <{||}, StateProps, DispatchProps> */({
   mapStateToProps: state => {
     const stackTimingByDepth = selectedThreadSelectors.getStackTimingByDepth(
       state
@@ -186,8 +189,7 @@ const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
     updatePreviewSelection,
   },
   component: StackChartGraph,
-};
-export default explicitConnect(options);
+});
 
 // This function is given the StackChartCanvas's chartProps.
 function viewportNeedsUpdate(
