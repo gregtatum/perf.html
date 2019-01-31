@@ -150,18 +150,11 @@ export function getJsTracerLeafTiming(
       const currStart = timingRow.start[timingRow.length - 1];
       const currEnd = timingRow.end[timingRow.length - 1];
       const prevEnd = timingRow.end[timingRow.length - 2];
-      if (end < start) {
-        throw new Error('end is less than the start');
-      }
-      if (currEnd < currStart) {
-        throw new Error(
-          `currEnd < currStart "${displayName} - ${currEnd} < ${currStart}"`
-        );
-      }
-      if (currStart < prevEnd) {
-        throw new Error(
-          `currStart < prevEnd "${displayName} - ${currStart} < ${prevEnd}"`
-        );
+      if (end < start || currEnd < currStart || currStart < prevEnd) {
+        // Do not report this timing, it doesn't make sense as being "correct". This
+        // error is most likely due to float precision issues, but could also happen
+        // due to errors in the algoirthm.
+        return;
       }
     }
 
