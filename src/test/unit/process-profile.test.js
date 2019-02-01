@@ -15,6 +15,7 @@ import {
   createGeckoCounter,
 } from '../fixtures/profiles/gecko-profile';
 import { ensureExists } from '../../utils/flow';
+import type { PII } from '../../types/profile-derived';
 
 describe('extract functions and resource from location strings', function() {
   // These location strings are turned into the proper funcs.
@@ -256,7 +257,15 @@ describe('serializeProfile', function() {
         expect(page.url.includes('http')).toBe(true);
       }
 
-      const serialized = serializeProfile(profile, false);
+      const PIIToRemove: PII = {
+        hiddenThreads: null,
+        screenshots: false,
+        networkUrls: true,
+        allUrls: false,
+        fullTimeRange: null,
+        extensions: false,
+      };
+      const serialized = serializeProfile(profile, PIIToRemove);
       const roundtrip = await unserializeProfileOfArbitraryFormat(serialized);
 
       for (const page of ensureExists(roundtrip.pages)) {
@@ -266,7 +275,15 @@ describe('serializeProfile', function() {
 
     it('should remove all URLs of network markers', async function() {
       const profile = processProfile(createGeckoProfile());
-      const serialized = serializeProfile(profile, false);
+      const PIIToRemove: PII = {
+        hiddenThreads: null,
+        screenshots: false,
+        networkUrls: true,
+        allUrls: false,
+        fullTimeRange: null,
+        extensions: false,
+      };
+      const serialized = serializeProfile(profile, PIIToRemove);
       const roundtrip = await unserializeProfileOfArbitraryFormat(serialized);
 
       for (const thread of roundtrip.threads) {
