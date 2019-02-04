@@ -8,7 +8,7 @@ import type { Profile } from '../../types/profile';
 
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent, queryByTestId } from 'react-testing-library';
+import { render, fireEvent } from 'react-testing-library';
 import { oneLine } from 'common-tags';
 
 import { changeTimelineType } from '../../actions/profile-view';
@@ -193,8 +193,8 @@ describe('timeline/TrackThread', function() {
 
   it('does not add disk io markers if none are present', function() {
     const noMarkers = [];
-    const { container } = setup(getMarkersProfile(noMarkers));
-    expect(queryByTestId(container, 'TimelineMarkersDiskIo')).toBeFalsy();
+    const { queryByTestId } = setup(getMarkersProfile(noMarkers));
+    expect(queryByTestId('TimelineMarkersDiskIo')).toBeFalsy();
   });
 
   it('adds disk io markers if they are present', function() {
@@ -211,7 +211,7 @@ describe('timeline/TrackThread', function() {
         },
       ],
     ];
-    const { container } = setup(getMarkersProfile(diskIoMarker));
-    expect(queryByTestId(container, 'TimelineMarkersDiskIo')).toBeTruthy();
+    const { getByTestId } = setup(getMarkersProfile(diskIoMarker));
+    expect(getByTestId('TimelineMarkersDiskIo')).toBeTruthy();
   });
 });
