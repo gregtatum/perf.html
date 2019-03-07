@@ -6,7 +6,7 @@
 
 import * as React from 'react';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
-import explicitConnect from '../../utils/connect';
+import explicitConnect from '../../../utils/connect';
 import classNames from 'classnames';
 import {
   getProfile,
@@ -14,35 +14,40 @@ import {
   getProfileSharingStatus,
   getGlobalTracks,
   getCommittedRange,
-} from '../../selectors/profile';
+} from '../../../selectors/profile';
 import {
   getDataSource,
   getUrlPredictor,
   getHiddenGlobalTracks,
-} from '../../selectors/url-state';
-import actions from '../../actions';
-import { compress } from '../../utils/gz';
-import { uploadBinaryProfileData } from '../../profile-logic/profile-store';
-import ArrowPanel from '../shared/ArrowPanel';
-import ButtonWithPanel from '../shared/ButtonWithPanel';
-import { shortenUrl } from '../../utils/shorten-url';
-import { serializeProfile } from '../../profile-logic/process-profile';
-import prettyBytes from '../../utils/pretty-bytes';
-import sha1 from '../../utils/sha1';
-import { sendAnalytics } from '../../utils/analytics';
+} from '../../../selectors/url-state';
+import actions from '../../../actions';
+import { compress } from '../../../utils/gz';
+import { uploadBinaryProfileData } from '../../../profile-logic/profile-store';
+import ArrowPanel from '../../shared/ArrowPanel';
+import ButtonWithPanel from '../../shared/ButtonWithPanel';
+import { shortenUrl } from '../../../utils/shorten-url';
+import { serializeProfile } from '../../../profile-logic/process-profile';
+import prettyBytes from '../../../utils/pretty-bytes';
+import sha1 from '../../../utils/sha1';
+import { sendAnalytics } from '../../../utils/analytics';
 import url from 'url';
+import { MenuButtonsShareProfile } from './ShareProfile';
 
-import type { StartEndRange } from '../../types/units';
-import type { Profile, ProfileMeta } from '../../types/profile';
-import type { TrackIndex, GlobalTrack, RemoveProfileInformation } from '../../types/profile-derived';
-import type { Action, DataSource } from '../../types/actions';
-import type { ProfileSharingStatus } from '../../types/state';
+import type { StartEndRange } from '../../../types/units';
+import type { Profile, ProfileMeta } from '../../../types/profile';
+import type {
+  TrackIndex,
+  GlobalTrack,
+  RemoveProfileInformation,
+} from '../../../types/profile-derived';
+import type { Action, DataSource } from '../../../types/actions';
+import type { ProfileSharingStatus } from '../../../types/state';
 import type {
   ExplicitConnectOptions,
   ConnectedProps,
-} from '../../utils/connect';
+} from '../../../utils/connect';
 
-require('./MenuButtons.css');
+require('./index.css');
 
 const UploadingStatus = ({ progress }: { progress: number }) => (
   <div className="menuButtonsUploadingButton">
@@ -54,158 +59,6 @@ const UploadingStatus = ({ progress }: { progress: number }) => (
       <div className="menuButtonsUploadingButtonLabel">Uploading...</div>
     </div>
   </div>
-);
-
-type ProfileSharingButtonProps = {|
-  +buttonClassName: string,
-  +shareLabel: string,
-  +okButtonClickEvent: () => mixed,
-  +panelOpenEvent?: () => void,
-  +PIIListToBeRemoved: Set<string>,
-  +PIICheckboxesOnChange?: (SyntheticEvent<HTMLInputElement>) => void,
-  // +checkboxDisabled: boolean,
-|};
-
-const ProfileSharingButton = ({
-  buttonClassName,
-  shareLabel,
-  okButtonClickEvent,
-  panelOpenEvent,
-  PIIListToBeRemoved,
-  PIICheckboxesOnChange,
-}: // checkboxDisabled,
-ProfileSharingButtonProps) => (
-  <ButtonWithPanel
-    className={buttonClassName}
-    label={shareLabel}
-    panel={
-      <ArrowPanel
-        className="menuButtonsPrivacyPanel"
-        // title="Upload Profile – Privacy Notice"
-        // okButtonText="Share"
-        // cancelButtonText="Cancel"
-        // onOkButtonClick={okButtonClickEvent}
-        onOpen={panelOpenEvent ? panelOpenEvent : undefined}
-      >
-        <div className="menuButtonsPrivacyContent">
-          <div className="menuButtonsPrivacyIcon" />
-          <p className="menuButtonsPrivacyInfoDescription">
-            You’re about to share your profile potentially where others have
-            public access to it. By default, the profile is stripped of much of
-            the personally identifiable information.
-          </p>
-          <details className="menuButtonsPrivacyData">
-            <summary className="menuButtonsPrivacyDataSummary">
-              Select more data to include
-            </summary>
-            <label className="menuButtonsPrivacyDataLabel menuButtonsPrivacyDataLabelAll">
-              <input
-                className="menuButtonsPrivacyDataLabelAllInput"
-                type="checkbox"
-                value="all"
-              />
-              Include all information
-            </label>
-            <div className="menuButtonsPrivacyDataColumns">
-              <div className="menuButtonsPrivacyDataColumn">
-                <label className="menuButtonsPrivacyDataLabel">
-                  <input
-                    type="checkbox"
-                    checked={!PIIListToBeRemoved.has('hiddenThreads')}
-                    // eslint-disable-next-line react/jsx-no-bind
-                    onChange={event =>
-                      PIICheckboxesOnChange(event, 'hiddenThreads')
-                    }
-                  />
-                  Include hidden threads
-                </label>
-                <label className="menuButtonsPrivacyDataLabel">
-                  <input
-                    type="checkbox"
-                    checked={!PIIListToBeRemoved.has('timeRange')}
-                    // eslint-disable-next-line react/jsx-no-bind
-                    onChange={event =>
-                      PIICheckboxesOnChange(event, 'timeRange')
-                    }
-                  />
-                  Include full time range
-                </label>
-                <label className="menuButtonsPrivacyDataLabel">
-                  <input
-                    type="checkbox"
-                    checked={!PIIListToBeRemoved.has('screenshots')}
-                    // eslint-disable-next-line react/jsx-no-bind
-                    onChange={event =>
-                      PIICheckboxesOnChange(event, 'screenshots')
-                    }
-                  />
-                  Include screenshots
-                </label>
-              </div>
-              <div className="menuButtonsPrivacyDataColumn">
-                <label className="menuButtonsPrivacyDataLabel">
-                  <input
-                    type="checkbox"
-                    checked={!PIIListToBeRemoved.has('networkUrls')}
-                    // eslint-disable-next-line react/jsx-no-bind
-                    onChange={event =>
-                      PIICheckboxesOnChange(event, 'networkUrls')
-                    }
-                  />
-                  Include network traffic URLs
-                </label>
-                <label className="menuButtonsPrivacyDataLabel">
-                  <input
-                    type="checkbox"
-                    checked={!PIIListToBeRemoved.has('allUrls')}
-                    // eslint-disable-next-line react/jsx-no-bind
-                    onChange={event => PIICheckboxesOnChange(event, 'allUrls')}
-                  />
-                  Include All profile URLs
-                </label>
-                <label className="menuButtonsPrivacyDataLabel">
-                  <input
-                    type="checkbox"
-                    checked={!PIIListToBeRemoved.has('extensions')}
-                    // eslint-disable-next-line react/jsx-no-bind
-                    onChange={event =>
-                      PIICheckboxesOnChange(event, 'extensions')
-                    }
-                  />
-                  Include Extensions
-                </label>
-              </div>
-            </div>
-          </details>
-          <div className="menuButtonsPrivacyButtons">
-            <div
-              aria-role="button"
-              className="menuButtonsPrivacyButton menuButtonsPrivacyButtonsUpload"
-              // eslint-disable-next-line react/jsx-no-bind
-              onClick={() => okButtonClickEvent()}
-            >
-              <span className="menuButtonsPrivacyButtonsSvg menuButtonsPrivacyButtonsSvgUpload" />
-              Upload
-            </div>
-            <div
-              aria-role="button"
-              className="menuButtonsPrivacyButton menuButtonsPrivacyButtonsDownload"
-            >
-              <span className="menuButtonsPrivacyButtonsSvg menuButtonsPrivacyButtonsSvgDownload" />
-              Download
-            </div>
-            <div
-              aria-role="button"
-              className="menuButtonsPrivacyButton menuButtonsPrivacyButtonsCancel"
-            >
-              <span className="menuButtonsPrivacyButtonsSvg menuButtonsPrivacyButtonsSvgCancel" />
-              Cancel
-            </div>
-          </div>
-        </div>
-      </ArrowPanel>
-    }
-  />
 );
 
 type ProfileMetaInfoButtonProps = {
@@ -519,7 +372,9 @@ class ProfileSharingCompositeButton extends React.PureComponent<
 
       const piiList = this.state.PIIListToBeRemoved;
       const piiToBeRemoved: RemoveProfileInformation = {
-        shouldRemoveThreads: piiList.has('hiddenThreads') ? globalHiddenThreads : [],
+        shouldRemoveThreads: piiList.has('hiddenThreads')
+          ? globalHiddenThreads
+          : [],
         shouldRemoveThreadsWithScreenshots: piiList.has('screenshots')
           ? (globalTracks.filter(track => track.type === 'process'): any).map(
               track => track.mainThreadIndex
@@ -694,13 +549,10 @@ class ProfileSharingCompositeButton extends React.PureComponent<
         {/* the buttons are conditionally rendered (depending on the state) */}
         {state === 'local' && (
           <AnimateUpTransition>
-            <ProfileSharingButton
-              buttonClassName="menuButtonsShareButton"
-              shareLabel="Share…"
+            <MenuButtonsShareProfile
               okButtonClickEvent={this._attemptToShare}
               PIIListToBeRemoved={this.state.PIIListToBeRemoved}
               PIICheckboxesOnChange={this._onChangePIICheckbox}
-              // checkboxDisabled={false}
             />
           </AnimateUpTransition>
         )}
@@ -763,7 +615,7 @@ class ProfileSharingCompositeButton extends React.PureComponent<
 
         {isSecondaryShareButtonVisible && (
           <AnimateUpTransition>
-            <ProfileSharingButton
+            <MenuButtonsShareProfile
               buttonClassName="menuButtonsSecondaryShareButton"
               shareLabel={secondaryShareLabel}
               okButtonClickEvent={this._attemptToSecondaryShare}
