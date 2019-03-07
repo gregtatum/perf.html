@@ -33,6 +33,11 @@ export function profilePublished(hash: string): Action {
   };
 }
 
+/**
+ * This function is called when hidden global tracks are being removed.
+ * We adjust the old track indexes to point to correct ones and remove the
+ * removed ones.
+ */
 export function hiddenTracksRemoved(hiddenTracks: Set<TrackIndex>): Action {
   return {
     type: 'HIDDEN_GLOBAL_TRACKS_REMOVED',
@@ -40,6 +45,11 @@ export function hiddenTracksRemoved(hiddenTracks: Set<TrackIndex>): Action {
   };
 }
 
+/**
+ * This function is called when we remove the timeline outside of the
+ * committed range. Since new full range is the current committed range now,
+ * we delete all the committed ranges.
+ */
 export function fullTimeRangeRemoved(): Action {
   return {
     type: 'FULL_TIME_RANGE_REMOVED',

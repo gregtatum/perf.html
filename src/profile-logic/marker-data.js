@@ -379,11 +379,6 @@ export function deriveMarkersFromRawMarkerTable(
 /**
  * This function filters markers from a thread's raw marker table using the
  * range specified as parameter.
- * It especially takes care of the markers that need a special handling because
- * of how the rest of the code handles them.
- *
- * There's more explanations about this special handling in the switch block
- * below.
  */
 export function filterRawMarkerTableToRange(
   markers: RawMarkerTable,
@@ -392,7 +387,7 @@ export function filterRawMarkerTableToRange(
 ): RawMarkerTable {
   const newMarkerTable = getEmptyRawMarkerTable();
 
-  const filteredMarkerIndexesIter = filterRawMarkerTableIndexesToRange(
+  const filteredMarkerIndexesIter = filterRawMarkerTableToRangeIndexGenerator(
     markers,
     rangeStart,
     rangeEnd
@@ -407,7 +402,21 @@ export function filterRawMarkerTableToRange(
   return newMarkerTable;
 }
 
-export function* filterRawMarkerTableIndexesToRange(
+/**
+ * This function filters marker indexes from a thread's raw marker table using
+ * the range specified as parameter.
+ * It especially takes care of the markers that need a special handling because
+ * of how the rest of the code handles them.
+ *
+ * There's more explanations about this special handling in the switch block
+ * below.
+ *
+ * This is a generator function and it returns a number every step. You can
+ * use that function inside a for..of function or use it with `.next()` function.
+ * The reason to use generator function is avoiding creating an intermediate
+ * markers array on some consumers.
+ */
+export function* filterRawMarkerTableToRangeIndexGenerator(
   markers: RawMarkerTable,
   rangeStart: number,
   rangeEnd: number
