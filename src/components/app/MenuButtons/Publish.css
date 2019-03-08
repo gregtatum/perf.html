@@ -121,7 +121,7 @@
 
 .menuButtonsPrivacyPanel,
 .menuButtonsUploadErrorPanel {
-  --width: 280px;
+  --width: 500px;
 }
 
 .menuButtonsPermalinkTextField {
@@ -141,4 +141,109 @@
   position: relative;
   bottom: 1px;
   vertical-align: middle;
+}
+
+.menuButtonsProfileDownloadPanel {
+  --offset-from-right: 25px;
+  --width: 30em;
+}
+
+.menuButtonsDownloadLink {
+  white-space: nowrap;
+}
+
+.menuButtonsPrivacyContent {
+  position: relative;
+  padding: 10px 0 10px 60px;
+}
+
+.menuButtonsPrivacyIcon {
+  position: absolute;
+  top: 32px;
+  left: 5px;
+  width: 44px;
+  height: 44px;
+  background: url(../../../../res/img/svg/info.svg) center center no-repeat;
+}
+
+.menuButtonsPrivacyInfoDescription {
+  flex: 1;
+  margin-bottom: 1em;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.menuButtonsPrivacyDataChoices {
+  margin-left: 35px;
+}
+
+.menuButtonsPrivacyDataChoicesLabel {
+  display: flex;
+  margin: 4px 0;
+}
+
+.menuButtonsPrivacyDataChoicesLabel.disabled {
+  opacity: 0.4;
+}
+
+.menuButtonsPrivacyDataSummary {
+  margin: 20px 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.menuButtonsPrivacyDataLabel {
+  display: block;
+  line-height: 2.3;
+}
+
+.menuButtonsPrivacyButtons {
+  display: flex;
+  justify-content: right;
+  margin-top: 20px;
+}
+
+.menuButtonsPrivacyButton {
+  display: inline-flex;
+  min-width: 132px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 8px;
+  font-size: 13px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.menuButtonsPrivacyButtonsSvg {
+  position: relative;
+  top: 4px;
+  display: inline-block;
+  margin-top: -6px;
+  margin-right: 5px;
+}
+
+.menuButtonsPrivacyButtonsSvgUpload {
+  width: 20px;
+  height: 20px;
+  background: url(../../../../res/img/svg/upload.svg) center center no-repeat;
+}
+
+.menuButtonsPrivacyButtonsSvgDownload {
+  width: 20px;
+  height: 20px;
+  background: url(../../../../res/img/svg/download.svg) center center no-repeat;
+}
+
+@keyframes menuButtonsDownloadButtonFadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.menuButtonsDownloadButton {
+  animation-duration: 60ms;
+  animation-name: menuButtonsDownloadButtonFadeIn;
 }
