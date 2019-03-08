@@ -5,9 +5,11 @@
 // @flow
 
 import * as React from 'react';
+import memoize from 'memoize-immutable';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import classNames from 'classnames';
 import actions from '../../../actions';
+import { toggleCheckedSharingOptions } from '../../../actions/publish';
 import { compress } from '../../../utils/gz';
 import { uploadBinaryProfileData } from '../../../profile-logic/profile-store';
 import ArrowPanel from '../../shared/ArrowPanel';
@@ -17,10 +19,25 @@ import { serializeProfile } from '../../../profile-logic/process-profile';
 import sha1 from '../../../utils/sha1';
 import { sendAnalytics } from '../../../utils/analytics';
 import url from 'url';
+import { getProfile, getProfileRootRange } from '../../../selectors/profile';
+import {
+  getCheckedSharingOptions,
+  getDownloadSize,
+} from '../../../selectors/publish';
+
+import explicitConnect, {
+  type ExplicitConnectOptions,
+  type ConnectedProps,
+} from '../../../utils/connect';
 
 import type { Profile } from '../../../types/profile';
-import type { Action, DataSource } from '../../../types/actions';
+import type {
+  Action,
+  DataSource,
+  CheckedSharingOptions,
+} from '../../../types/actions';
 import type { ProfileSharingStatus } from '../../../types/state';
+import type { StartEndRange } from '../../../types/units';
 
 require('./ProfileSharing.css');
 
@@ -33,13 +50,14 @@ type Props = {|
   +setProfileSharingStatus: typeof actions.setProfileSharingStatus,
 |};
 
+type UploadState = 'local' | 'uploading' | 'public' | 'error';
+
 type State = {
-  state: string,
+  state: UploadState,
   uploadProgress: number,
   error: Error | null,
   fullUrl: string,
   shortUrl: string,
-  shareNetworkUrls: boolean,
 };
 
 export class MenuButtonsProfileSharing extends React.PureComponent<
@@ -54,7 +72,6 @@ export class MenuButtonsProfileSharing extends React.PureComponent<
   _takePermalinkTextFieldRef = (elem: any) => {
     this._permalinkTextField = elem;
   };
-  _attemptToSecondaryShare = () => this._attemptToShare(true);
 
   constructor(props: Props) {
     super(props);
@@ -65,7 +82,6 @@ export class MenuButtonsProfileSharing extends React.PureComponent<
       error: null,
       fullUrl: window.location.href,
       shortUrl: window.location.href,
-      shareNetworkUrls: false,
     };
   }
 
@@ -123,14 +139,7 @@ export class MenuButtonsProfileSharing extends React.PureComponent<
    * them. We check the current state before attempting to share depending
    * on that flag.
    */
-  _attemptToShare = async (isSecondaryShare: boolean = false) => {
-    if (
-      ((!isSecondaryShare && this.state.state !== 'local') ||
-        (isSecondaryShare && this.state.state !== 'public')) &&
-      this.state.state !== 'error'
-    ) {
-      return;
-    }
+  _attemptToShare = async () => {
     this._notifyAnalytics();
 
     const { profile, predictUrl, profileSharingStatus } = this.props;
@@ -140,17 +149,14 @@ export class MenuButtonsProfileSharing extends React.PureComponent<
         throw new Error('profile is null');
       }
 
-      const jsonString = serializeProfile(profile, this.state.shareNetworkUrls);
+      const jsonString = serializeProfile(profile);
       if (!jsonString) {
         throw new Error('profile serialization failed');
       }
 
       const newProfileSharingStatus = {
-        sharedWithUrls:
-          this.state.shareNetworkUrls || profileSharingStatus.sharedWithUrls,
-        sharedWithoutUrls:
-          !this.state.shareNetworkUrls ||
-          profileSharingStatus.sharedWithoutUrls,
+        sharedWithUrls: profileSharingStatus.sharedWithUrls,
+        sharedWithoutUrls: profileSharingStatus.sharedWithoutUrls,
       };
       this.props.setProfileSharingStatus(newProfileSharingStatus);
       this.setState({ state: 'uploading', uploadProgress: 0 });
@@ -225,45 +231,8 @@ export class MenuButtonsProfileSharing extends React.PureComponent<
     }
   };
 
-  _onChangeShareNetworkUrls = (event: SyntheticEvent<HTMLInputElement>) => {
-    this.setState({
-      shareNetworkUrls: event.currentTarget.checked,
-    });
-  };
-
-  _onSecondarySharePanelOpen = () => {
-    const { profileSharingStatus } = this.props;
-    // In the secondary sharing panel, we disable the URL sharing checkbox and
-    // force it to the value we haven't used yet.
-    // Note that we can't have both sharedWithUrls and sharedWithoutUrls set to
-    // true here because we don't show the secondary panel when that's the case.
-    this.setState({
-      shareNetworkUrls: !profileSharingStatus.sharedWithUrls,
-    });
-  };
-
   render() {
     const { state, uploadProgress, error, shortUrl } = this.state;
-    const { profile, profileSharingStatus } = this.props;
-
-    // We don't show the secondary button if any of these conditions is true:
-    // 1. If we loaded a profile from a file or the public store that got its network URLs removed before.
-    //    Note that profiles captured from the add-on have this property set to false.
-    // 2. If it's been shared in both modes already; in that case we show no button at all.
-    const disableSecondaryShareProfile =
-      profile.meta.networkURLsRemoved ||
-      (profileSharingStatus.sharedWithUrls &&
-        profileSharingStatus.sharedWithoutUrls);
-
-    // Additionally we show it only when the profile is already shared
-    // (either loaded from a public store or previously shared), because otherwise
-    // we show the primary button (or errors).
-    const isSecondaryShareButtonVisible =
-      state === 'public' && !disableSecondaryShareProfile;
-
-    const secondaryShareLabel = profileSharingStatus.sharedWithUrls
-      ? 'Share without URLs'
-      : 'Share with URLs';
 
     return (
       <TransitionGroup
@@ -272,7 +241,6 @@ export class MenuButtonsProfileSharing extends React.PureComponent<
           currentButtonIsUploadingButton: state === 'uploading',
           currentButtonIsPermalinkButton: state === 'public',
           currentButtonIsUploadErrorButton: state === 'error',
-          currentButtonIsSecondaryShareButton: isSecondaryShareButtonVisible,
         })}
         data-testid="menuButtonsCompositeButtonContainer"
       >
@@ -283,8 +251,6 @@ export class MenuButtonsProfileSharing extends React.PureComponent<
               buttonClassName="menuButtonsShareButton"
               shareLabel="Share…"
               okButtonClickEvent={this._attemptToShare}
-              shareNetworkUrlCheckboxChecked={this.state.shareNetworkUrls}
-              shareNetworkUrlCheckboxOnChange={this._onChangeShareNetworkUrls}
               checkboxDisabled={false}
             />
           </AnimateUpTransition>
@@ -345,47 +311,10 @@ export class MenuButtonsProfileSharing extends React.PureComponent<
             />
           </AnimateUpTransition>
         )}
-
-        {isSecondaryShareButtonVisible && (
-          <AnimateUpTransition>
-            <ProfileSharingButton
-              buttonClassName="menuButtonsSecondaryShareButton"
-              shareLabel={secondaryShareLabel}
-              okButtonClickEvent={this._attemptToSecondaryShare}
-              panelOpenEvent={this._onSecondarySharePanelOpen}
-              shareNetworkUrlCheckboxChecked={this.state.shareNetworkUrls}
-              checkboxDisabled={true}
-            />
-          </AnimateUpTransition>
-        )}
       </TransitionGroup>
     );
   }
 }
-
-const PrivacyNotice = () => (
-  <section className="privacyNotice">
-    <p>
-      You’re about to upload your profile publicly where anyone will be able to
-      access it. To better diagnose performance problems profiles include the
-      following information:
-    </p>
-    <ul>
-      <li>The URLs of all painted tabs, and running scripts.</li>
-      <li>The metadata of all your add-ons to identify slow add-ons.</li>
-      <li>Firefox build and runtime configuration.</li>
-    </ul>
-    <p>
-      To view all the information you can download the full profile to a file
-      and open the json structure with a text editor.
-    </p>
-    <p>
-      By default, the URLs of all network requests will be removed while sharing
-      the profile but keeping the URLs may help to identify the problems. Please
-      select the checkbox below to share the URLs of the network requests:
-    </p>
-  </section>
-);
 
 const UploadingStatus = ({ progress }: { progress: number }) => (
   <div className="menuButtonsUploadingButton">
@@ -408,51 +337,220 @@ const AnimateUpTransition = (props: {}) => (
   />
 );
 
-type ProfileSharingButtonProps = {|
+type ProfileSharingButtonOwnProps = {|
   +buttonClassName: string,
   +shareLabel: string,
   +okButtonClickEvent: () => mixed,
   +panelOpenEvent?: () => void,
-  +shareNetworkUrlCheckboxChecked: boolean,
-  +shareNetworkUrlCheckboxOnChange?: (SyntheticEvent<HTMLInputElement>) => void,
   +checkboxDisabled: boolean,
 |};
 
-const ProfileSharingButton = ({
-  buttonClassName,
-  shareLabel,
-  okButtonClickEvent,
-  panelOpenEvent,
-  shareNetworkUrlCheckboxChecked,
-  shareNetworkUrlCheckboxOnChange,
-  checkboxDisabled,
-}: ProfileSharingButtonProps) => (
-  <ButtonWithPanel
-    className={buttonClassName}
-    label={shareLabel}
-    panel={
-      <ArrowPanel
-        className="menuButtonsPrivacyPanel"
-        title="Upload Profile – Privacy Notice"
-        okButtonText="Share"
-        cancelButtonText="Cancel"
-        onOkButtonClick={okButtonClickEvent}
-        onOpen={panelOpenEvent ? panelOpenEvent : undefined}
+type ProfileSharingButtonStateProps = {|
+  +profile: Profile,
+  +rootRange: StartEndRange,
+  +checkedSharingOptions: CheckedSharingOptions,
+  +downloadSizePromise: Promise<string>,
+|};
+
+type ProfileSharingButtonDispatchProps = {|
+  toggleCheckedSharingOptions: typeof toggleCheckedSharingOptions,
+|};
+
+type ProfileSharingButtonProps = ConnectedProps<
+  ProfileSharingButtonOwnProps,
+  ProfileSharingButtonStateProps,
+  ProfileSharingButtonDispatchProps
+>;
+
+class ProfileSharingButtonImpl extends React.PureComponent<
+  ProfileSharingButtonProps
+> {
+  _toggles: { [$Keys<CheckedSharingOptions>]: () => mixed } = {
+    isFiltering: () => this.props.toggleCheckedSharingOptions('isFiltering'),
+    hiddenThreads: () =>
+      this.props.toggleCheckedSharingOptions('hiddenThreads'),
+    timeRange: () => this.props.toggleCheckedSharingOptions('timeRange'),
+    screenshots: () => this.props.toggleCheckedSharingOptions('screenshots'),
+    urls: () => this.props.toggleCheckedSharingOptions('urls'),
+    extension: () => this.props.toggleCheckedSharingOptions('extension'),
+  };
+
+  _renderCheckbox(slug: $Keys<CheckedSharingOptions>, label: string) {
+    const { checkedSharingOptions } = this.props;
+    const isDisabled = !checkedSharingOptions.isFiltering;
+    const toggle = this._toggles[slug];
+    return (
+      <label
+        className={classNames({
+          'photon-label': true,
+          menuButtonsPrivacyDataChoicesLabel: true,
+          disabled: isDisabled,
+        })}
       >
-        <PrivacyNotice />
-        <p className="menuButtonsShareNetworkUrlsContainer">
-          <label>
-            <input
-              type="checkbox"
-              className="menuButtonsShareNetworkUrlsCheckbox"
-              checked={shareNetworkUrlCheckboxChecked}
-              onChange={shareNetworkUrlCheckboxOnChange}
-              disabled={checkboxDisabled}
-            />
-            Share the URLs of all network requests
-          </label>
-        </p>
-      </ArrowPanel>
-    }
-  />
-);
+        <input
+          type="checkbox"
+          className="photon-checkbox"
+          name={slug}
+          disabled={isDisabled}
+          onChange={toggle}
+          checked={checkedSharingOptions[slug]}
+        />
+        {label}
+      </label>
+    );
+  }
+
+  render() {
+    const {
+      buttonClassName,
+      shareLabel,
+      panelOpenEvent,
+      checkedSharingOptions,
+      downloadSizePromise,
+    } = this.props;
+
+    return (
+      <ButtonWithPanel
+        className={buttonClassName}
+        label={shareLabel}
+        panel={
+          <ArrowPanel
+            className="menuButtonsPrivacyPanel"
+            onOpen={panelOpenEvent ? panelOpenEvent : undefined}
+          >
+            <div className="menuButtonsPrivacyContent">
+              <div className="menuButtonsPrivacyIcon" />
+              <p className="menuButtonsPrivacyInfoDescription">
+                You’re about to share your profile potentially where others have
+                public access to it. By default, the profile is stripped of much
+                of the personally identifiable information.
+              </p>
+              <details className="menuButtonsPrivacyData">
+                <summary className="menuButtonsPrivacyDataSummary">
+                  Adjust how much is shared{' '}
+                  <DownloadSize downloadSizePromise={downloadSizePromise} />
+                </summary>
+                <label className="photon-label">
+                  <input
+                    className="photon-checkbox"
+                    type="checkbox"
+                    name="isFiltering"
+                    onChange={this._toggles.isFiltering}
+                    checked={checkedSharingOptions.isFiltering}
+                  />
+                  Filter out potentially identifying information
+                </label>
+                <div className="menuButtonsPrivacyDataChoices">
+                  {this._renderCheckbox(
+                    'hiddenThreads',
+                    'Remove hidden threads'
+                  )}
+                  {this._renderCheckbox(
+                    'timeRange',
+                    'Remove information out of the time range'
+                  )}
+                  {this._renderCheckbox('screenshots', 'Remove screenshots')}
+                  {this._renderCheckbox('urls', 'Remove all URLs')}
+                  {this._renderCheckbox('extension', 'Remove extensions')}
+                </div>
+              </details>
+              <div className="menuButtonsPrivacyButtons">
+                <button
+                  type="button"
+                  className="photon-button menuButtonsPrivacyButton menuButtonsPrivacyButtonsDownload"
+                >
+                  <span className="menuButtonsPrivacyButtonsSvg menuButtonsPrivacyButtonsSvgDownload" />
+                  Download
+                </button>
+                <button
+                  type="button"
+                  className="photon-button photon-button-primary menuButtonsPrivacyButton menuButtonsPrivacyButtonsUpload"
+                >
+                  <span className="menuButtonsPrivacyButtonsSvg menuButtonsPrivacyButtonsSvgUpload" />
+                  Publish
+                </button>
+              </div>
+            </div>
+          </ArrowPanel>
+        }
+      />
+    );
+  }
+}
+
+const profileSharingOptions: ExplicitConnectOptions<
+  ProfileSharingButtonOwnProps,
+  ProfileSharingButtonStateProps,
+  ProfileSharingButtonDispatchProps
+> = {
+  mapStateToProps: state => ({
+    profile: getProfile(state),
+    rootRange: getProfileRootRange(state),
+    checkedSharingOptions: getCheckedSharingOptions(state),
+    downloadSizePromise: getDownloadSize(state),
+  }),
+  mapDispatchToProps: { toggleCheckedSharingOptions },
+  component: ProfileSharingButtonImpl,
+};
+export const ProfileSharingButton = explicitConnect(profileSharingOptions);
+
+type DownloadSizeProps = {| +downloadSizePromise: Promise<string> |};
+
+class DownloadSize extends React.PureComponent<DownloadSizeProps> {
+  // Ok, this is a little odd, but there is no easy way to generate a React
+  // key off of the size promise, so instead, use a memoized function to
+  // increment a key generation value to generate a unique ID for each WeakMap
+  // we have seen.
+  //
+  // See the following for more information on keyed components:
+  // https://reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key
+  _keyGeneration = 0;
+  _objectToNumberedKey = (_obj: Object): number => this._keyGeneration++;
+  _getDownloadSizeKey = memoize(this._objectToNumberedKey, {
+    cache: new WeakMap(),
+  });
+
+  render() {
+    const { downloadSizePromise } = this.props;
+    const key = this._getDownloadSizeKey(downloadSizePromise);
+    return (
+      <DownloadSizeKeyed key={key} downloadSizePromise={downloadSizePromise} />
+    );
+  }
+}
+
+/**
+ * This class should be correctly keyed so that it never updates.
+ */
+class DownloadSizeKeyed extends React.PureComponent<
+  DownloadSizeProps,
+  {| downloadSize: string | null, isDestroyed: boolean |}
+> {
+  state = { downloadSize: null, isDestroyed: false };
+
+  componentDidMount() {
+    const { downloadSizePromise } = this.props;
+    downloadSizePromise.then(downloadSize => {
+      if (!this.state.isDestroyed) {
+        this.setState({ downloadSize });
+      }
+    });
+  }
+
+  componentDidUpdate() {
+    console.warn(
+      'The DownloadSizeKeyed component should never update, the key generated was not correct.'
+    );
+  }
+
+  componentWillUnmount() {
+    this.setState({ isDestroyed: true });
+  }
+
+  render() {
+    const { downloadSize } = this.state;
+    return downloadSize === null ? null : (
+      <span className="menuButtonsDownloadButton">({downloadSize})</span>
+    );
+  }
+}

@@ -1068,25 +1068,25 @@ export function processProfile(
  */
 export function serializeProfile(
   profile: Profile,
-  PIIToBeRemoved?: RemoveProfileInformation
+  PIIToBeRemoved?: RemoveProfileInformation | null
 ): string {
+  console.log(`!!! PIIToBeRemoved`, PIIToBeRemoved);
   // stringTable -> stringArray
   let urlCounter = 0;
   const removedThreadIndexes = [];
   const newProfile = Object.assign({}, profile, {
     meta: {
       ...profile.meta,
-      networkURLsRemoved:
-        PIIToBeRemoved !== undefined && PIIToBeRemoved.shouldRemoveNetworkUrls,
+      networkURLsRemoved: PIIToBeRemoved
+        ? PIIToBeRemoved.shouldRemoveNetworkUrls
+        : false,
       extensions:
-        PIIToBeRemoved !== undefined && PIIToBeRemoved.shouldRemoveExtensions
+        PIIToBeRemoved && PIIToBeRemoved.shouldRemoveExtensions
           ? getEmptyExtensions()
           : profile.meta.extensions,
     },
     pages:
-      PIIToBeRemoved !== undefined &&
-      PIIToBeRemoved.shouldRemoveNetworkUrls &&
-      profile.pages
+      PIIToBeRemoved && PIIToBeRemoved.shouldRemoveNetworkUrls && profile.pages
         ? profile.pages.map(page =>
             Object.assign({}, page, {
               url: 'Page #' + urlCounter++,
@@ -1100,7 +1100,7 @@ export function serializeProfile(
         let newThread: any = Object.assign({}, thread);
         delete newThread.stringTable;
 
-        if (PIIToBeRemoved !== undefined) {
+        if (PIIToBeRemoved) {
           newThread = removeThreadPII(
             newThread,
             threadIndex,

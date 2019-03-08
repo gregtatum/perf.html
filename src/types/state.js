@@ -12,6 +12,7 @@ import type {
   RequestedLib,
   TrackReference,
   TimelineType,
+  CheckedSharingOptions,
 } from './actions';
 import type { TabSlug } from '../app-logic/tabs-handling';
 import type { StartEndRange } from './units';
@@ -124,6 +125,10 @@ export type AppState = {|
   +lastVisibleThreadTabSlug: TabSlug,
 |};
 
+export type PublishState = {|
+  +checkedSharingOptions: CheckedSharingOptions,
+|};
+
 export type ZippedProfilesState = {
   zipFile: ZipFileState,
   error: Error | null,
@@ -170,6 +175,7 @@ export type State = {|
   +urlState: UrlState,
   +icons: IconState,
   +zippedProfiles: ZippedProfilesState,
+  +publish: PublishState,
 |};
 
 export type IconWithClassName = {|

@@ -82,6 +82,18 @@ export type RequestedLib = {|
 |};
 export type ImplementationFilter = 'combined' | 'js' | 'cpp';
 
+/**
+ * This type determines what kind of information gets sanitized from published profiles.
+ */
+export type CheckedSharingOptions = {|
+  isFiltering: boolean,
+  hiddenThreads: boolean,
+  timeRange: boolean,
+  screenshots: boolean,
+  urls: boolean,
+  extension: boolean,
+|};
+
 type ProfileAction =
   | {|
       +type: 'ROUTE_NOT_FOUND',
@@ -306,10 +318,16 @@ type SidebarAction = {|
   +isOpen: boolean,
 |};
 
+type PublishAction = {|
+  +type: 'TOGGLE_CHECKED_SHARING_OPTION',
+  +slug: $Keys<CheckedSharingOptions>,
+|};
+
 export type Action =
   | ProfileAction
   | ReceiveProfileAction
   | SidebarAction
   | UrlEnhancerAction
   | UrlStateAction
-  | IconsAction;
+  | IconsAction
+  | PublishAction;
