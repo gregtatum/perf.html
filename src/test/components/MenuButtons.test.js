@@ -141,14 +141,6 @@ describe('app/MenuButtons', function() {
         ).toEqual(true);
       });
 
-      const profileSharingStatus = ProfileViewSelectors.getProfileSharingStatus(
-        store.getState()
-      );
-      expect(profileSharingStatus).toEqual({
-        sharedWithUrls: false,
-        sharedWithoutUrls: true,
-      });
-
       // Sharing with URLs this time
       const innerShareButton = getInnerShareWithUrlsButton();
       if (innerShareButton !== null) {
@@ -172,14 +164,6 @@ describe('app/MenuButtons', function() {
             'currentButtonIsSecondaryShareButton'
           )
         ).toEqual(false);
-      });
-
-      const newProfileSharingStatus = ProfileViewSelectors.getProfileSharingStatus(
-        store.getState()
-      );
-      expect(newProfileSharingStatus).toEqual({
-        sharedWithUrls: true,
-        sharedWithoutUrls: true,
       });
     });
   });
