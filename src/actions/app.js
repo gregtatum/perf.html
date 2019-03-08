@@ -7,7 +7,7 @@ import { getSelectedTab, getDataSource } from '../selectors/url-state';
 import { sendAnalytics } from '../utils/analytics';
 import type { Action, ThunkAction } from '../types/store';
 import type { TabSlug } from '../app-logic/tabs-handling';
-import type { ProfileSharingStatus, UrlState } from '../types/state';
+import type { UrlState } from '../types/state';
 import type { TrackIndex } from '../types/profile-derived';
 
 export function changeSelectedTab(selectedTab: TabSlug): ThunkAction<void> {
@@ -53,15 +53,6 @@ export function hiddenTracksRemoved(hiddenTracks: Set<TrackIndex>): Action {
 export function fullTimeRangeRemoved(): Action {
   return {
     type: 'FULL_TIME_RANGE_REMOVED',
-  };
-}
-
-export function setProfileSharingStatus(
-  profileSharingStatus: ProfileSharingStatus
-): Action {
-  return {
-    type: 'SET_PROFILE_SHARING_STATUS',
-    profileSharingStatus,
   };
 }
 
