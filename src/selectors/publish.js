@@ -17,7 +17,7 @@ import prettyBytes from '../utils/pretty-bytes';
 import { getHiddenGlobalTracks, getHiddenLocalTracksByPid } from './url-state';
 import { ensureExists } from '../utils/flow';
 
-import type { PublishState } from '../types/state';
+import type { PublishState, UploadState } from '../types/state';
 import type { Selector } from '../types/store';
 import type { CheckedSharingOptions } from '../types/actions';
 import type { RemoveProfileInformation } from '../types/profile-derived';
@@ -137,3 +137,6 @@ export const getDownloadSize: Selector<Promise<string>> = createSelector(
   getSanitizedProfileBlob,
   blobPromise => blobPromise.then(blob => prettyBytes(blob.size))
 );
+
+export const getUploadState: Selector<UploadState> = state =>
+  getPublishState(state).upload;

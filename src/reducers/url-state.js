@@ -34,8 +34,6 @@ const dataSource: Reducer<DataSource> = (state = 'none', action) => {
   switch (action.type) {
     case 'WAITING_FOR_PROFILE_FROM_FILE':
       return 'from-file';
-    case 'PROFILE_PUBLISHED':
-      return 'public';
     case 'TRIGGER_LOADING_FROM_URL':
       return 'from-url';
     default:

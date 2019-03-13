@@ -44,11 +44,6 @@ export type ThreadViewOptions = {|
   +selectedMarker: IndexIntoRawMarkerTable | null,
 |};
 
-export type ProfileSharingStatus = {|
-  +sharedWithUrls: boolean,
-  +sharedWithoutUrls: boolean,
-|};
-
 export type ProfileViewState = {|
   +viewOptions: {|
     perThread: ThreadViewOptions[],
@@ -60,7 +55,6 @@ export type ProfileViewState = {|
     rootRange: StartEndRange,
     rightClickedTrack: TrackReference | null,
     isCallNodeContextMenuVisible: boolean,
-    profileSharingStatus: ProfileSharingStatus,
   |},
   +globalTracks: GlobalTrack[],
   +localTracksByPid: Map<Pid, LocalTrack[]>,
@@ -125,8 +119,19 @@ export type AppState = {|
   +lastVisibleThreadTabSlug: TabSlug,
 |};
 
+export type UploadPhase = 'local' | 'uploading' | 'public' | 'error';
+
+export type UploadState = {|
+  phase: UploadPhase,
+  uploadProgress: number,
+  error: Error | null,
+  fullUrl: string,
+  shortUrl: string,
+|};
+
 export type PublishState = {|
   +checkedSharingOptions: CheckedSharingOptions,
+  +upload: UploadState,
 |};
 
 export type ZippedProfilesState = {

@@ -5,7 +5,12 @@
 // @flow
 import { combineReducers } from 'redux';
 import type { CheckedSharingOptions } from '../types/actions';
-import type { PublishState, Reducer } from '../types/state';
+import type {
+  PublishState,
+  UploadState,
+  UploadPhase,
+  Reducer,
+} from '../types/state';
 
 function _getDefaultSharingOptions(): CheckedSharingOptions {
   return {
@@ -33,8 +38,64 @@ const checkedSharingOptions: Reducer<CheckedSharingOptions> = (
   }
 };
 
+const phase: Reducer<UploadPhase> = (state = 'local', action) => {
+  switch (action.type) {
+    case 'CHANGE_UPLOAD_STATE':
+      return 'phase' in action.changes ? action.changes.phase : state;
+    default:
+      return state;
+  }
+};
+
+const uploadProgress: Reducer<number> = (state = 0, action) => {
+  switch (action.type) {
+    case 'CHANGE_UPLOAD_STATE':
+      return 'uploadProgress' in action.changes
+        ? action.changes.uploadProgress
+        : state;
+    default:
+      return state;
+  }
+};
+
+const error: Reducer<Error | null> = (state = null, action) => {
+  switch (action.type) {
+    case 'CHANGE_UPLOAD_STATE':
+      return 'error' in action.changes ? action.changes.error : state;
+    default:
+      return state;
+  }
+};
+
+const fullUrl: Reducer<string> = (state = '', action) => {
+  switch (action.type) {
+    case 'CHANGE_UPLOAD_STATE':
+      return 'fullUrl' in action.changes ? action.changes.fullUrl : state;
+    default:
+      return state;
+  }
+};
+
+const shortUrl: Reducer<string> = (state = '', action) => {
+  switch (action.type) {
+    case 'CHANGE_UPLOAD_STATE':
+      return 'shortUrl' in action.changes ? action.changes.shortUrl : state;
+    default:
+      return state;
+  }
+};
+
+const upload: Reducer<UploadState> = combineReducers({
+  phase,
+  uploadProgress,
+  error,
+  fullUrl,
+  shortUrl,
+});
+
 const publishReducer: Reducer<PublishState> = combineReducers({
   checkedSharingOptions,
+  upload,
 });
 
 export default publishReducer;

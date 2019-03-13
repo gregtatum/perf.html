@@ -6,11 +6,7 @@
 
 import * as React from 'react';
 import explicitConnect from '../../../utils/connect';
-import {
-  getProfile,
-  getProfileRootRange,
-  getProfileSharingStatus,
-} from '../../../selectors/profile';
+import { getProfile, getProfileRootRange } from '../../../selectors/profile';
 import { getDataSource, getUrlPredictor } from '../../../selectors/url-state';
 import actions from '../../../actions';
 import { MenuButtonsMetaInfo } from './MetaInfo';
@@ -20,7 +16,6 @@ import { ProfileDownloadButton } from './Download';
 import type { StartEndRange } from '../../../types/units';
 import type { Profile } from '../../../types/profile';
 import type { Action, DataSource } from '../../../types/actions';
-import type { ProfileSharingStatus } from '../../../types/state';
 import type {
   ExplicitConnectOptions,
   ConnectedProps,
@@ -32,13 +27,11 @@ type StateProps = {|
   +profile: Profile,
   +rootRange: StartEndRange,
   +dataSource: DataSource,
-  +profileSharingStatus: ProfileSharingStatus,
   +predictUrl: (Action | Action[]) => string,
 |};
 
 type DispatchProps = {|
   +profilePublished: typeof actions.profilePublished,
-  +setProfileSharingStatus: typeof actions.setProfileSharingStatus,
 |};
 
 type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
@@ -48,8 +41,6 @@ const MenuButtons = ({
   rootRange,
   dataSource,
   profilePublished,
-  profileSharingStatus,
-  setProfileSharingStatus,
   predictUrl,
 }: Props) => (
   <>
@@ -60,8 +51,6 @@ const MenuButtons = ({
         profile={profile}
         dataSource={dataSource}
         onProfilePublished={profilePublished}
-        profileSharingStatus={profileSharingStatus}
-        setProfileSharingStatus={setProfileSharingStatus}
         predictUrl={predictUrl}
       />
       <ProfileDownloadButton profile={profile} rootRange={rootRange} />
@@ -82,12 +71,10 @@ const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
     profile: getProfile(state),
     rootRange: getProfileRootRange(state),
     dataSource: getDataSource(state),
-    profileSharingStatus: getProfileSharingStatus(state),
     predictUrl: getUrlPredictor(state),
   }),
   mapDispatchToProps: {
     profilePublished: actions.profilePublished,
-    setProfileSharingStatus: actions.setProfileSharingStatus,
   },
   component: MenuButtons,
 };

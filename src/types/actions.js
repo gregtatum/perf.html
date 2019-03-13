@@ -24,7 +24,7 @@ import type { TemporaryError } from '../utils/errors';
 import type { Transform, TransformStacksPerThread } from './transforms';
 import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
 import type { TabSlug } from '../app-logic/tabs-handling';
-import type { ProfileSharingStatus, UrlState } from '../types/state';
+import type { UrlState, UploadState } from '../types/state';
 
 export type DataSource =
   | 'none'
@@ -192,10 +192,6 @@ type ProfileAction =
       +isVisible: boolean,
     |}
   | {|
-      +type: 'SET_PROFILE_SHARING_STATUS',
-      +profileSharingStatus: ProfileSharingStatus,
-    |}
-  | {|
       +type: 'INCREMENT_PANEL_LAYOUT_GENERATION',
     |}
   | {| +type: 'HAS_ZOOMED_VIA_MOUSEWHEEL' |};
@@ -318,10 +314,15 @@ type SidebarAction = {|
   +isOpen: boolean,
 |};
 
-type PublishAction = {|
-  +type: 'TOGGLE_CHECKED_SHARING_OPTION',
-  +slug: $Keys<CheckedSharingOptions>,
-|};
+type PublishAction =
+  | {|
+      +type: 'TOGGLE_CHECKED_SHARING_OPTION',
+      +slug: $Keys<CheckedSharingOptions>,
+    |}
+  | {|
+      +type: 'CHANGE_UPLOAD_STATE',
+      +changes: $Shape<UploadState>,
+    |};
 
 export type Action =
   | ProfileAction
