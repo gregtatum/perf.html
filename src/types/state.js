@@ -125,8 +125,7 @@ export type UploadState = {|
   phase: UploadPhase,
   uploadProgress: number,
   error: Error | null,
-  fullUrl: string,
-  shortUrl: string,
+  url: string,
 |};
 
 export type PublishState = {|

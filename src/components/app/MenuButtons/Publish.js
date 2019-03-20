@@ -6,13 +6,10 @@
 
 import * as React from 'react';
 import memoize from 'memoize-immutable';
-import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import classNames from 'classnames';
-import actions from '../../../actions';
 import { toggleCheckedSharingOptions } from '../../../actions/publish';
 import ArrowPanel from '../../shared/ArrowPanel';
 import ButtonWithPanel from '../../shared/ButtonWithPanel';
-import { shortenUrl } from '../../../utils/shorten-url';
 import { getProfile, getProfileRootRange } from '../../../selectors/profile';
 import {
   getCheckedSharingOptions,
@@ -25,241 +22,27 @@ import explicitConnect, {
 } from '../../../utils/connect';
 
 import type { Profile } from '../../../types/profile';
-import type {
-  Action,
-  DataSource,
-  CheckedSharingOptions,
-} from '../../../types/actions';
+import type { CheckedSharingOptions } from '../../../types/actions';
 import type { StartEndRange } from '../../../types/units';
 
-require('./ProfileSharing.css');
+require('./Publish.css');
 
-type Props = {|
-  +profile: Profile,
-  +dataSource: DataSource,
-  +predictUrl: (Action | Action[]) => string,
-  +onProfilePublished: typeof actions.profilePublished,
-|};
+type OwnProps = {||};
 
-export class MenuButtonsProfileSharing extends React.PureComponent<Props> {
-  _permalinkButton: ButtonWithPanel | null;
-  _permalinkTextField: HTMLInputElement | null;
-  _takePermalinkButtonRef = (elem: any) => {
-    this._permalinkButton = elem;
-  };
-  _takePermalinkTextFieldRef = (elem: any) => {
-    this._permalinkTextField = elem;
-  };
-
-  constructor(props: Props) {
-    super(props);
-    const { dataSource } = props;
-    this.state = {
-      state: dataSource === 'public' ? 'public' : 'local', // local -> uploading (<-> error) -> public
-      uploadProgress: 0,
-      error: null,
-      fullUrl: window.location.href,
-      shortUrl: window.location.href,
-    };
-  }
-
-  componentWillReceiveProps({ dataSource }: Props) {
-    if (dataSource === 'public' && this.state.state !== 'public') {
-      this.setState({ state: 'public' });
-    }
-    if (window.location.href !== this.state.fullUrl) {
-      this.setState({
-        fullUrl: window.location.href,
-        shortUrl: window.location.href,
-      });
-    }
-  }
-
-  _onPermalinkPanelOpen = () => {
-    this._shortenUrlAndFocusTextFieldOnCompletion();
-  };
-
-  _shortenUrlAndFocusTextFieldOnCompletion(): Promise<void> {
-    return shortenUrl(this.state.fullUrl)
-      .then(shortUrl => {
-        this.setState({ shortUrl });
-        const textField = this._permalinkTextField;
-        if (textField) {
-          textField.focus();
-          textField.select();
-        }
-      })
-      .catch(() => {});
-  }
-
-  _onPermalinkPanelClose = () => {
-    if (this._permalinkTextField) {
-      this._permalinkTextField.blur();
-    }
-  };
-
-  _renderPermalinkTextField = () => {
-    const { shortUrl } = this.state;
-
-    return (
-      <input
-        type="text"
-        className="menuButtonsPermalinkTextField photon-input"
-        value={shortUrl}
-        readOnly="readOnly"
-        ref={this._takePermalinkTextFieldRef}
-      />
-    );
-  };
-
-  _renderUploadError = () => {
-    const { error } = this.state;
-    return (
-      <>
-        <p>An error occurred during upload:</p>
-        <pre>{error && error.toString()}</pre>
-      </>
-    );
-  };
-
-  _renderSharingComponent = () => {
-    ProfileSharingButton;
-  };
-
-  render() {
-    const { state, uploadProgress } = this.state;
-
-    return (
-      <TransitionGroup
-        className={classNames('menuButtonsCompositeButtonContainer', {
-          currentButtonIsShareButton: state === 'local',
-          currentButtonIsUploadingButton: state === 'uploading',
-          currentButtonIsPermalinkButton: state === 'public',
-          currentButtonIsUploadErrorButton: state === 'error',
-        })}
-        data-testid="menuButtonsCompositeButtonContainer"
-      >
-        {/* the buttons are conditionally rendered (depending on the state) */}
-        {state === 'local' && (
-          <AnimateUpTransition>
-            <ButtonWithPanel
-              buttonClassName="menuButtonsShareButton"
-              shareLabel="Share…"
-              panel={
-                <ArrowPanel
-                  className="menuButtonsPrivacyPanel"
-                  onOpen={panelOpenEvent ? panelOpenEvent : undefined}
-                  content={this._renderSharingComponent}
-                />
-              }
-            />
-            <ProfileSharingButton
-              okButtonClickEvent={this._attemptToShare}
-              checkboxDisabled={false}
-            />
-          </AnimateUpTransition>
-        )}
-
-        {state === 'uploading' && (
-          <AnimateUpTransition>
-            <UploadingStatus progress={uploadProgress} />
-          </AnimateUpTransition>
-        )}
-
-        {/* The Permalink button is rendered when state === 'uploading' AND state === 'public'.
-       The Permalink button itself is hidden when uploading is in progress,
-       but the Permalink's ArrowPanel with the URL is always displayed. */}
-        {(state === 'uploading' || state === 'public') && (
-          <AnimateUpTransition>
-            <ButtonWithPanel
-              className="menuButtonsPermalinkButton"
-              ref={this._takePermalinkButtonRef}
-              label="Permalink"
-              panel={
-                <ArrowPanel
-                  className="menuButtonsPermalinkPanel"
-                  onOpen={this._onPermalinkPanelOpen}
-                  onClose={this._onPermalinkPanelClose}
-                  content={this._renderPermalinkTextField}
-                />
-              }
-            />
-          </AnimateUpTransition>
-        )}
-
-        {state === 'error' && (
-          <AnimateUpTransition>
-            <ButtonWithPanel
-              className="menuButtonsUploadErrorButton"
-              label="Upload Error"
-              open
-              panel={
-                <ArrowPanel
-                  className="menuButtonsUploadErrorPanel"
-                  title="Upload Error"
-                  okButtonText="Try Again"
-                  cancelButtonText="Cancel"
-                  onOkButtonClick={this._attemptToShare}
-                  content={this._renderUploadError}
-                />
-              }
-            />
-          </AnimateUpTransition>
-        )}
-      </TransitionGroup>
-    );
-  }
-}
-
-const UploadingStatus = ({ progress }: { progress: number }) => (
-  <div className="menuButtonsUploadingButton">
-    <div className="menuButtonsUploadingButtonInner">
-      <progress
-        className="menuButtonsUploadingButtonProgress"
-        value={progress}
-      />
-      <div className="menuButtonsUploadingButtonLabel">Uploading...</div>
-    </div>
-  </div>
-);
-
-// CSSTransition wrapper component
-const AnimateUpTransition = (props: {}) => (
-  <CSSTransition
-    {...props}
-    timeout={200}
-    classNames="menuButtonsTransitionUp"
-  />
-);
-
-type ProfileSharingButtonOwnProps = {|
-  +buttonClassName: string,
-  +shareLabel: string,
-  +okButtonClickEvent: () => mixed,
-  +panelOpenEvent?: () => void,
-  +checkboxDisabled: boolean,
-|};
-
-type ProfileSharingButtonStateProps = {|
+type StateProps = {|
   +profile: Profile,
   +rootRange: StartEndRange,
   +checkedSharingOptions: CheckedSharingOptions,
   +downloadSizePromise: Promise<string>,
 |};
 
-type ProfileSharingButtonDispatchProps = {|
+type DispatchProps = {|
   toggleCheckedSharingOptions: typeof toggleCheckedSharingOptions,
 |};
 
-type ProfileSharingButtonProps = ConnectedProps<
-  ProfileSharingButtonOwnProps,
-  ProfileSharingButtonStateProps,
-  ProfileSharingButtonDispatchProps
->;
+type PublishProps = ConnectedProps<OwnProps, StateProps, DispatchProps>;
 
-class ProfileSharingButtonImpl extends React.PureComponent<
-  ProfileSharingButtonProps
-> {
+class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
   _toggles: { [$Keys<CheckedSharingOptions>]: () => mixed } = {
     isFiltering: () => this.props.toggleCheckedSharingOptions('isFiltering'),
     hiddenThreads: () =>
@@ -353,16 +136,13 @@ class ProfileSharingButtonImpl extends React.PureComponent<
   };
 
   render() {
-    const { buttonClassName, shareLabel, panelOpenEvent } = this.props;
-
     return (
       <ButtonWithPanel
-        className={buttonClassName}
-        label={shareLabel}
+        className="menuButtonsShareButton"
+        label="Share…"
         panel={
           <ArrowPanel
             className="menuButtonsPrivacyPanel"
-            onOpen={panelOpenEvent ? panelOpenEvent : undefined}
             content={this._renderPanelContent}
           />
         }
@@ -372,9 +152,9 @@ class ProfileSharingButtonImpl extends React.PureComponent<
 }
 
 const profileSharingOptions: ExplicitConnectOptions<
-  ProfileSharingButtonOwnProps,
-  ProfileSharingButtonStateProps,
-  ProfileSharingButtonDispatchProps
+  OwnProps,
+  StateProps,
+  DispatchProps
 > = {
   mapStateToProps: state => ({
     profile: getProfile(state),
@@ -383,9 +163,9 @@ const profileSharingOptions: ExplicitConnectOptions<
     downloadSizePromise: getDownloadSize(state),
   }),
   mapDispatchToProps: { toggleCheckedSharingOptions },
-  component: ProfileSharingButtonImpl,
+  component: MenuButtonsPublishImpl,
 };
-export const ProfileSharingButton = explicitConnect(profileSharingOptions);
+export const MenuButtonsPublish = explicitConnect(profileSharingOptions);
 
 type DownloadSizeProps = {| +downloadSizePromise: Promise<string> |};
 

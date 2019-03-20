@@ -67,19 +67,10 @@ const error: Reducer<Error | null> = (state = null, action) => {
   }
 };
 
-const fullUrl: Reducer<string> = (state = '', action) => {
+const url: Reducer<string> = (state = '', action) => {
   switch (action.type) {
     case 'CHANGE_UPLOAD_STATE':
-      return 'fullUrl' in action.changes ? action.changes.fullUrl : state;
-    default:
-      return state;
-  }
-};
-
-const shortUrl: Reducer<string> = (state = '', action) => {
-  switch (action.type) {
-    case 'CHANGE_UPLOAD_STATE':
-      return 'shortUrl' in action.changes ? action.changes.shortUrl : state;
+      return 'url' in action.changes ? action.changes.url : state;
     default:
       return state;
   }
@@ -89,8 +80,7 @@ const upload: Reducer<UploadState> = combineReducers({
   phase,
   uploadProgress,
   error,
-  fullUrl,
-  shortUrl,
+  url,
 });
 
 const publishReducer: Reducer<PublishState> = combineReducers({

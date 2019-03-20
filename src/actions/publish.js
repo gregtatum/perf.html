@@ -8,7 +8,9 @@ import { uploadBinaryProfileData } from '../profile-logic/profile-store';
 import { serializeProfile } from '../profile-logic/process-profile';
 import { sendAnalytics } from '../utils/analytics';
 import { getProfile } from '../selectors/profile';
-import { getUploadState } from '../selectors/publish';
+import { urlFromState } from '../app-logic/url-handling';
+import { profilePublished } from './app';
+import urlStateReducer from '../reducers/url-state';
 
 import type { Action, ThunkAction } from '../types/store';
 import type { UploadState } from '../types/state';
@@ -50,6 +52,10 @@ export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
       eventAction: 'start',
     });
 
+    const newUrl = urlFromState(
+      urlStateReducer(currentUrlState, hiddenTracksRemoved(hiddenTracks))
+    );
+
     const profile = getProfile(getState());
     const jsonString = serializeProfile(profile);
     const typedArray = new TextEncoder().encode(jsonString);
@@ -61,19 +67,13 @@ export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
       dispatch(changeUploadState({ uploadProgress }));
     });
 
-    const urlPathName = urlFromState(urlStateReducer(profilePublished(hash)));
-
-    // The profile has been published.
-    const prevState = getUploadState(getState());
-
-    const newShortUrl =
-      prevState.fullUrl === window.location.href
-        ? prevState.shortUrl
-        : window.location.href;
+    const url =
+      'https://profiler.firefox.com/' +
+      urlFromState(urlStateReducer(undefined, profilePublished(hash)));
 
     changeUploadState({
       phase: 'public',
-      url: urlPathName,
+      url,
     });
 
     sendAnalytics({

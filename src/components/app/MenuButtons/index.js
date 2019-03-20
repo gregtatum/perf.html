@@ -7,15 +7,16 @@
 import * as React from 'react';
 import explicitConnect from '../../../utils/connect';
 import { getProfile, getProfileRootRange } from '../../../selectors/profile';
-import { getDataSource, getUrlPredictor } from '../../../selectors/url-state';
-import actions from '../../../actions';
+import { getDataSource } from '../../../selectors/url-state';
 import { MenuButtonsMetaInfo } from './MetaInfo';
-import { MenuButtonsProfileSharing } from './ProfileSharing';
+import { MenuButtonsPublish } from './Publish';
+import { MenuButtonsPermalink } from './Permalink';
 import { ProfileDownloadButton } from './Download';
+import { assertExhaustiveCheck } from '../../../utils/flow';
 
 import type { StartEndRange } from '../../../types/units';
 import type { Profile } from '../../../types/profile';
-import type { Action, DataSource } from '../../../types/actions';
+import type { DataSource } from '../../../types/actions';
 import type {
   ExplicitConnectOptions,
   ConnectedProps,
@@ -27,32 +28,16 @@ type StateProps = {|
   +profile: Profile,
   +rootRange: StartEndRange,
   +dataSource: DataSource,
-  +predictUrl: (Action | Action[]) => string,
 |};
 
-type DispatchProps = {|
-  +profilePublished: typeof actions.profilePublished,
-|};
+type Props = ConnectedProps<{||}, StateProps, {||}>;
 
-type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
-
-const MenuButtons = ({
-  profile,
-  rootRange,
-  dataSource,
-  profilePublished,
-  predictUrl,
-}: Props) => (
+const MenuButtons = ({ profile, rootRange, dataSource }: Props) => (
   <>
     {/* Place the info button outside of the menu buttons to allow it to shrink. */}
     <MenuButtonsMetaInfo profile={profile} />
     <div className="menuButtons">
-      <MenuButtonsProfileSharing
-        profile={profile}
-        dataSource={dataSource}
-        onProfilePublished={profilePublished}
-        predictUrl={predictUrl}
-      />
+      <PublishOrPermalinkButtons dataSource={dataSource} />
       <ProfileDownloadButton profile={profile} rootRange={rootRange} />
       <a
         href="/docs/"
@@ -66,16 +51,29 @@ const MenuButtons = ({
   </>
 );
 
-const options: ExplicitConnectOptions<{||}, StateProps, DispatchProps> = {
+const PublishOrPermalinkButtons = ({ dataSource }) => {
+  switch (dataSource) {
+    case 'from-addon':
+    case 'from-file':
+    case 'local':
+      return <MenuButtonsPublish />;
+    case 'public':
+    case 'from-url':
+    case 'compare':
+      return <MenuButtonsPermalink />;
+    case 'none':
+      return null;
+    default:
+      throw assertExhaustiveCheck(dataSource);
+  }
+};
+
+const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
   mapStateToProps: state => ({
     profile: getProfile(state),
     rootRange: getProfileRootRange(state),
     dataSource: getDataSource(state),
-    predictUrl: getUrlPredictor(state),
   }),
-  mapDispatchToProps: {
-    profilePublished: actions.profilePublished,
-  },
   component: MenuButtons,
 };
 export default explicitConnect(options);
