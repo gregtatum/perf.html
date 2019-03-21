@@ -22,6 +22,11 @@
   border: none;
 }
 
+.photon-button.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 .photon-button:hover {
   background-color: var(--grey-90-a20);
 }

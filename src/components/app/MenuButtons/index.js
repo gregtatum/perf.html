@@ -11,8 +11,9 @@ import { getDataSource } from '../../../selectors/url-state';
 import { MenuButtonsMetaInfo } from './MetaInfo';
 import { MenuButtonsPublish } from './Publish';
 import { MenuButtonsPermalink } from './Permalink';
-import { ProfileDownloadButton } from './Download';
 import { assertExhaustiveCheck } from '../../../utils/flow';
+import ArrowPanel from '../../shared/ArrowPanel';
+import ButtonWithPanel from '../../shared/ButtonWithPanel';
 
 import type { StartEndRange } from '../../../types/units';
 import type { Profile } from '../../../types/profile';
@@ -32,13 +33,12 @@ type StateProps = {|
 
 type Props = ConnectedProps<{||}, StateProps, {||}>;
 
-const MenuButtons = ({ profile, rootRange, dataSource }: Props) => (
+const MenuButtons = ({ profile, dataSource }: Props) => (
   <>
     {/* Place the info button outside of the menu buttons to allow it to shrink. */}
     <MenuButtonsMetaInfo profile={profile} />
     <div className="menuButtons">
       <PublishOrPermalinkButtons dataSource={dataSource} />
-      <ProfileDownloadButton profile={profile} rootRange={rootRange} />
       <a
         href="/docs/"
         target="_blank"
@@ -56,7 +56,17 @@ const PublishOrPermalinkButtons = ({ dataSource }) => {
     case 'from-addon':
     case 'from-file':
     case 'local':
-      return <MenuButtonsPublish />;
+      return (
+        <ButtonWithPanel
+          className="menuButtonsShareButton"
+          label="Publish…"
+          panel={
+            <ArrowPanel className="menuButtonsPrivacyPanel">
+              <MenuButtonsPublish />
+            </ArrowPanel>
+          }
+        />
+      );
     case 'public':
     case 'from-url':
     case 'compare':

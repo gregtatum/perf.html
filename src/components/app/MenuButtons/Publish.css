@@ -208,11 +208,13 @@
 }
 
 .menuButtonsPrivacyButton {
+  display: inline-flex;
   min-width: 132px;
-  height: 32px;
-  padding: 0 8px;
-  margin-left: 20px;
+  align-items: center;
+  justify-content: center;
   font-size: 13px;
+  text-align: center;
+  text-decoration: none;
 }
 
 .menuButtonsPrivacyButtonsSvg {

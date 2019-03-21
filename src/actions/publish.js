@@ -8,6 +8,7 @@ import { uploadBinaryProfileData } from '../profile-logic/profile-store';
 import { serializeProfile } from '../profile-logic/process-profile';
 import { sendAnalytics } from '../utils/analytics';
 import { getProfile } from '../selectors/profile';
+import { getUrlState } from '../selectors/url-state';
 import { urlFromState } from '../app-logic/url-handling';
 import { profilePublished } from './app';
 import urlStateReducer from '../reducers/url-state';
@@ -65,18 +66,25 @@ export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
     // a future patch, we should handle this gracefully.
     const url =
       'https://profiler.firefox.com/' +
-      urlFromState(urlStateReducer(undefined, profilePublished(hash)));
+      urlFromState(
+        urlStateReducer(getUrlState(getState()), profilePublished(hash))
+      );
 
-    changeUploadState({
-      phase: 'uploaded',
-      url,
-    });
+    dispatch(
+      changeUploadState({
+        phase: 'uploaded',
+        url,
+      })
+    );
 
+    console.log(`!!! url`, url);
     sendAnalytics({
       hitType: 'event',
       eventCategory: 'profile upload',
       eventAction: 'succeeded',
     });
+
+    window.open(url, '_blank');
   } catch (error) {
     // To avoid any interaction with running transitions, we delay setting
     // the new state by 300ms.

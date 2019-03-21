@@ -28,15 +28,26 @@ export const getCheckedSharingOptions: Selector<
   CheckedSharingOptions
 > = state => getPublishState(state).checkedSharingOptions;
 
-export const getFilenameDateString: Selector<string> = createSelector(
+export const getFilenameString: Selector<string> = createSelector(
   getProfile,
   getProfileRootRange,
   (profile, rootRange) => {
-    const date = new Date(profile.meta.startTime + rootRange.start);
+    const { startTime, product } = profile.meta;
+
+    // Pad single digit numbers with a 0.
     const pad = x => (x < 10 ? `0${x}` : `${x}`);
-    return `${pad(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(
-      date.getDate()
-    )} ${pad(date.getHours())}.${pad(date.getMinutes())}`;
+
+    // Compute the date string.
+    const date = new Date(startTime + rootRange.start);
+    const year = pad(date.getFullYear());
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hour = pad(date.getHours());
+    const min = pad(date.getMinutes());
+    const dateString = `${year}-${month}-${day} ${hour}.${min}`;
+
+    // Return the final file name
+    return `${product} ${dateString} profile.json`;
   }
 );
 
@@ -136,6 +147,19 @@ export const getCompressedProfileBlobUrl: Selector<
 export const getDownloadSize: Selector<Promise<string>> = createSelector(
   getSanitizedProfileBlob,
   blobPromise => blobPromise.then(blob => prettyBytes(blob.size))
+);
+
+/**
+ * In order to use React keyed components for a PII filtered profile, we need
+ * an easy string or number to use for the key that represents the current version. This
+ * selector creates a generation value that increases every time the remove profile
+ * information or profile changes.
+ */
+let _sanitizedProfileGeneration = 0;
+export const getSanitizedProfileGeneration: Selector<number> = createSelector(
+  getRemoveProfileInformation,
+  getProfile,
+  () => _sanitizedProfileGeneration++
 );
 
 export const getUploadState: Selector<UploadState> = state =>

@@ -29,18 +29,6 @@ export class MenuButtonsPermalink extends React.PureComponent<*, State> {
     shortUrl: '',
   };
 
-  _renderPanelContent = () => {
-    return (
-      <input
-        type="text"
-        className="menuButtonsPermalinkTextField photon-input"
-        value={this.state.shortUrl}
-        readOnly="readOnly"
-        ref={this._takePermalinkTextFieldRef}
-      />
-    );
-  };
-
   _shortenUrlAndFocusTextFieldOnCompletion = async (): Promise<void> => {
     const { fullUrl } = this.state;
     const currentFullUrl = window.location.href;
@@ -80,8 +68,15 @@ export class MenuButtonsPermalink extends React.PureComponent<*, State> {
             className="menuButtonsPermalinkPanel"
             onOpen={this._shortenUrlAndFocusTextFieldOnCompletion}
             onClose={this._onPermalinkPanelClose}
-            content={this._renderPanelContent}
-          />
+          >
+            <input
+              type="text"
+              className="menuButtonsPermalinkTextField photon-input"
+              value={this.state.shortUrl}
+              readOnly="readOnly"
+              ref={this._takePermalinkTextFieldRef}
+            />
+          </ArrowPanel>
         }
       />
     );

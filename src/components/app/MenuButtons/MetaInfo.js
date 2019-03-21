@@ -19,92 +19,6 @@ type Props = {
  * This component formats the profile's meta information into a dropdown panel.
  */
 export class MenuButtonsMetaInfo extends React.PureComponent<Props> {
-  _renderPanelContent = () => {
-    const meta = this.props.profile.meta;
-
-    return (
-      <>
-        <h2 className="arrowPanelSubTitle">Timing</h2>
-        <div className="arrowPanelSection">
-          {meta.startTime ? (
-            <div className="metaInfoRow">
-              <span className="metaInfoLabel">Recording started:</span>
-              {_formatDate(meta.startTime)}
-            </div>
-          ) : null}
-          {meta.interval ? (
-            <div className="metaInfoRow">
-              <span className="metaInfoLabel">Interval:</span>
-              {meta.interval}ms
-            </div>
-          ) : null}
-          {meta.preprocessedProfileVersion ? (
-            <div className="metaInfoRow">
-              <span className="metaInfoLabel">Profile Version:</span>
-              {meta.preprocessedProfileVersion}
-            </div>
-          ) : null}
-        </div>
-        <h2 className="arrowPanelSubTitle">Application</h2>
-        <div className="arrowPanelSection">
-          {meta.product ? (
-            <div className="metaInfoRow">
-              <span className="metaInfoLabel">Name:</span>
-              {meta.product}
-            </div>
-          ) : null}
-          {meta.misc ? (
-            <div className="metaInfoRow">
-              <span className="metaInfoLabel">Version:</span>
-              {_formatVersionNumber(meta.misc)}
-            </div>
-          ) : null}
-          {meta.appBuildID ? (
-            <div className="metaInfoRow">
-              <span className="metaInfoLabel">Build ID:</span>
-              {meta.sourceURL ? (
-                <a href={meta.sourceURL} title={meta.sourceURL} target="_blank">
-                  {meta.appBuildID}
-                </a>
-              ) : (
-                meta.appBuildID
-              )}
-            </div>
-          ) : null}
-          {meta.extensions ? (
-            <div className="metaInfoRow">
-              <span className="metaInfoLabel">Extensions:</span>
-              <ul className="metaInfoList">
-                {_mapMetaInfoExtensionNames(meta.extensions.name)}
-              </ul>
-            </div>
-          ) : null}
-        </div>
-        <h2 className="arrowPanelSubTitle">Platform</h2>
-        <div className="arrowPanelSection">
-          {meta.platform ? (
-            <div className="metaInfoRow">
-              <span className="metaInfoLabel">Platform:</span>
-              {meta.platform}
-            </div>
-          ) : null}
-          {meta.oscpu ? (
-            <div className="metaInfoRow">
-              <span className="metaInfoLabel">OS:</span>
-              {meta.oscpu}
-            </div>
-          ) : null}
-          {meta.abi ? (
-            <div className="metaInfoRow">
-              <span className="metaInfoLabel">ABI:</span>
-              {meta.abi}
-            </div>
-          ) : null}
-        </div>
-      </>
-    );
-  };
-
   render() {
     const meta = this.props.profile.meta;
 
@@ -119,10 +33,89 @@ export class MenuButtonsMetaInfo extends React.PureComponent<Props> {
           className="menuButtonsMetaInfoButtonButton"
           label="&nbsp;"
           panel={
-            <ArrowPanel
-              className="arrowPanelOpenMetaInfo"
-              content={this._renderPanelContent}
-            />
+            <ArrowPanel className="arrowPanelOpenMetaInfo">
+              <h2 className="arrowPanelSubTitle">Timing</h2>
+              <div className="arrowPanelSection">
+                {meta.startTime ? (
+                  <div className="metaInfoRow">
+                    <span className="metaInfoLabel">Recording started:</span>
+                    {_formatDate(meta.startTime)}
+                  </div>
+                ) : null}
+                {meta.interval ? (
+                  <div className="metaInfoRow">
+                    <span className="metaInfoLabel">Interval:</span>
+                    {meta.interval}ms
+                  </div>
+                ) : null}
+                {meta.preprocessedProfileVersion ? (
+                  <div className="metaInfoRow">
+                    <span className="metaInfoLabel">Profile Version:</span>
+                    {meta.preprocessedProfileVersion}
+                  </div>
+                ) : null}
+              </div>
+              <h2 className="arrowPanelSubTitle">Application</h2>
+              <div className="arrowPanelSection">
+                {meta.product ? (
+                  <div className="metaInfoRow">
+                    <span className="metaInfoLabel">Name:</span>
+                    {meta.product}
+                  </div>
+                ) : null}
+                {meta.misc ? (
+                  <div className="metaInfoRow">
+                    <span className="metaInfoLabel">Version:</span>
+                    {_formatVersionNumber(meta.misc)}
+                  </div>
+                ) : null}
+                {meta.appBuildID ? (
+                  <div className="metaInfoRow">
+                    <span className="metaInfoLabel">Build ID:</span>
+                    {meta.sourceURL ? (
+                      <a
+                        href={meta.sourceURL}
+                        title={meta.sourceURL}
+                        target="_blank"
+                      >
+                        {meta.appBuildID}
+                      </a>
+                    ) : (
+                      meta.appBuildID
+                    )}
+                  </div>
+                ) : null}
+                {meta.extensions ? (
+                  <div className="metaInfoRow">
+                    <span className="metaInfoLabel">Extensions:</span>
+                    <ul className="metaInfoList">
+                      {_mapMetaInfoExtensionNames(meta.extensions.name)}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+              <h2 className="arrowPanelSubTitle">Platform</h2>
+              <div className="arrowPanelSection">
+                {meta.platform ? (
+                  <div className="metaInfoRow">
+                    <span className="metaInfoLabel">Platform:</span>
+                    {meta.platform}
+                  </div>
+                ) : null}
+                {meta.oscpu ? (
+                  <div className="metaInfoRow">
+                    <span className="metaInfoLabel">OS:</span>
+                    {meta.oscpu}
+                  </div>
+                ) : null}
+                {meta.abi ? (
+                  <div className="metaInfoRow">
+                    <span className="metaInfoLabel">ABI:</span>
+                    {meta.abi}
+                  </div>
+                ) : null}
+              </div>
+            </ArrowPanel>
           }
         />
       </div>

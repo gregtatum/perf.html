@@ -5,18 +5,18 @@
 // @flow
 
 import * as React from 'react';
-import memoize from 'memoize-immutable';
 import classNames from 'classnames';
 import {
   toggleCheckedSharingOptions,
   attemptToPublish,
 } from '../../../actions/publish';
-import ArrowPanel from '../../shared/ArrowPanel';
-import ButtonWithPanel from '../../shared/ButtonWithPanel';
 import { getProfile, getProfileRootRange } from '../../../selectors/profile';
 import {
   getCheckedSharingOptions,
+  getFilenameString,
   getDownloadSize,
+  getCompressedProfileBlobUrl,
+  getSanitizedProfileGeneration,
 } from '../../../selectors/publish';
 
 import explicitConnect, {
@@ -30,6 +30,32 @@ import type { StartEndRange } from '../../../types/units';
 
 require('./Publish.css');
 
+export class MenuButtonsPublish extends React.PureComponent<
+  {},
+  {| isMounted: boolean |}
+> {
+  state = {
+    isMounted: false,
+  };
+
+  componentWillMount() {
+    this.setState({ isMounted: true });
+  }
+
+  render() {
+    const { isMounted } = this.state;
+
+    if (!isMounted) {
+      // Mounting this panel can be expensive, as it fully compresses the profile in
+      // preparation for download, and for computing the download size. Do not run
+      // the connected component selectors unless needed.
+      return null;
+    }
+
+    return <MenuButtonsPublishConnected />;
+  }
+}
+
 type OwnProps = {||};
 
 type StateProps = {|
@@ -37,6 +63,9 @@ type StateProps = {|
   +rootRange: StartEndRange,
   +checkedSharingOptions: CheckedSharingOptions,
   +downloadSizePromise: Promise<string>,
+  +compressedProfileBlobUrlPromise: Promise<string>,
+  +sanitizedProfileGeneration: number,
+  +downloadFileName: string,
 |};
 
 type DispatchProps = {|
@@ -82,11 +111,14 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
     );
   }
 
-  _renderPanelContent = () => {
+  render() {
     const {
       checkedSharingOptions,
       downloadSizePromise,
       attemptToPublish,
+      downloadFileName,
+      compressedProfileBlobUrlPromise,
+      sanitizedProfileGeneration,
     } = this.props;
 
     return (
@@ -100,7 +132,10 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
         <details className="menuButtonsPrivacyData">
           <summary className="menuButtonsPrivacyDataSummary">
             Adjust how much is shared{' '}
-            <DownloadSize downloadSizePromise={downloadSizePromise} />
+            <DownloadSize
+              key={sanitizedProfileGeneration}
+              downloadSizePromise={downloadSizePromise}
+            />
           </summary>
           <label className="photon-label">
             <input
@@ -124,13 +159,11 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
           </div>
         </details>
         <div className="menuButtonsPrivacyButtons">
-          <button
-            type="button"
-            className="photon-button menuButtonsPrivacyButton menuButtonsPrivacyButtonsDownload"
-          >
-            <span className="menuButtonsPrivacyButtonsSvg menuButtonsPrivacyButtonsSvgDownload" />
-            Download
-          </button>
+          <DownloadButton
+            key={sanitizedProfileGeneration}
+            downloadFileName={downloadFileName}
+            compressedProfileBlobUrlPromise={compressedProfileBlobUrlPromise}
+          />
           <button
             type="button"
             className="photon-button photon-button-primary menuButtonsPrivacyButton menuButtonsPrivacyButtonsUpload"
@@ -141,21 +174,6 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
           </button>
         </div>
       </div>
-    );
-  };
-
-  render() {
-    return (
-      <ButtonWithPanel
-        className="menuButtonsShareButton"
-        label="Share…"
-        panel={
-          <ArrowPanel
-            className="menuButtonsPrivacyPanel"
-            content={this._renderPanelContent}
-          />
-        }
-      />
     );
   }
 }
@@ -170,41 +188,21 @@ const profileSharingOptions: ExplicitConnectOptions<
     rootRange: getProfileRootRange(state),
     checkedSharingOptions: getCheckedSharingOptions(state),
     downloadSizePromise: getDownloadSize(state),
+    downloadFileName: getFilenameString(state),
+    compressedProfileBlobUrlPromise: getCompressedProfileBlobUrl(state),
+    sanitizedProfileGeneration: getSanitizedProfileGeneration(state),
   }),
   mapDispatchToProps: { toggleCheckedSharingOptions, attemptToPublish },
   component: MenuButtonsPublishImpl,
 };
-export const MenuButtonsPublish = explicitConnect(profileSharingOptions);
+const MenuButtonsPublishConnected = explicitConnect(profileSharingOptions);
 
 type DownloadSizeProps = {| +downloadSizePromise: Promise<string> |};
-
-class DownloadSize extends React.PureComponent<DownloadSizeProps> {
-  // Ok, this is a little odd, but there is no easy way to generate a React
-  // key off of the size promise, so instead, use a memoized function to
-  // increment a key generation value to generate a unique ID for each WeakMap
-  // we have seen.
-  //
-  // See the following for more information on keyed components:
-  // https://reactjs.org/blog/2018/06/07/you-probably-dont-need-derived-state.html#recommendation-fully-uncontrolled-component-with-a-key
-  _keyGeneration = 0;
-  _objectToNumberedKey = (_obj: Object): number => this._keyGeneration++;
-  _getDownloadSizeKey = memoize(this._objectToNumberedKey, {
-    cache: new WeakMap(),
-  });
-
-  render() {
-    const { downloadSizePromise } = this.props;
-    const key = this._getDownloadSizeKey(downloadSizePromise);
-    return (
-      <DownloadSizeKeyed key={key} downloadSizePromise={downloadSizePromise} />
-    );
-  }
-}
 
 /**
  * This class should be correctly keyed so that it never updates.
  */
-class DownloadSizeKeyed extends React.PureComponent<
+class DownloadSize extends React.PureComponent<
   DownloadSizeProps,
   {| downloadSize: string | null, isDestroyed: boolean |}
 > {
@@ -231,8 +229,74 @@ class DownloadSizeKeyed extends React.PureComponent<
 
   render() {
     const { downloadSize } = this.state;
-    return downloadSize === null ? null : (
-      <span className="menuButtonsDownloadButton">({downloadSize})</span>
+    if (downloadSize === null) {
+      return null;
+    }
+    return <span className="menuButtonsDownloadButton">({downloadSize})</span>;
+  }
+}
+
+type DownloadButtonProps = {|
+  +compressedProfileBlobUrlPromise: Promise<string>,
+  +downloadFileName: string,
+|};
+
+/**
+ * This class should be correctly keyed so that it never updates.
+ */
+class DownloadButton extends React.PureComponent<
+  DownloadButtonProps,
+  {| compressedProfileBlobUrl: string | null, isDestroyed: boolean |}
+> {
+  state = { compressedProfileBlobUrl: null, isDestroyed: false };
+
+  componentDidMount() {
+    const { compressedProfileBlobUrlPromise } = this.props;
+    compressedProfileBlobUrlPromise.then(compressedProfileBlobUrl => {
+      if (!this.state.isDestroyed) {
+        this.setState({ compressedProfileBlobUrl });
+      }
+    });
+  }
+
+  componentDidUpdate() {
+    console.warn(
+      'The DownloadButtonKeyed component should never update, the key generated was not correct.'
+    );
+  }
+
+  componentWillUnmount() {
+    this.setState({ isDestroyed: true });
+  }
+
+  render() {
+    const { downloadFileName } = this.props;
+    const { compressedProfileBlobUrl } = this.state;
+    const className =
+      'photon-button menuButtonsPrivacyButton menuButtonsPrivacyButtonsDownload';
+
+    if (compressedProfileBlobUrl) {
+      return (
+        // This component must be an <a> rather than a <button> as the download attribute
+        // allows users to download the profile.
+        <a
+          type="button"
+          href={compressedProfileBlobUrl}
+          download={`${downloadFileName}.gz`}
+          className={className}
+        >
+          <span className="menuButtonsPrivacyButtonsSvg menuButtonsPrivacyButtonsSvgDownload" />
+          Download
+        </a>
+      );
+    }
+
+    return (
+      // This component must be an <a> rather than a <button> as the download attribute
+      // allows users to download the profile.
+      <a type="button" href="#" className={classNames(className, 'disabled')}>
+        Compressing…
+      </a>
     );
   }
 }

@@ -15,10 +15,7 @@ type Props = {
   onOkButtonClick?: () => mixed,
   onCancelButtonClick?: () => mixed,
   className: string,
-  // The content of the panel is inside of a function so that its rendering is deferred
-  // until only when the panel is open. This stops potentially expensive selectors
-  // from running when the panel is closed.
-  content: () => React.Node,
+  children: React.Node,
   title?: string,
   okButtonText?: string,
   cancelButtonText?: string,
@@ -63,22 +60,31 @@ class ArrowPanel extends React.PureComponent<Props, State> {
       }
       const openGeneration = state.openGeneration + 1;
 
-      setTimeout(() => {
-        if (state.openGeneration === openGeneration) {
-          this.setState({ isClosing: false });
-        }
-      }, 400);
+      setTimeout(this._onCloseAnimationFinish(openGeneration), 400);
 
       if (this.props.onClose) {
         this.props.onClose();
       }
+
       window.removeEventListener(
         'mousedown',
         this._windowMouseDownListener,
         true
       );
+
       return { open: false, isClosing: true, openGeneration };
     });
+  }
+
+  _onCloseAnimationFinish(openGeneration: number) {
+    return () => {
+      this.setState(state => {
+        if (state.openGeneration === openGeneration) {
+          return { isClosing: false };
+        }
+        return null;
+      });
+    };
   }
 
   componentWillUnmount() {
@@ -117,7 +123,7 @@ class ArrowPanel extends React.PureComponent<Props, State> {
   render() {
     const {
       className,
-      content,
+      children,
       title,
       okButtonText,
       cancelButtonText,
@@ -125,6 +131,7 @@ class ArrowPanel extends React.PureComponent<Props, State> {
     const hasTitle = title !== undefined;
     const hasButtons = okButtonText || cancelButtonText;
     const { open, isClosing } = this.state;
+    console.log(`!!! ArrowPanel`, { open, isClosing });
     return (
       <div className="arrowPanelAnchor">
         <div
@@ -138,7 +145,7 @@ class ArrowPanel extends React.PureComponent<Props, State> {
           <div className="arrowPanelArrow" />
           {hasTitle ? <h1 className="arrowPanelTitle">{title}</h1> : null}
           {open || isClosing ? (
-            <div className="arrowPanelContent">{content()}</div>
+            <div className="arrowPanelContent">{children}</div>
           ) : null}
           {hasButtons ? (
             <div className="arrowPanelButtons">

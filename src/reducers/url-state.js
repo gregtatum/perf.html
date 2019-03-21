@@ -36,6 +36,8 @@ const dataSource: Reducer<DataSource> = (state = 'none', action) => {
       return 'from-file';
     case 'TRIGGER_LOADING_FROM_URL':
       return 'from-url';
+    case 'PROFILE_PUBLISHED':
+      return 'public';
     default:
       return state;
   }
@@ -86,9 +88,8 @@ const committedRanges: Reducer<StartEndRange[]> = (state = [], action) => {
     }
     case 'POP_COMMITTED_RANGES':
       return state.slice(0, action.firstPoppedFilterIndex);
-    case 'FULL_TIME_RANGE_REMOVED':
-      // Removing all committed ranges if we deleted the full range
-      // because of PII sanitization.
+    case 'PROFILE_PUBLISHED':
+      // This may no longer be valid because of PII sanitization.
       return [];
     default:
       return state;
@@ -120,6 +121,9 @@ const selectedThread: Reducer<ThreadIndex | null> = (state = null, action) => {
       }
       return state - reduceBy;
     }
+    case 'PROFILE_PUBLISHED':
+      // This may no longer be valid because of PII sanitization.
+      return null;
     default:
       return state;
   }
@@ -161,6 +165,9 @@ const transforms: Reducer<TransformStacksPerThread> = (state = {}, action) => {
         [threadIndex]: transforms.slice(0, firstPoppedFilterIndex),
       });
     }
+    case 'PROFILE_PUBLISHED':
+      // This may no longer be valid because of PII sanitization.
+      return {};
     default:
       return state;
   }
@@ -241,6 +248,9 @@ const globalTrackOrder: Reducer<TrackIndex[]> = (state = [], action) => {
 
       return globalTrackOrder;
     }
+    case 'PROFILE_PUBLISHED':
+      // This may no longer be valid because of PII sanitization.
+      return [];
     default:
       return state;
   }
@@ -275,6 +285,9 @@ const hiddenGlobalTracks: Reducer<Set<TrackIndex>> = (
       }
       return hiddenGlobalTracks;
     }
+    case 'PROFILE_PUBLISHED':
+      // This may no longer be valid because of PII sanitization.
+      return new Set();
     default:
       return state;
   }
@@ -307,6 +320,9 @@ const hiddenLocalTracksByPid: Reducer<Map<Pid, Set<TrackIndex>>> = (
       hiddenLocalTracksByPid.set(action.pid, action.hiddenLocalTracks);
       return hiddenLocalTracksByPid;
     }
+    case 'PROFILE_PUBLISHED':
+      // This may no longer be valid because of PII sanitization.
+      return new Map();
     default:
       return state;
   }
@@ -324,6 +340,9 @@ const localTrackOrderByPid: Reducer<Map<Pid, TrackIndex[]>> = (
       localTrackOrderByPid.set(action.pid, action.localTrackOrder);
       return localTrackOrderByPid;
     }
+    case 'PROFILE_PUBLISHED':
+      // This may no longer be valid because of PII sanitization.
+      return new Map();
     default:
       return state;
   }

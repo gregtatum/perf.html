@@ -12,12 +12,15 @@ import { ensureExists } from '../../utils/flow';
 describe('shared/ButtonWithPanel', () => {
   // renders the button in its default state
   function setup() {
-    const content = () => <div>Panel content</div>;
     return render(
       <ButtonWithPanel
         className="button"
         label="My Button"
-        panel={<ArrowPanel className="panel" content={content} />}
+        panel={
+          <ArrowPanel className="panel">
+            <div>Panel content</div>
+          </ArrowPanel>
+        }
       />
     );
   }
@@ -28,47 +31,55 @@ describe('shared/ButtonWithPanel', () => {
   });
 
   it('renders a button with a panel', () => {
-    const content = () => <div>Panel content</div>;
     const { container } = render(
       <ButtonWithPanel
         className="button"
         label="My Button"
         open={true}
-        panel={<ArrowPanel className="panel" content={content} />}
+        panel={
+          <ArrowPanel className="panel">
+            <div>Panel content</div>
+          </ArrowPanel>
+        }
       />
     );
     expect(container.firstChild).toMatchSnapshot();
   });
 
-  describe('protecting against expensive panel contents', function() {
+  describe('protecting against mounting expensive panels', function() {
     it('does not render the contents when closed', function() {
-      const content = jest.fn(() => <div>Panel content</div>);
-      render(
+      const { queryByTestId } = render(
         <ButtonWithPanel
           className="button"
           label="My Button"
-          panel={<ArrowPanel className="panel" content={content} />}
+          panel={
+            <ArrowPanel className="panel">
+              <div data-testid="panel-content">Panel content</div>
+            </ArrowPanel>
+          }
         />
       );
-      expect(content).not.toHaveBeenCalled();
+      expect(queryByTestId('panel-content')).toBeFalsy();
     });
 
     /**
-     * This test asserts that we don't try and render the contents of a panel, which
-     * would run the selector. This protects us from running expensive selectors
-     * when they are not needed.
+     * This test asserts that we don't try and mount the contents of a panel if it's
+     * not open.
      */
     it('only renders the contents when open', function() {
-      const content = jest.fn(() => <div>Panel content</div>);
-      render(
+      const { queryByTestId } = render(
         <ButtonWithPanel
           className="button"
           label="My Button"
           open={true}
-          panel={<ArrowPanel className="panel" content={content} />}
+          panel={
+            <ArrowPanel className="panel">
+              <div>Panel content</div>
+            </ArrowPanel>
+          }
         />
       );
-      expect(content).toHaveBeenCalled();
+      expect(queryByTestId('panel-content')).toBeTruthy();
     });
   });
 
