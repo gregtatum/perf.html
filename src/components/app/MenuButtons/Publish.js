@@ -7,7 +7,10 @@
 import * as React from 'react';
 import memoize from 'memoize-immutable';
 import classNames from 'classnames';
-import { toggleCheckedSharingOptions } from '../../../actions/publish';
+import {
+  toggleCheckedSharingOptions,
+  attemptToPublish,
+} from '../../../actions/publish';
 import ArrowPanel from '../../shared/ArrowPanel';
 import ButtonWithPanel from '../../shared/ButtonWithPanel';
 import { getProfile, getProfileRootRange } from '../../../selectors/profile';
@@ -38,6 +41,7 @@ type StateProps = {|
 
 type DispatchProps = {|
   toggleCheckedSharingOptions: typeof toggleCheckedSharingOptions,
+  attemptToPublish: typeof attemptToPublish,
 |};
 
 type PublishProps = ConnectedProps<OwnProps, StateProps, DispatchProps>;
@@ -79,7 +83,11 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
   }
 
   _renderPanelContent = () => {
-    const { checkedSharingOptions, downloadSizePromise } = this.props;
+    const {
+      checkedSharingOptions,
+      downloadSizePromise,
+      attemptToPublish,
+    } = this.props;
 
     return (
       <div className="menuButtonsPrivacyContent">
@@ -126,6 +134,7 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
           <button
             type="button"
             className="photon-button photon-button-primary menuButtonsPrivacyButton menuButtonsPrivacyButtonsUpload"
+            onClick={attemptToPublish}
           >
             <span className="menuButtonsPrivacyButtonsSvg menuButtonsPrivacyButtonsSvgUpload" />
             Publish
@@ -162,7 +171,7 @@ const profileSharingOptions: ExplicitConnectOptions<
     checkedSharingOptions: getCheckedSharingOptions(state),
     downloadSizePromise: getDownloadSize(state),
   }),
-  mapDispatchToProps: { toggleCheckedSharingOptions },
+  mapDispatchToProps: { toggleCheckedSharingOptions, attemptToPublish },
   component: MenuButtonsPublishImpl,
 };
 export const MenuButtonsPublish = explicitConnect(profileSharingOptions);

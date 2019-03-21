@@ -119,7 +119,7 @@ export type AppState = {|
   +lastVisibleThreadTabSlug: TabSlug,
 |};
 
-export type UploadPhase = 'local' | 'uploading' | 'public' | 'error';
+export type UploadPhase = 'local' | 'uploading' | 'uploaded' | 'error';
 
 export type UploadState = {|
   phase: UploadPhase,

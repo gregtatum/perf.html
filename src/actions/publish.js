@@ -29,14 +29,12 @@ export const changeUploadState = (changes: $Shape<UploadState>): Action => ({
 });
 
 /**
- * This function starts the profile sharing process.
- * Takes an optional argument that indicates if the share attempt
- * is being made for the second time. We have two share buttons,
- * one for sharing for the first time, and one for sharing
- * after the initial share depending on the previous URL share status.
- * People can decide to remove the URLs from the profile after sharing
- * with URLs or they can decide to add the URLs after sharing without
- * them. We check the current state before attempting to share depending
+ * This function starts the profile sharing process. Takes an optional argument that
+ * indicates if the share attempt is being made for the second time. We have two share
+ * buttons, one for sharing for the first time, and one for sharing after the initial
+ * share depending on the previous URL share status. People can decide to remove the
+ * URLs from the profile after sharing with URLs or they can decide to add the URLs after
+ * sharing without them. We check the current state before attempting to share depending
  * on that flag.
  */
 export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
@@ -52,10 +50,6 @@ export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
       eventAction: 'start',
     });
 
-    const newUrl = urlFromState(
-      urlStateReducer(currentUrlState, hiddenTracksRemoved(hiddenTracks))
-    );
-
     const profile = getProfile(getState());
     const jsonString = serializeProfile(profile);
     const typedArray = new TextEncoder().encode(jsonString);
@@ -67,12 +61,14 @@ export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
       dispatch(changeUploadState({ uploadProgress }));
     });
 
+    // Generate a url, and completely drop any of the existing URL state. In
+    // a future patch, we should handle this gracefully.
     const url =
       'https://profiler.firefox.com/' +
       urlFromState(urlStateReducer(undefined, profilePublished(hash)));
 
     changeUploadState({
-      phase: 'public',
+      phase: 'uploaded',
       url,
     });
 

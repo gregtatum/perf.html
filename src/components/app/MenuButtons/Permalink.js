@@ -47,7 +47,6 @@ export class MenuButtonsPermalink extends React.PureComponent<*, State> {
     if (fullUrl !== currentFullUrl) {
       try {
         const shortUrl = await shortenUrl(currentFullUrl);
-        console.log(`!!! setting shortUrl`, shortUrl);
         this.setState({ shortUrl, fullUrl: currentFullUrl });
       } catch (error) {
         console.warn('Unable to shorten the URL.', error);

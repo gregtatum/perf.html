@@ -1070,7 +1070,6 @@ export function serializeProfile(
   profile: Profile,
   PIIToBeRemoved?: RemoveProfileInformation | null
 ): string {
-  console.log(`!!! PIIToBeRemoved`, PIIToBeRemoved);
   // stringTable -> stringArray
   let urlCounter = 0;
   const removedThreadIndexes = [];
