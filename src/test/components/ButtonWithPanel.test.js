@@ -74,7 +74,7 @@ describe('shared/ButtonWithPanel', () => {
           open={true}
           panel={
             <ArrowPanel className="panel">
-              <div>Panel content</div>
+              <div data-testid="panel-content">Panel content</div>
             </ArrowPanel>
           }
         />
