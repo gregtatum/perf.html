@@ -19,8 +19,9 @@ import {
 import prettyBytes from '../utils/pretty-bytes';
 import { getHiddenGlobalTracks, getHiddenLocalTracksByPid } from './url-state';
 import { ensureExists } from '../utils/flow';
+import { formatNumber } from '../utils/format-numbers';
 
-import type { PublishState, UploadState } from '../types/state';
+import type { PublishState, UploadState, UploadPhase } from '../types/state';
 import type { Selector } from '../types/store';
 import type { CheckedSharingOptions } from '../types/actions';
 import type { RemoveProfileInformation } from '../types/profile-derived';
@@ -170,3 +171,20 @@ export const getSanitizedProfileGeneration: Selector<number> = createSelector(
 
 export const getUploadState: Selector<UploadState> = state =>
   getPublishState(state).upload;
+
+export const getUploadPhase: Selector<UploadPhase> = state =>
+  getUploadState(state).phase;
+
+export const getUploadGeneration: Selector<number> = state =>
+  getUploadState(state).generation;
+
+export const getUploadProgress: Selector<number> = state =>
+  getUploadState(state).uploadProgress;
+
+export const getUploadProgressString: Selector<string> = createSelector(
+  getUploadProgress,
+  progress => formatNumber(progress, 0, 0, 'percent')
+);
+
+export const getAbortFunction: Selector<() => void> = state =>
+  getUploadState(state).abortFunction;

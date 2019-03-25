@@ -317,6 +317,10 @@ type PublishAction =
   | {|
       +type: 'CHANGE_UPLOAD_STATE',
       +changes: $Shape<UploadState>,
+    |}
+  | {|
+      +type: 'SAVE_ABORT_UPLOAD_FUNCTION',
+      +abort: () => void,
     |};
 
 export type Action =

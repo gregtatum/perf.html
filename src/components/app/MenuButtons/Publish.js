@@ -9,6 +9,7 @@ import classNames from 'classnames';
 import {
   toggleCheckedSharingOptions,
   attemptToPublish,
+  abortUpload,
 } from '../../../actions/publish';
 import { getProfile, getProfileRootRange } from '../../../selectors/profile';
 import {
@@ -17,7 +18,10 @@ import {
   getDownloadSize,
   getCompressedProfileBlobUrl,
   getSanitizedProfileGeneration,
+  getUploadPhase,
+  getUploadProgressString,
 } from '../../../selectors/publish';
+import { assertExhaustiveCheck } from '../../../utils/flow';
 
 import explicitConnect, {
   type ExplicitConnectOptions,
@@ -27,6 +31,7 @@ import explicitConnect, {
 import type { Profile } from '../../../types/profile';
 import type { CheckedSharingOptions } from '../../../types/actions';
 import type { StartEndRange } from '../../../types/units';
+import type { UploadPhase } from '../../../types/state';
 
 require('./Publish.css');
 
@@ -66,11 +71,14 @@ type StateProps = {|
   +compressedProfileBlobUrlPromise: Promise<string>,
   +sanitizedProfileGeneration: number,
   +downloadFileName: string,
+  +uploadPhase: UploadPhase,
+  +uploadProgress: string,
 |};
 
 type DispatchProps = {|
-  toggleCheckedSharingOptions: typeof toggleCheckedSharingOptions,
-  attemptToPublish: typeof attemptToPublish,
+  +toggleCheckedSharingOptions: typeof toggleCheckedSharingOptions,
+  +attemptToPublish: typeof attemptToPublish,
+  +abortUpload: typeof abortUpload,
 |};
 
 type PublishProps = ConnectedProps<OwnProps, StateProps, DispatchProps>;
@@ -100,7 +108,7 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
       >
         <input
           type="checkbox"
-          className="photon-checkbox"
+          className="photon-checkbox photon-checkbox-default"
           name={slug}
           disabled={isDisabled}
           onChange={toggle}
@@ -111,7 +119,7 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
     );
   }
 
-  render() {
+  _renderPublishPanel() {
     const {
       checkedSharingOptions,
       downloadSizePromise,
@@ -139,7 +147,7 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
           </summary>
           <label className="photon-label">
             <input
-              className="photon-checkbox"
+              className="photon-checkbox photon-checkbox-default"
               type="checkbox"
               name="isFiltering"
               onChange={this._toggles.isFiltering}
@@ -176,6 +184,63 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
       </div>
     );
   }
+
+  _renderUploadPanel() {
+    const {
+      uploadProgress,
+      abortUpload,
+      downloadFileName,
+      compressedProfileBlobUrlPromise,
+      sanitizedProfileGeneration,
+    } = this.props;
+
+    return (
+      <div className="menuButtonsPrivacyUpload">
+        <div className="menuButtonsPrivacyUploadTop">
+          <div className="menuButtonsPrivacyUploadTitle">
+            Publishing profile…
+          </div>
+          <div className="menuButtonsPrivacyUploadPercentage">
+            {uploadProgress}
+          </div>
+          <div className="menuButtonsPrivacyUploadBar">
+            <div
+              className="menuButtonsPrivacyUploadBarInner"
+              style={{ width: uploadProgress }}
+            />
+          </div>
+        </div>
+        <div className="menuButtonsPrivacyButtons">
+          <DownloadButton
+            key={sanitizedProfileGeneration}
+            downloadFileName={downloadFileName}
+            compressedProfileBlobUrlPromise={compressedProfileBlobUrlPromise}
+          />
+          <button
+            type="button"
+            className="photon-button photon-button-default menuButtonsPrivacyButton menuButtonsPrivacyButtonsCancelUpload"
+            onClick={abortUpload}
+          >
+            Cancel Upload
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  render() {
+    const { uploadPhase } = this.props;
+    switch (uploadPhase) {
+      case 'error':
+      case 'local':
+      case 'uploaded':
+        return this._renderPublishPanel();
+      case 'uploading':
+        return this._renderUploadPanel();
+      default:
+        throw assertExhaustiveCheck(uploadPhase);
+    }
+  }
 }
 
 const profileSharingOptions: ExplicitConnectOptions<
@@ -191,8 +256,14 @@ const profileSharingOptions: ExplicitConnectOptions<
     downloadFileName: getFilenameString(state),
     compressedProfileBlobUrlPromise: getCompressedProfileBlobUrl(state),
     sanitizedProfileGeneration: getSanitizedProfileGeneration(state),
+    uploadPhase: getUploadPhase(state),
+    uploadProgress: getUploadProgressString(state),
   }),
-  mapDispatchToProps: { toggleCheckedSharingOptions, attemptToPublish },
+  mapDispatchToProps: {
+    toggleCheckedSharingOptions,
+    attemptToPublish,
+    abortUpload,
+  },
   component: MenuButtonsPublishImpl,
 };
 const MenuButtonsPublishConnected = explicitConnect(profileSharingOptions);

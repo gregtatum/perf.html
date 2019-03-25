@@ -131,7 +131,6 @@ class ArrowPanel extends React.PureComponent<Props, State> {
     const hasTitle = title !== undefined;
     const hasButtons = okButtonText || cancelButtonText;
     const { open, isClosing } = this.state;
-    console.log(`!!! ArrowPanel`, { open, isClosing });
     return (
       <div className="arrowPanelAnchor">
         <div

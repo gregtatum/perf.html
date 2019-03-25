@@ -9,6 +9,11 @@ import { serializeProfile } from '../profile-logic/process-profile';
 import { sendAnalytics } from '../utils/analytics';
 import { getProfile } from '../selectors/profile';
 import { getUrlState } from '../selectors/url-state';
+import {
+  getAbortFunction,
+  getUploadPhase,
+  getUploadGeneration,
+} from '../selectors/publish';
 import { urlFromState } from '../app-logic/url-handling';
 import { profilePublished } from './app';
 import urlStateReducer from '../reducers/url-state';
@@ -43,7 +48,16 @@ export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
   getState
 ) => {
   try {
-    dispatch(changeUploadState({ phase: 'uploading', uploadProgress: 0 }));
+    const { abortFunction, startUpload } = uploadBinaryProfileData();
+
+    dispatch(
+      changeUploadState({
+        phase: 'uploading',
+        uploadProgress: 0,
+        abortFunction,
+      })
+    );
+    const uploadGeneration = getUploadGeneration(getState());
 
     sendAnalytics({
       hitType: 'event',
@@ -56,9 +70,17 @@ export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
     const typedArray = new TextEncoder().encode(jsonString);
     const gzipData: Uint8Array = await compress(typedArray.slice(0));
 
+    if (
+      getUploadPhase(getState()) !== 'uploading' ||
+      uploadGeneration !== getUploadGeneration(getState())
+    ) {
+      // The upload could have been aborted while we were compressing the data.
+      return;
+    }
+
     // Upload the profile, and notify it with the amount of data that has been
     // uploaded.
-    const hash = await uploadBinaryProfileData(gzipData, uploadProgress => {
+    const hash = await startUpload(gzipData, uploadProgress => {
       dispatch(changeUploadState({ uploadProgress }));
     });
 
@@ -77,7 +99,6 @@ export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
       })
     );
 
-    console.log(`!!! url`, url);
     sendAnalytics({
       hitType: 'event',
       eventCategory: 'profile upload',
@@ -101,4 +122,22 @@ export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
       eventAction: 'failed',
     });
   }
+};
+
+/**
+ * Abort the attempt to publish.
+ */
+export const abortUpload = (): ThunkAction<Promise<void>> => async (
+  dispatch,
+  getState
+) => {
+  const abort = getAbortFunction(getState());
+  abort();
+  dispatch(changeUploadState({ phase: 'local', uploadProgress: 0 }));
+
+  sendAnalytics({
+    hitType: 'event',
+    eventCategory: 'profile upload',
+    eventAction: 'aborted',
+  });
 };

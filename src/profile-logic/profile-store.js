@@ -3,38 +3,61 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 // @flow
 
-export function uploadBinaryProfileData(
-  data: $TypedArray,
-  progressChangeCallback?: number => mixed
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
+let _generation = 0;
+export function uploadBinaryProfileData(): * {
+  const xhr = new XMLHttpRequest();
+  const generation = _generation++;
+  let isAborted = false;
 
-    xhr.onload = () => {
-      if (xhr.status === 200) {
-        resolve(xhr.responseText);
-      } else {
-        reject(
-          new Error(
-            `xhr onload with status != 200, xhr.statusText: ${xhr.statusText}`
-          )
-        );
-      }
-    };
+  return {
+    abortFunction: (): void => {
+      isAborted = true;
+      console.log(`!!! ${generation} xhr.onload, status:`, xhr);
+      xhr.abort();
+    },
+    startUpload: (
+      data: $TypedArray,
+      progressChangeCallback?: number => mixed
+    ): Promise<string> =>
+      new Promise((resolve, reject) => {
+        if (isAborted) {
+          reject(new Error('The request was already aborted.'));
+          return;
+        }
 
-    xhr.onerror = () => {
-      reject(
-        new Error(`xhr onerror was called, xhr.statusText: ${xhr.statusText}`)
-      );
-    };
+        xhr.onload = () => {
+          console.log(`!!! ${generation} xhr.onload, status:`, xhr);
+          if (xhr.status === 200) {
+            resolve(xhr.responseText);
+          } else {
+            reject(
+              new Error(
+                `xhr onload with status != 200, xhr.statusText: ${
+                  xhr.statusText
+                }`
+              )
+            );
+          }
+        };
 
-    xhr.upload.onprogress = e => {
-      if (progressChangeCallback && e.lengthComputable) {
-        progressChangeCallback(e.loaded / e.total);
-      }
-    };
+        xhr.onerror = () => {
+          console.log(`!!! ${generation} xhr.onload, error:`, xhr);
 
-    xhr.open('POST', 'https://profile-store.appspot.com/compressed-store');
-    xhr.send(data);
-  });
+          reject(
+            new Error(
+              `xhr onerror was called, xhr.statusText: ${xhr.statusText}`
+            )
+          );
+        };
+
+        xhr.upload.onprogress = e => {
+          if (progressChangeCallback && e.lengthComputable) {
+            progressChangeCallback(e.loaded / e.total);
+          }
+        };
+
+        xhr.open('POST', 'https://profile-store.appspot.com/compressed-store');
+        xhr.send(data);
+      }),
+  };
 }
