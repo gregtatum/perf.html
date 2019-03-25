@@ -10,6 +10,7 @@ import {
   toggleCheckedSharingOptions,
   attemptToPublish,
   abortUpload,
+  resetUploadState,
 } from '../../../actions/publish';
 import { getProfile, getProfileRootRange } from '../../../selectors/profile';
 import {
@@ -20,6 +21,7 @@ import {
   getSanitizedProfileGeneration,
   getUploadPhase,
   getUploadProgressString,
+  getUploadUrl,
 } from '../../../selectors/publish';
 import { assertExhaustiveCheck } from '../../../utils/flow';
 
@@ -73,12 +75,14 @@ type StateProps = {|
   +downloadFileName: string,
   +uploadPhase: UploadPhase,
   +uploadProgress: string,
+  +uploadUrl: string,
 |};
 
 type DispatchProps = {|
   +toggleCheckedSharingOptions: typeof toggleCheckedSharingOptions,
   +attemptToPublish: typeof attemptToPublish,
   +abortUpload: typeof abortUpload,
+  +resetUploadState: typeof resetUploadState,
 |};
 
 type PublishProps = ConnectedProps<OwnProps, StateProps, DispatchProps>;
@@ -127,63 +131,93 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
       downloadFileName,
       compressedProfileBlobUrlPromise,
       sanitizedProfileGeneration,
+      uploadUrl,
     } = this.props;
 
     return (
-      <div className="menuButtonsPrivacyContent">
-        <div className="menuButtonsPrivacyIcon" />
-        <p className="menuButtonsPrivacyInfoDescription">
-          You’re about to share your profile potentially where others have
-          public access to it. By default, the profile is stripped of much of
-          the personally identifiable information.
-        </p>
-        <details className="menuButtonsPrivacyData">
-          <summary className="menuButtonsPrivacyDataSummary">
-            Adjust how much is shared{' '}
-            <DownloadSize
-              key={sanitizedProfileGeneration}
-              downloadSizePromise={downloadSizePromise}
-            />
-          </summary>
-          <label className="photon-label">
-            <input
-              className="photon-checkbox photon-checkbox-default"
-              type="checkbox"
-              name="isFiltering"
-              onChange={this._toggles.isFiltering}
-              checked={checkedSharingOptions.isFiltering}
-            />
-            Filter out potentially identifying information
-          </label>
-          <div className="menuButtonsPrivacyDataChoices">
-            {this._renderCheckbox('hiddenThreads', 'Remove hidden threads')}
-            {this._renderCheckbox(
-              'timeRange',
-              'Remove information out of the time range'
-            )}
-            {this._renderCheckbox('screenshots', 'Remove screenshots')}
-            {this._renderCheckbox('urls', 'Remove all URLs')}
-            {this._renderCheckbox('extension', 'Remove extensions')}
+      <>
+        {uploadUrl ? (
+          <div className="menuButtonsPrivacyPreviousUrl">
+            <div className="menuButtonsPrivacyPreviousUrlTitle">
+              Previously published profile:
+            </div>
+            <div className="menuButtonsPrivacyUrl">
+              <a href={uploadUrl} target="_blank">
+                {uploadUrl}
+              </a>
+            </div>
           </div>
-        </details>
-        <div className="menuButtonsPrivacyButtons">
-          <DownloadButton
-            key={sanitizedProfileGeneration}
-            downloadFileName={downloadFileName}
-            compressedProfileBlobUrlPromise={compressedProfileBlobUrlPromise}
-          />
-          <button
-            type="button"
-            className="photon-button photon-button-primary menuButtonsPrivacyButton menuButtonsPrivacyButtonsUpload"
-            onClick={attemptToPublish}
-          >
-            <span className="menuButtonsPrivacyButtonsSvg menuButtonsPrivacyButtonsSvgUpload" />
-            Publish
-          </button>
+        ) : null}
+        <div className="menuButtonsPrivacyContent">
+          <div className="menuButtonsPrivacyIcon" />
+          <p className="menuButtonsPrivacyInfoDescription">
+            You’re about to share your profile potentially where others have
+            public access to it. By default, the profile is stripped of much of
+            the personally identifiable information.
+          </p>
+          <details className="menuButtonsPrivacyData">
+            <summary className="menuButtonsPrivacyDataSummary">
+              Adjust how much is shared{' '}
+              <DownloadSize
+                key={sanitizedProfileGeneration}
+                downloadSizePromise={downloadSizePromise}
+              />
+            </summary>
+            <label className="photon-label">
+              <input
+                className="photon-checkbox photon-checkbox-default"
+                type="checkbox"
+                name="isFiltering"
+                onChange={this._toggles.isFiltering}
+                checked={checkedSharingOptions.isFiltering}
+              />
+              Filter out potentially identifying information
+            </label>
+            <div className="menuButtonsPrivacyDataChoices">
+              {this._renderCheckbox('hiddenThreads', 'Remove hidden threads')}
+              {this._renderCheckbox(
+                'timeRange',
+                'Remove information out of the time range'
+              )}
+              {this._renderCheckbox('screenshots', 'Remove screenshots')}
+              {this._renderCheckbox('urls', 'Remove all URLs')}
+              {this._renderCheckbox('extension', 'Remove extensions')}
+            </div>
+          </details>
+          <div className="menuButtonsPrivacyButtons">
+            <DownloadButton
+              key={sanitizedProfileGeneration}
+              downloadFileName={downloadFileName}
+              compressedProfileBlobUrlPromise={compressedProfileBlobUrlPromise}
+            />
+            <button
+              type="button"
+              className="photon-button photon-button-primary menuButtonsPrivacyButton menuButtonsPrivacyButtonsUpload"
+              onClick={attemptToPublish}
+            >
+              <span className="menuButtonsPrivacyButtonsSvg menuButtonsPrivacyButtonsSvgUpload" />
+              Publish
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
+
+  _closePanelAfterUpload = () => {
+    const { resetUploadState } = this.props;
+    // Only reset it after the panel animation disappears.
+    setTimeout(resetUploadState, 300);
+
+    const { body } = document;
+    if (body) {
+      // This is a hack to close the arrow panel. See the following issue on
+      // moving this to the Redux state.
+      //
+      // https://github.com/firefox-devtools/profiler/issues/1888
+      body.dispatchEvent(new MouseEvent('mousedown'));
+    }
+  };
 
   _renderUploadPanel() {
     const {
@@ -228,15 +262,44 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
     );
   }
 
+  _renderUploadedPanel() {
+    const { uploadUrl } = this.props;
+    return (
+      <div className="menuButtonsPrivacyUpload">
+        <div className="menuButtonsPrivacyUploadTop">
+          <div className="menuButtonsPrivacyUploadTitle">Profile published</div>
+          <div className="menuButtonsPrivacyMessage">
+            Your profile was published, it is now safe to close this window.
+          </div>
+          <div className="menuButtonsPrivacyUrl">
+            <a href={uploadUrl} target="_blank">
+              {uploadUrl}
+            </a>
+          </div>
+        </div>
+        <div className="menuButtonsPrivacyButtons">
+          <button
+            type="button"
+            className="photon-button photon-button-primary menuButtonsPrivacyButton"
+            onClick={this._closePanelAfterUpload}
+          >
+            Ok
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   render() {
     const { uploadPhase } = this.props;
     switch (uploadPhase) {
       case 'error':
       case 'local':
-      case 'uploaded':
         return this._renderPublishPanel();
       case 'uploading':
         return this._renderUploadPanel();
+      case 'uploaded':
+        return this._renderUploadedPanel();
       default:
         throw assertExhaustiveCheck(uploadPhase);
     }
@@ -258,11 +321,13 @@ const profileSharingOptions: ExplicitConnectOptions<
     sanitizedProfileGeneration: getSanitizedProfileGeneration(state),
     uploadPhase: getUploadPhase(state),
     uploadProgress: getUploadProgressString(state),
+    uploadUrl: getUploadUrl(state),
   }),
   mapDispatchToProps: {
     toggleCheckedSharingOptions,
     attemptToPublish,
     abortUpload,
+    resetUploadState,
   },
   component: MenuButtonsPublishImpl,
 };
