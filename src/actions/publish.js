@@ -49,7 +49,6 @@ export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
 ) => {
   try {
     const { abortFunction, startUpload } = uploadBinaryProfileData();
-
     dispatch(
       changeUploadState({
         phase: 'uploading',

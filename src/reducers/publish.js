@@ -38,7 +38,7 @@ const checkedSharingOptions: Reducer<CheckedSharingOptions> = (
   }
 };
 
-const phase: Reducer<UploadPhase> = (state = 'error', action) => {
+const phase: Reducer<UploadPhase> = (state = 'local', action) => {
   switch (action.type) {
     case 'CHANGE_UPLOAD_STATE':
       return 'phase' in action.changes ? action.changes.phase : state;
@@ -47,7 +47,7 @@ const phase: Reducer<UploadPhase> = (state = 'error', action) => {
   }
 };
 
-const uploadProgress: Reducer<number> = (state = 0.0, action) => {
+const uploadProgress: Reducer<number> = (state = 0, action) => {
   switch (action.type) {
     case 'CHANGE_UPLOAD_STATE':
       return 'uploadProgress' in action.changes
@@ -58,10 +58,7 @@ const uploadProgress: Reducer<number> = (state = 0.0, action) => {
   }
 };
 
-const error: Reducer<Error | mixed> = (
-  state = new Error('There was an error uploading the profile.'),
-  action
-) => {
+const error: Reducer<Error | mixed> = (state = null, action) => {
   switch (action.type) {
     case 'CHANGE_UPLOAD_STATE':
       return 'error' in action.changes ? action.changes.error : state;

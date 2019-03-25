@@ -137,7 +137,7 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
     } = this.props;
 
     return (
-      <>
+      <div data-testid="MenuButtonsPublish-container">
         {uploadUrl ? (
           <div className="menuButtonsPublishPreviousUrl">
             <div className="menuButtonsPublishPreviousUrlTitle">
@@ -196,13 +196,14 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
               type="button"
               className="photon-button photon-button-primary menuButtonsPublishButton menuButtonsPublishButtonsUpload"
               onClick={attemptToPublish}
+              data-testid="MenuButtonsPublish-publish-button"
             >
               <span className="menuButtonsPublishButtonsSvg menuButtonsPublishButtonsSvgUpload" />
               Publish
             </button>
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -231,7 +232,10 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
     } = this.props;
 
     return (
-      <div className="menuButtonsPublishUpload">
+      <div
+        className="menuButtonsPublishUpload"
+        data-testid="MenuButtonsPublish-container"
+      >
         <div className="menuButtonsPublishUploadTop">
           <div className="menuButtonsPublishUploadTitle">
             Publishing profile…
@@ -267,7 +271,10 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
   _renderUploadedPanel() {
     const { uploadUrl } = this.props;
     return (
-      <div className="menuButtonsPublishUpload">
+      <div
+        className="menuButtonsPublishUpload"
+        data-testid="MenuButtonsPublish-container"
+      >
         <div className="menuButtonsPublishUploadTop">
           <div className="menuButtonsPublishUploadTitle">Profile published</div>
           <div className="menuButtonsPublishMessage">
@@ -309,7 +316,10 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
     }
 
     return (
-      <div className="menuButtonsPublishUpload">
+      <div
+        className="menuButtonsPublishUpload"
+        data-testid="MenuButtonsPublish-container"
+      >
         <div className="photon-message-bar photon-message-bar-error">
           Uh oh, something went wrong when publishing the profile.
           <button
@@ -377,27 +387,23 @@ type DownloadSizeProps = {| +downloadSizePromise: Promise<string> |};
  */
 class DownloadSize extends React.PureComponent<
   DownloadSizeProps,
-  {| downloadSize: string | null, isDestroyed: boolean |}
+  {| downloadSize: string | null |}
 > {
-  state = { downloadSize: null, isDestroyed: false };
+  _isMounted: boolean = true;
+  state = { downloadSize: null };
 
   componentDidMount() {
     const { downloadSizePromise } = this.props;
+    this._isMounted = true;
     downloadSizePromise.then(downloadSize => {
-      if (!this.state.isDestroyed) {
+      if (this._isMounted) {
         this.setState({ downloadSize });
       }
     });
   }
 
-  componentDidUpdate() {
-    console.warn(
-      'The DownloadSizeKeyed component should never update, the key generated was not correct.'
-    );
-  }
-
   componentWillUnmount() {
-    this.setState({ isDestroyed: true });
+    this._isMounted = false;
   }
 
   render() {
@@ -419,27 +425,23 @@ type DownloadButtonProps = {|
  */
 class DownloadButton extends React.PureComponent<
   DownloadButtonProps,
-  {| compressedProfileBlobUrl: string | null, isDestroyed: boolean |}
+  {| compressedProfileBlobUrl: string | null |}
 > {
-  state = { compressedProfileBlobUrl: null, isDestroyed: false };
+  _isMounted: boolean = false;
+  state = { compressedProfileBlobUrl: null };
 
   componentDidMount() {
     const { compressedProfileBlobUrlPromise } = this.props;
+    this._isMounted = true;
     compressedProfileBlobUrlPromise.then(compressedProfileBlobUrl => {
-      if (!this.state.isDestroyed) {
+      if (this._isMounted) {
         this.setState({ compressedProfileBlobUrl });
       }
     });
   }
 
-  componentDidUpdate() {
-    console.warn(
-      'The DownloadButtonKeyed component should never update, the key generated was not correct.'
-    );
-  }
-
   componentWillUnmount() {
-    this.setState({ isDestroyed: true });
+    this._isMounted = false;
   }
 
   render() {
