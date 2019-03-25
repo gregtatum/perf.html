@@ -87,7 +87,7 @@ export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
     // Generate a url, and completely drop any of the existing URL state. In
     // a future patch, we should handle this gracefully.
     const url =
-      'https://profiler.firefox.com/' +
+      'https://profiler.firefox.com' +
       urlFromState(
         urlStateReducer(getUrlState(getState()), profilePublished(hash))
       );

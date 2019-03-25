@@ -106,7 +106,7 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
       <label
         className={classNames({
           'photon-label': true,
-          menuButtonsPrivacyDataChoicesLabel: true,
+          menuButtonsPublishDataChoicesLabel: true,
           disabled: isDisabled,
         })}
       >
@@ -137,26 +137,26 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
     return (
       <>
         {uploadUrl ? (
-          <div className="menuButtonsPrivacyPreviousUrl">
-            <div className="menuButtonsPrivacyPreviousUrlTitle">
+          <div className="menuButtonsPublishPreviousUrl">
+            <div className="menuButtonsPublishPreviousUrlTitle">
               Previously published profile:
             </div>
-            <div className="menuButtonsPrivacyUrl">
+            <div className="menuButtonsPublishUrl">
               <a href={uploadUrl} target="_blank">
                 {uploadUrl}
               </a>
             </div>
           </div>
         ) : null}
-        <div className="menuButtonsPrivacyContent">
-          <div className="menuButtonsPrivacyIcon" />
-          <p className="menuButtonsPrivacyInfoDescription">
+        <div className="menuButtonsPublishContent">
+          <div className="menuButtonsPublishIcon" />
+          <p className="menuButtonsPublishInfoDescription">
             You’re about to share your profile potentially where others have
             public access to it. By default, the profile is stripped of much of
             the personally identifiable information.
           </p>
-          <details className="menuButtonsPrivacyData">
-            <summary className="menuButtonsPrivacyDataSummary">
+          <details className="menuButtonsPublishData">
+            <summary className="menuButtonsPublishDataSummary">
               Adjust how much is shared{' '}
               <DownloadSize
                 key={sanitizedProfileGeneration}
@@ -173,7 +173,7 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
               />
               Filter out potentially identifying information
             </label>
-            <div className="menuButtonsPrivacyDataChoices">
+            <div className="menuButtonsPublishDataChoices">
               {this._renderCheckbox('hiddenThreads', 'Remove hidden threads')}
               {this._renderCheckbox(
                 'timeRange',
@@ -184,7 +184,7 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
               {this._renderCheckbox('extension', 'Remove extensions')}
             </div>
           </details>
-          <div className="menuButtonsPrivacyButtons">
+          <div className="menuButtonsPublishButtons">
             <DownloadButton
               key={sanitizedProfileGeneration}
               downloadFileName={downloadFileName}
@@ -192,10 +192,10 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
             />
             <button
               type="button"
-              className="photon-button photon-button-primary menuButtonsPrivacyButton menuButtonsPrivacyButtonsUpload"
+              className="photon-button photon-button-primary menuButtonsPublishButton menuButtonsPublishButtonsUpload"
               onClick={attemptToPublish}
             >
-              <span className="menuButtonsPrivacyButtonsSvg menuButtonsPrivacyButtonsSvgUpload" />
+              <span className="menuButtonsPublishButtonsSvg menuButtonsPublishButtonsSvgUpload" />
               Publish
             </button>
           </div>
@@ -229,22 +229,22 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
     } = this.props;
 
     return (
-      <div className="menuButtonsPrivacyUpload">
-        <div className="menuButtonsPrivacyUploadTop">
-          <div className="menuButtonsPrivacyUploadTitle">
+      <div className="menuButtonsPublishUpload">
+        <div className="menuButtonsPublishUploadTop">
+          <div className="menuButtonsPublishUploadTitle">
             Publishing profile…
           </div>
-          <div className="menuButtonsPrivacyUploadPercentage">
+          <div className="menuButtonsPublishUploadPercentage">
             {uploadProgress}
           </div>
-          <div className="menuButtonsPrivacyUploadBar">
+          <div className="menuButtonsPublishUploadBar">
             <div
-              className="menuButtonsPrivacyUploadBarInner"
+              className="menuButtonsPublishUploadBarInner"
               style={{ width: uploadProgress }}
             />
           </div>
         </div>
-        <div className="menuButtonsPrivacyButtons">
+        <div className="menuButtonsPublishButtons">
           <DownloadButton
             key={sanitizedProfileGeneration}
             downloadFileName={downloadFileName}
@@ -252,7 +252,7 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
           />
           <button
             type="button"
-            className="photon-button photon-button-default menuButtonsPrivacyButton menuButtonsPrivacyButtonsCancelUpload"
+            className="photon-button photon-button-default menuButtonsPublishButton menuButtonsPublishButtonsCancelUpload"
             onClick={abortUpload}
           >
             Cancel Upload
@@ -265,22 +265,22 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
   _renderUploadedPanel() {
     const { uploadUrl } = this.props;
     return (
-      <div className="menuButtonsPrivacyUpload">
-        <div className="menuButtonsPrivacyUploadTop">
-          <div className="menuButtonsPrivacyUploadTitle">Profile published</div>
-          <div className="menuButtonsPrivacyMessage">
+      <div className="menuButtonsPublishUpload">
+        <div className="menuButtonsPublishUploadTop">
+          <div className="menuButtonsPublishUploadTitle">Profile published</div>
+          <div className="menuButtonsPublishMessage">
             Your profile was published, it is now safe to close this window.
           </div>
-          <div className="menuButtonsPrivacyUrl">
+          <div className="menuButtonsPublishUrl">
             <a href={uploadUrl} target="_blank">
               {uploadUrl}
             </a>
           </div>
         </div>
-        <div className="menuButtonsPrivacyButtons">
+        <div className="menuButtonsPublishButtons">
           <button
             type="button"
-            className="photon-button photon-button-primary menuButtonsPrivacyButton"
+            className="photon-button photon-button-primary menuButtonsPublishButton"
             onClick={this._closePanelAfterUpload}
           >
             Ok
@@ -409,7 +409,7 @@ class DownloadButton extends React.PureComponent<
     const { downloadFileName } = this.props;
     const { compressedProfileBlobUrl } = this.state;
     const className =
-      'photon-button menuButtonsPrivacyButton menuButtonsPrivacyButtonsDownload';
+      'photon-button menuButtonsPublishButton menuButtonsPublishButtonsDownload';
 
     if (compressedProfileBlobUrl) {
       return (
@@ -421,7 +421,7 @@ class DownloadButton extends React.PureComponent<
           download={`${downloadFileName}.gz`}
           className={className}
         >
-          <span className="menuButtonsPrivacyButtonsSvg menuButtonsPrivacyButtonsSvgDownload" />
+          <span className="menuButtonsPublishButtonsSvg menuButtonsPublishButtonsSvgDownload" />
           Download
         </a>
       );
