@@ -22,6 +22,7 @@ import {
   getUploadPhase,
   getUploadProgressString,
   getUploadUrl,
+  getUploadError,
 } from '../../../selectors/publish';
 import { assertExhaustiveCheck } from '../../../utils/flow';
 
@@ -76,6 +77,7 @@ type StateProps = {|
   +uploadPhase: UploadPhase,
   +uploadProgress: string,
   +uploadUrl: string,
+  +error: mixed,
 |};
 
 type DispatchProps = {|
@@ -290,10 +292,44 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
     );
   }
 
+  _renderErrorPanel() {
+    const { error, resetUploadState } = this.props;
+    let message: string =
+      'There was an unknown error when trying to publish the profile.';
+    if (
+      error &&
+      typeof error === 'object' &&
+      'message' in error &&
+      typeof error.message === 'string'
+    ) {
+      // This is most likely an error, but do a runtime check just in case.
+      message = error.message;
+    } else if (typeof error === 'string') {
+      message = error;
+    }
+
+    return (
+      <div className="menuButtonsPublishUpload">
+        <div className="photon-message-bar photon-message-bar-error">
+          Uh oh, something went wrong when publishing the profile.
+          <button
+            className="photon-button photon-button-micro"
+            type="button"
+            onClick={resetUploadState}
+          >
+            Try again
+          </button>
+        </div>
+        <div className="menuButtonsPublishError">{message}</div>
+      </div>
+    );
+  }
+
   render() {
     const { uploadPhase } = this.props;
     switch (uploadPhase) {
       case 'error':
+        return this._renderErrorPanel();
       case 'local':
         return this._renderPublishPanel();
       case 'uploading':
@@ -322,6 +358,7 @@ const profileSharingOptions: ExplicitConnectOptions<
     uploadPhase: getUploadPhase(state),
     uploadProgress: getUploadProgressString(state),
     uploadUrl: getUploadUrl(state),
+    error: getUploadError(state),
   }),
   mapDispatchToProps: {
     toggleCheckedSharingOptions,

@@ -184,6 +184,9 @@ export const getUploadProgress: Selector<number> = state =>
 export const getUploadUrl: Selector<string> = state =>
   getUploadState(state).url;
 
+export const getUploadError: Selector<Error | mixed> = state =>
+  getUploadState(state).error;
+
 export const getUploadProgressString: Selector<string> = createSelector(
   getUploadProgress,
   progress => formatNumber(progress, 0, 0, 'percent')

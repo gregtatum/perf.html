@@ -124,7 +124,7 @@ export type UploadPhase = 'local' | 'uploading' | 'uploaded' | 'error';
 export type UploadState = {|
   phase: UploadPhase,
   uploadProgress: number,
-  error: Error | null,
+  error: Error | mixed,
   url: string,
   abortFunction: () => void,
   generation: number,
