@@ -126,6 +126,8 @@ export type UploadState = {|
   uploadProgress: number,
   error: Error | null,
   url: string,
+  abortFunction: () => void,
+  generation: number,
 |};
 
 export type PublishState = {|

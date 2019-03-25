@@ -38,7 +38,7 @@ const checkedSharingOptions: Reducer<CheckedSharingOptions> = (
   }
 };
 
-const phase: Reducer<UploadPhase> = (state = 'local', action) => {
+const phase: Reducer<UploadPhase> = (state = 'uploading', action) => {
   switch (action.type) {
     case 'CHANGE_UPLOAD_STATE':
       return 'phase' in action.changes ? action.changes.phase : state;
@@ -47,7 +47,7 @@ const phase: Reducer<UploadPhase> = (state = 'local', action) => {
   }
 };
 
-const uploadProgress: Reducer<number> = (state = 0, action) => {
+const uploadProgress: Reducer<number> = (state = 0.3, action) => {
   switch (action.type) {
     case 'CHANGE_UPLOAD_STATE':
       return 'uploadProgress' in action.changes
@@ -76,11 +76,37 @@ const url: Reducer<string> = (state = '', action) => {
   }
 };
 
+const abortFunction: Reducer<() => void> = (state = () => {}, action) => {
+  switch (action.type) {
+    case 'CHANGE_UPLOAD_STATE':
+      return 'abortFunction' in action.changes
+        ? action.changes.abortFunction
+        : state;
+    default:
+      return state;
+  }
+};
+
+/**
+ * Update the generation value for every upload attempt.
+ */
+const generation: Reducer<number> = (state = 0, action) => {
+  switch (action.type) {
+    case 'CHANGE_UPLOAD_STATE':
+      // Incrememnt the generation value if starting to upload.
+      return action.changes.phase === 'uploading' ? state + 1 : state;
+    default:
+      return state;
+  }
+};
+
 const upload: Reducer<UploadState> = combineReducers({
   phase,
   uploadProgress,
+  abortFunction,
   error,
   url,
+  generation,
 });
 
 const publishReducer: Reducer<PublishState> = combineReducers({
