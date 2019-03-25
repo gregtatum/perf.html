@@ -38,7 +38,7 @@ const checkedSharingOptions: Reducer<CheckedSharingOptions> = (
   }
 };
 
-const phase: Reducer<UploadPhase> = (state = 'uploading', action) => {
+const phase: Reducer<UploadPhase> = (state = 'local', action) => {
   switch (action.type) {
     case 'CHANGE_UPLOAD_STATE':
       return 'phase' in action.changes ? action.changes.phase : state;
@@ -47,7 +47,7 @@ const phase: Reducer<UploadPhase> = (state = 'uploading', action) => {
   }
 };
 
-const uploadProgress: Reducer<number> = (state = 0.3, action) => {
+const uploadProgress: Reducer<number> = (state = 0.0, action) => {
   switch (action.type) {
     case 'CHANGE_UPLOAD_STATE':
       return 'uploadProgress' in action.changes

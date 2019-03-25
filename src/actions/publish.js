@@ -141,3 +141,8 @@ export const abortUpload = (): ThunkAction<Promise<void>> => async (
     eventAction: 'aborted',
   });
 };
+
+export const resetUploadState = (): Action =>
+  changeUploadState({
+    phase: 'local',
+  });
