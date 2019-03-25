@@ -61,7 +61,7 @@ const PublishOrPermalinkButtons = ({ dataSource }) => {
           className="menuButtonsShareButton"
           label="Publish…"
           panel={
-            <ArrowPanel className="menuButtonsPrivacyPanel">
+            <ArrowPanel className="menuButtonsPublishPanel">
               <MenuButtonsPublish />
             </ArrowPanel>
           }

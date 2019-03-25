@@ -219,7 +219,7 @@ Array [
           class="arrowPanelAnchor"
         >
           <div
-            class="arrowPanel hasTitle hasButtons menuButtonsPrivacyPanel"
+            class="arrowPanel hasTitle hasButtons menuButtonsPublishPanel"
           >
             <div
               class="arrowPanelArrow"
