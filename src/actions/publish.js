@@ -107,15 +107,12 @@ export const attemptToPublish = (): ThunkAction<Promise<void>> => async (
 
     window.open(url, '_blank');
   } catch (error) {
-    // To avoid any interaction with running transitions, we delay setting
-    // the new state by 300ms.
-    setTimeout(() => {
+    dispatch(
       changeUploadState({
         phase: 'error',
         error,
-      });
-    }, 300);
-
+      })
+    );
     sendAnalytics({
       hitType: 'event',
       eventCategory: 'profile upload',

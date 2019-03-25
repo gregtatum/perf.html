@@ -2,17 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 // @flow
+import { oneLine } from 'common-tags';
 
-let _generation = 0;
 export function uploadBinaryProfileData(): * {
   const xhr = new XMLHttpRequest();
-  const generation = _generation++;
   let isAborted = false;
 
   return {
     abortFunction: (): void => {
       isAborted = true;
-      console.log(`!!! ${generation} xhr.onload, status:`, xhr);
       xhr.abort();
     },
     startUpload: (
@@ -26,7 +24,6 @@ export function uploadBinaryProfileData(): * {
         }
 
         xhr.onload = () => {
-          console.log(`!!! ${generation} xhr.onload, status:`, xhr);
           if (xhr.status === 200) {
             resolve(xhr.responseText);
           } else {
@@ -41,11 +38,15 @@ export function uploadBinaryProfileData(): * {
         };
 
         xhr.onerror = () => {
-          console.log(`!!! ${generation} xhr.onload, error:`, xhr);
-
           reject(
             new Error(
-              `xhr onerror was called, xhr.statusText: ${xhr.statusText}`
+              xhr.statusText
+                ? oneLine`
+                    There was an issue uploading the profile to the server. This is often
+                    caused by the profile file size being too large. The error
+                    response was: ${xhr.statusText}
+                  `
+                : 'Unable to make a connection to publish the profile.'
             )
           );
         };
