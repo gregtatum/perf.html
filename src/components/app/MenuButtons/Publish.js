@@ -23,6 +23,7 @@ import {
   getUploadProgressString,
   getUploadUrl,
   getUploadError,
+  getNamesOfRemovedThreads,
 } from '../../../selectors/publish';
 import { assertExhaustiveCheck } from '../../../utils/flow';
 
@@ -52,6 +53,7 @@ type StateProps = {|
   +uploadProgress: string,
   +uploadUrl: string,
   +error: mixed,
+  +namesOfRemovedThreads: string[],
 |};
 
 type DispatchProps = {|
@@ -74,7 +76,11 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
     extension: () => this.props.toggleCheckedSharingOptions('extension'),
   };
 
-  _renderCheckbox(slug: $Keys<CheckedSharingOptions>, label: string) {
+  _renderCheckbox(
+    slug: $Keys<CheckedSharingOptions>,
+    label: string,
+    subtext?: string
+  ) {
     const { checkedSharingOptions } = this.props;
     const isDisabled = !checkedSharingOptions.isFiltering;
     const toggle = this._toggles[slug];
@@ -94,9 +100,22 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
           onChange={toggle}
           checked={checkedSharingOptions[slug]}
         />
-        {label}
+        <div className="menuButtonsPublishLabelContent">
+          {label}
+          {subtext ? (
+            <div className="menuButtonsPublishLabelSubtext">{subtext}</div>
+          ) : null}
+        </div>
       </label>
     );
+  }
+
+  _renderNamesOfHiddenThreads(): string {
+    const { namesOfRemovedThreads } = this.props;
+    if (namesOfRemovedThreads.length === 0) {
+      return 'No threads are removed.';
+    }
+    return namesOfRemovedThreads.join(', ');
   }
 
   _renderPublishPanel() {
@@ -150,7 +169,11 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
               Filter out potentially identifying information
             </label>
             <div className="menuButtonsPublishDataChoices">
-              {this._renderCheckbox('hiddenThreads', 'Remove hidden threads')}
+              {this._renderCheckbox(
+                'hiddenThreads',
+                'Remove hidden threads',
+                this._renderNamesOfHiddenThreads()
+              )}
               {this._renderCheckbox(
                 'timeRange',
                 'Remove information out of the time range'
@@ -341,6 +364,7 @@ const options: ExplicitConnectOptions<OwnProps, StateProps, DispatchProps> = {
     uploadProgress: getUploadProgressString(state),
     uploadUrl: getUploadUrl(state),
     error: getUploadError(state),
+    namesOfRemovedThreads: getNamesOfRemovedThreads(state),
   }),
   mapDispatchToProps: {
     toggleCheckedSharingOptions,

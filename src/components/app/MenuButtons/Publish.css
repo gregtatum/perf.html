@@ -183,7 +183,7 @@
 
 .menuButtonsPublishDataChoicesLabel {
   display: flex;
-  margin: 4px 0;
+  margin: 7px 0;
 }
 
 .menuButtonsPublishDataChoicesLabel.disabled {
@@ -331,5 +331,18 @@
 
 .menuButtonsPublishError {
   margin: 10px 0;
+  font-size: 13px;
+}
+
+.menuButtonsPublishLabelSubtext {
+  overflow: hidden;
+  max-width: 350px;
+  color: var(--grey-50);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuButtonsPublishLabelContent {
   font-size: 13px;
 }
