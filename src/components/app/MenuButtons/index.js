@@ -18,10 +18,7 @@ import ButtonWithPanel from '../../shared/ButtonWithPanel';
 import type { StartEndRange } from '../../../types/units';
 import type { Profile } from '../../../types/profile';
 import type { DataSource } from '../../../types/actions';
-import type {
-  ExplicitConnectOptions,
-  ConnectedProps,
-} from '../../../utils/connect';
+import type { ConnectedProps } from '../../../utils/connect';
 
 require('./index.css');
 
@@ -79,13 +76,11 @@ const PublishOrPermalinkButtons = ({ dataSource }) => {
   }
 };
 
-const options: ExplicitConnectOptions<{||}, StateProps, {||}> = {
+export default explicitConnect<{||}, StateProps, {||}>({
   mapStateToProps: state => ({
     profile: getProfile(state),
     rootRange: getProfileRootRange(state),
     dataSource: getDataSource(state),
   }),
   component: MenuButtons,
-};
-// $FlowFixMe Error introduced by upgrading to v0.96.0.
-export default explicitConnect(options);
+});

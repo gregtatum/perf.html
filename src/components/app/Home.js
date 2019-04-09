@@ -15,7 +15,6 @@ import {
 } from '../../actions/receive-profile';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import type {
-  ExplicitConnectOptions,
   ConnectedProps,
   WrapFunctionInDispatch,
 } from '../../utils/connect';
@@ -321,8 +320,8 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
               profiler.firefox.com.
             </p>
             <ActionButtons
-              retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               // $FlowFixMe Error introduced by upgrading to v0.96.0.
+              retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               triggerLoadingFromUrl={this.props.triggerLoadingFromUrl}
             />
           </div>
@@ -355,8 +354,8 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
             </p>
             {this._renderShortcuts()}
             <ActionButtons
-              retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               // $FlowFixMe Error introduced by upgrading to v0.96.0.
+              retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               triggerLoadingFromUrl={this.props.triggerLoadingFromUrl}
             />
           </div>
@@ -393,8 +392,8 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
             </p>
             {this._renderShortcuts()}
             <ActionButtons
-              retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               // $FlowFixMe Error introduced by upgrading to v0.96.0.
+              retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               triggerLoadingFromUrl={this.props.triggerLoadingFromUrl}
             />
           </div>
@@ -425,8 +424,8 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
               However, existing profiles can be viewed in any modern browser.
             </p>
             <ActionButtons
-              retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               // $FlowFixMe Error introduced by upgrading to v0.96.0.
+              retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               triggerLoadingFromUrl={this.props.triggerLoadingFromUrl}
             />
           </div>
@@ -526,10 +525,7 @@ function _isFirefox(): boolean {
   return Boolean(navigator.userAgent.match(/Firefox\/\d+\.\d+/));
 }
 
-// $FlowFixMe Error introduced by upgrading to v0.96.0.
-const options: ExplicitConnectOptions<OwnHomeProps, {||}, DispatchHomeProps> = {
+export default explicitConnect<OwnHomeProps, {||}, DispatchHomeProps>({
   mapDispatchToProps: { retrieveProfileFromFile, triggerLoadingFromUrl },
   component: Home,
-};
-// $FlowFixMe Error introduced by upgrading to v0.96.0.
-export default explicitConnect(options);
+});
