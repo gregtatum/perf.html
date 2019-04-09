@@ -73,7 +73,8 @@ const NetworkChartRowBar = (props: NetworkChartRowBarProps) => {
     start < networkPayload.responseStart
   ) {
     request =
-      (networkPayload.responseStart - networkPayload.requestStart) / dur * 100;
+      ((networkPayload.responseStart - networkPayload.requestStart) / dur) *
+      100;
   }
 
   if (
@@ -83,11 +84,11 @@ const NetworkChartRowBar = (props: NetworkChartRowBarProps) => {
     start < networkPayload.responseStart
   ) {
     response =
-      (networkPayload.responseEnd - networkPayload.responseStart) / dur * 100;
+      ((networkPayload.responseEnd - networkPayload.responseStart) / dur) * 100;
   }
 
   if (queueStart && start < queueStart && queueStart > 0) {
-    requestQueue = (queueStart - start) / dur * 100;
+    requestQueue = ((queueStart - start) / dur) * 100;
   }
 
   // When we keep the default values (=zero), the
