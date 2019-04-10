@@ -61,9 +61,9 @@ class ExampleComponent extends React.PureComponent<Props> {
 
     // The action creators are properly wrapped by dispatch.
     (this.props.dispatchString: string => Action);
-    // $FlowFixMe Error introduced by upgrading to v0.96.0.
+    // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
     (this.props.dispatchThunk: string => number);
-    // $FlowFixMe Error introduced by upgrading to v0.96.0.
+    // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
     (this.props.dispatchThunk('foo'): number);
 
     return null;

@@ -235,24 +235,17 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
 
   componentDidMount() {
     // Prevent dropping files on the document.
-    // Help Flow infer the correct type signature for document.addEventListener.
-    // $FlowFixMe Error introduced by upgrading to v0.96.0.
-    document.addEventListener(('drag': string), _preventDefault, false);
-    // $FlowFixMe Error introduced by upgrading to v0.96.0.
-    document.addEventListener(('dragover': string), _preventDefault, false);
-    // $FlowFixMe Error introduced by upgrading to v0.96.0.
-    document.addEventListener(('drop': string), _preventDefault, false);
+    document.addEventListener('drag', _dragPreventDefault, false);
+    document.addEventListener('dragover', _dragPreventDefault, false);
+    document.addEventListener('drop', _dragPreventDefault, false);
     // Let the Gecko Profiler Add-on let the home-page know when it's been installed.
     homeInstance = this;
   }
 
   componentWillUnmount() {
-    // $FlowFixMe Error introduced by upgrading to v0.96.0.
-    document.removeEventListener(('drag': string), _preventDefault, false);
-    // $FlowFixMe Error introduced by upgrading to v0.96.0.
-    document.removeEventListener(('dragover': string), _preventDefault, false);
-    // $FlowFixMe Error introduced by upgrading to v0.96.0.
-    document.removeEventListener(('drop': string), _preventDefault, false);
+    document.removeEventListener('drag', _dragPreventDefault, false);
+    document.removeEventListener('dragover', _dragPreventDefault, false);
+    document.removeEventListener('drop', _dragPreventDefault, false);
   }
 
   _startDragging = (event: Event) => {
@@ -320,7 +313,7 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
               profiler.firefox.com.
             </p>
             <ActionButtons
-              // $FlowFixMe Error introduced by upgrading to v0.96.0.
+              // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
               retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               triggerLoadingFromUrl={this.props.triggerLoadingFromUrl}
             />
@@ -354,7 +347,7 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
             </p>
             {this._renderShortcuts()}
             <ActionButtons
-              // $FlowFixMe Error introduced by upgrading to v0.96.0.
+              // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
               retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               triggerLoadingFromUrl={this.props.triggerLoadingFromUrl}
             />
@@ -392,7 +385,7 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
             </p>
             {this._renderShortcuts()}
             <ActionButtons
-              // $FlowFixMe Error introduced by upgrading to v0.96.0.
+              // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
               retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               triggerLoadingFromUrl={this.props.triggerLoadingFromUrl}
             />
@@ -424,7 +417,7 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
               However, existing profiles can be viewed in any modern browser.
             </p>
             <ActionButtons
-              // $FlowFixMe Error introduced by upgrading to v0.96.0.
+              // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
               retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               triggerLoadingFromUrl={this.props.triggerLoadingFromUrl}
             />
@@ -511,7 +504,7 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
   }
 }
 
-function _preventDefault(event) {
+function _dragPreventDefault(event: DragEvent) {
   event.preventDefault();
 }
 
