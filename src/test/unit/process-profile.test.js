@@ -279,7 +279,7 @@ describe('sanitizePII', function() {
       shouldRemoveThreads: new Set([0, 2]),
     });
 
-    const sanitizedProfile = sanitizePII(profile, PIIToRemove);
+    const sanitizedProfile = sanitizePII(profile, PIIToRemove).profile;
     // First and last threads are removed and now there are only 1 thread.
     expect(sanitizedProfile.threads.length).toEqual(1);
   });
@@ -348,7 +348,7 @@ describe('sanitizePII', function() {
       shouldRemoveThreadsWithScreenshots: new Set([0, 1, 2]),
     });
 
-    const sanitizedProfile = sanitizePII(profile, PIIToRemove);
+    const sanitizedProfile = sanitizePII(profile, PIIToRemove).profile;
     screenshotMarkerFound = false;
     for (const thread of sanitizedProfile.threads) {
       for (const data of thread.markers.data) {
@@ -372,7 +372,7 @@ describe('sanitizePII', function() {
       shouldRemoveNetworkUrls: true,
     });
 
-    const sanitizedProfile = sanitizePII(profile, PIIToRemove);
+    const sanitizedProfile = sanitizePII(profile, PIIToRemove).profile;
     for (const page of ensureExists(sanitizedProfile.pages)) {
       expect(page.url.includes('http')).toBe(false);
     }
@@ -384,7 +384,7 @@ describe('sanitizePII', function() {
       shouldRemoveNetworkUrls: true,
     });
 
-    const sanitizedProfile = sanitizePII(profile, PIIToRemove);
+    const sanitizedProfile = sanitizePII(profile, PIIToRemove).profile;
     for (const thread of sanitizedProfile.threads) {
       const stringArray = thread.stringTable.serializeToArray();
       for (let i = 0; i < thread.markers.length; i++) {
@@ -409,7 +409,7 @@ describe('sanitizePII', function() {
       shouldRemoveAllUrls: true,
     });
 
-    const sanitizedProfile = sanitizePII(profile, PIIToRemove);
+    const sanitizedProfile = sanitizePII(profile, PIIToRemove).profile;
     for (const thread of sanitizedProfile.threads) {
       const stringArray = thread.stringTable.serializeToArray();
       for (const string of stringArray) {
@@ -436,7 +436,7 @@ describe('sanitizePII', function() {
       shouldRemoveExtensions: true,
     });
 
-    const sanitizedProfile = sanitizePII(profile, PIIToRemove);
+    const sanitizedProfile = sanitizePII(profile, PIIToRemove).profile;
     expect(sanitizedProfile.meta.extensions).not.toEqual(undefined);
     // For flow
     if (sanitizedProfile.meta.extensions !== undefined) {

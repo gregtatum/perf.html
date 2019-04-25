@@ -13,7 +13,10 @@ import {
 } from './profile';
 import { compress } from '../utils/gz';
 import { serializeProfile } from '../profile-logic/process-profile';
-import { sanitizePII } from '../profile-logic/sanitize';
+import {
+  sanitizePII,
+  type SanitizeProfileResult,
+} from '../profile-logic/sanitize';
 import prettyBytes from '../utils/pretty-bytes';
 import { getHiddenGlobalTracks, getHiddenLocalTracksByPid } from './url-state';
 import { ensureExists } from '../utils/flow';
@@ -131,6 +134,17 @@ export const getRemoveProfileInformation: Selector<RemoveProfileInformation | nu
 );
 
 /**
+ * Run the profile sanitization step, and also get information about how any
+ * UrlState needs to be updated, with things like mapping thread indexes,
+ * or providing a new committed range.
+ */
+export const getSanitizedProfile: Selector<SanitizeProfileResult> = createSelector(
+  getProfile,
+  getRemoveProfileInformation,
+  sanitizePII
+);
+
+/**
  * Computing the compressed data for a profile is a potentially slow operation. This
  * selector and its consumers perform that operation asynchronously. It can be called
  * multiple times while adjust the PII sanitization, but should happen in the background.
@@ -142,14 +156,8 @@ export const getRemoveProfileInformation: Selector<RemoveProfileInformation | nu
 export const getSanitizedProfileData: Selector<
   Promise<Uint8Array>
 > = createSelector(
-  getRemoveProfileInformation,
-  getProfile,
-  async (removeProfileInformation, profile) => {
-    const maybeSanitizedProfile = removeProfileInformation
-      ? sanitizePII(profile, removeProfileInformation)
-      : profile;
-    return compress(serializeProfile(maybeSanitizedProfile));
-  }
+  getSanitizedProfile,
+  ({ profile }) => compress(serializeProfile(profile))
 );
 
 /**
