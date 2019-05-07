@@ -36,7 +36,9 @@ import type { UploadPhase } from '../../../types/state';
 
 require('./Publish.css');
 
-type OwnProps = {||};
+type OwnProps = {|
+  +isRepublish?: boolean,
+|};
 
 type StateProps = {|
   +profile: Profile,
@@ -99,6 +101,7 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
       compressedProfileBlobPromise,
       uploadUrl,
       shouldSanitizeByDefault,
+      isRepublish,
     } = this.props;
 
     return (
@@ -117,7 +120,11 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
         ) : null}
         <form className="menuButtonsPublishContent" onSubmit={attemptToPublish}>
           <div className="menuButtonsPublishIcon" />
-          <h1 className="menuButtonsPublishTitle">Share Performance Profile</h1>
+          <h1 className="menuButtonsPublishTitle">
+            {isRepublish
+              ? 'Re-publish Performance Profile'
+              : 'Share Performance Profile'}
+          </h1>
           <p className="menuButtonsPublishInfoDescription">
             Upload your profile and make it accessible to anyone with the link.
             {shouldSanitizeByDefault
@@ -222,7 +229,7 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
   }
 
   _renderUploadedPanel() {
-    const { uploadUrl } = this.props;
+    const { isRepublish, uploadUrl } = this.props;
     return (
       <div
         className="menuButtonsPublishUpload"
@@ -231,7 +238,9 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
         <div className="menuButtonsPublishUploadTop">
           <div className="menuButtonsPublishUploadTitle">Profile published</div>
           <div className="menuButtonsPublishMessage">
-            Your profile was published, it is now safe to close this window.
+            {isRepublish
+              ? 'Your profile was re-published.'
+              : 'Your profile was published, it is now safe to close this window.'}
           </div>
           <div className="menuButtonsPublishUrl">
             <a href={uploadUrl} target="_blank" rel="noopener noreferrer">
