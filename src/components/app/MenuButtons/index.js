@@ -109,10 +109,21 @@ const PublishOrPermalinkButtons = ({
     case 'from-url':
     case 'compare':
       return (
-        <MenuButtonsPermalink
-          isNewlyPublished={isNewlyPublished}
-          injectedUrlShortener={injectedUrlShortener}
-        />
+        <>
+          <ButtonWithPanel
+            className="menuButtonsShareButton"
+            label="Re-publish…"
+            panel={
+              <ArrowPanel className="menuButtonsPublishPanel">
+                <MenuButtonsPublish isRepublish={true} />
+              </ArrowPanel>
+            }
+          />
+          <MenuButtonsPermalink
+            isNewlyPublished={isNewlyPublished}
+            injectedUrlShortener={injectedUrlShortener}
+          />
+        </>
       );
     case 'none':
       return null;
