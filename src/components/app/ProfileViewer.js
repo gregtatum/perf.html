@@ -17,6 +17,10 @@ import { getHasZipFile } from '../../selectors/zipped-profiles';
 import SplitterLayout from 'react-splitter-layout';
 import { invalidatePanelLayout } from '../../actions/app';
 import { getTimelineHeight } from '../../selectors/app';
+import {
+  getUploadProgressString,
+  getUploadPhase,
+} from '../../selectors/publish';
 
 import type { CssPixels } from '../../types/units';
 import type { ConnectedProps } from '../../utils/connect';
@@ -27,6 +31,8 @@ type StateProps = {|
   +profileName: string | null,
   +hasZipFile: boolean,
   +timelineHeight: CssPixels | null,
+  +uploadProgress: string,
+  +isUploading: boolean,
 |};
 
 type DispatchProps = {|
@@ -44,6 +50,8 @@ class ProfileViewer extends PureComponent<Props> {
       returnToZipFileList,
       invalidatePanelLayout,
       timelineHeight,
+      isUploading,
+      uploadProgress,
     } = this.props;
 
     return (
@@ -77,6 +85,12 @@ class ProfileViewer extends PureComponent<Props> {
           }
           <div className="profileViewerSpacer" />
           <MenuButtons />
+          {isUploading ? (
+            <div
+              className="menuButtonsPublishUploadBarInner"
+              style={{ width: uploadProgress }}
+            />
+          ) : null}
         </div>
         <SplitterLayout
           customClassName="profileViewerSplitter"
@@ -102,6 +116,8 @@ export default explicitConnect<{||}, StateProps, DispatchProps>({
     profileName: getProfileName(state),
     hasZipFile: getHasZipFile(state),
     timelineHeight: getTimelineHeight(state),
+    uploadProgress: getUploadProgressString(state),
+    isUploading: getUploadPhase(state) === 'uploading',
   }),
   mapDispatchToProps: {
     returnToZipFileList,

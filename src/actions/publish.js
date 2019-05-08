@@ -5,7 +5,7 @@
 // @flow
 import { uploadBinaryProfileData } from '../profile-logic/profile-store';
 import { sendAnalytics } from '../utils/analytics';
-import { getUrlState } from '../selectors/url-state';
+import { getProfile } from '../selectors/profile';
 import {
   getAbortFunction,
   getUploadGeneration,
@@ -13,14 +13,11 @@ import {
   getSanitizedProfileData,
   getRemoveProfileInformation,
 } from '../selectors/publish';
-import { urlFromState } from '../app-logic/url-handling';
-import { profilePublished } from './app';
-import urlStateReducer from '../reducers/url-state';
 
 import type { Action, ThunkAction } from '../types/store';
 import type { CheckedSharingOptions } from '../types/actions';
 import type { StartEndRange } from '../types/units';
-import type { ThreadIndex } from '../types/profile';
+import type { Profile, ThreadIndex } from '../types/profile';
 
 export function toggleCheckedSharingOptions(
   slug: $Keys<CheckedSharingOptions>
@@ -56,13 +53,6 @@ export function updateUploadProgress(uploadProgress: number): Action {
     type: 'UPDATE_UPLOAD_PROGRESS',
     uploadProgress,
   };
-}
-
-/**
- * A profile upload finished.
- */
-export function uploadFinished(url: string): Action {
-  return { type: 'UPLOAD_FINISHED', url };
 }
 
 /**
@@ -125,32 +115,28 @@ export function attemptToPublish(): ThunkAction<Promise<boolean>> {
       }
 
       const removeProfileInformation = getRemoveProfileInformation(getState());
-      let urlState;
       if (removeProfileInformation) {
         const { committedRanges, oldThreadIndexToNew } = getSanitizedProfile(
           getState()
         );
-        urlState = urlStateReducer(
-          getUrlState(getState()),
-          profileSanitized(hash, committedRanges, oldThreadIndexToNew)
+        const originalProfile = getProfile(getState());
+        dispatch(
+          profileSanitized(
+            hash,
+            committedRanges,
+            oldThreadIndexToNew,
+            originalProfile
+          )
         );
       } else {
-        urlState = urlStateReducer(
-          getUrlState(getState()),
-          profilePublished(hash)
-        );
+        dispatch(profilePublished(hash));
       }
-      const url = window.location.origin + urlFromState(urlState);
-
-      dispatch(uploadFinished(url));
 
       sendAnalytics({
         hitType: 'event',
         eventCategory: 'profile upload',
         eventAction: 'succeeded',
       });
-
-      window.open(url, '_blank');
     } catch (error) {
       dispatch(uploadFailed(error));
       sendAnalytics({
@@ -194,12 +180,34 @@ export function resetUploadState(): Action {
 export function profileSanitized(
   hash: string,
   committedRanges: StartEndRange[] | null,
-  oldThreadIndexToNew: Map<ThreadIndex, ThreadIndex> | null
+  oldThreadIndexToNew: Map<ThreadIndex, ThreadIndex> | null,
+  originalProfile: Profile
 ): Action {
   return {
-    type: 'SANITIZE_PROFILE',
+    type: 'SANITIZE_PROFILE_PUBLISHED',
     hash,
     committedRanges,
     oldThreadIndexToNew,
+    originalProfile,
+  };
+}
+
+/**
+ * Report that the profile was published, but not sanitized.
+ */
+export function profilePublished(hash: string): Action {
+  return {
+    type: 'PROFILE_PUBLISHED',
+    hash,
+  };
+}
+
+export function revertToOriginalProfile(): ThunkAction<void> {
+  return (dispatch, getState) => {
+    dispatch({
+      type: 'REVERT_TO_ORIGINAL_PROFILE',
+      originalProfile: getOriginalProfile(getState()),
+      originalUrlState: getOriginalUrlState(getState()),
+    });
   };
 }

@@ -26,6 +26,7 @@ import { formatNumber } from '../utils/format-numbers';
 import type { PublishState, UploadState, UploadPhase } from '../types/state';
 import type { Selector } from '../types/store';
 import type { CheckedSharingOptions } from '../types/actions';
+import type { Profile } from '../types/profile';
 import type { RemoveProfileInformation } from '../types/profile-derived';
 
 export const getPublishState: Selector<PublishState> = state => state.publish;
@@ -191,9 +192,6 @@ export const getUploadGeneration: Selector<number> = state =>
 export const getUploadProgress: Selector<number> = state =>
   getUploadState(state).uploadProgress;
 
-export const getUploadUrl: Selector<string> = state =>
-  getUploadState(state).url;
-
 export const getUploadError: Selector<Error | mixed> = state =>
   getUploadState(state).error;
 
@@ -209,3 +207,6 @@ export const getShouldSanitizeByDefault: Selector<boolean> = createSelector(
   getProfile,
   getShouldSanitizeByDefaultImpl
 );
+
+export const getOriginalProfile: Selector<null | Profile> = state =>
+  getPublishState(state).originalProfile;

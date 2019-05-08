@@ -127,7 +127,6 @@ export type UploadState = {|
   phase: UploadPhase,
   uploadProgress: number,
   error: Error | mixed,
-  url: string,
   abortFunction: () => void,
   generation: number,
 |};
@@ -135,6 +134,7 @@ export type UploadState = {|
 export type PublishState = {|
   +checkedSharingOptions: CheckedSharingOptions,
   +upload: UploadState,
+  +originalProfile: Profile | null,
 |};
 
 export type ZippedProfilesState = {

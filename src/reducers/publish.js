@@ -7,6 +7,7 @@ import { combineReducers } from 'redux';
 import { getShouldSanitizeByDefault } from '../profile-logic/sanitize';
 
 import type { CheckedSharingOptions } from '../types/actions';
+import type { Profile } from '../types/profile';
 import type {
   PublishState,
   UploadState,
@@ -51,20 +52,25 @@ const checkedSharingOptions: Reducer<CheckedSharingOptions> = (
 
 // This is a diagram explaining the ordering of actions for uploading
 //
-//                              UPDATE_UPLOAD_PROGRESS
-//                                        ^ (fired many times)
-//                                        |
-// UPLOAD_COMPRESSION_STARTED  ->  UPLOAD_STARTED  ->  UPLOAD_FINISHED -> UPLOAD_RESET
-//                            \                   \
-//                             > UPLOAD_ABORTED    > UPLOAD_ABORTED
-
+//               UPLOAD_COMPRESSION_STARTED
+//                         |
+//                         v
+//                    UPLOAD_STARTED  --->  UPDATE_UPLOAD_PROGRESS
+//                     /          \           (fired many times)
+//                    v            v
+// [SANITIZED_]PROFILE_PUBLISHED   UPLOAD_ABORTED
+//               |
+//               v
+//          UPLOAD_RESET
+//
 const phase: Reducer<UploadPhase> = (state = 'local', action) => {
   switch (action.type) {
     case 'UPLOAD_COMPRESSION_STARTED':
       return 'compressing';
     case 'UPLOAD_STARTED':
       return 'uploading';
-    case 'UPLOAD_FINISHED':
+    case 'PROFILE_PUBLISHED':
+    case 'SANITIZE_PROFILE_PUBLISHED':
       return 'uploaded';
     case 'UPLOAD_FAILED':
       return 'error';
@@ -85,7 +91,8 @@ const uploadProgress: Reducer<number> = (state = 0, action) => {
     case 'UPLOAD_STARTED':
     case 'UPLOAD_ABORTED':
     case 'UPLOAD_RESET':
-    case 'UPLOAD_FINISHED':
+    case 'PROFILE_PUBLISHED':
+    case 'SANITIZE_PROFILE_PUBLISHED':
     case 'UPLOAD_COMPRESSION_STARTED':
     case 'UPLOAD_FAILED':
       return 0;
@@ -106,20 +113,12 @@ const error: Reducer<Error | mixed> = (state = null, action) => {
   }
 };
 
-const url: Reducer<string> = (state = '', action) => {
-  switch (action.type) {
-    case 'UPLOAD_FINISHED':
-      return action.url;
-    default:
-      return state;
-  }
-};
-
 const noop = () => {};
 const abortFunction: Reducer<() => void> = (state = noop, action) => {
   switch (action.type) {
     case 'UPLOAD_ABORTED':
-    case 'UPLOAD_FINISHED':
+    case 'PROFILE_PUBLISHED':
+    case 'SANITIZE_PROFILE_PUBLISHED':
     case 'UPLOAD_FAILED':
       return noop;
     case 'UPLOAD_STARTED':
@@ -134,7 +133,8 @@ const abortFunction: Reducer<() => void> = (state = noop, action) => {
  */
 const generation: Reducer<number> = (state = 0, action) => {
   switch (action.type) {
-    case 'UPLOAD_FINISHED':
+    case 'PROFILE_PUBLISHED':
+    case 'SANITIZE_PROFILE_PUBLISHED':
     case 'UPLOAD_ABORTED':
     case 'UPLOAD_FAILED':
       // Increment the generation value when exiting out of the profile uploading.
@@ -149,13 +149,31 @@ const upload: Reducer<UploadState> = combineReducers({
   uploadProgress,
   abortFunction,
   error,
-  url,
   generation,
 });
+
+const originalProfile: Reducer<null | Profile> = (state = null, action) => {
+  switch (action.type) {
+    case 'SANITIZE_PROFILE_PUBLISHED':
+      return action.originalProfile;
+    default:
+      return state;
+  }
+};
+
+const originalUrlState: Reducer<null | UrlState> = (state = null, action) => {
+  switch (action.type) {
+    case 'SANITIZE_PROFILE_PUBLISHED':
+      return action.originalUrlState;
+    default:
+      return state;
+  }
+};
 
 const publishReducer: Reducer<PublishState> = combineReducers({
   checkedSharingOptions,
   upload,
+  originalProfile,
 });
 
 export default publishReducer;

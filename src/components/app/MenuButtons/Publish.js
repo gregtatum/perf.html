@@ -20,7 +20,6 @@ import {
   getCompressedProfileBlob,
   getUploadPhase,
   getUploadProgressString,
-  getUploadUrl,
   getUploadError,
   getShouldSanitizeByDefault,
 } from '../../../selectors/publish';
@@ -49,7 +48,6 @@ type StateProps = {|
   +downloadFileName: string,
   +uploadPhase: UploadPhase,
   +uploadProgress: string,
-  +uploadUrl: string,
   +shouldSanitizeByDefault: boolean,
   +error: mixed,
 |};
@@ -99,25 +97,12 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
       attemptToPublish,
       downloadFileName,
       compressedProfileBlobPromise,
-      uploadUrl,
       shouldSanitizeByDefault,
       isRepublish,
     } = this.props;
 
     return (
       <div data-testid="MenuButtonsPublish-container">
-        {uploadUrl ? (
-          <div className="menuButtonsPublishPreviousUrl">
-            <div className="menuButtonsPublishPreviousUrlTitle">
-              Previously published profile:
-            </div>
-            <div className="menuButtonsPublishUrl">
-              <a href={uploadUrl} target="_blank" rel="noopener noreferrer">
-                {uploadUrl}
-              </a>
-            </div>
-          </div>
-        ) : null}
         <form className="menuButtonsPublishContent" onSubmit={attemptToPublish}>
           <div className="menuButtonsPublishIcon" />
           <h1 className="menuButtonsPublishTitle">
@@ -229,7 +214,7 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
   }
 
   _renderUploadedPanel() {
-    const { isRepublish, uploadUrl } = this.props;
+    const { isRepublish } = this.props;
     return (
       <div
         className="menuButtonsPublishUpload"
@@ -241,11 +226,6 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
             {isRepublish
               ? 'Your profile was re-published.'
               : 'Your profile was published, it is now safe to close this window.'}
-          </div>
-          <div className="menuButtonsPublishUrl">
-            <a href={uploadUrl} target="_blank" rel="noopener noreferrer">
-              {uploadUrl}
-            </a>
           </div>
         </div>
         <div className="menuButtonsPublishButtons">
@@ -329,7 +309,6 @@ export const MenuButtonsPublish = explicitConnect<
     compressedProfileBlobPromise: getCompressedProfileBlob(state),
     uploadPhase: getUploadPhase(state),
     uploadProgress: getUploadProgressString(state),
-    uploadUrl: getUploadUrl(state),
     error: getUploadError(state),
     shouldSanitizeByDefault: getShouldSanitizeByDefault(state),
   }),
