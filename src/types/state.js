@@ -135,6 +135,7 @@ export type PublishState = {|
   +checkedSharingOptions: CheckedSharingOptions,
   +upload: UploadState,
   +originalProfile: Profile | null,
+  +originalUrlState: UrlState,
 |};
 
 export type ZippedProfilesState = {

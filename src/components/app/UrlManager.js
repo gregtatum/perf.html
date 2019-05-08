@@ -30,29 +30,56 @@ type OwnProps = {|
 
 type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
 
+/**
+ * This component manages the interaction with the window.history browser API.
+ */
 class UrlManager extends React.PureComponent<Props> {
   _updateState(firstRun: boolean) {
-    const { updateUrlState, show404 } = this.props;
-    let urlState;
+    const { updateUrlState, show404, urlState: previousUrlState } = this.props;
+    let newUrlState;
     if (window.history.state) {
-      urlState = (window.history.state: UrlState);
+      // The UrlState is serialized and stored in the history API. Pull out that state
+      // and use it as the real UrlState.
+      newUrlState = (window.history.state: UrlState);
     } else {
+      // There is no state serialized and stored by the browser, attempt to create
+      // A UrlState object by parsin gthe window.location.
       try {
-        urlState = stateFromLocation(window.location);
+        newUrlState = stateFromLocation(window.location);
       } catch (e) {
+        // The location could not be parsed, show a 404 instead.
         console.error(e);
         show404(window.location.pathname + window.location.search);
         return;
       }
     }
+
     if (firstRun) {
-      // Validate the initial URL state.
-      if (urlState.dataSource === 'from-file') {
-        urlState = null;
+      // Validate the initial URL state. We can't refresh on a from-file URL.
+      if (newUrlState.dataSource === 'from-file') {
+        newUrlState = null;
+      }
+    } else {
+      // Profile sanitization and publishing can do weird things for the history API.
+      // Rather than write lots of complicated interactions, just bail out of allowing
+      // the back button to work when going between a published profile, and one
+      // that is not.
+      if (
+        previousUrlState.dataSource !== newUrlState.dataSource ||
+        previousUrlState.hash !== newUrlState.hash
+      ) {
+        window.history.replaceState(
+          previousUrlState,
+          document.title,
+          urlFromState(previousUrlState)
+        );
       }
     }
-    updateUrlState(urlState);
+
+    // Update the Redux store.
+    updateUrlState(newUrlState);
   }
+
   componentDidMount() {
     this._updateState(true);
     window.addEventListener('popstate', () => this._updateState(false));

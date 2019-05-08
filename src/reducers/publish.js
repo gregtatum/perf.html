@@ -9,6 +9,7 @@ import { getShouldSanitizeByDefault } from '../profile-logic/sanitize';
 import type { CheckedSharingOptions } from '../types/actions';
 import type { Profile } from '../types/profile';
 import type {
+  UrlState,
   PublishState,
   UploadState,
   UploadPhase,
@@ -165,6 +166,8 @@ const originalUrlState: Reducer<null | UrlState> = (state = null, action) => {
   switch (action.type) {
     case 'SANITIZE_PROFILE_PUBLISHED':
       return action.originalUrlState;
+    case 'REVERT_TO_ORIGINAL_PROFILE':
+      return null;
     default:
       return state;
   }
@@ -174,6 +177,7 @@ const publishReducer: Reducer<PublishState> = combineReducers({
   checkedSharingOptions,
   upload,
   originalProfile,
+  originalUrlState,
 });
 
 export default publishReducer;

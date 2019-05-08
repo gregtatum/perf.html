@@ -23,7 +23,12 @@ import { getHiddenGlobalTracks, getHiddenLocalTracksByPid } from './url-state';
 import { ensureExists } from '../utils/flow';
 import { formatNumber } from '../utils/format-numbers';
 
-import type { PublishState, UploadState, UploadPhase } from '../types/state';
+import type {
+  PublishState,
+  UploadState,
+  UploadPhase,
+  UrlState,
+} from '../types/state';
 import type { Selector } from '../types/store';
 import type { CheckedSharingOptions } from '../types/actions';
 import type { Profile } from '../types/profile';
@@ -210,3 +215,6 @@ export const getShouldSanitizeByDefault: Selector<boolean> = createSelector(
 
 export const getOriginalProfile: Selector<null | Profile> = state =>
   getPublishState(state).originalProfile;
+
+export const getOriginalUrlState: Selector<UrlState> = state =>
+  getPublishState(state).originalUrlState;

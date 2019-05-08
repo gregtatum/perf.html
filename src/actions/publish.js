@@ -12,7 +12,10 @@ import {
   getSanitizedProfile,
   getSanitizedProfileData,
   getRemoveProfileInformation,
+  getOriginalProfile,
+  getOriginalUrlState,
 } from '../selectors/publish';
+import { ensureExists } from '../utils/flow';
 
 import type { Action, ThunkAction } from '../types/store';
 import type { CheckedSharingOptions } from '../types/actions';
@@ -206,7 +209,10 @@ export function revertToOriginalProfile(): ThunkAction<void> {
   return (dispatch, getState) => {
     dispatch({
       type: 'REVERT_TO_ORIGINAL_PROFILE',
-      originalProfile: getOriginalProfile(getState()),
+      originalProfile: ensureExists(
+        getOriginalProfile(getState()),
+        'Expected to find an original profiler when reverting to it.'
+      ),
       originalUrlState: getOriginalUrlState(getState()),
     });
   };

@@ -313,6 +313,7 @@ type UrlStateAction =
       +committedRanges: StartEndRange[] | null,
       +oldThreadIndexToNew: Map<ThreadIndex, ThreadIndex> | null,
       +originalProfile: Profile,
+      +originalUrlState: UrlState,
     |};
 
 type IconsAction =
