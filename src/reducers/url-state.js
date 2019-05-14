@@ -376,6 +376,7 @@ const profileName: Reducer<string> = (state = '', action) => {
 const isNewlyPublished: Reducer<boolean> = (state = false, action) => {
   switch (action.type) {
     case 'PROFILE_PUBLISHED':
+    case 'SANITIZE_PROFILE_PUBLISHED':
       return true;
     case 'DISMISS_NEWLY_PUBLISHED':
       return false;
@@ -420,6 +421,8 @@ const wrapReducerInResetter = (
 ): Reducer<UrlState> => {
   return (state, action) => {
     switch (action.type) {
+      case 'REVERT_TO_ORIGINAL_PROFILE':
+        return action.originalUrlState;
       case 'UPDATE_URL_STATE':
         // A new URL came in because of a browser action, discard the current UrlState
         // and use the new one, which was probably serialized from the URL, or stored

@@ -20,7 +20,9 @@ import { getTimelineHeight } from '../../selectors/app';
 import {
   getUploadProgressString,
   getUploadPhase,
+  getIsHidingStaleProfile,
 } from '../../selectors/publish';
+import classNames from 'classnames';
 
 import type { CssPixels } from '../../types/units';
 import type { ConnectedProps } from '../../utils/connect';
@@ -33,6 +35,7 @@ type StateProps = {|
   +timelineHeight: CssPixels | null,
   +uploadProgress: string,
   +isUploading: boolean,
+  +isHidingStaleProfile: boolean,
 |};
 
 type DispatchProps = {|
@@ -52,11 +55,15 @@ class ProfileViewer extends PureComponent<Props> {
       timelineHeight,
       isUploading,
       uploadProgress,
+      isHidingStaleProfile,
     } = this.props;
 
     return (
       <div
-        className="profileViewer"
+        className={classNames({
+          profileViewer: true,
+          profileViewerFadeOut: isHidingStaleProfile,
+        })}
         style={
           timelineHeight === null
             ? {}
@@ -118,6 +125,7 @@ export default explicitConnect<{||}, StateProps, DispatchProps>({
     timelineHeight: getTimelineHeight(state),
     uploadProgress: getUploadProgressString(state),
     isUploading: getUploadPhase(state) === 'uploading',
+    isHidingStaleProfile: getIsHidingStaleProfile(state),
   }),
   mapDispatchToProps: {
     returnToZipFileList,

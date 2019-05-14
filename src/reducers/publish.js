@@ -157,6 +157,8 @@ const originalProfile: Reducer<null | Profile> = (state = null, action) => {
   switch (action.type) {
     case 'SANITIZE_PROFILE_PUBLISHED':
       return action.originalProfile;
+    case 'REVERT_TO_ORIGINAL_PROFILE':
+      return null;
     default:
       return state;
   }
@@ -173,11 +175,23 @@ const originalUrlState: Reducer<null | UrlState> = (state = null, action) => {
   }
 };
 
+const isHidingStaleProfile: Reducer<boolean> = (state = false, action) => {
+  switch (action.type) {
+    case 'HIDE_STALE_PROFILE':
+      return true;
+    case 'VIEW_PROFILE':
+      return false;
+    default:
+      return state;
+  }
+};
+
 const publishReducer: Reducer<PublishState> = combineReducers({
   checkedSharingOptions,
   upload,
   originalProfile,
   originalUrlState,
+  isHidingStaleProfile,
 });
 
 export default publishReducer;

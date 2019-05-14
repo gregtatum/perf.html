@@ -7,10 +7,28 @@
   }
 }
 
+@keyframes profileViewerFadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
 .profileViewer {
   animation-duration: 200ms;
   animation-name: profileViewerFadeIn;
   background-color: #fff;
+}
+
+.profileViewerFadeOut {
+  /* Keep this duration in sync with the value in hideStaleProfile() */
+  animation-duration: 300ms;
+  animation-name: profileViewerFadeOut;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .profileViewerName {

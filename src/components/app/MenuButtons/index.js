@@ -47,6 +47,7 @@ type StateProps = {|
 
 type DispatchProps = {|
   +dismissNewlyPublished: typeof dismissNewlyPublished,
+  +revertToOriginalProfile: typeof revertToOriginalProfile,
 |};
 
 type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;

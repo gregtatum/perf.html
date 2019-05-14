@@ -59,6 +59,7 @@ export type ProfileViewState = {|
 
 export type AppViewState =
   | {| +phase: 'ROUTE_NOT_FOUND' |}
+  | {| +phase: 'TRANSITIONING_FROM_STALE_PROFILE' |}
   | {| +phase: 'DATA_LOADED' |}
   | {| +phase: 'FATAL_ERROR', +error: Error |}
   | {|
@@ -134,8 +135,9 @@ export type UploadState = {|
 export type PublishState = {|
   +checkedSharingOptions: CheckedSharingOptions,
   +upload: UploadState,
-  +originalProfile: Profile | null,
-  +originalUrlState: UrlState,
+  +originalProfile: null | Profile,
+  +originalUrlState: null | UrlState,
+  +isHidingStaleProfile: boolean,
 |};
 
 export type ZippedProfilesState = {

@@ -358,9 +358,9 @@ type PublishAction =
     |}
   | {|
       +type: 'REVERT_TO_ORIGINAL_PROFILE',
-      +originalProfile: Profile,
       +originalUrlState: UrlState,
-    |};
+    |}
+  | {| +type: 'HIDE_STALE_PROFILE' |};
 
 export type Action =
   | ProfileAction

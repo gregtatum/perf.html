@@ -216,5 +216,8 @@ export const getShouldSanitizeByDefault: Selector<boolean> = createSelector(
 export const getOriginalProfile: Selector<null | Profile> = state =>
   getPublishState(state).originalProfile;
 
-export const getOriginalUrlState: Selector<UrlState> = state =>
+export const getOriginalUrlState: Selector<null | UrlState> = state =>
   getPublishState(state).originalUrlState;
+
+export const getIsHidingStaleProfile: Selector<boolean> = state =>
+  getPublishState(state).isHidingStaleProfile;
