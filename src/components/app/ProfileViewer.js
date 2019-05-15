@@ -45,7 +45,6 @@ class ProfileViewer extends PureComponent<Props> {
       invalidatePanelLayout,
       timelineHeight,
     } = this.props;
-
     return (
       <div
         className="profileViewer"

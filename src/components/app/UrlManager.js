@@ -8,7 +8,10 @@ import * as React from 'react';
 import explicitConnect from '../../utils/connect';
 import { getIsUrlSetupDone } from '../../selectors/app';
 import { updateUrlState, urlSetupDone, show404 } from '../../actions/app';
+import { getHasZipFile } from '../../selectors/zipped-profiles';
 import { urlFromState, stateFromLocation } from '../../app-logic/url-handling';
+import ProfileViewer from './ProfileViewer';
+import ZipFileViewer from './ZipFileViewer';
 
 import type { ConnectedProps } from '../../utils/connect';
 import type { UrlState } from '../../types/state';
@@ -16,6 +19,7 @@ import type { UrlState } from '../../types/state';
 type StateProps = {|
   +urlState: UrlState,
   +isUrlSetupDone: boolean,
+  +hasZipFile: boolean,
 |};
 
 type DispatchProps = {|
@@ -24,11 +28,7 @@ type DispatchProps = {|
   +show404: typeof show404,
 |};
 
-type OwnProps = {|
-  +children: React.Node,
-|};
-
-type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
+type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 class UrlManager extends React.PureComponent<Props> {
   _updateState(firstRun: boolean) {
@@ -53,6 +53,7 @@ class UrlManager extends React.PureComponent<Props> {
     }
     updateUrlState(urlState);
   }
+
   componentDidMount() {
     this._updateState(true);
     window.addEventListener('popstate', () => this._updateState(false));
@@ -72,19 +73,19 @@ class UrlManager extends React.PureComponent<Props> {
   }
 
   render() {
-    const { isUrlSetupDone } = this.props;
-    return isUrlSetupDone ? (
-      this.props.children
-    ) : (
-      <div className="processingUrl" />
-    );
+    const { isUrlSetupDone, hasZipFile } = this.props;
+    if (!isUrlSetupDone) {
+      return <></>;
+    }
+    return hasZipFile ? <ZipFileViewer /> : <ProfileViewer />;
   }
 }
 
-export default explicitConnect<OwnProps, StateProps, DispatchProps>({
+export default explicitConnect<{||}, StateProps, DispatchProps>({
   mapStateToProps: state => ({
     urlState: state.urlState,
     isUrlSetupDone: getIsUrlSetupDone(state),
+    hasZipFile: getHasZipFile(state),
   }),
   mapDispatchToProps: {
     updateUrlState,

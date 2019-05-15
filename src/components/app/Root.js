@@ -3,8 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 // @flow
 
-import React, { Fragment, PureComponent } from 'react';
+// import React, { Fragment, PureComponent, Node } from 'react';
+import * as React from 'react';
 import { Provider } from 'react-redux';
+import queryString from 'query-string';
 import explicitConnect from '../../utils/connect';
 
 import {
@@ -13,22 +15,15 @@ import {
   retrieveProfileOrZipFromUrl,
   retrieveProfilesToCompare,
 } from '../../actions/receive-profile';
-import ProfileViewer from './ProfileViewer';
-import ZipFileViewer from './ZipFileViewer';
 import Home from './Home';
 import CompareHome from './CompareHome';
-import { getView } from '../../selectors/app';
-import { getHasZipFile } from '../../selectors/zipped-profiles';
-import {
-  getDataSource,
-  getHash,
-  getProfileUrl,
-  getProfilesToCompare,
-} from '../../selectors/url-state';
+import { getView, getIsUrlSetupDone } from '../../selectors/app';
+import { getDataSourceFromPathParts } from '../../app-logic/url-handling';
 import UrlManager from './UrlManager';
 import ServiceWorkerManager from './ServiceWorkerManager';
 import FooterLinks from './FooterLinks';
 import { ErrorBoundary } from './ErrorBoundary';
+import { getDataSource } from '../../selectors/url-state';
 
 import type { Store } from '../../types/store';
 import type { AppViewState, State } from '../../types/state';
@@ -72,13 +67,15 @@ function toParagraphs(str: string) {
     return <p key={i}>{s}</p>;
   });
 }
+
+type ProfileViewOwnProps = {|
+  +children: React.Node,
+|};
+
 type ProfileViewStateProps = {|
   +view: AppViewState,
   +dataSource: DataSource,
-  +hash: string,
-  +profileUrl: string,
-  +profilesToCompare: string[] | null,
-  +hasZipFile: boolean,
+  +isUrlSetupDone: boolean,
 |};
 
 type ProfileViewDispatchProps = {|
@@ -89,23 +86,54 @@ type ProfileViewDispatchProps = {|
 |};
 
 type ProfileViewProps = ConnectedProps<
-  {||},
+  ProfileViewOwnProps,
   ProfileViewStateProps,
   ProfileViewDispatchProps
 >;
 
-class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
+type ProfileViewState = {|
+  dataSource: DataSource,
+  hashOrUrl: string,
+  profilesToCompare: string[],
+|}
+
+class ProfileViewWhenReadyImpl extends React.PureComponent<
+  ProfileViewProps,
+  ProfileViewState
+> {
+  constructor(props) {
+    super(props);
+    // At first it's going to come to this point. Because we didn't process the
+    // url yet.
+    const pathParts = window.location.pathname.split('/').filter(d => d);
+    const dataSource = getDataSourceFromPathParts(pathParts);
+    let profilesToCompare = [];
+    if (dataSource === 'compare') {
+      const query = queryString.parse(window.location.search.substr(1), {
+        arrayFormat: 'bracket', // This uses parameters with brackets for arrays.
+      });
+      if (Array.isArray(query.profiles)) {
+        profilesToCompare = query.profiles;
+      }
+    }
+
+    this.state = {
+      dataSource,
+      hashOrUrl: pathParts[1],
+      profilesToCompare,
+    };
+  }
+
   _retrieveProfileFromDataSource = () => {
     const {
-      dataSource,
-      hash,
-      profileUrl,
-      profilesToCompare,
       retrieveProfileFromAddon,
       retrieveProfileFromStore,
       retrieveProfileOrZipFromUrl,
       retrieveProfilesToCompare,
     } = this.props;
+    const { dataSource, hashOrUrl, profilesToCompare } = this.state;
+
+    // this data source switch will need to be removed.
     switch (dataSource) {
       case 'from-addon':
         retrieveProfileFromAddon().catch(e => console.error(e));
@@ -116,16 +144,15 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
       case 'local':
         break;
       case 'public':
-        retrieveProfileFromStore(hash).catch(e => console.error(e));
+        retrieveProfileFromStore(hashOrUrl).catch(e => console.error(e));
         break;
       case 'from-url':
-        retrieveProfileOrZipFromUrl(profileUrl).catch(e => console.error(e));
+        retrieveProfileOrZipFromUrl(hashOrUrl).catch(e => console.error(e));
         break;
-      case 'compare':
-        if (profilesToCompare) {
-          retrieveProfilesToCompare(profilesToCompare);
-        }
+      case 'compare': {
+        retrieveProfilesToCompare(profilesToCompare);
         break;
+      }
       case 'none':
         // nothing to do
         break;
@@ -142,11 +169,11 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
     if (prevProps.dataSource === 'none' && this.props.dataSource !== 'none') {
       this._retrieveProfileFromDataSource();
     } else if (
+      // this is wrong.
       this.props.dataSource === 'compare' &&
-      !prevProps.profilesToCompare &&
-      this.props.profilesToCompare
+      this.state.profilesToCompare
     ) {
-      this.props.retrieveProfilesToCompare(this.props.profilesToCompare);
+      this.props.retrieveProfilesToCompare(this.state.profilesToCompare);
     }
   }
 
@@ -186,7 +213,8 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
   }
 
   renderAppropriateComponents() {
-    const { view, dataSource, profilesToCompare, hasZipFile } = this.props;
+    const { view } = this.props;
+    const { dataSource, profilesToCompare } = this.state;
     const phase = view.phase;
     if (dataSource === 'none') {
       return <Home />;
@@ -234,7 +262,7 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
         // The data is now loaded. This could be either a single profile, or a zip file
         // with multiple profiles. Only show the ZipFileViewer if the data loaded is a
         // Zip file, and there is no stored path into the zip file.
-        return hasZipFile ? <ZipFileViewer /> : <ProfileViewer />;
+        return this.props.children;
       case 'ROUTE_NOT_FOUND':
       default:
         // Assert with Flow that we've handled all the cases, as the only thing left
@@ -248,26 +276,23 @@ class ProfileViewWhenReadyImpl extends PureComponent<ProfileViewProps> {
 
   render() {
     return (
-      <Fragment>
+      <>
         <ServiceWorkerManager />
         {this.renderAppropriateComponents()}
-      </Fragment>
+      </>
     );
   }
 }
 
 export const ProfileViewWhenReady = explicitConnect<
-  {||},
+  ProfileViewOwnProps,
   ProfileViewStateProps,
   ProfileViewDispatchProps
 >({
   mapStateToProps: (state: State) => ({
     view: getView(state),
     dataSource: getDataSource(state),
-    hash: getHash(state),
-    profileUrl: getProfileUrl(state),
-    profilesToCompare: getProfilesToCompare(state),
-    hasZipFile: getHasZipFile(state),
+    isUrlSetupDone: getIsUrlSetupDone(state),
   }),
   mapDispatchToProps: {
     retrieveProfileFromStore,
@@ -282,16 +307,16 @@ type RootProps = {
   store: Store,
 };
 
-export default class Root extends PureComponent<RootProps> {
+export default class Root extends React.PureComponent<RootProps> {
   render() {
     const { store } = this.props;
     return (
       <ErrorBoundary message="Uh oh, some error happened in profiler.firefox.com.">
         <Provider store={store}>
-          <UrlManager>
-            <ProfileViewWhenReady />
+          <ProfileViewWhenReady>
+            <UrlManager />
             <FooterLinks />
-          </UrlManager>
+          </ProfileViewWhenReady>
         </Provider>
       </ErrorBoundary>
     );
