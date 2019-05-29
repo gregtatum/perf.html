@@ -15,9 +15,6 @@
 .menuButtonsUploadErrorButton {
   height: 24px;
   margin-bottom: -24px;
-}
-
-.menuButtonsPermalinkButton {
   border-left: 1px solid var(--grey-30);
 }
 

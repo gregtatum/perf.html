@@ -10,7 +10,7 @@ import { Provider } from 'react-redux';
 import { storeWithProfile } from '../fixtures/stores';
 import { stateFromLocation } from '../../app-logic/url-handling';
 import { ensureExists } from '../../utils/flow';
-import { getIsNewlyPublished } from '../../selectors/url-state';
+import { getIsNewlyPublished } from '../../selectors/app';
 
 describe('<Permalink>', function() {
   function setup(search = '', injectedUrlShortener) {

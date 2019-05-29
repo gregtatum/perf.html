@@ -115,6 +115,7 @@ export type AppState = {|
   +panelLayoutGeneration: number,
   +lastVisibleThreadTabSlug: TabSlug,
   +trackThreadHeights: Array<ThreadIndex | void>,
+  +isNewlyPublished: boolean,
 |};
 
 export type UploadPhase =
@@ -160,7 +161,6 @@ export type UrlState = {|
   +selectedTab: TabSlug,
   +pathInZipFile: string | null,
   +profileName: string,
-  +isNewlyPublished: boolean,
   +profileSpecific: {|
     selectedThread: ThreadIndex | null,
     globalTrackOrder: TrackIndex[],
