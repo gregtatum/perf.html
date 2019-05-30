@@ -8,7 +8,11 @@ import * as React from 'react';
 import explicitConnect from '../../utils/connect';
 import { getIsUrlSetupDone } from '../../selectors/app';
 import { updateUrlState, urlSetupDone, show404 } from '../../actions/app';
-import { urlFromState, stateFromLocation } from '../../app-logic/url-handling';
+import {
+  urlFromState,
+  stateFromLocation,
+  getIsHistoryReplaceState,
+} from '../../app-logic/url-handling';
 
 import type { ConnectedProps } from '../../utils/connect';
 import type { UrlState } from '../../types/state';
@@ -89,9 +93,13 @@ class UrlManager extends React.PureComponent<Props> {
     const { isUrlSetupDone } = this.props;
     const newUrl = urlFromState(nextProps.urlState);
     if (newUrl !== window.location.pathname + window.location.search) {
-      if (isUrlSetupDone) {
+      if (isUrlSetupDone && !getIsHistoryReplaceState()) {
+        // Push the URL state only when the url setup is done, and we haven't set
+        // a flag to only replace the state.
         window.history.pushState(nextProps.urlState, document.title, newUrl);
       } else {
+        // Replace the URL state before the URL setup is done, and if we've specifically
+        // flagged to replace the URL state.
         window.history.replaceState(nextProps.urlState, document.title, newUrl);
       }
     }

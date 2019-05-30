@@ -16,7 +16,7 @@ import type {
 import type { ThreadIndex } from '../types/profile';
 
 const view: Reducer<AppViewState> = (
-  state = { phase: 'TRANSITIONING_FROM_STALE_PROFILE' },
+  state = { phase: 'INITIALIZING' },
   action
 ) => {
   switch (action.type) {
