@@ -213,34 +213,6 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
     );
   }
 
-  _renderUploadedPanel() {
-    const { isRepublish } = this.props;
-    return (
-      <div
-        className="menuButtonsPublishUpload"
-        data-testid="MenuButtonsPublish-container"
-      >
-        <div className="menuButtonsPublishUploadTop">
-          <div className="menuButtonsPublishUploadTitle">Profile published</div>
-          <div className="menuButtonsPublishMessage">
-            {isRepublish
-              ? 'Your profile was re-published.'
-              : 'Your profile was published, it is now safe to close this window.'}
-          </div>
-        </div>
-        <div className="menuButtonsPublishButtons">
-          <button
-            type="button"
-            className="photon-button photon-button-primary menuButtonsPublishButton"
-            onClick={this._closePanelAfterUpload}
-          >
-            Ok
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   _renderErrorPanel() {
     const { error, resetUploadState } = this.props;
     let message: string =
@@ -283,12 +255,11 @@ class MenuButtonsPublishImpl extends React.PureComponent<PublishProps> {
       case 'error':
         return this._renderErrorPanel();
       case 'local':
+      case 'uploaded':
         return this._renderPublishPanel();
       case 'uploading':
       case 'compressing':
         return this._renderUploadPanel();
-      case 'uploaded':
-        return this._renderUploadedPanel();
       default:
         throw assertExhaustiveCheck(uploadPhase);
     }

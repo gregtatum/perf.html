@@ -202,7 +202,15 @@ export const getUploadError: Selector<Error | mixed> = state =>
 
 export const getUploadProgressString: Selector<string> = createSelector(
   getUploadProgress,
-  progress => formatNumber(progress, 0, 0, 'percent')
+  progress =>
+    formatNumber(
+      // Create a minimum value of 0.1 so that there is at least some user feedback
+      // that the upload started.
+      Math.max(progress, 0.1),
+      0,
+      0,
+      'percent'
+    )
 );
 
 export const getAbortFunction: Selector<() => void> = state =>
@@ -221,3 +229,6 @@ export const getOriginalUrlState: Selector<null | UrlState> = state =>
 
 export const getIsHidingStaleProfile: Selector<boolean> = state =>
   getPublishState(state).isHidingStaleProfile;
+
+export const getHasSanitizedProfile: Selector<boolean> = state =>
+  getPublishState(state).hasSanitizedProfile;

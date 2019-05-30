@@ -139,6 +139,7 @@ export type PublishState = {|
   +originalProfile: null | Profile,
   +originalUrlState: null | UrlState,
   +isHidingStaleProfile: boolean,
+  +hasSanitizedProfile: boolean,
 |};
 
 export type ZippedProfilesState = {

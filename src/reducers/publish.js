@@ -175,6 +175,9 @@ const originalUrlState: Reducer<null | UrlState> = (state = null, action) => {
   }
 };
 
+/**
+ * This piece of state controls the animation of hiding the profile when it's stale.
+ */
 const isHidingStaleProfile: Reducer<boolean> = (state = false, action) => {
   switch (action.type) {
     case 'HIDE_STALE_PROFILE':
@@ -186,12 +189,26 @@ const isHidingStaleProfile: Reducer<boolean> = (state = false, action) => {
   }
 };
 
+/**
+ * This piece of state lets components know that a profile has been sanitized.
+ * This changes the behavior of how the <ProfileViewer> component animates in.
+ */
+const hasSanitizedProfile: Reducer<boolean> = (state = false, action) => {
+  switch (action.type) {
+    case 'HIDE_STALE_PROFILE':
+      return true;
+    default:
+      return state;
+  }
+};
+
 const publishReducer: Reducer<PublishState> = combineReducers({
   checkedSharingOptions,
   upload,
   originalProfile,
   originalUrlState,
   isHidingStaleProfile,
+  hasSanitizedProfile,
 });
 
 export default publishReducer;

@@ -5,6 +5,7 @@
 // @flow
 
 import * as React from 'react';
+import classNames from 'classnames';
 import explicitConnect from '../../../utils/connect';
 import { getProfile, getProfileRootRange } from '../../../selectors/profile';
 import { getDataSource } from '../../../selectors/url-state';
@@ -14,7 +15,7 @@ import { MenuButtonsPublish } from './Publish';
 import { MenuButtonsPermalink } from './Permalink';
 import ArrowPanel from '../../shared/ArrowPanel';
 import ButtonWithPanel from '../../shared/ButtonWithPanel';
-import { revertToOriginalProfile } from '../../../actions/publish';
+import { revertToOriginalProfile, abortUpload } from '../../../actions/publish';
 import { dismissNewlyPublished } from '../../../actions/app';
 import { getUploadPhase, getOriginalProfile } from '../../../selectors/publish';
 
@@ -46,6 +47,7 @@ type StateProps = {|
 type DispatchProps = {|
   +dismissNewlyPublished: typeof dismissNewlyPublished,
   +revertToOriginalProfile: typeof revertToOriginalProfile,
+  +abortUpload: typeof abortUpload,
 |};
 
 type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
@@ -57,25 +59,48 @@ class MenuButtons extends React.PureComponent<Props> {
   }
 
   _renderPublishPanel() {
-    const { uploadPhase, dataSource } = this.props;
+    const { uploadPhase, dataSource, abortUpload } = this.props;
+
     const isUploading =
       uploadPhase === 'uploading' || uploadPhase === 'compressing';
 
     if (isUploading) {
-      return null;
+      return (
+        <button
+          type="button"
+          className="buttonWithPanelButton menuButtonsAbortUploadButton"
+          onClick={abortUpload}
+        >
+          Cancel Upload
+        </button>
+      );
     }
+
     const isRepublish =
       dataSource === 'public' ||
       dataSource === 'from-url' ||
       dataSource === 'compare';
+    const isError = uploadPhase === 'error';
+
+    let label = 'Publish…';
+    if (isRepublish) {
+      label = 'Re-publish…';
+    }
+    if (isError) {
+      label = 'Error publishing…';
+    }
 
     return (
       <ButtonWithPanel
-        className="menuButtonsShareButton"
-        label={isRepublish ? 'Re-publish…' : 'Publish'}
+        className={classNames({
+          menuButtonsShareButton: true,
+          menuButtonsShareButtonOriginal: !isRepublish && !isError,
+          menuButtonsShareButtonError: isError,
+        })}
+        label={label}
         panel={
           <ArrowPanel className="menuButtonsPublishPanel">
-            <MenuButtonsPublish isRepublish={true} />
+            <MenuButtonsPublish isRepublish={isRepublish} />
           </ArrowPanel>
         }
       />
@@ -106,7 +131,7 @@ class MenuButtons extends React.PureComponent<Props> {
     return (
       <button
         type="button"
-        className="menuButtonsRevertButton"
+        className="buttonWithPanelButton menuButtonsRevertButton"
         onClick={revertToOriginalProfile}
       >
         Revert to Original Profile
@@ -151,6 +176,7 @@ export default explicitConnect<OwnProps, StateProps, DispatchProps>({
   mapDispatchToProps: {
     dismissNewlyPublished,
     revertToOriginalProfile,
+    abortUpload,
   },
   component: MenuButtons,
 });

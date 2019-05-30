@@ -255,7 +255,7 @@ export function hideStaleProfile(): ThunkAction<Promise<void>> {
   return dispatch => {
     dispatch({ type: 'HIDE_STALE_PROFILE' });
     return new Promise(resolve => {
-      // This timing should match .profileViewerFadeout.
+      // This timing should match .profileViewerFadeOut.
       setTimeout(resolve, 300);
     });
   };
