@@ -205,6 +205,20 @@ function sanitizeThreadPII(
         markersToDelete.add(i);
       }
     }
+
+    const { hiddenScreenshotWindowIds } = PIIToBeRemoved;
+    if (hiddenScreenshotWindowIds && thread.name === 'Compositor') {
+      for (let i = 0; i < markerTable.length; i++) {
+        const currentMarker = markerTable.data[i];
+        if (
+          currentMarker &&
+          currentMarker.type === 'CompositorScreenshot' &&
+          hiddenScreenshotWindowIds.has(currentMarker.windowID)
+        ) {
+          markersToDelete.add(i);
+        }
+      }
+    }
   }
 
   // After iterating (or not iterating at all) the markers, if we have some

@@ -90,6 +90,7 @@ export const getRemoveProfileInformation: Selector<RemoveProfileInformation | nu
 
     // Find all of the thread indexes that are hidden.
     const shouldRemoveThreads = new Set();
+    const hiddenScreenshotWindowIds = new Set();
     if (!checkedSharingOptions.includeHiddenThreads) {
       for (const globalTrackIndex of hiddenGlobalTracks) {
         const globalTrack = globalTracks[globalTrackIndex];
@@ -126,6 +127,25 @@ export const getRemoveProfileInformation: Selector<RemoveProfileInformation | nu
           }
         }
       }
+
+      // Screenshots can be visible, while the compositor thread can be hidden.
+      // In this case, the screenshots would effectively be removed from the profile.
+      // Instead, re-add the compositor thread so that the screenshots are preserved.
+      if (checkedSharingOptions.includeScreenshots) {
+        // Go through all of the global tracks.
+        for (const [globalTrackIndex, globalTrack] of globalTracks.entries()) {
+          // Look for the screenshots.
+          if (globalTrack.type === 'screenshots') {
+            // Check to see if the screenshot track is visible.
+            if (hiddenGlobalTracks.has(globalTrackIndex)) {
+              hiddenScreenshotWindowIds.add(globalTrack.id);
+            } else {
+              // Make sure this thread is not in the "shouldRemove" list.
+              shouldRemoveThreads.delete(globalTrack.threadIndex);
+            }
+          }
+        }
+      }
     }
 
     return {
@@ -140,6 +160,11 @@ export const getRemoveProfileInformation: Selector<RemoveProfileInformation | nu
       ),
       shouldRemoveThreads,
       shouldRemoveExtensions: !checkedSharingOptions.includeExtension,
+      hiddenScreenshotWindowIds:
+        checkedSharingOptions.includeScreenshots &&
+        !checkedSharingOptions.includeHiddenThreads
+          ? hiddenScreenshotWindowIds
+          : null,
     };
   }
 );

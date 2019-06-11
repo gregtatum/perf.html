@@ -170,7 +170,7 @@ export type TrackIndex = number;
  * Type that holds the values of personally identifiable information that user
  * wants to remove.
  */
-export type RemoveProfileInformation = {
+export type RemoveProfileInformation = {|
   // Remove the given hidden threads if they are provided.
   shouldRemoveThreads: Set<ThreadIndex>,
   // Remove the screenshots if they are provided.
@@ -181,4 +181,5 @@ export type RemoveProfileInformation = {
   shouldRemoveUrls: boolean,
   // Remove the extension list if it's true.
   shouldRemoveExtensions: boolean,
-};
+  hiddenScreenshotWindowIds: Set<string> | null,
+|};
