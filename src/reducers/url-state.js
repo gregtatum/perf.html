@@ -160,6 +160,15 @@ const networkSearchString: Reducer<string> = (state = '', action) => {
   }
 };
 
+const jsAllocationSearchString: Reducer<string> = (state = '', action) => {
+  switch (action.type) {
+    case 'CHANGE_JS_ALLOCATION_SEARCH_STRING':
+      return action.searchString;
+    default:
+      return state;
+  }
+};
+
 const transforms: Reducer<TransformStacksPerThread> = (state = {}, action) => {
   switch (action.type) {
     case 'VIEW_PROFILE':
@@ -385,6 +394,7 @@ const profileSpecific = combineReducers({
   callTreeSearchString,
   markersSearchString,
   networkSearchString,
+  jsAllocationSearchString,
   transforms,
   timelineType,
   // The timeline tracks used to be hidden and sorted by thread indexes, rather than

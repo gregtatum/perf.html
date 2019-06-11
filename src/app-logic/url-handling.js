@@ -108,6 +108,11 @@ type NetworkQuery = {|
   networkSearch?: string, // "DOMEvent"
 |};
 
+type JsAllocationQuery = {|
+  ...BaseQuery,
+  jsAllocationSearch?: string, // "myFunc"
+|};
+
 type StackChartQuery = {|
   ...BaseQuery,
   search: string, // "js::RunScript"
@@ -127,6 +132,7 @@ type Query = {|
   ...CallTreeQuery,
   ...MarkersQuery,
   ...NetworkQuery,
+  ...JsAllocationQuery,
   ...StackChartQuery,
   ...JsTracerQuery,
 |};
@@ -239,6 +245,10 @@ export function urlStateToUrlObject(urlState: UrlState): UrlObject {
     case 'marker-chart':
       query.markerSearch =
         urlState.profileSpecific.markersSearchString || undefined;
+      break;
+    case 'js-allocations':
+      query.jsAllocationSearch =
+        urlState.profileSpecific.jsAllocationSearchString || undefined;
       break;
     case 'network-chart':
       query.networkSearch =
@@ -365,6 +375,7 @@ export function stateFromLocation(location: Location): UrlState {
         : new Map(),
       markersSearchString: query.markerSearch || '',
       networkSearchString: query.networkSearch || '',
+      jsAllocationSearchString: query.jsAllocationSearch || '',
       transforms,
       timelineType: query.timelineType === 'stack' ? 'stack' : 'category',
       legacyThreadOrder: query.threadOrder

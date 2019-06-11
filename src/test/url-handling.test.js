@@ -10,6 +10,7 @@ import {
   changeCallTreeSearchString,
   changeMarkersSearchString,
   changeNetworkSearchString,
+  changeJsAllocationSearchString,
   changeProfileName,
 } from '../actions/profile-view';
 import { changeSelectedTab, changeProfilesToCompare } from '../actions/app';
@@ -338,6 +339,18 @@ describe('search strings', function() {
     const urlState = urlStateReducers.getUrlState(getState());
     const { query } = urlStateToUrlObject(urlState);
     expect(query.networkSearch).toBe(networkSearchString);
+  });
+
+  it('serializes the JS allocation search string in the URL', function() {
+    const { getState, dispatch } = _getStoreWithURL();
+
+    const searchString = 'abc';
+
+    dispatch(changeJsAllocationSearchString(searchString));
+    dispatch(changeSelectedTab('js-allocations'));
+    const urlState = urlStateReducers.getUrlState(getState());
+    const { query } = urlStateToUrlObject(urlState);
+    expect(query.jsAllocationSearch).toBe(searchString);
   });
 });
 

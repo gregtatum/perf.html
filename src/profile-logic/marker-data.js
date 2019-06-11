@@ -867,6 +867,10 @@ export function isNetworkMarker(marker: Marker): boolean {
   return !!(marker.data && marker.data.type === 'Network');
 }
 
+export function isJsAllocationMarker(marker: Marker): boolean {
+  return !!(marker.data && marker.data.type === 'JS allocation');
+}
+
 export function isNavigationMarker({ name, data }: Marker) {
   if (name === 'TTI') {
     // TTI is only selectable by name, as it doesn't have a structured payload.

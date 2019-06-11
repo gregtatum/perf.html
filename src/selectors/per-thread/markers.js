@@ -414,6 +414,47 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
     return getMarker(rightClickedMarkerIndex);
   };
 
+  /**
+   * Check to see if there are any JS allocations for this thread. This way we
+   * can display a custom thread.
+   */
+  const getHasJsAllocations: Selector<boolean> = createSelector(
+    getMarkerGetter,
+    threadSelectors.getStringTable,
+    _getRawMarkerTable,
+    (markerGetter, stringTable, rawMarkers) => {
+      return (
+        // The common case here is that there are no JS allocation markers. In this case
+        // this first check will bail out early, as there is no string in the string
+        // table related to JS allocations.
+        stringTable.hasString('JS allocation') &&
+        // Now do the full real check for allocations.
+        rawMarkers.data.some(datum => datum && datum.type === 'JS allocation')
+      );
+    }
+  );
+
+  /**
+   * This selector filters network markers from the range filtered markers.
+   */
+  const getJsAllocationMarkerIndexes: Selector<MarkerIndex[]> = createSelector(
+    getMarkerGetter,
+    getCommittedRangeFilteredMarkerIndexes,
+    filterMarkerIndexesCreator(MarkerData.isJsAllocationMarker)
+  );
+
+  /**
+   * This filters JS allocation markers using a search string.
+   */
+  const getSearchFilteredJsAllocationMarkerIndexes: Selector<
+    MarkerIndex[]
+  > = createSelector(
+    getMarkerGetter,
+    getJsAllocationMarkerIndexes,
+    UrlState.getJsAllocationSearchString,
+    MarkerData.getSearchFilteredMarkerIndexes
+  );
+
   return {
     getMarkerGetter,
     getJankMarkerIndexesForHeader,
@@ -439,5 +480,7 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
     getRightClickedMarkerIndex,
     getRightClickedMarker,
     getIsNetworkChartEmptyInFullRange,
+    getHasJsAllocations,
+    getSearchFilteredJsAllocationMarkerIndexes,
   };
 }

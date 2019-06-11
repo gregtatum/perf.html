@@ -177,6 +177,7 @@ export type UrlState = {|
     callTreeSearchString: string,
     markersSearchString: string,
     networkSearchString: string,
+    jsAllocationSearchString: string,
     transforms: TransformStacksPerThread,
     timelineType: TimelineType,
     legacyThreadOrder: ThreadIndex[] | null,
