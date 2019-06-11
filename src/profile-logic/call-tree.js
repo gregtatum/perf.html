@@ -4,7 +4,7 @@
 
 // @flow
 import { timeCode } from '../utils/time-code';
-import { getSampleCallNodes, getOriginAnnotationForFunc } from './profile-data';
+import { getOriginAnnotationForFunc } from './profile-data';
 import { resourceTypes } from './data-structures';
 import { UniqueStringArray } from '../utils/unique-string-array';
 import type {
@@ -253,8 +253,8 @@ export class CallTree {
 function _getInvertedStackSelfTimes(
   thread: Thread,
   callNodeTable: CallNodeTable,
-  sampleCallNodes: Array<IndexIntoCallNodeTable | null>,
-  interval: Milliseconds
+  callNodeEntries: Array<IndexIntoCallNodeTable | null>,
+  computeTimeForCallNodeEntry: IndexIntoCallNodeTable => Milliseconds
 ): {
   // In an inverted profile, all the self time is accounted to the root nodes.
   // So `callNodeSelfTime` will be 0 for all non-root nodes.
@@ -290,16 +290,13 @@ function _getInvertedStackSelfTimes(
   // Calculate the timing information by going through each sample.
   const callNodeSelfTime = new Float32Array(callNodeTable.length);
   const callNodeLeafTime = new Float32Array(callNodeTable.length);
-  for (
-    let sampleIndex = 0;
-    sampleIndex < sampleCallNodes.length;
-    sampleIndex++
-  ) {
-    const callNodeIndex = sampleCallNodes[sampleIndex];
+  for (let entryIndex = 0; entryIndex < callNodeEntries.length; entryIndex++) {
+    const callNodeIndex = callNodeEntries[entryIndex];
     if (callNodeIndex !== null) {
       const rootIndex = callNodeToRoot[callNodeIndex];
-      callNodeSelfTime[rootIndex] += interval;
-      callNodeLeafTime[callNodeIndex] += interval;
+      const time = computeTimeForCallNodeEntry(entryIndex);
+      callNodeSelfTime[rootIndex] += time;
+      callNodeLeafTime[callNodeIndex] += time;
     }
   }
 
@@ -312,22 +309,20 @@ function _getInvertedStackSelfTimes(
 function _getStackSelfTimes(
   thread: Thread,
   callNodeTable: CallNodeTable,
-  sampleCallNodes: Array<null | IndexIntoCallNodeTable>,
-  interval: Milliseconds
+  callNodeEntries: Array<null | IndexIntoCallNodeTable>,
+  computeTimeForCallNodeEntry: IndexIntoCallNodeTable => Milliseconds
 ): {
   callNodeSelfTime: Float32Array, // Milliseconds[]
   callNodeLeafTime: Float32Array, // Milliseconds[]
 } {
   const callNodeSelfTime = new Float32Array(callNodeTable.length);
 
-  for (
-    let sampleIndex = 0;
-    sampleIndex < sampleCallNodes.length;
-    sampleIndex++
-  ) {
-    const callNodeIndex = sampleCallNodes[sampleIndex];
+  for (let entryIndex = 0; entryIndex < callNodeEntries.length; entryIndex++) {
+    const callNodeIndex = callNodeEntries[entryIndex];
     if (callNodeIndex !== null) {
-      callNodeSelfTime[callNodeIndex] += interval;
+      callNodeSelfTime[callNodeIndex] += computeTimeForCallNodeEntry(
+        callNodeIndex
+      );
     }
   }
 
@@ -340,23 +335,25 @@ function _getStackSelfTimes(
  */
 export function computeCallTreeCountsAndTimings(
   thread: Thread,
-  { callNodeTable, stackIndexToCallNodeIndex }: CallNodeInfo,
-  interval: Milliseconds,
+  callNodeEntries: Array<IndexIntoCallNodeTable | null>,
+  { callNodeTable }: CallNodeInfo,
+  computeTimeForCallNodeEntry: IndexIntoCallNodeTable => Milliseconds,
   invertCallstack: boolean
 ): CallTreeCountsAndTimings {
-  const sampleCallNodes = getSampleCallNodes(
-    thread.samples,
-    stackIndexToCallNodeIndex
-  );
   // Inverted trees need a different method for computing the timing.
   const { callNodeSelfTime, callNodeLeafTime } = invertCallstack
     ? _getInvertedStackSelfTimes(
         thread,
         callNodeTable,
-        sampleCallNodes,
-        interval
+        callNodeEntries,
+        computeTimeForCallNodeEntry
       )
-    : _getStackSelfTimes(thread, callNodeTable, sampleCallNodes, interval);
+    : _getStackSelfTimes(
+        thread,
+        callNodeTable,
+        callNodeEntries,
+        computeTimeForCallNodeEntry
+      );
 
   // Compute the following variables:
   const callNodeTotalTime = new Float32Array(callNodeTable.length);

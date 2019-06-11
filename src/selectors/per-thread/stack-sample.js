@@ -166,10 +166,29 @@ export function getStackAndSampleSelectorsPerThread(
     }
   );
 
-  const getCallTreeCountsAndTimings: Selector<CallTree.CallTreeCountsAndTimings> = createSelector(
+  const _getSampleCallNodes: Selector<
+    Array<IndexIntoCallNodeTable | null>
+  > = createSelector(
     threadSelectors.getPreviewFilteredThread,
     getCallNodeInfo,
+    ({ samples }, { stackIndexToCallNodeIndex }) =>
+      ProfileData.getSampleCallNodes(samples, stackIndexToCallNodeIndex)
+  );
+
+  const getCallTreeTimeCalculator = createSelector(
     ProfileSelectors.getProfileInterval,
+    interval => {
+      return function addIntervalToTime(_sampleIndex: IndexIntoSamplesTable) {
+        return interval;
+      };
+    }
+  );
+
+  const getCallTreeCountsAndTimings: Selector<CallTree.CallTreeCountsAndTimings> = createSelector(
+    threadSelectors.getPreviewFilteredThread,
+    _getSampleCallNodes,
+    getCallNodeInfo,
+    getCallTreeTimeCalculator,
     UrlState.getInvertCallstack,
     CallTree.computeCallTreeCountsAndTimings
   );
