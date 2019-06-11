@@ -486,6 +486,18 @@ export type DummyForTestsMarkerPayload = {|
   endTime: Milliseconds,
 |};
 
+export type JsAllocationPayload = {
+  type: 'JS allocation',
+  startTime: Milliseconds,
+  endTime: Milliseconds,
+  className: 'Function',
+  typeName: string, // Currently only 'JSObject'
+  coarseType: string, // Currently only 'Object',
+  size: number, // in bytes.
+  inNursery: true,
+  cause: CauseBacktrace,
+};
+
 /**
  * The union of all the different marker payloads that profiler.firefox.com knows about,
  * this is not guaranteed to be all the payloads that we actually get from the Gecko

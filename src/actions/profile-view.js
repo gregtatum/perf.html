@@ -909,6 +909,13 @@ export function changeNetworkSearchString(searchString: string): Action {
   };
 }
 
+export function changeJsAllocationSearchString(searchString: string): Action {
+  return {
+    type: 'CHANGE_JS_ALLOCATION_SEARCH_STRING',
+    searchString,
+  };
+}
+
 export function changeImplementationFilter(
   implementation: ImplementationFilter
 ): ThunkAction<void> {
