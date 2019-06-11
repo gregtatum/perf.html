@@ -10,6 +10,7 @@ import {
   getCallTree,
   computeCallTreeCountsAndTimings,
   CallTree,
+  getTimeCalculatorForDuration,
 } from '../../profile-logic/call-tree';
 import { getRootsAndChildren } from '../../profile-logic/flame-graph';
 import {
@@ -18,6 +19,7 @@ import {
   getCallNodeIndexFromPath,
   getOriginAnnotationForFunc,
   filterThreadSamplesToRange,
+  getSampleCallNodes,
 } from '../../profile-logic/profile-data';
 import { resourceTypes } from '../../profile-logic/data-structures';
 import { formatTree, formatTreeIncludeCategories } from '../fixtures/utils';
@@ -39,8 +41,9 @@ function callTreeFromProfile(
   );
   const callTreeCountsAndTimings = computeCallTreeCountsAndTimings(
     thread,
+    getSampleCallNodes(thread.samples, callNodeInfo.stackIndexToCallNodeIndex),
     callNodeInfo,
-    interval,
+    getTimeCalculatorForDuration(interval),
     false
   );
   return getCallTree(
@@ -98,8 +101,12 @@ describe('unfiltered call tree', function() {
       expect(
         computeCallTreeCountsAndTimings(
           thread,
+          getSampleCallNodes(
+            thread.samples,
+            callNodeInfo.stackIndexToCallNodeIndex
+          ),
           callNodeInfo,
-          profile.meta.interval,
+          () => profile.meta.interval,
           false
         )
       ).toEqual({
@@ -429,8 +436,12 @@ describe('inverted call tree', function() {
     );
     const callTreeCountsAndTimings = computeCallTreeCountsAndTimings(
       thread,
+      getSampleCallNodes(
+        thread.samples,
+        callNodeInfo.stackIndexToCallNodeIndex
+      ),
       callNodeInfo,
-      interval,
+      getTimeCalculatorForDuration(interval),
       true
     );
     const callTree = getCallTree(
@@ -468,8 +479,12 @@ describe('inverted call tree', function() {
     );
     const invertedCallTreeCountsAndTimings = computeCallTreeCountsAndTimings(
       invertedThread,
+      getSampleCallNodes(
+        invertedThread.samples,
+        invertedCallNodeInfo.stackIndexToCallNodeIndex
+      ),
       invertedCallNodeInfo,
-      interval,
+      getTimeCalculatorForDuration(interval),
       true
     );
     const invertedCallTree = getCallTree(
@@ -601,8 +616,12 @@ describe('diffing trees', function() {
     );
     const callTreeCountsAndTimings = computeCallTreeCountsAndTimings(
       thread,
+      getSampleCallNodes(
+        thread.samples,
+        callNodeInfo.stackIndexToCallNodeIndex
+      ),
       callNodeInfo,
-      interval,
+      getTimeCalculatorForDuration(interval),
       false
     );
     expect(callTreeCountsAndTimings.rootTotalTime).toBe(4);
