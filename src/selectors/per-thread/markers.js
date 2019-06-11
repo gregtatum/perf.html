@@ -419,10 +419,9 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
    * can display a custom thread.
    */
   const getHasJsAllocations: Selector<boolean> = createSelector(
-    getMarkerGetter,
     threadSelectors.getStringTable,
     _getRawMarkerTable,
-    (markerGetter, stringTable, rawMarkers) => {
+    (stringTable, rawMarkers) => {
       return (
         // The common case here is that there are no JS allocation markers. In this case
         // this first check will bail out early, as there is no string in the string

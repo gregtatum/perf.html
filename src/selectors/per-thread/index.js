@@ -51,10 +51,15 @@ export const getThreadSelectors = (
 ): ThreadSelectors => {
   if (!(threadIndex in _threadSelectorsCache)) {
     const threadSelectors = getThreadSelectorsPerThread(threadIndex);
+    const markerSelectors = getMarkerSelectorsPerThread(threadSelectors);
+    const stackAndSampleSelectors = getStackAndSampleSelectorsPerThread(
+      threadSelectors,
+      markerSelectors
+    );
     _threadSelectorsCache[threadIndex] = {
       ...threadSelectors,
-      ...getStackAndSampleSelectorsPerThread(threadSelectors),
-      ...getMarkerSelectorsPerThread(threadSelectors),
+      ...markerSelectors,
+      ...stackAndSampleSelectors,
     };
   }
   return _threadSelectorsCache[threadIndex];

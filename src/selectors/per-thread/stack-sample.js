@@ -11,6 +11,7 @@ import * as FlameGraph from '../../profile-logic/flame-graph';
 import * as CallTree from '../../profile-logic/call-tree';
 import { PathSet } from '../../utils/path';
 import * as ProfileSelectors from '../profile';
+import { assertExhaustiveCheck } from '../../utils/flow';
 
 import type {
   IndexIntoCategoryList,
@@ -26,7 +27,10 @@ import type { StartEndRange } from '../../types/units';
 import type { Selector } from '../../types/store';
 import type { SelectedState } from '../../profile-logic/profile-data';
 import type { $ReturnType } from '../../types/utils';
+import type { JsAllocationPayload, MarkerPayload } from '../../types/markers';
 import type { ThreadSelectorsPerThread } from './thread';
+import type { MarkerSelectorsPerThread } from './markers';
+import type { CallTreeSummaryStrategy } from '../../types/actions';
 
 /**
  * Infer the return type from the getStackAndSampleSelectorsPerThread function. This
@@ -41,7 +45,8 @@ export type StackAndSampleSelectorsPerThread = $ReturnType<
  * Create the selectors for a thread that have to do with either stacks or samples.
  */
 export function getStackAndSampleSelectorsPerThread(
-  threadSelectors: ThreadSelectorsPerThread
+  threadSelectors: ThreadSelectorsPerThread,
+  markerSelectors: MarkerSelectorsPerThread
 ): * {
   /**
    * The buffers of the samples can be cleared out. This function lets us know the
@@ -184,6 +189,28 @@ export function getStackAndSampleSelectorsPerThread(
     }
   );
 
+  const getCallTreeJsAllocationCalculator = createSelector(
+    markerSelectors.getJsAllocationMarkerIndexes,
+    markerSelectors.getMarkerGetter,
+    (jsAllocationMarkerIndexes, getMarker) => {
+      return function addMemorySize(indexIntoJsAllocationMarkers: number) {
+        const marker = getMarker(
+          jsAllocationMarkerIndexes[indexIntoJsAllocationMarkers]
+        );
+        return ((marker.data: any): JsAllocationPayload).size;
+      };
+    }
+  );
+
+  const getCallTreeJsAllocationCountsAndTimings: Selector<CallTree.CallTreeCountsAndTimings> = createSelector(
+    threadSelectors.getPreviewFilteredThread,
+    markerSelectors.getJsAllocationMarkerIndexes,
+    getCallNodeInfo,
+    getCallTreeJsAllocationCalculator,
+    UrlState.getInvertCallstack,
+    CallTree.computeCallTreeCountsAndTimings
+  );
+
   const getCallTreeCountsAndTimings: Selector<CallTree.CallTreeCountsAndTimings> = createSelector(
     threadSelectors.getPreviewFilteredThread,
     _getSampleCallNodes,
@@ -193,13 +220,40 @@ export function getStackAndSampleSelectorsPerThread(
     CallTree.computeCallTreeCountsAndTimings
   );
 
-  const getCallTree: Selector<CallTree.CallTree> = createSelector(
+  const getCallTree = state => {
+    const strategy: CallTreeSummaryStrategy = UrlState.getCallTreeSummaryStrategy(
+      state
+    );
+    switch (strategy) {
+      case 'timing':
+        return getCallTreeWithTimingStrategy(state);
+      case 'js-allocations':
+        return getCallTreeWithJsAllocationStrategy(state);
+      default:
+        throw assertExhaustiveCheck(
+          strategy,
+          `Unhandled CallTreeSummaryStrategy.`
+        );
+    }
+  };
+
+  const getCallTreeWithTimingStrategy: Selector<CallTree.CallTree> = createSelector(
     threadSelectors.getPreviewFilteredThread,
     ProfileSelectors.getProfileInterval,
     getCallNodeInfo,
     ProfileSelectors.getCategories,
     UrlState.getImplementationFilter,
     getCallTreeCountsAndTimings,
+    CallTree.getCallTree
+  );
+
+  const getCallTreeWithJsAllocationStrategy: Selector<CallTree.CallTree> = createSelector(
+    threadSelectors.getPreviewFilteredThread,
+    ProfileSelectors.getProfileInterval,
+    getCallNodeInfo,
+    ProfileSelectors.getCategories,
+    UrlState.getImplementationFilter,
+    getCallTreeJsAllocationCountsAndTimings,
     CallTree.getCallTree
   );
 

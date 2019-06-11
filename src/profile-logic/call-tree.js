@@ -179,7 +179,6 @@ export class CallTree {
     const totalTimeRelative = totalTime / this._rootTotalTime;
     const selfTime = this._callNodeTimes.selfTime[callNodeIndex];
     const selfTimeRelative = selfTime / this._rootTotalTime;
-
     return {
       funcName,
       totalTime,
@@ -211,7 +210,6 @@ export class CallTree {
       } else if (resourceType === resourceTypes.addon) {
         icon = ExtensionIcon;
       }
-
       const formattedTotalTime = formatNumberDependingOnInterval(
         this._isIntegerInterval,
         totalTime
@@ -253,7 +251,9 @@ export class CallTree {
 function _getInvertedStackSelfTimes(
   thread: Thread,
   callNodeTable: CallNodeTable,
-  callNodeEntries: Array<IndexIntoCallNodeTable | null>,
+  callNodeEntries:
+    | Array<IndexIntoCallNodeTable | null>
+    | Array<IndexIntoCallNodeTable>,
   computeTimeForCallNodeEntry: IndexIntoCallNodeTable => Milliseconds
 ): {
   // In an inverted profile, all the self time is accounted to the root nodes.
@@ -309,7 +309,9 @@ function _getInvertedStackSelfTimes(
 function _getStackSelfTimes(
   thread: Thread,
   callNodeTable: CallNodeTable,
-  callNodeEntries: Array<null | IndexIntoCallNodeTable>,
+  callNodeEntries:
+    | Array<IndexIntoCallNodeTable | null>
+    | Array<IndexIntoCallNodeTable>,
   computeTimeForCallNodeEntry: IndexIntoCallNodeTable => Milliseconds
 ): {
   callNodeSelfTime: Float32Array, // Milliseconds[]
@@ -321,7 +323,7 @@ function _getStackSelfTimes(
     const callNodeIndex = callNodeEntries[entryIndex];
     if (callNodeIndex !== null) {
       callNodeSelfTime[callNodeIndex] += computeTimeForCallNodeEntry(
-        callNodeIndex
+        entryIndex
       );
     }
   }
@@ -335,7 +337,9 @@ function _getStackSelfTimes(
  */
 export function computeCallTreeCountsAndTimings(
   thread: Thread,
-  callNodeEntries: Array<IndexIntoCallNodeTable | null>,
+  callNodeEntries:
+    | Array<IndexIntoCallNodeTable | null>
+    | Array<IndexIntoCallNodeTable>,
   { callNodeTable }: CallNodeInfo,
   computeTimeForCallNodeEntry: IndexIntoCallNodeTable => Milliseconds,
   invertCallstack: boolean
