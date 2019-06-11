@@ -437,7 +437,7 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
   /**
    * This selector filters network markers from the range filtered markers.
    */
-  const getJsAllocationMarkerIndexes: Selector<MarkerIndex[]> = createSelector(
+  const _getJsAllocationMarkerIndexes: Selector<MarkerIndex[]> = createSelector(
     getMarkerGetter,
     getCommittedRangeFilteredMarkerIndexes,
     filterMarkerIndexesCreator(MarkerData.isJsAllocationMarker)
@@ -450,9 +450,54 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
     MarkerIndex[]
   > = createSelector(
     getMarkerGetter,
-    getJsAllocationMarkerIndexes,
+    _getJsAllocationMarkerIndexes,
     UrlState.getJsAllocationSearchString,
     MarkerData.getSearchFilteredMarkerIndexes
+  );
+
+  const getJsAllocationCallTreeCountsAndTimings: Selector<> = createSelector(
+    getMarkerGetter,
+    threadSelectors.getThread,
+    threadSelectors.getCallNodeInfo,
+    UrlState.getInvertCallstack,
+    getSearchFilteredJsAllocationMarkerIndexes,
+    (
+      markerGetter,
+      thread,
+      { callNodeTable, stackIndexToCallNodeIndex },
+      invertCallstack,
+      markerIndexes
+    ) => {
+      const allocationCallNodes = markerIndexes.map(
+        markerIndex =>
+          stackIndexToCallNodeIndex[markerGetter(markerIndex).stack]
+      );
+      function getAllocationAmounts() {
+        const callNodeSelfTime = new Float32Array(callNodeTable.length);
+        for (
+          let sampleIndex = 0;
+          sampleIndex < sampleCallNodes.length;
+          sampleIndex++
+        ) {
+          const callNodeIndex = sampleCallNodes[sampleIndex];
+          if (callNodeIndex !== null) {
+            callNodeSelfTime[callNodeIndex] += interval;
+          }
+        }
+        return callNodeSelfTime;
+      }
+    }
+  );
+
+  const getJsAllocationCallNodeInfo: Selector<> = createSelector(
+    getMarkerGetter,
+    getSearchFilteredJsAllocationMarkerIndexes,
+    (markerGetter, markerIndexes) => {
+      getCallTree();
+      for (const markerIndex of markerIndexes) {
+        const marker = markerGetter(markerIndex);
+      }
+    }
   );
 
   return {

@@ -58,13 +58,17 @@ export const getIsNewlyPublished: Selector<boolean> = state =>
 export const getVisibleTabs: Selector<$ReadOnlyArray<TabSlug>> = createSelector(
   selectedThreadSelectors.getIsNetworkChartEmptyInFullRange,
   selectedThreadSelectors.getJsTracerTable,
-  (isNetworkChartEmpty, jsTracerTable) => {
+  selectedThreadSelectors.getHasJsAllocations,
+  (isNetworkChartEmpty, jsTracerTable, hasJsAllocations) => {
     let visibleTabs = tabSlugs;
     if (isNetworkChartEmpty) {
       visibleTabs = visibleTabs.filter(tabSlug => tabSlug !== 'network-chart');
     }
     if (!jsTracerTable) {
       visibleTabs = visibleTabs.filter(tabSlug => tabSlug !== 'js-tracer');
+    }
+    if (!hasJsAllocations) {
+      visibleTabs = visibleTabs.filter(tabSlug => tabSlug !== 'js-allocations');
     }
     return visibleTabs;
   }
