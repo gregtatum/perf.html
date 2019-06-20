@@ -7,6 +7,8 @@ import type {
   JsTracerTable,
   IndexIntoStringTable,
   IndexIntoJsTracerEvents,
+  IndexIntoFuncTable,
+  Thread,
 } from '../types/profile';
 import type { JsTracerTiming } from '../types/profile-derived';
 import type { Microseconds } from '../types/units';
@@ -29,9 +31,34 @@ import type { UniqueStringArray } from '../utils/unique-string-array';
  */
 export function getJsTracerTiming(
   jsTracer: JsTracerTable,
-  stringTable: UniqueStringArray
+  thread: Thread
 ): JsTracerTiming[] {
   const jsTracerTiming: JsTracerTiming[] = [];
+  const { stringTable, funcTable } = thread;
+
+  // Create a map that keys off of the string `${fileName}:${line}:${column}`. This maps
+  // the JS tracer script locations to functions in the profiling data structure.
+  // This operation can fail, as there is no guarantee that every location in the JS
+  // tracer information was sampled.
+  const keyToFuncIndex: Map<string, IndexIntoFuncTable | null> = new Map();
+  for (let funcIndex = 0; funcIndex < funcTable.length; funcIndex++) {
+    if (!funcTable.isJS[funcIndex]) {
+      continue;
+    }
+    const line = funcTable.lineNumber[funcIndex];
+    const column = funcTable.columnNumber[funcIndex];
+    const fileNameIndex = funcTable.fileName[funcIndex];
+    if (line !== null && column !== null && fileNameIndex !== null) {
+      const fileName = stringTable.getString(fileNameIndex);
+      const key = `${fileName}:${line}:${column}`;
+      if (keyToFuncIndex.has(key)) {
+        // Multiple functions map to this script location.
+        keyToFuncIndex.set(key, null);
+      } else {
+        keyToFuncIndex.set(key, funcIndex);
+      }
+    }
+  }
 
   // Go through all of the events.
   for (
@@ -40,7 +67,26 @@ export function getJsTracerTiming(
     tracerEventIndex++
   ) {
     const stringIndex = jsTracer.events[tracerEventIndex];
-    const displayName = stringTable.getString(stringIndex);
+    let displayName = stringTable.getString(stringIndex);
+    let funcIndex: null | IndexIntoFuncTable = null;
+    const column = jsTracer.columns[tracerEventIndex];
+    const line = jsTracer.lines[tracerEventIndex];
+    if (column !== null && line !== null) {
+      // Look up to see if this script location has a function in the sampled data.
+      const key = `${displayName}:${line}:${column}`;
+      const funcIndexInMap = keyToFuncIndex.get(key);
+
+      if (funcIndexInMap !== undefined) {
+        if (funcIndexInMap === null) {
+          displayName = `(multiple matching functions) ${displayName}`;
+        } else {
+          funcIndex = funcIndexInMap;
+          displayName = `ƒ ${stringTable.getString(
+            funcTable.name[funcIndex]
+          )}  ${displayName}`;
+        }
+      }
+    }
 
     // Place the event in the closest row that is empty.
     for (let i = 0; i <= jsTracerTiming.length; i++) {
@@ -52,6 +98,7 @@ export function getJsTracerTiming(
           end: [],
           index: [],
           label: [],
+          func: [],
           name: 'Tracing Information',
           length: 0,
         };
@@ -71,6 +118,7 @@ export function getJsTracerTiming(
         timingRow.end.push(start + duration);
         timingRow.label.push(displayName);
         timingRow.index.push(tracerEventIndex);
+        timingRow.func.push(funcIndex);
         timingRow.length++;
         break;
       }
@@ -139,6 +187,7 @@ export function getJsTracerLeafTiming(
         end: [],
         index: [],
         label: [],
+        func: [],
         name: rowName,
         length: 0,
       };
