@@ -71,7 +71,7 @@ class JsTracerExpensiveChartImpl extends React.PureComponent<Props> {
       timeRange: { start, end },
       interval,
     } = this.props;
-    return interval / (end - start);
+    return (0.01 * interval) / (end - start);
   }
 
   render() {

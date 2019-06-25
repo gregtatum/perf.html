@@ -9,6 +9,8 @@ import {
   processProfile,
   unserializeProfileOfArbitraryFormat,
 } from '../profile-logic/process-profile';
+import { convertJsTracerToThread } from '../profile-logic/js-tracer';
+import { getFriendlyThreadName } from '../profile-logic/profile-data';
 import { SymbolStore } from '../profile-logic/symbol-store';
 import { symbolicateProfile } from '../profile-logic/symbolication';
 import * as MozillaSymbolicationAPI from '../profile-logic/mozilla-symbolication-api';
@@ -144,6 +146,28 @@ export function finalizeProfileView(
       // Profile load was not successful. Do not continue.
       return;
     }
+
+    // This is NOT the right place for this code. This is just an easy hack to
+    // show off this feature.
+    const jsTracerThreads = [];
+    for (const thread of profile.threads) {
+      const { jsTracer } = thread;
+      if (jsTracer) {
+        const friendlyThreadName = getFriendlyThreadName(
+          profile.threads,
+          thread
+        );
+        const jsTracerThread = convertJsTracerToThread(
+          thread,
+          jsTracer,
+          profile.meta.categories
+        );
+        jsTracerThread.isJsTracer = true;
+        jsTracerThread.name = `JS Tracer of ${friendlyThreadName}`;
+        jsTracerThreads.push(jsTracerThread);
+      }
+    }
+    profile.threads = [...profile.threads, ...jsTracerThreads];
 
     // The selectedThreadIndex is only null for new profiles that haven't
     // been seen before. If it's non-null, then there is profile view information

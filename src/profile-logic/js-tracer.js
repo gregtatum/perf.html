@@ -3,12 +3,22 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 // @flow
 
+import {
+  getEmptyFrameTable,
+  getEmptyStackTable,
+  getEmptySamplesTable,
+  getEmptyRawMarkerTable,
+} from './data-structures';
+import { ensureExists } from '../utils/flow';
 import type {
   JsTracerTable,
   IndexIntoStringTable,
   IndexIntoJsTracerEvents,
   IndexIntoFuncTable,
   Thread,
+  IndexIntoStackTable,
+  SamplesTable,
+  CategoryList,
 } from '../types/profile';
 import type { JsTracerTiming } from '../types/profile-derived';
 import type { Microseconds } from '../types/units';
@@ -35,30 +45,7 @@ export function getJsTracerTiming(
 ): JsTracerTiming[] {
   const jsTracerTiming: JsTracerTiming[] = [];
   const { stringTable, funcTable } = thread;
-
-  // Create a map that keys off of the string `${fileName}:${line}:${column}`. This maps
-  // the JS tracer script locations to functions in the profiling data structure.
-  // This operation can fail, as there is no guarantee that every location in the JS
-  // tracer information was sampled.
-  const keyToFuncIndex: Map<string, IndexIntoFuncTable | null> = new Map();
-  for (let funcIndex = 0; funcIndex < funcTable.length; funcIndex++) {
-    if (!funcTable.isJS[funcIndex]) {
-      continue;
-    }
-    const line = funcTable.lineNumber[funcIndex];
-    const column = funcTable.columnNumber[funcIndex];
-    const fileNameIndex = funcTable.fileName[funcIndex];
-    if (line !== null && column !== null && fileNameIndex !== null) {
-      const fileName = stringTable.getString(fileNameIndex);
-      const key = `${fileName}:${line}:${column}`;
-      if (keyToFuncIndex.has(key)) {
-        // Multiple functions map to this script location.
-        keyToFuncIndex.set(key, null);
-      } else {
-        keyToFuncIndex.set(key, funcIndex);
-      }
-    }
-  }
+  const scriptLocationToFuncIndex = getScriptLocationToFuncIndex(thread);
 
   // Go through all of the events.
   for (
@@ -69,12 +56,12 @@ export function getJsTracerTiming(
     const stringIndex = jsTracer.events[tracerEventIndex];
     let displayName = stringTable.getString(stringIndex);
     let funcIndex: null | IndexIntoFuncTable = null;
-    const column = jsTracer.columns[tracerEventIndex];
-    const line = jsTracer.lines[tracerEventIndex];
+    const column = jsTracer.column[tracerEventIndex];
+    const line = jsTracer.line[tracerEventIndex];
     if (column !== null && line !== null) {
       // Look up to see if this script location has a function in the sampled data.
       const key = `${displayName}:${line}:${column}`;
-      const funcIndexInMap = keyToFuncIndex.get(key);
+      const funcIndexInMap = scriptLocationToFuncIndex.get(key);
 
       if (funcIndexInMap !== undefined) {
         if (funcIndexInMap === null) {
@@ -126,6 +113,38 @@ export function getJsTracerTiming(
   }
 
   return jsTracerTiming;
+}
+
+/**
+ * Create a map that keys off of the string `${fileName}:${line}:${column}`. This maps
+ * the JS tracer script locations to functions in the profiling data structure.
+ * This operation can fail, as there is no guarantee that every location in the JS
+ * tracer information was sampled.
+ */
+function getScriptLocationToFuncIndex(
+  thread: Thread
+): Map<string, IndexIntoFuncTable | null> {
+  const { funcTable, stringTable } = thread;
+  const scriptLocationToFuncIndex = new Map();
+  for (let funcIndex = 0; funcIndex < funcTable.length; funcIndex++) {
+    if (!funcTable.isJS[funcIndex]) {
+      continue;
+    }
+    const line = funcTable.lineNumber[funcIndex];
+    const column = funcTable.columnNumber[funcIndex];
+    const fileNameIndex = funcTable.fileName[funcIndex];
+    if (line !== null && column !== null && fileNameIndex !== null) {
+      const fileName = stringTable.getString(fileNameIndex);
+      const key = `${fileName}:${line}:${column}`;
+      if (scriptLocationToFuncIndex.has(key)) {
+        // Multiple functions map to this script location.
+        scriptLocationToFuncIndex.set(key, null);
+      } else {
+        scriptLocationToFuncIndex.set(key, funcIndex);
+      }
+    }
+  }
+  return scriptLocationToFuncIndex;
 }
 
 /**
@@ -429,4 +448,495 @@ export function getJsTracerLeafTiming(
 
     return 0;
   });
+}
+
+/**
+ * Given JS tracer data:
+ *
+ *   [A------------------------------]
+ *      [B-------][D--------------]
+ *         [C--]      [E-------]
+ *
+ * Build this StackTable:
+ *
+ *   A -> B -> C
+ *     \
+ *        D -> E
+ *
+ * This data would then have the following self time:
+ *
+ *            0         10        20        30
+ *   Time:    |123456789|123456789|123456789|12
+ *   Node:    AAABBBCCCCBBBDDDDEEEEEEEEEEDDDAAA
+ *   Sample:  ⎣A⎦⎣B⎦⎣C-⎦⎣B⎦⎣D-⎦⎣E-------⎦⎣D⎦⎣A⎦
+ *
+ * Insert a sample for each discrete bit of self time.
+ *
+ *   SampleTable = {
+ *     stack:  [A,  B,  C,  B,  D,  E,  D,  A ],
+ *     time:   [0,  3,  6,  10, 14, 17, 27, 30],
+ *     weight: [3,  3,  4,  3,  4,  10, 3,  3 ]
+ *   }
+ */
+export function convertJsTracerToThreadWithoutSamples(
+  fromThread: Thread,
+  jsTracer: JsTracerFixed,
+  categories: CategoryList
+): {
+  thread: Thread,
+  stackMap: Map<IndexIntoJsTracerEvents, IndexIntoStackTable>,
+} {
+  // Create a new thread, with empty information, but preserve some of the existing
+  // thread information.
+  const frameTable = getEmptyFrameTable();
+  const stackTable = getEmptyStackTable();
+  const samples = getEmptySamplesTable();
+  const markers = getEmptyRawMarkerTable();
+  const funcTable = { ...fromThread.funcTable };
+  const { stringTable } = fromThread;
+
+  const sampleWeights = [];
+  samples.weight = sampleWeights;
+  samples.weightType = 'microseconds';
+
+  const thread: Thread = {
+    ...fromThread,
+    markers,
+    funcTable,
+    stackTable,
+    frameTable,
+    samples,
+  };
+
+  // Keep a stack of js tracer events, and end timings, that will be used to find
+  // the stack prefixes. Once a JS tracer event starts past another event end, the
+  // stack will be "popped" by decrementing the unmatchedIndex.
+  let unmatchedIndex = 0;
+  const unmatchedEventIndexes = [null];
+  const unmatchedEventEnds = [0];
+  const unmatchedEventStarts = [0];
+
+  // Build up maps between index values.
+  const funcMap: Map<IndexIntoStringTable, IndexIntoFuncTable> = new Map();
+  const stackMap: Map<IndexIntoJsTracerEvents, IndexIntoStackTable> = new Map();
+
+  // Get some computed values before entering the loop.
+  const blankStringIndex = stringTable.indexForString('');
+  const otherCategory = categories.findIndex(c => c.name === 'Other');
+  if (otherCategory === -1) {
+    throw new Error("Expected to find an 'Other' category.");
+  }
+  const scriptLocationToFuncIndex = getScriptLocationToFuncIndex(thread);
+  // Go through all of the JS tracer events, and build up the func, stack, and
+  // frame tables.
+  for (
+    let tracerEventIndex = 0;
+    tracerEventIndex < jsTracer.length;
+    tracerEventIndex++
+  ) {
+    // Look up various values for this event.
+    const stringIndex = jsTracer.events[tracerEventIndex];
+    const eventName = stringTable.getString(stringIndex);
+    const end = jsTracer.end[tracerEventIndex];
+    const column = jsTracer.column[tracerEventIndex];
+    const line = jsTracer.line[tracerEventIndex];
+    let funcIndex: null | IndexIntoFuncTable = null;
+
+    // First try to look up the func index by script location.
+    if (column !== null && line !== null) {
+      // Look up to see if this script location has a function in the sampled data.
+      const key = `${eventName}:${line}:${column}`;
+      const maybeFuncIndex = scriptLocationToFuncIndex.get(key);
+      if (maybeFuncIndex !== undefined) {
+        funcIndex = maybeFuncIndex;
+      }
+    }
+
+    const generatedFuncIndex = funcMap.get(stringIndex);
+    if (generatedFuncIndex === undefined) {
+      // Create a new function only if the event string is different.
+      funcIndex = funcTable.length++;
+      funcTable.address.push(0);
+      funcTable.name.push(stringIndex);
+      funcTable.isJS.push(false);
+      funcTable.resource.push(-1);
+      funcTable.relevantForJS.push(true);
+      funcTable.fileName.push(null);
+      funcTable.lineNumber.push(null);
+      funcTable.columnNumber.push(null);
+
+      funcMap.set(stringIndex, funcIndex);
+    } else {
+      funcIndex = generatedFuncIndex;
+    }
+
+    // Try to find the prefix stack for this event.
+    let prefixIndex = unmatchedEventIndexes[unmatchedIndex];
+    while (prefixIndex !== null) {
+      const prefixStart = unmatchedEventStarts[unmatchedIndex];
+      const prefixEnd = unmatchedEventEnds[unmatchedIndex];
+      if (end <= prefixEnd) {
+        // This prefix is the correct one.
+        break;
+      }
+      // Keep on searching for the next prefix.
+      prefixIndex = unmatchedEventIndexes[unmatchedIndex];
+      unmatchedIndex--;
+    }
+
+    // Every event gets a unique frame entry.
+    const frameIndex = frameTable.length++;
+    frameTable.address.push(blankStringIndex);
+    frameTable.category.push(otherCategory);
+    frameTable.func.push(funcIndex);
+    // TODO - We could figure out the implementation, by tracking what the callee was.
+    frameTable.implementation.push(null);
+    frameTable.line.push(line);
+    frameTable.column.push(column);
+    frameTable.optimizations.push(null);
+
+    // Each event gets a stack table entry.
+    const stackIndex = stackTable.length++;
+    stackTable.frame.push(frameIndex);
+    stackTable.category.push(otherCategory);
+    stackTable.prefix.push(prefixIndex);
+    stackMap.set(tracerEventIndex, stackIndex);
+
+    // Add this stack to the unmatched stacks of events.
+    unmatchedIndex++;
+    if (unmatchedIndex === 0) {
+      // Reached a new root, reset the index to 1.
+      unmatchedIndex = 1;
+    }
+    unmatchedEventIndexes[unmatchedIndex] = tracerEventIndex;
+    unmatchedEventEnds[unmatchedIndex] = end;
+  }
+  return { thread, stackMap };
+}
+
+type JsTracerFixed = {|
+  events: Array<IndexIntoStringTable>,
+  start: Array<Microseconds>,
+  end: Array<Microseconds>,
+  line: Array<number | null>, // Line number.
+  column: Array<number | null>, // Column number.
+  length: number,
+|};
+
+export function getJsTracerFixed(jsTracer: JsTracerTable): JsTracerFixed {
+  if (jsTracer.length === 0) {
+    return {
+      events: [],
+      start: [],
+      end: [],
+      line: [],
+      column: [],
+      length: 0,
+    };
+  }
+  let prevStart = jsTracer.timestamps[0];
+  let prevEnd = prevStart + jsTracer.durations[0];
+  const start = [prevStart];
+  const end = [prevEnd];
+  const jsTracerFixed = {
+    events: jsTracer.events,
+    start,
+    end,
+    line: jsTracer.line,
+    column: jsTracer.column,
+    length: jsTracer.length,
+  };
+  for (let eventIndex = 1; eventIndex < jsTracer.length; eventIndex++) {
+    const duration = jsTracer.durations[eventIndex];
+    let currStart = jsTracer.timestamps[eventIndex];
+    let currEnd = currStart + (duration === null ? 0 : duration);
+
+    // The following if branches were produced to enumerate through all possible
+    // overlapping cases.
+    if (currStart < prevStart) {
+      if (prevStart < currEnd) {
+        //                       | Adjust to this:
+        // prev:        [-----]  |    [----]
+        // curr:  [---------]    |    [---]
+        currStart = prevStart;
+      } else {
+        //                       | Adjust to this:
+        // prev:        [-----]  |    [----]
+        // curr: [---]           |    [---]
+        const duration = currEnd - currStart;
+        currStart = prevStart;
+        currEnd = Math.min(prevEnd, currStart + duration);
+      }
+    } else {
+      if (currEnd < prevEnd) {
+        // No adjustment needed
+        // prev: [-----]
+        // curr:  [--]
+      } else {
+        if (prevEnd <= currStart) {
+          // There is no need to adjust the timing.
+          // prev: [----]
+          // curr:         [----]
+        } else {
+          if (prevEnd - currStart < currEnd - prevEnd) {
+            // Fix the timing       | Adjust to this:
+            // prev: [---]          | [---][----]
+            // curr:    [-----]     |
+            currStart = prevEnd;
+          } else {
+            // Fix the timing       | Adjust to this:
+            // prev: [----]         | [----]
+            // curr:   [---]        |   [--]
+            currEnd = prevEnd;
+          }
+        }
+      }
+    }
+
+    start.push(currStart);
+    end.push(currEnd);
+
+    prevStart = currStart;
+    prevEnd = currEnd;
+  }
+  return jsTracerFixed;
+}
+
+export function convertJsTracerToThread(
+  fromThread: Thread,
+  jsTracer: JsTracerTable,
+  categories: CategoryList
+): Thread {
+  const jsTracerFixed = getJsTracerFixed(jsTracer);
+  const { thread, stackMap } = convertJsTracerToThreadWithoutSamples(
+    fromThread,
+    jsTracerFixed,
+    categories
+  );
+  thread.samples = getSelfTimeSamplesFromJsTracer(
+    thread,
+    jsTracerFixed,
+    stackMap
+  );
+  return thread;
+}
+
+export function getSelfTimeSamplesFromJsTracer(
+  thread: Thread,
+  jsTracer: JsTracerFixed,
+  stackMap: Map<IndexIntoJsTracerEvents, IndexIntoStackTable>
+): SamplesTable {
+  // Give more leeway for floating number precision issues.
+  const epsilon = 1e-5;
+  const isNearlyEqual = (a, b) => Math.abs(a - b) < epsilon;
+  // Each event type will have it's own timing information, later collapse these into
+  // a single array.
+  const { stringTable } = thread;
+  const samples = getEmptySamplesTable();
+  const sampleWeights = [];
+  samples.weight = sampleWeights;
+  samples.weightType = 'microseconds';
+
+  function addSelfTimeAsASample(
+    eventIndex: IndexIntoJsTracerEvents,
+    start: Microseconds,
+    end: Microseconds
+  ): void {
+    // Use a check against the epsilon, for float precision issues.
+    if (isNearlyEqual(start, end)) {
+      // If this self time is 0, do not report it.
+      return;
+    }
+    const stackIndex = ensureExists(
+      stackMap.get(eventIndex),
+      'The JS tracer event did not exist in the stack map.'
+    );
+    samples.stack.push(stackIndex);
+    samples.time.push(
+      // Convert from microseconds.
+      start / 1000
+    );
+    sampleWeights.push(
+      // The weight of the sample is in microseconds.
+      end - start
+    );
+    samples.length++;
+  }
+  // Determine the self time of the various events.
+
+  // These arrays implement the stack of "prefix" events. This is implemented as 3
+  // arrays instead of an array of objects to reduce the GC pressure in this tight
+  // loop, but conceptually this is just one stack, not 3 stacks. At any given time,
+  // the stack represents the prefixes, aka the parents, of the current event.
+  const prefixesStarts: Microseconds[] = [];
+  const prefixesEnds: Microseconds[] = [];
+  const prefixesEventIndexes: IndexIntoJsTracerEvents[] = [];
+
+  // If there is no prefix, set it to -1. This simplifies some of the real-time
+  // type checks that would be required by Flow for this mutable variable.
+  let prefixesTip = -1;
+
+  // Go through all of the events. Each `if` branch is documented with a small diagram
+  // that includes a little bit of ascii art to help explain the step.
+  //
+  // Legend:
+  // xxxxxxxx - Already reported information, not part of the prefix stack.
+  // [======] - Some event on the stack that has not been reported.
+  // [prefix] - The prefix event to consider, the top of the prefix stack. This
+  //            could also be only part of an event, that has been split into multiple
+  //            pieces.
+  // [current] - The current event to add.
+
+  for (
+    let currentEventIndex = 0;
+    currentEventIndex < jsTracer.length;
+    currentEventIndex++
+  ) {
+    const currentStart = jsTracer.start[currentEventIndex];
+    const currentEnd = jsTracer.end[currentEventIndex];
+
+    if (prefixesTip === -1) {
+      // Nothing has been added yet, add this "current" event to the stack of prefixes.
+      prefixesTip = 0;
+      prefixesStarts[prefixesTip] = currentStart;
+      prefixesEnds[prefixesTip] = currentEnd;
+      prefixesEventIndexes[prefixesTip] = currentEventIndex;
+      continue;
+    }
+
+    while (true) {
+      const prefixStart = prefixesStarts[prefixesTip];
+      const prefixEnd = prefixesEnds[prefixesTip];
+      const prefixEventIndex = prefixesEventIndexes[prefixesTip];
+
+      // The following if/else blocks go through every potential case of timing for the
+      // the data, and finally throw if those cases weren't handled. Each block should
+      // have a diagram explaining the various states the timing can be in. Inside the
+      // if checks, the loop is either continued or broken.
+
+      if (prefixEnd <= currentStart + epsilon) {
+        // In this case, the "current" event has passed the other "prefix" event.
+        //
+        //    xxxxxxxxxxxxxxxx[================]
+        //    xxxxxxxx[======]     [current]
+        //    [prefix]
+        //
+        // This next step would match too:
+        //
+        //    xxxxxxxxxxxxxxxx[================]
+        //    xxxxxxxx[prefix]     [current]
+        //    xxxxxxxx
+
+        // Commit the previous "prefix" event, then continue on with this loop.
+        addSelfTimeAsASample(prefixEventIndex, prefixStart, prefixEnd);
+
+        // Move the tip towards the prefix.
+        prefixesTip--;
+
+        if (prefixesTip === -1) {
+          // This next step would match too:
+          //
+          //   [prefix]     [current]
+
+          // There are no more "prefix" events to commit. Add the "current" event on, and
+          // break out of this loop.
+          prefixesTip = 0;
+          prefixesEventIndexes[prefixesTip] = currentEventIndex;
+          prefixesStarts[prefixesTip] = currentStart;
+          prefixesEnds[prefixesTip] = currentEnd;
+          break;
+        }
+
+        // Move up the prefix stack to report more self times. This is the only branch
+        // that has a `continue`, and not a `break`.
+        continue;
+      } else if (currentEnd < prefixEnd + epsilon) {
+        // The current event occludes the prefix event.
+        //
+        //   [prefix=================]
+        //           [current]
+        //
+        // Split the reported self time of the prefix.
+        //
+        //   [prefix]xxxxxxxxx[prefix]
+        //           [current]
+        //
+        //                    ^leave the second prefix piece on the "prefixes" stack
+        //   ^report the first prefix piece
+        //
+        //   After reporting we are left with:
+        //
+        //   xxxxxxxxxxxxxxxxx[======]
+        //           [current]
+
+        // Report the first part of the prefix's self time.
+        addSelfTimeAsASample(prefixEventIndex, prefixStart, currentStart);
+
+        // Shorten the prefix's start time.
+        prefixesStarts[prefixesTip] = currentEnd;
+
+        // Now add on the "current" event to the stack of prefixes.
+        prefixesTip++;
+        prefixesStarts[prefixesTip] = currentStart;
+        prefixesEnds[prefixesTip] = currentEnd;
+        prefixesEventIndexes[prefixesTip] = currentEventIndex;
+        break;
+      } else if (isNearlyEqual(prefixEnd, currentEnd)) {
+        if (!isNearlyEqual(prefixStart, currentStart)) {
+          // The current event splits the event above it, so split the reported self
+          // time of the prefix.
+          //
+          //   [prefix]xxxxxxxxx
+          //           [current]
+
+          // Report the prefix's self time.
+          addSelfTimeAsASample(prefixEventIndex, prefixStart, currentStart);
+
+          // Update both the index and the start time.
+          prefixesStarts[prefixesTip] = currentStart;
+          prefixesEventIndexes[prefixesTip] = currentEventIndex;
+        } else {
+          // The prefix and current events completely match, so don't report any
+          // self time from the prefix. Replace the prefix's index.
+          prefixesEventIndexes[prefixesTip] = currentEventIndex;
+        }
+        break;
+      } else {
+        // There is some error in the data structure or this functions logic. Throw
+        // an error, and report some nice information to the console.
+        const prefixName = stringTable.getString(
+          jsTracer.events[prefixEventIndex]
+        );
+        const currentName = stringTable.getString(
+          jsTracer.events[currentEventIndex]
+        );
+        console.error('Current JS Tracer information:', {
+          jsTracer,
+          stringTable,
+          prefixEventIndex,
+          currentEventIndex,
+        });
+        console.error(
+          `Prefix (parent) times for "${prefixName}": ${prefixStart}ms to ${prefixEnd}ms`
+        );
+        console.error(
+          `Current (child) times for "${currentName}": ${currentStart}ms to ${currentEnd}ms`
+        );
+        throw new Error(
+          'The JS Tracer information was malformed. Some event lasted longer than its parent event.'
+        );
+      }
+    }
+  }
+
+  // Drain off the remaining "prefixes" from the stack, and report the self time.
+  for (; prefixesTip >= 0; prefixesTip--) {
+    addSelfTimeAsASample(
+      prefixesEventIndexes[prefixesTip],
+      prefixesStarts[prefixesTip],
+      prefixesEnds[prefixesTip]
+    );
+  }
+
+  return samples;
 }
