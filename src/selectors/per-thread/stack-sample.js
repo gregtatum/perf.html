@@ -133,7 +133,7 @@ export function getStackAndSampleSelectorsPerThread(
   );
 
   const getSamplesSelectedStatesInFilteredThread: Selector<
-    SelectedState[]
+    null | SelectedState[]
   > = createSelector(
     threadSelectors.getFilteredThread,
     getCallNodeInfo,
@@ -143,6 +143,9 @@ export function getStackAndSampleSelectorsPerThread(
       { callNodeTable, stackIndexToCallNodeIndex },
       selectedCallNode
     ) => {
+      if (thread.isJsTracer) {
+        return null;
+      }
       const sampleIndexToCallNodeIndex = ProfileData.getSampleIndexToCallNodeIndex(
         thread.samples.stack,
         stackIndexToCallNodeIndex

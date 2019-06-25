@@ -280,16 +280,21 @@ class FlameGraphCanvas extends React.PureComponent<Props> {
         categories={categories}
         durationText={`${(100 * duration).toFixed(2)}%`}
         callTree={callTree}
-        timings={this._getTimingsForCallNodeIndex(
-          callNodeIndex,
-          callNodeInfo,
-          interval,
-          isInverted,
-          thread,
-          unfilteredThread,
-          sampleIndexOffset,
-          categories
-        )}
+        timings={
+          thread.isJsTracer
+            ? // This is currently too slow.
+              undefined
+            : this._getTimingsForCallNodeIndex(
+                callNodeIndex,
+                callNodeInfo,
+                interval,
+                isInverted,
+                thread,
+                unfilteredThread,
+                sampleIndexOffset,
+                categories
+              )
+        }
       />
     );
   };
