@@ -490,14 +490,14 @@ export function convertJsTracerToThreadWithoutSamples(
   // thread information.
   const frameTable = getEmptyFrameTable();
   const stackTable = getEmptyStackTable();
-  const samples = getEmptySamplesTable();
+  const samples: SamplesTable = {
+    ...getEmptySamplesTable(),
+    duration: [],
+    weightType: 'microseconds',
+  };
   const markers = getEmptyRawMarkerTable();
   const funcTable = { ...fromThread.funcTable };
   const { stringTable } = fromThread;
-
-  const sampleWeights = [];
-  samples.weight = sampleWeights;
-  samples.weightType = 'microseconds';
 
   const thread: Thread = {
     ...fromThread,
@@ -514,7 +514,6 @@ export function convertJsTracerToThreadWithoutSamples(
   let unmatchedIndex = 0;
   const unmatchedEventIndexes = [null];
   const unmatchedEventEnds = [0];
-  const unmatchedEventStarts = [0];
 
   // Build up maps between index values.
   const funcMap: Map<IndexIntoStringTable, IndexIntoFuncTable> = new Map();
@@ -573,7 +572,6 @@ export function convertJsTracerToThreadWithoutSamples(
     // Try to find the prefix stack for this event.
     let prefixIndex = unmatchedEventIndexes[unmatchedIndex];
     while (prefixIndex !== null) {
-      const prefixStart = unmatchedEventStarts[unmatchedIndex];
       const prefixEnd = unmatchedEventEnds[unmatchedIndex];
       if (end <= prefixEnd) {
         // This prefix is the correct one.
@@ -734,7 +732,7 @@ export function getSelfTimeSamplesFromJsTracer(
   const { stringTable } = thread;
   const samples = getEmptySamplesTable();
   const sampleWeights = [];
-  samples.weight = sampleWeights;
+  samples.duration = sampleWeights;
   samples.weightType = 'microseconds';
 
   function addSelfTimeAsASample(

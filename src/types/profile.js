@@ -99,6 +99,7 @@ export type SamplesTable = {|
   stack: Array<IndexIntoStackTable | null>,
   time: Milliseconds[],
   duration?: Milliseconds[],
+  weightType?: 'microseconds' | 'compare' | 'milliseconds',
   length: number,
 |};
 
@@ -376,6 +377,7 @@ export type Thread = {|
   pausedRanges: PausedRange[],
   name: string,
   processName?: string,
+  isJsTracer?: boolean,
   pid: Pid,
   tid: number | void,
   samples: SamplesTable,
