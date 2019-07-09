@@ -27,7 +27,7 @@ import type { StartEndRange } from '../../types/units';
 import type { Selector } from '../../types/store';
 import type { SelectedState } from '../../profile-logic/profile-data';
 import type { $ReturnType } from '../../types/utils';
-import type { JsAllocationPayload, MarkerPayload } from '../../types/markers';
+import type { NativeAllocationPayload, MarkerPayload } from '../../types/markers';
 import type { ThreadSelectorsPerThread } from './thread';
 import type { MarkerSelectorsPerThread } from './markers';
 import type { CallTreeSummaryStrategy } from '../../types/actions';
@@ -197,7 +197,7 @@ export function getStackAndSampleSelectorsPerThread(
         const marker = getMarker(
           jsAllocationMarkerIndexes[indexIntoJsAllocationMarkers]
         );
-        return ((marker.data: any): JsAllocationPayload).size;
+        return ((marker.data: any): NativeAllocationPayload).size;
       };
     }
   );

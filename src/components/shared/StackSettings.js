@@ -129,7 +129,7 @@ class StackSettings extends PureComponent<Props> {
             <li className="stackSettingsListItem stackSettingsFilter">
               {this._renderCallTreeStrategyRadioButton('Timing', 'timing')}
               {this._renderCallTreeStrategyRadioButton(
-                'JavaScript Allocations',
+                'Allocations',
                 'js-allocations'
               )}
             </li>

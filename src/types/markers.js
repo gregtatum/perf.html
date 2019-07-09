@@ -488,16 +488,11 @@ export type DummyForTestsMarkerPayload = {|
   endTime: Milliseconds,
 |};
 
-export type JsAllocationPayload = {
-  type: 'JS allocation',
+export type NativeAllocationPayload = {
+  type: 'Native allocation',
   startTime: Milliseconds,
   endTime: Milliseconds,
-  className: 'Function',
-  typeName: string, // Currently only 'JSObject'
-  coarseType: string, // Currently only 'Object',
   size: number, // in bytes.
-  inNursery: true,
-  cause: CauseBacktrace,
 };
 
 /**

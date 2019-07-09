@@ -868,7 +868,7 @@ export function isNetworkMarker(marker: Marker): boolean {
 }
 
 export function isJsAllocationMarker(marker: Marker): boolean {
-  return !!(marker.data && marker.data.type === 'JS allocation');
+  return !!(marker.data && marker.data.type === 'Native allocation');
 }
 
 export function isNavigationMarker({ name, data }: Marker) {

@@ -426,9 +426,11 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
         // The common case here is that there are no JS allocation markers. In this case
         // this first check will bail out early, as there is no string in the string
         // table related to JS allocations.
-        stringTable.hasString('JS allocation') &&
+        stringTable.hasString('Native allocation') &&
         // Now do the full real check for allocations.
-        rawMarkers.data.some(datum => datum && datum.type === 'JS allocation')
+        rawMarkers.data.some(
+          datum => datum && datum.type === 'Native allocation'
+        )
       );
     }
   );
