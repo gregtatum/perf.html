@@ -82,6 +82,8 @@ export type RequestedLib = {|
   +breakpadId: string,
 |};
 export type ImplementationFilter = 'combined' | 'js' | 'cpp';
+// Change the strategy for computing the summarizing information for the call tree.
+export type CallTreeSummaryStrategy = 'timing' | 'js-allocations';
 
 /**
  * This type determines what kind of information gets sanitized from published profiles.
@@ -305,6 +307,10 @@ type UrlStateAction =
       +transformedThread: Thread,
       +previousImplementation: ImplementationFilter,
       +implementation: ImplementationFilter,
+    |}
+  | {|
+      type: 'CHANGE_CALL_TREE_SUMMARY_STRATEGY',
+      strategy: CallTreeSummaryStrategy,
     |}
   | {|
       +type: 'CHANGE_INVERT_CALLSTACK',
