@@ -27,6 +27,7 @@ import type { StartEndRange } from '../../types/units';
 import type { Selector } from '../../types/store';
 import type { $ReturnType } from '../../types/utils';
 import type { ThreadSelectorsPerThread } from './thread';
+import type { MarkerSelectorsPerThread } from './markers';
 
 /**
  * Infer the return type from the getStackAndSampleSelectorsPerThread function. This
@@ -40,15 +41,16 @@ export type StackAndSampleSelectorsPerThread = $ReturnType<
 /**
  * Create the selectors for a thread that have to do with either stacks or samples.
  */
-export function getStackAndSampleSelectorsPerThread(
-  threadSelectors: ThreadSelectorsPerThread
-): * {
+export function getStackAndSampleSelectorsPerThread(selectors: {|
+  ...ThreadSelectorsPerThread,
+  ...MarkerSelectorsPerThread,
+|}): * {
   /**
    * The buffers of the samples can be cleared out. This function lets us know the
    * absolute range of samples that we have collected.
    */
   const unfilteredSamplesRange: Selector<StartEndRange | null> = createSelector(
-    threadSelectors.getThread,
+    selectors.getThread,
     ProfileSelectors.getProfileInterval,
     (thread, interval) => {
       const { time } = thread.samples;
@@ -60,7 +62,7 @@ export function getStackAndSampleSelectorsPerThread(
   );
 
   const getCallNodeInfo: Selector<CallNodeInfo> = createSelector(
-    threadSelectors.getFilteredThread,
+    selectors.getFilteredThread,
     ProfileSelectors.getDefaultCategory,
     (
       { stackTable, frameTable, funcTable }: Thread,
@@ -76,13 +78,13 @@ export function getStackAndSampleSelectorsPerThread(
   );
 
   const getCallNodeMaxDepth: Selector<number> = createSelector(
-    threadSelectors.getFilteredThread,
+    selectors.getFilteredThread,
     getCallNodeInfo,
     ProfileData.computeCallNodeMaxDepth
   );
 
   const getSelectedCallNodePath: Selector<CallNodePath> = createSelector(
-    threadSelectors.getViewOptions,
+    selectors.getViewOptions,
     (threadViewOptions): CallNodePath => threadViewOptions.selectedCallNodePath
   );
 
@@ -98,7 +100,7 @@ export function getStackAndSampleSelectorsPerThread(
   );
 
   const getRightClickedCallNodePath: Selector<CallNodePath | null> = state =>
-    threadSelectors.getViewOptions(state).rightClickedCallNodePath;
+    selectors.getViewOptions(state).rightClickedCallNodePath;
 
   const getRightClickedCallNodeIndex: Selector<IndexIntoCallNodeTable | null> = createSelector(
     getCallNodeInfo,
@@ -113,7 +115,7 @@ export function getStackAndSampleSelectorsPerThread(
   );
 
   const getExpandedCallNodePaths: Selector<PathSet> = createSelector(
-    threadSelectors.getViewOptions,
+    selectors.getViewOptions,
     threadViewOptions => threadViewOptions.expandedCallNodePaths
   );
 
@@ -132,7 +134,7 @@ export function getStackAndSampleSelectorsPerThread(
   const getSamplesSelectedStatesInFilteredThread: Selector<
     SelectedState[]
   > = createSelector(
-    threadSelectors.getFilteredThread,
+    selectors.getFilteredThread,
     getCallNodeInfo,
     getSelectedCallNodeIndex,
     (
@@ -155,7 +157,7 @@ export function getStackAndSampleSelectorsPerThread(
   const getTreeOrderComparatorInFilteredThread: Selector<
     (IndexIntoSamplesTable, IndexIntoSamplesTable) => number
   > = createSelector(
-    threadSelectors.getFilteredThread,
+    selectors.getFilteredThread,
     getCallNodeInfo,
     (thread, { callNodeTable, stackIndexToCallNodeIndex }) => {
       const sampleCallNodes = ProfileData.getSampleCallNodes(
@@ -169,7 +171,7 @@ export function getStackAndSampleSelectorsPerThread(
   const _getSampleCallNodes: Selector<
     Array<IndexIntoCallNodeTable | null>
   > = createSelector(
-    threadSelectors.getPreviewFilteredThread,
+    selectors.getPreviewFilteredThread,
     getCallNodeInfo,
     ({ samples }, { stackIndexToCallNodeIndex }) =>
       ProfileData.getSampleCallNodes(samples, stackIndexToCallNodeIndex)
@@ -181,7 +183,7 @@ export function getStackAndSampleSelectorsPerThread(
   );
 
   const getCallTreeCountsAndTimings: Selector<CallTree.CallTreeCountsAndTimings> = createSelector(
-    threadSelectors.getPreviewFilteredThread,
+    selectors.getPreviewFilteredThread,
     _getSampleCallNodes,
     getCallNodeInfo,
     getCallTreeTimeCalculator,
@@ -190,7 +192,7 @@ export function getStackAndSampleSelectorsPerThread(
   );
 
   const getCallTree: Selector<CallTree.CallTree> = createSelector(
-    threadSelectors.getPreviewFilteredThread,
+    selectors.getPreviewFilteredThread,
     ProfileSelectors.getProfileInterval,
     getCallNodeInfo,
     ProfileSelectors.getCategories,
@@ -200,7 +202,7 @@ export function getStackAndSampleSelectorsPerThread(
   );
 
   const getStackTimingByDepth: Selector<StackTiming.StackTimingByDepth> = createSelector(
-    threadSelectors.getFilteredThread,
+    selectors.getFilteredThread,
     getCallNodeInfo,
     getCallNodeMaxDepth,
     ProfileSelectors.getProfileInterval,
@@ -208,13 +210,13 @@ export function getStackAndSampleSelectorsPerThread(
   );
 
   const getCallNodeMaxDepthForFlameGraph: Selector<number> = createSelector(
-    threadSelectors.getPreviewFilteredThread,
+    selectors.getPreviewFilteredThread,
     getCallNodeInfo,
     ProfileData.computeCallNodeMaxDepth
   );
 
   const getFlameGraphTiming: Selector<FlameGraph.FlameGraphTiming> = createSelector(
-    threadSelectors.getPreviewFilteredThread,
+    selectors.getPreviewFilteredThread,
     getCallNodeInfo,
     getCallTreeCountsAndTimings,
     FlameGraph.getFlameGraphTiming

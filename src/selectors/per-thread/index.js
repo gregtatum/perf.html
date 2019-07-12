@@ -55,22 +55,32 @@ export const getThreadSelectors = (
   threadIndex: ThreadIndex
 ): ThreadSelectors => {
   if (!(threadIndex in _threadSelectorsCache)) {
-    // We define the thread selectors in 3 steps to ensure clarity in the
+    // We define the thread selectors in multiple steps to ensure clarity in the
     // separate files.
-    // 1. The basic selectors.
+
+    // 1. The basic thread selectors.
     let selectors = getThreadSelectorsPerThread(threadIndex);
-    // 2. Stack, sample and marker selectors that need the previous basic
-    // selectors for their own definition.
+
+    // 2. Markers selectors need the thread selectors.
+    selectors = {
+      ...selectors,
+      ...getMarkerSelectorsPerThread(selectors),
+    };
+
+    // 3. Stack and samples selectors can use marker selectors.
     selectors = {
       ...selectors,
       ...getStackAndSampleSelectorsPerThread(selectors),
-      ...getMarkerSelectorsPerThread(selectors),
     };
-    // 3. Other selectors that need selectors from different files to be defined.
-    _threadSelectorsCache[threadIndex] = {
+
+    // 3. Finally, collect selectors that may need multiple previous selectors.
+    selectors = {
       ...selectors,
       ...getComposedSelectorsPerThread(selectors),
     };
+
+    // Cache the results.
+    _threadSelectorsCache[threadIndex] = selectors;
   }
   return _threadSelectorsCache[threadIndex];
 };
