@@ -23,6 +23,9 @@ import {
 } from '../../profile-logic/profile-data';
 import { resourceTypes } from '../../profile-logic/data-structures';
 import { formatTree, formatTreeIncludeCategories } from '../fixtures/utils';
+import { storeWithProfile } from '../fixtures/stores';
+import { changeSelectedThread } from '../../actions/profile-view';
+import { selectedThreadSelectors } from '../../selectors/per-thread';
 
 import type { Profile } from '../../types/profile';
 
@@ -30,30 +33,9 @@ function callTreeFromProfile(
   profile: Profile,
   threadIndex: number = 0
 ): CallTree {
-  const thread = profile.threads[threadIndex];
-  const { interval, categories } = profile.meta;
-  const defaultCategory = categories.findIndex(c => c.name === 'Other');
-  const callNodeInfo = getCallNodeInfo(
-    thread.stackTable,
-    thread.frameTable,
-    thread.funcTable,
-    defaultCategory
-  );
-  const callTreeCountsAndTimings = computeCallTreeCountsAndTimings(
-    thread,
-    getSampleCallNodes(thread.samples, callNodeInfo.stackIndexToCallNodeIndex),
-    callNodeInfo,
-    getTimeCalculatorForDuration(interval),
-    false
-  );
-  return getCallTree(
-    thread,
-    interval,
-    callNodeInfo,
-    categories,
-    'combined',
-    callTreeCountsAndTimings
-  );
+  const { getState, dispatch } = storeWithProfile(profile);
+  dispatch(changeSelectedThread(threadIndex));
+  return selectedThreadSelectors.getCallTree(getState());
 }
 
 describe('unfiltered call tree', function() {
