@@ -286,7 +286,7 @@ export class CallTree {
 function _getInvertedStackSelfTimes(
   thread: Thread,
   callNodeTable: CallNodeTable,
-  callNodeEntries:
+  entryIndexToCallNodeIndex:
     | Array<IndexIntoCallNodeTable | null>
     | Array<IndexIntoCallNodeTable>,
   callTreeTimeCalculator: CallTreeTimeCalculator
@@ -326,17 +326,17 @@ function _getInvertedStackSelfTimes(
   const callNodeSelfTime = new Float32Array(callNodeTable.length);
   const callNodeLeafTime = new Float32Array(callNodeTable.length);
   for (
-    let sampleIndex = 0;
-    sampleIndex < callNodeEntries.length;
-    sampleIndex++
+    let entryIndex = 0;
+    entryIndex < entryIndexToCallNodeIndex.length;
+    entryIndex++
   ) {
-    const callNodeIndex = callNodeEntries[sampleIndex];
+    const callNodeIndex = entryIndexToCallNodeIndex[entryIndex];
     if (callNodeIndex !== null) {
       const rootIndex = callNodeToRoot[callNodeIndex];
       const duration = callTreeTimeCalculator(
         thread,
         callNodeIndex,
-        sampleIndex
+        entryIndex
       );
       callNodeSelfTime[rootIndex] += duration;
       callNodeLeafTime[callNodeIndex] += duration;
@@ -352,7 +352,7 @@ function _getInvertedStackSelfTimes(
 function _getStackSelfTimes(
   thread: Thread,
   callNodeTable: CallNodeTable,
-  callNodeEntries:
+  entryIndexToCallNodeIndex:
     | Array<IndexIntoCallNodeTable | null>
     | Array<IndexIntoCallNodeTable>,
   callTreeTimeCalculator: CallTreeTimeCalculator
@@ -363,16 +363,16 @@ function _getStackSelfTimes(
   const callNodeSelfTime = new Float32Array(callNodeTable.length);
 
   for (
-    let sampleIndex = 0;
-    sampleIndex < callNodeEntries.length;
-    sampleIndex++
+    let entryIndex = 0;
+    entryIndex < entryIndexToCallNodeIndex.length;
+    entryIndex++
   ) {
-    const callNodeIndex = callNodeEntries[sampleIndex];
+    const callNodeIndex = entryIndexToCallNodeIndex[entryIndex];
     if (callNodeIndex !== null) {
       callNodeSelfTime[callNodeIndex] += callTreeTimeCalculator(
         thread,
         callNodeIndex,
-        sampleIndex
+        entryIndex
       );
     }
   }
@@ -386,7 +386,7 @@ function _getStackSelfTimes(
  */
 export function computeCallTreeCountsAndTimings(
   thread: Thread,
-  callNodeEntries:
+  entryIndexToCallNodeIndex:
     | Array<IndexIntoCallNodeTable | null>
     | Array<IndexIntoCallNodeTable>,
   { callNodeTable }: CallNodeInfo,
@@ -398,13 +398,13 @@ export function computeCallTreeCountsAndTimings(
     ? _getInvertedStackSelfTimes(
         thread,
         callNodeTable,
-        callNodeEntries,
+        entryIndexToCallNodeIndex,
         callTreeTimeCalculator
       )
     : _getStackSelfTimes(
         thread,
         callNodeTable,
-        callNodeEntries,
+        entryIndexToCallNodeIndex,
         callTreeTimeCalculator
       );
 
