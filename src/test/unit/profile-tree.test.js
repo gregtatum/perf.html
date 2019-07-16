@@ -5,6 +5,7 @@
 import {
   getProfileFromTextSamples,
   getMergedProfileFromTextSamples,
+  getThreadWithMarkers,
 } from '../fixtures/profiles/processed-profile';
 import {
   getCallTree,
@@ -24,10 +25,15 @@ import {
 import { resourceTypes } from '../../profile-logic/data-structures';
 import { formatTree, formatTreeIncludeCategories } from '../fixtures/utils';
 import { storeWithProfile } from '../fixtures/stores';
-import { changeSelectedThread } from '../../actions/profile-view';
+import {
+  changeSelectedThread,
+  changeCallTreeSummaryStrategy,
+  changeCallTreeSearchString,
+} from '../../actions/profile-view';
 import { selectedThreadSelectors } from '../../selectors/per-thread';
 
 import type { Profile } from '../../types/profile';
+import type { JsAllocationPayload } from '../../types/markers';
 
 function callTreeFromProfile(
   profile: Profile,
@@ -607,6 +613,95 @@ describe('diffing trees', function() {
       false
     );
     expect(callTreeCountsAndTimings.rootTotalTime).toBe(4);
+  });
+});
+
+describe('JS allocation trees', function() {
+  function setupAllocationMarkerHelper() {
+    let time = 0;
+    return ({ byteSize, stack }) => {
+      const thisTime = time++;
+      const payload: JsAllocationPayload = {
+        type: 'JS allocation',
+        startTime: thisTime,
+        endTime: thisTime,
+        className: 'Function',
+        typeName: 'JSObject',
+        coarseType: 'Object',
+        size: byteSize,
+        inNursery: true,
+        cause: {
+          time: thisTime,
+          stack,
+        },
+      };
+      return ['JS allocation', thisTime, payload];
+    };
+  }
+
+  function setup() {
+    const getAllocationMarker = setupAllocationMarkerHelper();
+    const { profile } = getProfileFromTextSamples(`
+      A  A  A
+      B  B  B
+      C  F  F
+      D  G  G
+      E     H
+            I
+    `);
+    // The stack table is built sequentially, so we can deduce the stack indexes
+    // from the fixture data.
+    const letters = 'ABCDEFGHI'.split('');
+    const E = letters.indexOf('E');
+    const G = letters.indexOf('G');
+    const I = letters.indexOf('I');
+
+    const allocations = [
+      getAllocationMarker({ byteSize: 3, stack: E }),
+      getAllocationMarker({ byteSize: 5, stack: G }),
+      getAllocationMarker({ byteSize: 7, stack: I }),
+    ];
+    const { markers } = getThreadWithMarkers(
+      allocations,
+      profile.meta.interval
+    );
+    profile.threads[0].markers = markers;
+
+    const store = storeWithProfile(profile);
+    store.dispatch(changeCallTreeSummaryStrategy('js-allocations'));
+    return store;
+  }
+
+  it('can create a call tree from allocation markers', function() {
+    const { getState } = setup();
+    const callTree = selectedThreadSelectors.getCallTree(getState());
+
+    expect(formatTree(callTree)).toEqual([
+      '- A (total: 15, self: —)',
+      '  - B (total: 15, self: —)',
+      '    - F (total: 12, self: —)',
+      '      - G (total: 12, self: 5)',
+      '        - H (total: 7, self: —)',
+      '          - I (total: 7, self: 7)',
+      '    - C (total: 3, self: —)',
+      '      - D (total: 3, self: —)',
+      '        - E (total: 3, self: 3)',
+    ]);
+  });
+
+  it('can search the allocation markers', function() {
+    const { getState, dispatch } = setup();
+    dispatch(changeCallTreeSearchString('H'));
+    const callTree = selectedThreadSelectors.getCallTree(getState());
+
+    expect(formatTree(callTree)).toEqual([
+      '- A (total: 7, self: —)',
+      '  - B (total: 7, self: —)',
+      '    - F (total: 7, self: —)',
+      '      - G (total: 7, self: —)',
+      '        - H (total: 7, self: —)',
+      '          - I (total: 7, self: 7)',
+    ]);
   });
 });
 
