@@ -9,6 +9,7 @@ import type {
   IndexIntoFuncTable,
   ThreadIndex,
   Pid,
+  IndexIntoStackTable,
   IndexIntoJsTracerEvents,
   CounterIndex,
 } from './profile';
@@ -201,3 +202,12 @@ export type SelectedState =
   // This call node is not selected, and the stacks are ordered after the selected
   // call node as sorted by the getTreeOrderComparator.
   | 'UNSELECTED_ORDERED_AFTER_SELECTED';
+
+/**
+ * JS allocations come from marker payloads, but we need to apply the transform
+ * pipeline to them. This table holds the derived information for that transformation.
+ */
+export type JsAllocationTable = {|
+  markers: MarkerIndex[],
+  stacks: Array<null | IndexIntoStackTable>,
+|};

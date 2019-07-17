@@ -9,14 +9,17 @@ import { stripIndent } from 'common-tags';
 import * as UrlState from '../url-state';
 import * as MarkerData from '../../profile-logic/marker-data';
 import * as MarkerTiming from '../../profile-logic/marker-timing';
+import * as ProfileData from '../../profile-logic/profile-data';
 import * as ProfileSelectors from '../profile';
 
-import type { RawMarkerTable } from '../../types/profile';
+import type { RawMarkerTable, IndexIntoStackTable } from '../../types/profile';
 import type {
   MarkerIndex,
   Marker,
   MarkerTimingRows,
+  JsAllocationTable,
 } from '../../types/profile-derived';
+import type { JsAllocationPayload } from '../../types/markers';
 import type { Selector } from '../../types/store';
 import type { $ReturnType } from '../../types/utils';
 import type { Milliseconds } from '../../types/units';
@@ -433,13 +436,96 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
     }
   );
 
+
+  /**
+   * Allocation markers need to use the same transform pipeline as the thread. Make
+   * sure this gets updated if the stack transform pipeline changes.
+   *
+   * 1. Unfiltered - Unused
+   * 2. Range - This is
+   * 3. Transform - Apply the transform stack that modifies the stacks and samples.
+   * 4. Implementation - Modify stacks and samples to only show a single implementation.
+   * 5. Search - Exclude samples that don't include some text in the stack.
+   * 6. Preview - Only include samples that are within a user's preview range selection.
+   */
+
+   const getRangeFilteredJsAllocationTable: Selector<JsAllocationTable> = createSelector(
+     getMarkerGetter,
+     getCommittedRangeFilteredMarkerIndexes,
+     (getMarker, markerIndexes) => {
+       const markers: MarkerIndex[] = [];
+       const stacks: Array<IndexIntoStackTable | null> = [];
+
+       for (const markerIndex of markerIndexes) {
+         const { data } = getMarker(markerIndex);
+         if (data && data.type === 'JS allocation') {
+           markers.push(markerIndex);
+           if (data.cause) {
+             stacks.push(data.cause.stack);
+           } else {
+             stacks.push(null);
+           }
+         }
+       }
+       return { markers, stacks };
+     }
+   );
+
+
+  const getTransformStack: Selector<TransformStack> = state =>
+     UrlState.getTransformStack(state, threadIndex);
+
+   // The thread applies the transforms in a memoized function, so do so as well here.
+   const _applyTransformMemoized = memoize(Transforms.applyTransform, {
+     cache: new MixedTupleMap(),
+   });
+
+
+  getRangeTransformFilteredJsAllocationTable: Selector<JsAllocationTable> = createSelector(
+    getRangeFilteredJsAllocationTable,
+    getTransformStack,
+    (jsAllocations, transforms) => transforms.reduce(threa
+  );
+
   /**
    * This selector filters network markers from the range filtered markers.
    */
   const getJsAllocationMarkerIndexes: Selector<MarkerIndex[]> = createSelector(
     getMarkerGetter,
+    threadSelectors.getFilteredThread,
+    UrlState.getCurrentSearchString,
     getCommittedRangeFilteredMarkerIndexes,
-    filterMarkerIndexesCreator(MarkerData.isJsAllocationMarker)
+    (getMarker, filteredThread, searchString, markerIndexes) => {
+      const doesStackMatch = ProfileData.getStackMatcherFilter(
+        filteredThread,
+        searchString
+      );
+      let causeFailures = 0;
+
+      const filteredMarkers = markerIndexes.filter(index => {
+        const { data } = getMarker(index);
+        if (!data || data.type !== 'JS allocation') {
+          return false;
+        }
+        const { cause }: JsAllocationPayload = (data: any);
+        if (!cause) {
+          causeFailures++;
+          return false;
+        }
+        return doesStackMatch(cause.stack);
+      });
+
+      if (causeFailures > 0) {
+        // For some reason we lack causes due to the "stack" property having 0 samples.
+        // See Bug 1566576.
+        const totalMarkers = causeFailures + filteredMarkers.length;
+        console.warn(
+          `!!! No stacks were collected for ${causeFailures} markers out of ${totalMarkers}`
+        );
+      }
+
+      return filteredMarkers;
+    }
   );
 
   return {

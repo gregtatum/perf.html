@@ -554,7 +554,7 @@ export function mergeCallNode(
   thread: Thread,
   callNodePath: CallNodePath,
   implementation: ImplementationFilter
-): Thread {
+): TransformResult {
   return timeCode('mergeCallNode', () => {
     const { stackTable, frameTable, samples } = thread;
     // Depth here is 0 indexed.
@@ -645,11 +645,12 @@ export function mergeCallNode(
       }),
     };
 
-    return {
+    const newThread = {
       ...thread,
       stackTable: newStackTable,
       samples: newSamples,
     };
+    return { thread: newThread, oldStackToNewStack };
   });
 }
 
@@ -660,7 +661,7 @@ export function mergeCallNode(
 export function mergeFunction(
   thread: Thread,
   funcIndexToMerge: IndexIntoFuncTable
-): Thread {
+): TransformResult {
   const { stackTable, frameTable, samples } = thread;
   const oldStackToNewStack: Map<
     IndexIntoStackTable | null,
@@ -706,11 +707,12 @@ export function mergeFunction(
       return newStack;
     }),
   };
-  return {
+  const newThread = {
     ...thread,
     stackTable: newStackTable,
     samples: newSamples,
   };
+  return { thread: newThread, oldStackToNewStack };
 }
 
 /**
@@ -719,7 +721,7 @@ export function mergeFunction(
 export function dropFunction(
   thread: Thread,
   funcIndexToDrop: IndexIntoFuncTable
-) {
+): TransformResult {
   const { stackTable, frameTable, samples } = thread;
 
   // Go through each stack, and label it as containing the function or not.
@@ -744,10 +746,11 @@ export function dropFunction(
   );
 
   // Return the thread with the replaced samples.
-  return {
+  const newThread = {
     ...thread,
     samples: { ...samples, stack },
   };
+  return { thread: newThread, oldStackToNewStack: null };
 }
 
 export function collapseResource(
@@ -755,7 +758,7 @@ export function collapseResource(
   resourceIndexToCollapse: IndexIntoResourceTable,
   implementation: ImplementationFilter,
   defaultCategory: IndexIntoCategoryList
-): Thread {
+): TransformResult {
   const { stackTable, funcTable, frameTable, resourceTable, samples } = thread;
   const resourceNameIndex = resourceTable.name[resourceIndexToCollapse];
   const newFrameTable = shallowCloneFrameTable(frameTable);
@@ -903,20 +906,21 @@ export function collapseResource(
     }),
   };
 
-  return {
+  const newThread = {
     ...thread,
     stackTable: newStackTable,
     frameTable: newFrameTable,
     funcTable: newFuncTable,
     samples: newSamples,
   };
+  return { thread: newThread, oldStackToNewStack };
 }
 
 export function collapseDirectRecursion(
   thread: Thread,
   funcToCollapse: IndexIntoFuncTable,
   implementation: ImplementationFilter
-): Thread {
+): TransformResult {
   const { stackTable, frameTable, samples } = thread;
   const oldStackToNewStack: Map<
     IndexIntoStackTable | null,
@@ -987,11 +991,12 @@ export function collapseDirectRecursion(
       return newStack;
     }),
   };
-  return {
+  const newThread = {
     ...thread,
     stackTable: newStackTable,
     samples: newSamples,
   };
+  return { thread: newThread, oldStackToNewStack };
 }
 const FUNC_MATCHES = {
   combined: (_thread: Thread, _funcIndex: IndexIntoFuncTable) => true,
@@ -1023,7 +1028,7 @@ export function collapseFunctionSubtree(
   thread: Thread,
   funcToCollapse: IndexIntoFuncTable,
   defaultCategory: IndexIntoCategoryList
-): Thread {
+): TransformResult {
   const { stackTable, frameTable, samples } = thread;
   const oldStackToNewStack: Map<
     IndexIntoStackTable | null,
@@ -1106,11 +1111,12 @@ export function collapseFunctionSubtree(
       return newStack;
     }),
   };
-  return {
+  const newThread = {
     ...thread,
     stackTable: newStackTable,
     samples: newSamples,
   };
+  return { thread: newThread, oldStackToNewStack };
 }
 
 /**
@@ -1122,7 +1128,7 @@ export function focusSubtree(
   thread: Thread,
   callNodePath: CallNodePath,
   implementation: ImplementationFilter
-): Thread {
+): TransformResult {
   return timeCode('focusSubtree', () => {
     const { stackTable, frameTable, samples } = thread;
     const prefixDepth = callNodePath.length;
@@ -1182,11 +1188,12 @@ export function focusSubtree(
         return newStack;
       }),
     };
-    return {
+    const newThread = {
       ...thread,
       stackTable: newStackTable,
       samples: newSamples,
     };
+    return { thread: newThread, oldStackToNewStack };
   });
 }
 
@@ -1199,7 +1206,7 @@ export function focusInvertedSubtree(
   thread: Thread,
   postfixCallNodePath: CallNodePath,
   implementation: ImplementationFilter
-): Thread {
+): TransformResult {
   return timeCode('focusInvertedSubtree', () => {
     const postfixDepth = postfixCallNodePath.length;
     const { stackTable, frameTable, samples } = thread;
@@ -1236,17 +1243,18 @@ export function focusInvertedSubtree(
         return newStackIndex;
       }),
     };
-    return {
+    const newThread = {
       ...thread,
       samples: newSamples,
     };
+    return { thread: newThread, oldStackToNewStack };
   });
 }
 export function focusFunction(
   thread: Thread,
   funcIndexToFocus: IndexIntoFuncTable
-): Thread {
-  return timeCode('focusSubtree', () => {
+): TransformResult {
+  return timeCode('focusFunction', () => {
     const { stackTable, frameTable, samples } = thread;
     const oldStackToNewStack: Map<
       IndexIntoStackTable | null,
@@ -1294,11 +1302,12 @@ export function focusFunction(
         return newStack;
       }),
     });
-    return {
+    const newThread = {
       ...thread,
       stackTable: newStackTable,
       samples: newSamples,
     };
+    return { thread: newThread, oldStackToNewStack };
   });
 }
 
@@ -1426,11 +1435,19 @@ export function funcHasRecursiveCall(
   return false;
 }
 
+type TransformResult = {|
+  +thread: Thread,
+  +oldStackToNewStack: null | Map<
+    IndexIntoStackTable | null,
+    IndexIntoStackTable | null
+  >,
+|};
+
 export function applyTransform(
   thread: Thread,
   transform: Transform,
   defaultCategory: IndexIntoCategoryList
-): Thread {
+): TransformResult {
   switch (transform.type) {
     case 'focus-subtree':
       return transform.inverted

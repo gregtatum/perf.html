@@ -843,9 +843,23 @@ export function filterThreadToSearchString(
   if (!searchString) {
     return thread;
   }
+  const { samples } = thread;
+  const stackMatchesFilter = getStackMatcherFilter(thread, searchString);
+
+  return {
+    ...thread,
+    samples: Object.assign({}, samples, {
+      stack: samples.stack.map(s => (stackMatchesFilter(s) ? s : null)),
+    }),
+  };
+}
+
+export function getStackMatcherFilter(
+  thread: Thread,
+  searchString: string
+): (IndexIntoStackTable | null) => boolean {
   const lowercaseSearchString = searchString.toLowerCase();
   const {
-    samples,
     funcTable,
     frameTable,
     stackTable,
@@ -891,7 +905,7 @@ export function filterThreadToSearchString(
   }
 
   const stackMatchesFilterCache = new Map();
-  function stackMatchesFilter(stackIndex) {
+  return function stackMatchesFilter(stackIndex) {
     if (stackIndex === null) {
       return false;
     }
@@ -908,13 +922,6 @@ export function filterThreadToSearchString(
       stackMatchesFilterCache.set(stackIndex, result);
     }
     return result;
-  }
-
-  return {
-    ...thread,
-    samples: Object.assign({}, samples, {
-      stack: samples.stack.map(s => (stackMatchesFilter(s) ? s : null)),
-    }),
   };
 }
 

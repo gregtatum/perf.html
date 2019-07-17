@@ -202,6 +202,26 @@ export function getStackAndSampleSelectorsPerThread(selectors: {|
     }
   );
 
+  /**
+   * This selector returns an array, where the index is the js allocation marker index
+   * from getJsAllocationMarkerIndexes, and the value is the CallNodeIndex of that
+   * marker.
+   */
+  const _getJsAllocationMarkerIndexesToCallNodeIndexes: Selector<
+    IndexIntoCallNodeTable[]
+  > = createSelector(
+    selectors.getMarkerGetter,
+    selectors.getJsAllocationMarkerIndexes,
+    getCallNodeInfo,
+    (getMarker, markerIndexes, { stackIndexToCallNodeIndex }) =>
+      markerIndexes.map(index => {
+        const marker = getMarker(index);
+        const stackIndex = ((marker: any).data: JsAllocationPayload).cause
+          .stack;
+        return stackIndexToCallNodeIndex[stackIndex];
+      })
+  );
+
   const getCallTreeJsAllocationCountsAndTimings: Selector<CallTree.CallTreeCountsAndTimings> = createSelector(
     selectors.getPreviewFilteredThread,
     _getJsAllocationMarkerIndexesToCallNodeIndexes,
