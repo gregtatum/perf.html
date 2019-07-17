@@ -171,7 +171,7 @@ export function getStackAndSampleSelectorsPerThread(selectors: {|
     }
   );
 
-  const _getSampleCallNodes: Selector<
+  const _getSampleIndexToCallNodeIndex: Selector<
     Array<IndexIntoCallNodeTable | null>
   > = createSelector(
     selectors.getPreviewFilteredThread,
@@ -204,7 +204,7 @@ export function getStackAndSampleSelectorsPerThread(selectors: {|
 
   const getCallTreeJsAllocationCountsAndTimings: Selector<CallTree.CallTreeCountsAndTimings> = createSelector(
     selectors.getPreviewFilteredThread,
-    selectors.getJsAllocationMarkerIndexes,
+    _getJsAllocationMarkerIndexesToCallNodeIndexes,
     getCallNodeInfo,
     getCallTreeJsAllocationCalculator,
     UrlState.getInvertCallstack,
@@ -213,7 +213,7 @@ export function getStackAndSampleSelectorsPerThread(selectors: {|
 
   const getCallTreeCountsAndTimings: Selector<CallTree.CallTreeCountsAndTimings> = createSelector(
     selectors.getPreviewFilteredThread,
-    _getSampleCallNodes,
+    _getSampleIndexToCallNodeIndex,
     getCallNodeInfo,
     getCallTreeTimeCalculator,
     UrlState.getInvertCallstack,
