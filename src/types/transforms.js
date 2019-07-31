@@ -282,6 +282,29 @@ export type TransformDefinitions = {
     +type: 'collapse-function-subtree',
     +funcIndex: IndexIntoFuncTable,
   |},
+
+  /**
+   * Extract function is similar to focus function, but it leaves the rest of the
+   * samples that do not contain that function alone.
+   *
+   *                 A:3,0                               C:2,0         A:1,0
+   *                   |                               /      \          |
+   *                   v      Extract function C      v        v         v
+   *                 B:3,0           -->            D:1,0     F:1,0    B:1,0
+   *                 /    \                         |           |        |
+   *                v      v                        v           v        v
+   *            C:2,0     H:1,0                   E:1,1       G:1,     H:1,0
+   *           /      \         \                                        |
+   *          v        v         v                                       v
+   *        D:1,0     F:1,0     F:1,1                                  F:1,1
+   *        |           |
+   *        v           v
+   *      E:1,1       G:1,1
+   */
+  'extract-function': {|
+    +type: 'extract-function',
+    +funcIndex: CallNodePath,
+  |},
 };
 
 // Extract the transforms into a union.
