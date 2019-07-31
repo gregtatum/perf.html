@@ -25,7 +25,6 @@ import type {
   Category,
   Counter,
   CounterSamplesTable,
-  JsAllocationsTable,
 } from '../types/profile';
 import type {
   CallNodeInfo,
@@ -998,20 +997,20 @@ export function filterThreadToSearchString(
  * This function takes both a SamplesTable and can be used on CounterSamplesTable.
  */
 export function getSampleIndexRangeForSelection(
-  samples: SamplesTable | CounterSamplesTable | JsAllocationsTable,
+  table: { time: Milliseconds[], length: number },
   rangeStart: number,
   rangeEnd: number
 ): [IndexIntoSamplesTable, IndexIntoSamplesTable] {
-  // TODO: This should really use bisect. samples.time is sorted.
-  const firstSample = samples.time.findIndex(t => t >= rangeStart);
+  // TODO: This should really use bisect. table.time is sorted.
+  const firstSample = table.time.findIndex(t => t >= rangeStart);
   if (firstSample === -1) {
-    return [samples.length, samples.length];
+    return [table.length, table.length];
   }
-  const afterLastSample = samples.time
+  const afterLastSample = table.time
     .slice(firstSample)
     .findIndex(t => t >= rangeEnd);
   if (afterLastSample === -1) {
-    return [firstSample, samples.length];
+    return [firstSample, table.length];
   }
   return [firstSample, firstSample + afterLastSample];
 }
@@ -1021,7 +1020,7 @@ export function filterThreadSamplesToRange(
   rangeStart: number,
   rangeEnd: number
 ): Thread {
-  const { samples, jsAllocations } = thread;
+  const { samples, jsAllocations, nativeAllocations } = thread;
   const [beginSampleIndex, endSampleIndex] = getSampleIndexRangeForSelection(
     samples,
     rangeStart,
@@ -1062,6 +1061,23 @@ export function filterThreadSamplesToRange(
       duration: jsAllocations.duration.slice(startAllocIndex, endAllocIndex),
       inNursery: jsAllocations.inNursery.slice(startAllocIndex, endAllocIndex),
       stack: jsAllocations.stack.slice(startAllocIndex, endAllocIndex),
+      length: endAllocIndex - startAllocIndex,
+    };
+  }
+
+  if (nativeAllocations) {
+    const [startAllocIndex, endAllocIndex] = _getSampleIndexRangeForSelection(
+      nativeAllocations,
+      rangeStart,
+      rangeEnd
+    );
+    newThread.nativeAllocations = {
+      time: nativeAllocations.time.slice(startAllocIndex, endAllocIndex),
+      duration: nativeAllocations.duration.slice(
+        startAllocIndex,
+        endAllocIndex
+      ),
+      stack: nativeAllocations.stack.slice(startAllocIndex, endAllocIndex),
       length: endAllocIndex - startAllocIndex,
     };
   }
@@ -1442,7 +1458,7 @@ export function updateThreadStacks(
   newStackTable: StackTable,
   convertStack: (IndexIntoStackTable | null) => IndexIntoStackTable | null
 ): Thread {
-  const { jsAllocations, samples } = thread;
+  const { jsAllocations, nativeAllocations, samples } = thread;
 
   const newSamples = {
     ...samples,
@@ -1459,6 +1475,12 @@ export function updateThreadStacks(
     newThread.jsAllocations = {
       ...jsAllocations,
       stack: jsAllocations.stack.map(oldStack => convertStack(oldStack)),
+    };
+  }
+  if (nativeAllocations) {
+    newThread.nativeAllocations = {
+      ...nativeAllocations,
+      stack: nativeAllocations.stack.map(oldStack => convertStack(oldStack)),
     };
   }
 

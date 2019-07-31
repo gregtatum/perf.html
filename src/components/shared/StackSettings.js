@@ -43,6 +43,7 @@ type StateProps = {|
   +invertCallstack: boolean,
   +currentSearchString: string,
   +hasJsAllocations: boolean,
+  +hasNativeAllocations: boolean,
 |};
 
 type DispatchProps = {|
@@ -125,8 +126,11 @@ class StackSettings extends PureComponent<Props> {
       hideInvertCallstack,
       currentSearchString,
       hasJsAllocations,
+      hasNativeAllocations,
       disableCallTreeSummaryButtons,
     } = this.props;
+
+    const hasAllocations = hasJsAllocations || hasNativeAllocations;
 
     return (
       <div className="stackSettings">
@@ -136,13 +140,21 @@ class StackSettings extends PureComponent<Props> {
             {this._renderImplementationRadioButton('JavaScript', 'js')}
             {this._renderImplementationRadioButton('Native', 'cpp')}
           </li>
-          {hasJsAllocations && !disableCallTreeSummaryButtons ? (
+          {hasAllocations && !disableCallTreeSummaryButtons ? (
             <li className="stackSettingsListItem stackSettingsFilter">
               {this._renderCallTreeStrategyRadioButton('Timing', 'timing')}
-              {this._renderCallTreeStrategyRadioButton(
-                'JavaScript Allocations',
-                'js-allocations'
-              )}
+              {hasJsAllocations
+                ? this._renderCallTreeStrategyRadioButton(
+                    'JavaScript Allocations',
+                    'js-allocations'
+                  )
+                : null}
+              {hasNativeAllocations
+                ? this._renderCallTreeStrategyRadioButton(
+                    'Native Allocations',
+                    'native-allocations'
+                  )
+                : null}
             </li>
           ) : null}
           {hideInvertCallstack ? null : (
@@ -177,6 +189,9 @@ export default explicitConnect<OwnProps, StateProps, DispatchProps>({
     implementationFilter: getImplementationFilter(state),
     currentSearchString: getCurrentSearchString(state),
     hasJsAllocations: selectedThreadSelectors.getHasJsAllocations(state),
+    hasNativeAllocations: selectedThreadSelectors.getHasNativeAllocations(
+      state
+    ),
     callTreeSummaryStrategy: getCallTreeSummaryStrategy(state),
   }),
   mapDispatchToProps: {

@@ -80,7 +80,7 @@ class CallTreeComponent extends PureComponent<Props> {
     { propName: 'selfTime', title: 'Self (ms)' },
     { propName: 'icon', title: '', component: NodeIcon },
   ];
-  _fixedColumnsJsAllocations: Column[] = [
+  _fixedColumnsAllocations: Column[] = [
     { propName: 'totalTimePercent', title: '' },
     { propName: 'totalTime', title: 'Total Size (bytes)' },
     { propName: 'selfTime', title: 'Self (bytes)' },
@@ -208,7 +208,7 @@ class CallTreeComponent extends PureComponent<Props> {
         break;
       case 'native-allocations':
       case 'js-allocations':
-        fixedColumns = this._fixedColumnsJsAllocations;
+        fixedColumns = this._fixedColumnsAllocations;
         break;
       default:
         throw assertExhaustiveCheck(callTreeSummaryStrategy);

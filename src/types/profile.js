@@ -120,6 +120,16 @@ export type JsAllocationsTable = {|
   length: number,
 |};
 
+export type NativeAllocationsTable = {|
+  time: Milliseconds[],
+  // "duration" is a bit odd of a name for this field, but it's "duck typing" the byte
+  // size so that we can use a SamplesTable and NativeAllocationsTable in the same call
+  // tree computation functions.
+  duration: Bytes[],
+  stack: Array<IndexIntoStackTable | null>,
+  length: number,
+|};
+
 /**
  * This is the base abstract class that marker payloads inherit from. This probably isn't
  * used directly in profiler.firefox.com, but is provided here for mainly documentation
@@ -380,6 +390,7 @@ export type Thread = {|
   tid: number | void,
   samples: SamplesTable,
   jsAllocations?: JsAllocationsTable,
+  nativeAllocations?: NativeAllocationsTable,
   markers: RawMarkerTable,
   stackTable: StackTable,
   frameTable: FrameTable,

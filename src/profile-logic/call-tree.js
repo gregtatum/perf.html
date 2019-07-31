@@ -19,6 +19,7 @@ import type {
   IndexIntoFuncTable,
   SamplesTable,
   JsAllocationsTable,
+  NativeAllocationsTable,
 } from '../types/profile';
 import type {
   CallNodeTable,
@@ -270,7 +271,7 @@ export class CallTree {
 
 function _getInvertedStackSelfTimes(
   // The samples could either be a SamplesTable, or a JsAllocationsTable.
-  samples: SamplesTable | JsAllocationsTable,
+  samples: SamplesTable | JsAllocationsTable | NativeAllocationsTable,
   callNodeTable: CallNodeTable,
   sampleIndexToCallNodeIndex: Array<IndexIntoCallNodeTable | null>,
   interval: Milliseconds
@@ -332,7 +333,7 @@ function _getInvertedStackSelfTimes(
  * This is a helper function to get the stack timings for un-inverted call trees.
  */
 function _getStackSelfTimes(
-  samples: SamplesTable | JsAllocationsTable,
+  samples: SamplesTable | JsAllocationsTable | NativeAllocationsTable,
   callNodeTable: CallNodeTable,
   sampleIndexToCallNodeIndex: Array<null | IndexIntoCallNodeTable>,
   interval: Milliseconds
@@ -364,7 +365,7 @@ function _getStackSelfTimes(
  * It takes into account both the normal tree, and the inverted tree.
  */
 export function computeCallTreeCountsAndTimings(
-  samples: SamplesTable | JsAllocationsTable,
+  samples: SamplesTable | JsAllocationsTable | NativeAllocationsTable,
   { callNodeTable, stackIndexToCallNodeIndex }: CallNodeInfo,
   interval: Milliseconds,
   invertCallstack: boolean
