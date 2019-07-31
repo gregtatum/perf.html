@@ -17,6 +17,7 @@ import {
 import {
   urlFromState,
   stateFromLocation,
+  replaceHistoryState,
   getIsHistoryReplaceState,
 } from '../../app-logic/url-handling';
 import {
@@ -84,38 +85,40 @@ type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
  */
 class UrlManager extends React.PureComponent<Props> {
   async _processInitialUrls() {
-    const {
-      startFetchingProfiles,
-      setupInitialUrlState,
-      urlSetupDone,
-    } = this.props;
-    // We have to wrap this because of the error introduced by upgrading to v0.96.0. See issue #1936.
-    const getProfilesFromRawUrl: WrapFunctionInDispatch<GetProfilesFromRawUrl> = (this
-      .props.getProfilesFromRawUrl: any);
-    startFetchingProfiles();
+    replaceHistoryState(async () => {
+      const {
+        startFetchingProfiles,
+        setupInitialUrlState,
+        urlSetupDone,
+      } = this.props;
+      // We have to wrap this because of the error introduced by upgrading to v0.96.0. See issue #1936.
+      const getProfilesFromRawUrl: WrapFunctionInDispatch<GetProfilesFromRawUrl> = (this
+        .props.getProfilesFromRawUrl: any);
+      startFetchingProfiles();
 
-    try {
-      // Process the raw url and fetch the profile.
-      const results: {
-        profile: Profile | null,
-        shouldSetupInitialUrlState: boolean,
-      } = await getProfilesFromRawUrl(window.location);
+      try {
+        // Process the raw url and fetch the profile.
+        const results: {
+          profile: Profile | null,
+          shouldSetupInitialUrlState: boolean,
+        } = await getProfilesFromRawUrl(window.location);
 
-      // Manually coerce these into the proper type due to the FlowFixMe above.
-      // Profile may be null only for the `from-addon` dataSource since we do
-      // not `await` for retrieveProfileFromAddon function.
-      const profile: Profile | null = results.profile;
-      const shouldSetupInitialUrlState: boolean =
-        results.shouldSetupInitialUrlState;
-      if (profile !== null && shouldSetupInitialUrlState) {
-        setupInitialUrlState(window.location, profile);
-      } else {
+        // Manually coerce these into the proper type due to the FlowFixMe above.
+        // Profile may be null only for the `from-addon` dataSource since we do
+        // not `await` for retrieveProfileFromAddon function.
+        const profile: Profile | null = results.profile;
+        const shouldSetupInitialUrlState: boolean =
+          results.shouldSetupInitialUrlState;
+        if (profile !== null && shouldSetupInitialUrlState) {
+          setupInitialUrlState(window.location, profile);
+        } else {
+          urlSetupDone();
+        }
+      } catch (error) {
+        // Silently complete the url setup.
         urlSetupDone();
       }
-    } catch (error) {
-      // Silently complete the url setup.
-      urlSetupDone();
-    }
+    });
   }
 
   _updateState() {
@@ -142,6 +145,7 @@ class UrlManager extends React.PureComponent<Props> {
       previousUrlState.dataSource !== newUrlState.dataSource ||
       previousUrlState.hash !== newUrlState.hash
     ) {
+      console.trace('!!! replaceState', { previousUrlState, newUrlState });
       // Profile sanitization and publishing can do weird things for the history API.
       // Rather than write lots of complicated interactions, just prevent the back button
       // from working when going between a published profile, and one that is not.
@@ -171,10 +175,18 @@ class UrlManager extends React.PureComponent<Props> {
       if (!getIsHistoryReplaceState()) {
         // Push the URL state only when the url setup is done, and we haven't set
         // a flag to only replace the state.
+        console.trace('!!! pushState', newUrl, {
+          previousUrlState: this.props.urlState,
+          newUrlState: nextProps.urlState,
+        });
         window.history.pushState(nextProps.urlState, document.title, newUrl);
       } else {
         // Replace the URL state before the URL setup is done, and if we've specifically
         // flagged to replace the URL state.
+        console.trace('!!! replaceState', newUrl, {
+          previousUrlState: this.props.urlState,
+          newUrlState: nextProps.urlState,
+        });
         window.history.replaceState(nextProps.urlState, document.title, newUrl);
       }
     }

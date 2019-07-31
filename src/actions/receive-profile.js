@@ -29,6 +29,7 @@ import {
 import {
   stateFromLocation,
   getDataSourceFromPathParts,
+  replaceHistoryState,
 } from '../app-logic/url-handling';
 import {
   initializeLocalTrackOrderByPid,
@@ -1007,7 +1008,10 @@ export function getProfilesFromRawUrl(
       // be 'from-file' and needs to be redirected to home page.
       dataSource = 'none';
     }
-    dispatch(setDataSource(dataSource));
+
+    replaceHistoryState(() => {
+      dispatch(setDataSource(dataSource));
+    });
 
     let shouldSetupInitialUrlState = true;
     switch (dataSource) {

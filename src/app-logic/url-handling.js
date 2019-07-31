@@ -18,7 +18,19 @@ import {
   ensureExists,
 } from '../utils/flow';
 import { toValidCallTreeSummaryStrategy } from '../profile-logic/profile-data';
+import {
+  updateUrlState,
+  startFetchingProfiles,
+  urlSetupDone,
+  show404,
+  setupInitialUrlState,
+} from '../actions/app';
+import {
+  getProfilesFromRawUrl,
+  typeof getProfilesFromRawUrl as GetProfilesFromRawUrl,
+} from '../actions/receive-profile';
 import { oneLine } from 'common-tags';
+import type { Store } from '../types/store';
 import type { UrlState } from '../types/state';
 import type { DataSource } from '../types/actions';
 import type {
@@ -37,14 +49,27 @@ export const CURRENT_URL_VERSION = 4;
  * The history API is a singleton, and so here we're also using a singleton pattern
  * to manage this bit of state.
  */
-let _isReplaceState: boolean = false;
+let _replaceHistoryCallCount: number = 0;
 
 /**
- * This function can be called from thunk actions or other components to change the
- * history API's behavior.
+ * Code run in the callback will have its history replaced, rather than pushed.
+ * It allows for nested calls of replaceHistoryState.
  */
-export function setHistoryReplaceState(value: boolean): void {
-  _isReplaceState = value;
+export async function replaceHistoryState(callback: Function): Promise<void> {
+  const id = ++_replaceHistoryCallCount;
+  console.trace('!!! entering replaceHistoryState', id);
+  try {
+    await callback();
+  } catch (e) {
+    // Do nothing on failure
+  }
+  console.trace('!!! exiting replaceHistoryState', id);
+  _replaceHistoryCallCount--;
+  if (_replaceHistoryCallCount < 0) {
+    console.error(
+      '_replaceHistoryCallCount became unbalanced and went below zero.'
+    );
+  }
 }
 
 /**
@@ -52,7 +77,37 @@ export function setHistoryReplaceState(value: boolean): void {
  * history API. It's embedded here to avoid cyclical dependencies when importing files.
  */
 export function getIsHistoryReplaceState(): boolean {
-  return _isReplaceState;
+  return _replaceHistoryCallCount > 0;
+}
+
+export function setupUrlHandling(store: Store) {
+  //
+  processInitialUrls(store);
+}
+
+async function processInitialUrls({ dispatch }: Store) {
+  replaceHistoryState(async () => {
+    dispatch(startFetchingProfiles());
+
+    try {
+      // Process the raw url and fetch the profile.
+      const results: {
+        profile: Profile | null,
+        shouldSetupInitialUrlState: boolean,
+      } = await dispatch(getProfilesFromRawUrl(window.location));
+
+      const shouldSetupInitialUrlState: boolean =
+        results.shouldSetupInitialUrlState;
+      if (profile !== null && shouldSetupInitialUrlState) {
+        dispatch(setupInitialUrlState(window.location, profile));
+      } else {
+        dispatch(urlSetupDone());
+      }
+    } catch (error) {
+      // Silently complete the url setup.
+      dispatch(urlSetupDone());
+    }
+  });
 }
 
 function getDataSourceDirs(

@@ -6,7 +6,10 @@
 import { getSelectedTab, getDataSource } from '../selectors/url-state';
 import { getTrackThreadHeights } from '../selectors/app';
 import { sendAnalytics } from '../utils/analytics';
-import { stateFromLocation } from '../app-logic/url-handling';
+import {
+  stateFromLocation,
+  replaceHistoryState,
+} from '../app-logic/url-handling';
 import { finalizeProfileView } from './receive-profile';
 import type { Profile, ThreadIndex } from '../types/profile';
 import type { CssPixels } from '../types/units';
@@ -90,30 +93,34 @@ export function setupInitialUrlState(
   profile: Profile
 ): ThunkAction<void> {
   return dispatch => {
-    let urlState;
-    try {
-      urlState = stateFromLocation(location, profile);
-    } catch (e) {
-      // The location could not be parsed, show a 404 instead.
-      console.error(e);
-      dispatch(show404(location.pathname + location.search));
-      return;
-    }
+    // When setting up the initial URL, replace the history rather than pushing it.
+    replaceHistoryState(() => {
+      let urlState;
 
-    // Validate the initial URL state. We can't refresh on a from-file URL.
-    if (urlState.dataSource === 'from-file') {
-      urlState = null;
-    }
+      try {
+        urlState = stateFromLocation(location, profile);
+      } catch (e) {
+        // The location could not be parsed, show a 404 instead.
+        console.error(e);
+        dispatch(show404(location.pathname + location.search));
+        return;
+      }
 
-    // Normally having multiple dispatches is an anti pattern, but here it's
-    // necessary because we are doing different things inside those actions and
-    // they can't be merged because we are also calling those seperately on
-    // other parts of the code.
-    // The first dispatch here updates the url state, then changes state as the url
-    // setup is done, and lastly finalizes the profile view since everything is set up now.
-    dispatch(updateUrlState(urlState));
-    dispatch(urlSetupDone());
-    dispatch(finalizeProfileView());
+      // Validate the initial URL state. We can't refresh on a from-file URL.
+      if (urlState.dataSource === 'from-file') {
+        urlState = null;
+      }
+
+      // Normally having multiple dispatches is an anti pattern, but here it's
+      // necessary because we are doing different things inside those actions and
+      // they can't be merged because we are also calling those seperately on
+      // other parts of the code.
+      // The first dispatch here updates the url state, then changes state as the url
+      // setup is done, and lastly finalizes the profile view since everything is set up now.
+      dispatch(updateUrlState(urlState));
+      dispatch(urlSetupDone());
+      dispatch(finalizeProfileView());
+    });
   };
 }
 

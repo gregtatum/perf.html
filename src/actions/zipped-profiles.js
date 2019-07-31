@@ -6,6 +6,7 @@
 import { getZipFileTable, getZipFileState } from '../selectors/zipped-profiles';
 import { unserializeProfileOfArbitraryFormat } from '../profile-logic/process-profile';
 import { loadProfile } from './receive-profile';
+import { replaceHistoryState } from '../app-logic/url-handling';
 
 import type { Action, ThunkAction } from '../types/store';
 import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
@@ -53,29 +54,33 @@ export function viewProfileFromZip(
 
     dispatch({ type: 'PROCESS_PROFILE_FROM_ZIP_FILE', pathInZipFile });
 
-    try {
-      // Attempt to unserialize the profile.
-      const profile = await unserializeProfileOfArbitraryFormat(
-        await file.async('string')
-      );
+    // While loading the profile and setting the default view state, we need to
+    // replace the URL state rather than pushing onto it.
+    replaceHistoryState(async () => {
+      try {
+        // Attempt to unserialize the profile.
+        const profile = await unserializeProfileOfArbitraryFormat(
+          await file.async('string')
+        );
 
-      // Since this is an async function, there can be race conditions. Prevent this by
-      // comparing this request with the current state of the store. If this result
-      // is invalid, don't dispatch anything, and discard the profile.
-      const zipFileState = getZipFileState(getState());
-      if (
-        zipFileState.pathInZipFile === pathInZipFile &&
-        zipFileState.phase === 'PROCESS_PROFILE_FROM_ZIP_FILE'
-      ) {
-        await dispatch(loadProfile(profile, { pathInZipFile }, initialLoad));
+        // Since this is an async function, there can be race conditions. Prevent this by
+        // comparing this request with the current state of the store. If this result
+        // is invalid, don't dispatch anything, and discard the profile.
+        const zipFileState = getZipFileState(getState());
+        if (
+          zipFileState.pathInZipFile === pathInZipFile &&
+          zipFileState.phase === 'PROCESS_PROFILE_FROM_ZIP_FILE'
+        ) {
+          await dispatch(loadProfile(profile, { pathInZipFile }, initialLoad));
+        }
+      } catch (error) {
+        console.error(
+          'Failed to process the profile in the zip file with the following error:'
+        );
+        console.error(error);
+        dispatch({ type: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE', error });
       }
-    } catch (error) {
-      console.error(
-        'Failed to process the profile in the zip file with the following error:'
-      );
-      console.error(error);
-      dispatch({ type: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE', error });
-    }
+    });
   };
 }
 

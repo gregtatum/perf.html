@@ -18,7 +18,7 @@ import {
 import { getUrlState } from '../selectors/url-state';
 import { viewProfile } from './receive-profile';
 import { ensureExists } from '../utils/flow';
-import { setHistoryReplaceState } from '../app-logic/url-handling';
+import { replaceHistoryState } from '../app-logic/url-handling';
 
 import type { Action, ThunkAction } from '../types/store';
 import type { CheckedSharingOptions } from '../types/actions';
@@ -147,12 +147,12 @@ export function attemptToPublish(): ThunkAction<Promise<boolean>> {
         // Swap out the URL state, since the view profile calculates all of the default
         // settings. If we don't do this then we can go back in history to where we
         // are trying to view a profile without valid view settings.
-        setHistoryReplaceState(true);
-        // Multiple dispatches are usually to be avoided, but viewProfile requires
-        // the next UrlState in place. It could be rewritten to have a UrlState passed
-        // in as a paremeter, but that doesn't seem worth it at the time of this writing.
-        dispatch(viewProfile(profile));
-        setHistoryReplaceState(false);
+        replaceHistoryState(() => {
+          // Multiple dispatches are usually to be avoided, but viewProfile requires
+          // the next UrlState in place. It could be rewritten to have a UrlState passed
+          // in as a paremeter, but that doesn't seem worth it at the time of this writing.
+          dispatch(viewProfile(profile));
+        });
       } else {
         dispatch(profilePublished(hash));
       }
