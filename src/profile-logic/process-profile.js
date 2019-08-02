@@ -650,10 +650,6 @@ function _processMarkers(
           continue;
         }
         case 'Native allocation': {
-          if (geckoPayload.size < 0) {
-            // TODO - This is a negative allocation, skip it for now.
-            continue;
-          }
           // Build up a separate table for the native allocation data, and do not
           // include it in the marker information.
           nativeAllocations.time.push(geckoPayload.startTime);
