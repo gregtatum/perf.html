@@ -50,3 +50,6 @@ export const JS_TRACER_MAXIMUM_CHART_ZOOM = 0.001;
 // The following values are for the visual progress tracks.
 export const TRACK_VISUAL_PROGRESS_HEIGHT = 40;
 export const TRACK_VISUAL_PROGRESS_LINE_WIDTH = 2;
+
+// This controls the height of the call tree and marker table.
+export const TREE_VIEW_ROW_HEIGHT = 18;
