@@ -164,7 +164,7 @@ exports[`FlameGraph has a tooltip that matches the snapshot 1`] = `
           Stack Type:
         </div>
         <div>
-          Native
+          Label
         </div>
         <div
           class="tooltipLabel"

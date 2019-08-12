@@ -396,14 +396,21 @@ function _buildThreadFromTextOnlyStacks(
   } = thread;
 
   // Create the FuncTable.
-  funcNames.forEach(funcName => {
+  funcNames.forEach((funcName, funcNameIndex) => {
+    const isJS = funcName.endsWith('js');
+    let address = -1;
+    if (funcName.startsWith('0x')) {
+      address = parseInt(funcName.substr(2), 16);
+    } else if (!isJS) {
+      // Create some fictional address unique to the function.
+      address = funcNameIndex * 1000;
+    }
+
     funcTable.name.push(stringTable.indexForString(funcName));
-    funcTable.address.push(
-      funcName.startsWith('0x') ? parseInt(funcName.substr(2), 16) : -1
-    );
+    funcTable.address.push(address);
     funcTable.fileName.push(null);
     funcTable.relevantForJS.push(funcName.endsWith('js-relevant'));
-    funcTable.isJS.push(funcName.endsWith('js'));
+    funcTable.isJS.push(isJS);
     funcTable.lineNumber.push(null);
     funcTable.columnNumber.push(null);
     // Ignore resources for now, this way funcNames have really nice string indexes.

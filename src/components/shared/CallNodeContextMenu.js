@@ -484,6 +484,7 @@ class CallNodeContextMenu extends PureComponent<Props> {
 
   render() {
     const { callNodeIndex } = this.props;
+    console.log(callNodeIndex);
 
     if (callNodeIndex === null) {
       return null;

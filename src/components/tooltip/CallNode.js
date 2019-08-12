@@ -186,7 +186,7 @@ export class TooltipCallNode extends React.PureComponent<Props> {
         <div className="tooltipLabel" key="file">
           File:
         </div>,
-        fileName,
+        <span key={fileName}>{fileName}</span>,
       ];
     } else {
       const resourceIndex = thread.funcTable.resource[funcIndex];
@@ -227,9 +227,7 @@ export class TooltipCallNode extends React.PureComponent<Props> {
         stackTypeLabel = 'JavaScript';
         break;
       case 'unsymbolicated':
-        stackTypeLabel = thread.funcTable.isJS[funcIndex]
-          ? 'Unsymbolicated native'
-          : 'Unsymbolicated or generated JIT instructions';
+        stackTypeLabel = 'Unsymbolicated or generated JIT instructions';
         break;
       case 'label':
         stackTypeLabel = 'Label';

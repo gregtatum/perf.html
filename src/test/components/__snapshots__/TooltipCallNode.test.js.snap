@@ -1,0 +1,137 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TooltipCallNode matches the snapshot 1`] = `
+<div>
+  <div
+    class="tooltipCallNode"
+  >
+    <div
+      class="tooltipOneLine tooltipHeader"
+    >
+      <div
+        class="tooltipTiming"
+      >
+        Fake Duration 33%
+      </div>
+      <div
+        class="tooltipTitle"
+      >
+        B
+      </div>
+      <div
+        class="tooltipIcon"
+      />
+    </div>
+    <div
+      class="tooltipCallNodeDetails"
+    >
+      <div
+        class="tooltipCallNodeImplementation"
+      >
+        <div />
+        <div
+          class="tooltipCallNodeImplementationHeader"
+        />
+        <div
+          class="tooltipCallNodeImplementationHeader"
+        >
+          <span
+            class="tooltipCallNodeImplementationHeaderSwatchRunning"
+          />
+          Running
+        </div>
+        <div
+          class="tooltipCallNodeImplementationHeader"
+        >
+          <span
+            class="tooltipCallNodeImplementationHeaderSwatchSelf"
+          />
+          Self
+        </div>
+        <div
+          class="tooltipLabel"
+        >
+          Overall
+        </div>
+        <div
+          class="tooltipCallNodeImplementationGraph"
+        >
+          <div
+            class="tooltipCallNodeImplementationGraphRunning"
+            style="width: 150px;"
+          />
+          <div
+            class="tooltipCallNodeImplementationGraphSelf"
+            style="width: 50px;"
+          />
+        </div>
+        <div>
+          3ms
+        </div>
+        <div>
+          1ms
+        </div>
+        <div
+          class="tooltipCallNodeImplementationName tooltipLabel"
+        >
+          Native code
+        </div>
+        <div
+          class="tooltipCallNodeImplementationGraph"
+        >
+          <div
+            class="tooltipCallNodeImplementationGraphRunning"
+            style="width: 150px;"
+          />
+          <div
+            class="tooltipCallNodeImplementationGraphSelf"
+            style="width: 50px;"
+          />
+        </div>
+        <div
+          class="tooltipCallNodeImplementationTiming"
+        >
+          3
+          ms
+        </div>
+        <div
+          class="tooltipCallNodeImplementationTiming"
+        >
+          1ms
+        </div>
+      </div>
+      <div
+        class="tooltipDetails tooltipCallNodeDetailsLeft"
+      >
+        <div
+          class="tooltipLabel"
+        >
+          Stack Type:
+        </div>
+        <div>
+          Label
+        </div>
+        <div
+          class="tooltipLabel"
+        >
+          Category:
+        </div>
+        <div>
+          <span
+            class="colored-square category-color-blue"
+          />
+          DOM
+        </div>
+        <div
+          class="tooltipLabel"
+        >
+          File:
+        </div>
+        <span>
+          path/to/file:11:101
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+`;
