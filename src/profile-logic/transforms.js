@@ -30,6 +30,7 @@ import type {
   IndexIntoFuncTable,
   IndexIntoStackTable,
   IndexIntoResourceTable,
+  IndexIntoFrameTable,
 } from '../types/profile';
 import type {
   CallNodePath,
@@ -1289,14 +1290,39 @@ export function restoreAllFunctionsInCallNodePath(
 
 export function getStackType(
   thread: Thread,
-  funcIndex: IndexIntoFuncTable
+  frameIndex: IndexIntoFrameTable
 ): StackType {
-  if (FUNC_MATCHES.cpp(thread, funcIndex)) {
-    return 'native';
-  } else if (FUNC_MATCHES.js(thread, funcIndex)) {
+  const { frameTable, funcTable, stringTable } = thread;
+  const funcIndex = frameTable.func[frameIndex];
+  const category = frameTable.category[frameIndex];
+  const isJS = funcTable.isJS[funcIndex];
+  const address = funcTable.address[funcIndex];
+
+  if (isJS) {
+    // This is labeled as a JS frame, and we trust it.
     return 'js';
   }
-  return 'unsymbolicated';
+  if (address > -1) {
+    // The function name, e.g. "0x7f1f85ab1a87" was determined to be in a library
+    // that we knew about, hence it has an address field > -1.
+    return 'native';
+  }
+  if (category === null) {
+    if (
+      frameIndex === 0 &&
+      stringTable.getString(funcTable.name[funcIndex]) === '(root)'
+    ) {
+      // The root frame label does not have a category.
+      return 'label';
+    }
+    // The category is null here, which means that it's not a known symbol, but it's
+    // also not a label frame, as all label frames have a category.
+    return 'unsymbolicated';
+  }
+
+  // This is a label frame, as the name doesn't match a hex address, and it has
+  // a valid category.
+  return 'label';
 }
 
 export function filterCallNodePathByImplementation(

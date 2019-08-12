@@ -5,7 +5,7 @@
 import * as React from 'react';
 
 import { getStackType } from '../../profile-logic/transforms';
-import { objectEntries } from '../../utils/flow';
+import { objectEntries, assertExhaustiveCheck } from '../../utils/flow';
 import { formatNumberDependingOnInterval } from '../../utils/format-numbers';
 import NodeIcon from '../shared/NodeIcon';
 import {
@@ -151,7 +151,7 @@ export class TooltipCallNode extends React.PureComponent<Props> {
       categories,
       callTree,
       timings,
-      callNodeInfo: { callNodeTable },
+      callNodeInfo: { callNodeTable, stackIndexToCallNodeIndex },
     } = this.props;
     const categoryIndex = callNodeTable.category[callNodeIndex];
     const categoryColor = categories[categoryIndex].color;
@@ -206,7 +206,18 @@ export class TooltipCallNode extends React.PureComponent<Props> {
       }
     }
 
-    const stackType = getStackType(thread, funcIndex);
+    // Warning, this is a O(n) linear search of the stack indexes. If this function
+    // shows up as slow, it might be worth computing a callNodeIndexToFrameIndex.
+    const stackIndex = stackIndexToCallNodeIndex.indexOf(callNodeIndex);
+    if (stackIndex === -1) {
+      // This is a programming error, as the stackIndexToCallNodeIndex is derived data
+      // and should contain every single call node index.
+      throw new Error(
+        'Could not look up the stack index from the call node index.'
+      );
+    }
+    const frameIndex = thread.stackTable.frame[stackIndex];
+    const stackType = getStackType(thread, frameIndex);
     let stackTypeLabel;
     switch (stackType) {
       case 'native':
@@ -220,8 +231,11 @@ export class TooltipCallNode extends React.PureComponent<Props> {
           ? 'Unsymbolicated native'
           : 'Unsymbolicated or generated JIT instructions';
         break;
+      case 'label':
+        stackTypeLabel = 'Label';
+        break;
       default:
-        throw new Error(`Unknown stack type case "${stackType}".`);
+        throw assertExhaustiveCheck(stackType, 'Unhandled stack type.');
     }
 
     return (
