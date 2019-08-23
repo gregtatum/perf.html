@@ -261,7 +261,7 @@ describe('MarkerChart', function() {
 
       dispatch(changeSelectedTab('marker-chart'));
       flushRafCalls();
-      flushDrawLog();
+      const drawLog = flushDrawLog();
 
       function getPositioningOptions({ x, y }) {
         // These positioning options will be sent to all our mouse events. Note
@@ -313,6 +313,19 @@ describe('MarkerChart', function() {
         fireEvent.click(getByText(stringOrRegexp));
       }
 
+      function findFillTextPosition(markerName) {
+        const tuple = drawLog.find(
+          ([cmd, text]) => cmd === 'fillText' && text === markerName
+        );
+        if (!tuple) {
+          throw new Error(
+            'Could not find a fillText command for ' + markerName
+          );
+        }
+        const [, , x, y] = tuple;
+        return { x, y };
+      }
+
       const getContextMenu = () =>
         ensureExists(
           container.querySelector('.react-contextmenu'),
@@ -324,15 +337,20 @@ describe('MarkerChart', function() {
         rightClick,
         mouseOver,
         getContextMenu,
+        findFillTextPosition,
         clickOnMenuItem,
       };
     }
 
     it('when right clicking on a marker', () => {
-      const { rightClick, clickOnMenuItem, getContextMenu } = setup();
+      const {
+        rightClick,
+        clickOnMenuItem,
+        getContextMenu,
+        findFillTextPosition,
+      } = setup();
 
-      // The "Marker A" marker is drawn from 150,1 to 275,13.
-      rightClick({ x: 200, y: 5 });
+      rightClick(findFillTextPosition('Marker A'));
       expect(getContextMenu()).toHaveClass('react-contextmenu--visible');
 
       clickOnMenuItem('Copy');
@@ -346,12 +364,12 @@ describe('MarkerChart', function() {
     it('when right clicking on markers in a sequence', () => {
       const { rightClick, clickOnMenuItem, getContextMenu } = setup();
 
-      // The "Marker A" marker is drawn from 150,1 to 275,13.
-      rightClick({ x: 200, y: 5 });
+      // The "Marker A" marker is drawn from 150,34 to 275,46.
+      rightClick({ x: 200, y: 39 });
       expect(getContextMenu()).toHaveClass('react-contextmenu--visible');
 
-      // The "click" DOMEvent marker is drawn from 213,82 to 275.5,93.
-      rightClick({ x: 220, y: 90 });
+      // The "click" DOMEvent marker is drawn from 213,129 to 275.5,109.
+      rightClick({ x: 220, y: 75 });
       jest.runAllTimers();
 
       expect(getContextMenu()).toHaveClass('react-contextmenu--visible');
@@ -362,13 +380,13 @@ describe('MarkerChart', function() {
     it('and still highlights other markers when hovering them', () => {
       const { rightClick, mouseOver, flushDrawLog, getContextMenu } = setup();
 
-      // The "Marker A" marker is drawn from 150,1 to 275,13.
-      rightClick({ x: 200, y: 5 });
+      // The "Marker A" marker is drawn from 150,34 to 275,46.
+      rightClick({ x: 200, y: 39 });
       expect(getContextMenu()).toHaveClass('react-contextmenu--visible');
 
       flushDrawLog();
-      // The "click" DOMEvent marker is drawn from 213,82 to 275.5,93.
-      mouseOver({ x: 220, y: 90 });
+      // The "click" DOMEvent marker is drawn from 213,129 to 275.5,109.
+      mouseOver({ x: 220, y: 124 });
 
       // Expect that we have 2 markers drawn with this color.
       const drawCalls = flushDrawLog();

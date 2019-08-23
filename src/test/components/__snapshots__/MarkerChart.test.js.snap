@@ -34,425 +34,9 @@ exports[`MarkerChart EmptyReasons shows a reason when a profile's markers have b
 </div>
 `;
 
-exports[`MarkerChart renders the hoveredItem markers properly 1`] = `
-Array [
-  Array [
-    "set fillStyle",
-    "#ffffff",
-  ],
-  Array [
-    "fillRect",
-    0,
-    0,
-    365,
-    300,
-  ],
-  Array [
-    "set lineWidth",
-    1,
-  ],
-  Array [
-    "set fillStyle",
-    "#45a1ff",
-  ],
-  Array [
-    "fillRect",
-    289,
-    1,
-    48,
-    1,
-  ],
-  Array [
-    "fillRect",
-    288,
-    2,
-    50,
-    11,
-  ],
-  Array [
-    "fillRect",
-    289,
-    13,
-    48,
-    1,
-  ],
-  Array [
-    "measureText",
-    "",
-  ],
-  Array [
-    "set fillStyle",
-    "#45a1ff",
-  ],
-  Array [
-    "fillRect",
-    151,
-    17,
-    123,
-    1,
-  ],
-  Array [
-    "fillRect",
-    150,
-    18,
-    125,
-    11,
-  ],
-  Array [
-    "fillRect",
-    151,
-    29,
-    123,
-    1,
-  ],
-  Array [
-    "measureText",
-    "",
-  ],
-  Array [
-    "set fillStyle",
-    "#45a1ff",
-  ],
-  Array [
-    "fillRect",
-    151,
-    33,
-    35.5,
-    1,
-  ],
-  Array [
-    "fillRect",
-    150,
-    34,
-    37.5,
-    11,
-  ],
-  Array [
-    "fillRect",
-    151,
-    45,
-    35.5,
-    1,
-  ],
-  Array [
-    "measureText",
-    "",
-  ],
-  Array [
-    "set fillStyle",
-    "#45a1ff",
-  ],
-  Array [
-    "beginPath",
-  ],
-  Array [
-    "arc",
-    205,
-    55.5,
-    3.75,
-    0,
-    6.283185307179586,
-  ],
-  Array [
-    "fill",
-  ],
-  Array [
-    "set fillStyle",
-    "#45a1ff",
-  ],
-  Array [
-    "fillRect",
-    214,
-    65,
-    123,
-    1,
-  ],
-  Array [
-    "fillRect",
-    213,
-    66,
-    125,
-    11,
-  ],
-  Array [
-    "fillRect",
-    214,
-    77,
-    123,
-    1,
-  ],
-  Array [
-    "measureText",
-    "",
-  ],
-  Array [
-    "set fillStyle",
-    "#45a1ff",
-  ],
-  Array [
-    "fillRect",
-    214,
-    81,
-    60.5,
-    1,
-  ],
-  Array [
-    "fillRect",
-    213,
-    82,
-    62.5,
-    11,
-  ],
-  Array [
-    "fillRect",
-    214,
-    93,
-    60.5,
-    1,
-  ],
-  Array [
-    "set fillStyle",
-    "white",
-  ],
-  Array [
-    "fillText",
-    "click",
-    216,
-    91,
-  ],
-  Array [
-    "set fillStyle",
-    "#45a1ff",
-  ],
-  Array [
-    "beginPath",
-  ],
-  Array [
-    "arc",
-    243,
-    103.5,
-    3.75,
-    0,
-    6.283185307179586,
-  ],
-  Array [
-    "fill",
-  ],
-  Array [
-    "set fillStyle",
-    "#45a1ff",
-  ],
-  Array [
-    "fillRect",
-    264,
-    113,
-    85.5,
-    1,
-  ],
-  Array [
-    "fillRect",
-    263,
-    114,
-    87.5,
-    11,
-  ],
-  Array [
-    "fillRect",
-    264,
-    125,
-    85.5,
-    1,
-  ],
-  Array [
-    "measureText",
-    "",
-  ],
-  Array [
-    "set fillStyle",
-    "Highlight",
-  ],
-  Array [
-    "fillRect",
-    151,
-    1,
-    123,
-    1,
-  ],
-  Array [
-    "fillRect",
-    150,
-    2,
-    125,
-    11,
-  ],
-  Array [
-    "fillRect",
-    151,
-    13,
-    123,
-    1,
-  ],
-  Array [
-    "measureText",
-    "",
-  ],
-  Array [
-    "set fillStyle",
-    "#ededf0",
-  ],
-  Array [
-    "fillRect",
-    149,
-    0,
-    1,
-    300,
-  ],
-  Array [
-    "fillRect",
-    0,
-    15,
-    365,
-    1,
-  ],
-  Array [
-    "fillRect",
-    0,
-    31,
-    365,
-    1,
-  ],
-  Array [
-    "fillRect",
-    0,
-    47,
-    365,
-    1,
-  ],
-  Array [
-    "fillRect",
-    0,
-    63,
-    365,
-    1,
-  ],
-  Array [
-    "fillRect",
-    0,
-    79,
-    365,
-    1,
-  ],
-  Array [
-    "fillRect",
-    0,
-    95,
-    365,
-    1,
-  ],
-  Array [
-    "fillRect",
-    0,
-    111,
-    365,
-    1,
-  ],
-  Array [
-    "fillRect",
-    0,
-    127,
-    365,
-    1,
-  ],
-  Array [
-    "set fillStyle",
-    "#000000",
-  ],
-  Array [
-    "fillText",
-    "Marker A",
-    5,
-    11,
-  ],
-  Array [
-    "fillText",
-    "Marker H with no start",
-    5,
-    43,
-  ],
-  Array [
-    "fillText",
-    "Dot marker E",
-    5,
-    59,
-  ],
-  Array [
-    "fillText",
-    "Very very very very very ver…",
-    5,
-    75,
-  ],
-  Array [
-    "fillText",
-    "Marker G type DOMEvent",
-    5,
-    91,
-  ],
-  Array [
-    "fillText",
-    "Non-interval marker F withou…",
-    5,
-    107,
-  ],
-  Array [
-    "fillText",
-    "Marker H with no end",
-    5,
-    123,
-  ],
-]
-`;
+exports[`MarkerChart renders the hoveredItem markers properly 1`] = `Array []`;
 
-exports[`MarkerChart renders the hoveredItem markers properly 2`] = `
-<div
-  class="tooltip"
-  data-testid="tooltip"
-  style="left: 211px; top: 16px;"
->
-  <div
-    class="tooltipMarker"
-  >
-    <div
-      class=""
-    >
-      <div
-        class="tooltipOneLine"
-      >
-        <div
-          class="tooltipTiming"
-        >
-          10ms
-        </div>
-        <div
-          class="tooltipTitle"
-        >
-          Marker A
-        </div>
-      </div>
-      <div
-        class="tooltipDetails"
-      >
-        <div
-          class="tooltipLabel"
-        >
-          Thread
-          :
-        </div>
-        Empty
-      </div>
-    </div>
-  </div>
-</div>
-`;
+exports[`MarkerChart renders the hoveredItem markers properly 2`] = `null`;
 
 exports[`MarkerChart renders the normal marker chart and matches the snapshot 1`] = `
 <div
@@ -576,128 +160,12 @@ Array [
     "…",
   ],
   Array [
-    "fillRect",
-    151,
-    1,
-    123,
-    1,
-  ],
-  Array [
-    "fillRect",
-    150,
-    2,
-    125,
-    11,
-  ],
-  Array [
-    "fillRect",
-    151,
-    13,
-    123,
-    1,
-  ],
-  Array [
-    "measureText",
-    "",
-  ],
-  Array [
-    "set fillStyle",
-    "#45a1ff",
-  ],
-  Array [
-    "fillRect",
-    288.5,
-    1,
-    48,
-    1,
-  ],
-  Array [
-    "fillRect",
-    287.5,
-    2,
-    50,
-    11,
-  ],
-  Array [
-    "fillRect",
-    288.5,
-    13,
-    48,
-    1,
-  ],
-  Array [
-    "measureText",
-    "",
-  ],
-  Array [
-    "set fillStyle",
-    "#45a1ff",
-  ],
-  Array [
-    "fillRect",
-    151,
-    17,
-    123,
-    1,
-  ],
-  Array [
-    "fillRect",
-    150,
-    18,
-    125,
-    11,
-  ],
-  Array [
-    "fillRect",
-    151,
-    29,
-    123,
-    1,
-  ],
-  Array [
-    "measureText",
-    "",
-  ],
-  Array [
-    "set fillStyle",
-    "#45a1ff",
-  ],
-  Array [
-    "fillRect",
-    151,
-    33,
-    35.5,
-    1,
-  ],
-  Array [
-    "fillRect",
-    150,
-    34,
-    37.5,
-    11,
-  ],
-  Array [
-    "fillRect",
-    151,
-    45,
-    35.5,
-    1,
-  ],
-  Array [
-    "measureText",
-    "",
-  ],
-  Array [
-    "set fillStyle",
-    "#45a1ff",
-  ],
-  Array [
     "beginPath",
   ],
   Array [
     "arc",
     205,
-    55.5,
+    23.5,
     3.75,
     0,
     6.283185307179586,
@@ -711,22 +179,80 @@ Array [
   ],
   Array [
     "fillRect",
-    213.5,
-    65,
+    151,
+    33,
     123,
     1,
   ],
   Array [
     "fillRect",
-    212.5,
-    66,
+    150,
+    34,
     125,
     11,
   ],
   Array [
     "fillRect",
-    213.5,
-    77,
+    151,
+    45,
+    123,
+    1,
+  ],
+  Array [
+    "measureText",
+    "",
+  ],
+  Array [
+    "set fillStyle",
+    "#45a1ff",
+  ],
+  Array [
+    "fillRect",
+    288.5,
+    33,
+    48,
+    1,
+  ],
+  Array [
+    "fillRect",
+    287.5,
+    34,
+    50,
+    11,
+  ],
+  Array [
+    "fillRect",
+    288.5,
+    45,
+    48,
+    1,
+  ],
+  Array [
+    "measureText",
+    "",
+  ],
+  Array [
+    "set fillStyle",
+    "#45a1ff",
+  ],
+  Array [
+    "fillRect",
+    151,
+    49,
+    123,
+    1,
+  ],
+  Array [
+    "fillRect",
+    150,
+    50,
+    125,
+    11,
+  ],
+  Array [
+    "fillRect",
+    151,
+    61,
     123,
     1,
   ],
@@ -741,21 +267,21 @@ Array [
   Array [
     "fillRect",
     213.5,
-    81,
+    65,
     60.5,
     1,
   ],
   Array [
     "fillRect",
     212.5,
-    82,
+    66,
     62.5,
     11,
   ],
   Array [
     "fillRect",
     213.5,
-    93,
+    77,
     60.5,
     1,
   ],
@@ -771,7 +297,65 @@ Array [
     "fillText",
     "click",
     215.5,
-    91,
+    75,
+  ],
+  Array [
+    "set fillStyle",
+    "#45a1ff",
+  ],
+  Array [
+    "fillRect",
+    263.5,
+    81,
+    85.5,
+    1,
+  ],
+  Array [
+    "fillRect",
+    262.5,
+    82,
+    87.5,
+    11,
+  ],
+  Array [
+    "fillRect",
+    263.5,
+    93,
+    85.5,
+    1,
+  ],
+  Array [
+    "measureText",
+    "",
+  ],
+  Array [
+    "set fillStyle",
+    "#45a1ff",
+  ],
+  Array [
+    "fillRect",
+    151,
+    97,
+    35.5,
+    1,
+  ],
+  Array [
+    "fillRect",
+    150,
+    98,
+    37.5,
+    11,
+  ],
+  Array [
+    "fillRect",
+    151,
+    109,
+    35.5,
+    1,
+  ],
+  Array [
+    "measureText",
+    "",
   ],
   Array [
     "set fillStyle",
@@ -783,7 +367,7 @@ Array [
   Array [
     "arc",
     242.5,
-    103.5,
+    119.5,
     3.75,
     0,
     6.283185307179586,
@@ -797,23 +381,23 @@ Array [
   ],
   Array [
     "fillRect",
-    263.5,
-    113,
-    85.5,
+    213.5,
+    129,
+    123,
     1,
   ],
   Array [
     "fillRect",
-    262.5,
-    114,
-    87.5,
+    212.5,
+    130,
+    125,
     11,
   ],
   Array [
     "fillRect",
-    263.5,
-    125,
-    85.5,
+    213.5,
+    141,
+    123,
     1,
   ],
   Array [
@@ -888,58 +472,65 @@ Array [
     1,
   ],
   Array [
+    "fillRect",
+    0,
+    143,
+    365,
+    1,
+  ],
+  Array [
     "set fillStyle",
     "#000000",
   ],
   Array [
     "measureText",
-    "Marker A",
+    "Dot marker E",
   ],
   Array [
     "fillText",
-    "Marker A",
+    "Dot marker E",
     5,
-    11,
+    27,
   ],
   Array [
     "measureText",
-    "Marker H with no start",
+    "Marker A",
   ],
   Array [
     "fillText",
-    "Marker H with no start",
+    "Marker A",
     5,
     43,
   ],
   Array [
     "measureText",
-    "Dot marker E",
+    "Marker G type DOMEvent",
   ],
   Array [
     "fillText",
-    "Dot marker E",
-    5,
-    59,
-  ],
-  Array [
-    "measureText",
-    "Very very very very very very Very very very very very very Very very very very very very Very very very very very very Very very very very very very long Marker D",
-  ],
-  Array [
-    "fillText",
-    "Very very very very very ver…",
+    "Marker G type DOMEvent",
     5,
     75,
   ],
   Array [
     "measureText",
-    "Marker G type DOMEvent",
+    "Marker H with no end",
   ],
   Array [
     "fillText",
-    "Marker G type DOMEvent",
+    "Marker H with no end",
     5,
     91,
+  ],
+  Array [
+    "measureText",
+    "Marker H with no start",
+  ],
+  Array [
+    "fillText",
+    "Marker H with no start",
+    5,
+    107,
   ],
   Array [
     "measureText",
@@ -949,17 +540,56 @@ Array [
     "fillText",
     "Non-interval marker F withou…",
     5,
-    107,
+    123,
   ],
   Array [
     "measureText",
-    "Marker H with no end",
+    "Very very very very very very Very very very very very very Very very very very very very Very very very very very very Very very very very very very long Marker D",
   ],
   Array [
     "fillText",
-    "Marker H with no end",
+    "Very very very very very ver…",
     5,
-    123,
+    139,
+  ],
+  Array [
+    "set fillStyle",
+    "#ededf0",
+  ],
+  Array [
+    "fillRect",
+    0,
+    0,
+    365,
+    16,
+  ],
+  Array [
+    "set fillStyle",
+    "#d7d7db",
+  ],
+  Array [
+    "fillRect",
+    0,
+    -1,
+    365,
+    1,
+  ],
+  Array [
+    "fillRect",
+    0,
+    16,
+    365,
+    1,
+  ],
+  Array [
+    "set fillStyle",
+    "#000000",
+  ],
+  Array [
+    "fillText",
+    "Idle",
+    155,
+    11,
   ],
 ]
 `;
