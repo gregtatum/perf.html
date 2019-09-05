@@ -70,7 +70,7 @@ type StateProps = {|
   +categories: CategoryList,
   +timelineType: TimelineType,
   +hasFileIoMarkers: boolean,
-  +samplesSelectedStates: SelectedState[],
+  +samplesSelectedStates: null | SelectedState[],
 |};
 
 type DispatchProps = {|

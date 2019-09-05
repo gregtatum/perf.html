@@ -106,6 +106,28 @@ export function loadProfile(
       return;
     }
 
+    // This is NOT the right place for this code. This is just an easy hack to
+    // show off this feature.
+    const jsTracerThreads = [];
+    for (const thread of profile.threads) {
+      const { jsTracer } = thread;
+      if (jsTracer) {
+        const friendlyThreadName = getFriendlyThreadName(
+          profile.threads,
+          thread
+        );
+        const jsTracerThread = convertJsTracerToThread(
+          thread,
+          jsTracer,
+          profile.meta.categories
+        );
+        jsTracerThread.isJsTracer = true;
+        jsTracerThread.name = `JS Tracer of ${friendlyThreadName}`;
+        jsTracerThreads.push(jsTracerThread);
+      }
+    }
+    profile.threads = [...profile.threads, ...jsTracerThreads];
+
     // We have a 'PROFILE_LOADED' dispatch here and a second dispatch for
     // `finalizeProfileView`. Normally this is an anti-pattern but that was
     // necessary for initial load url handling. We are not dispatching
@@ -146,28 +168,6 @@ export function finalizeProfileView(
       // Profile load was not successful. Do not continue.
       return;
     }
-
-    // This is NOT the right place for this code. This is just an easy hack to
-    // show off this feature.
-    const jsTracerThreads = [];
-    for (const thread of profile.threads) {
-      const { jsTracer } = thread;
-      if (jsTracer) {
-        const friendlyThreadName = getFriendlyThreadName(
-          profile.threads,
-          thread
-        );
-        const jsTracerThread = convertJsTracerToThread(
-          thread,
-          jsTracer,
-          profile.meta.categories
-        );
-        jsTracerThread.isJsTracer = true;
-        jsTracerThread.name = `JS Tracer of ${friendlyThreadName}`;
-        jsTracerThreads.push(jsTracerThread);
-      }
-    }
-    profile.threads = [...profile.threads, ...jsTracerThreads];
 
     // The selectedThreadIndex is only null for new profiles that haven't
     // been seen before. If it's non-null, then there is profile view information
