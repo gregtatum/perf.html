@@ -748,7 +748,7 @@ export function getJsTracerTable(
     jsTracer.timestamps.push(start * 1000);
     jsTracer.durations.push((end - start) * 1000);
     jsTracer.line.push(null);
-    jsTracer.column.push(null);
+    // jsTracer.column.push(null);
     jsTracer.length++;
   }
 
