@@ -788,7 +788,7 @@ export function getSelfTimeSamplesFromJsTracer(
     );
     sampleWeights.push(
       // The weight of the sample is in microseconds.
-      end - start
+      (end - start) / 1000
     );
     samples.length++;
   }
