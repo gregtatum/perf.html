@@ -22,7 +22,10 @@ import type { Selector } from '../../types/store';
 import type { ThreadViewOptions } from '../../types/state';
 import type { TransformStack } from '../../types/transforms';
 import type { UniqueStringArray } from '../../utils/unique-string-array';
-import type { JsTracerTiming } from '../../types/profile-derived';
+import type {
+  JsTracerTiming,
+  EventDataForTimings,
+} from '../../types/profile-derived';
 import type { $ReturnType } from '../../types/utils';
 import type { StartEndRange } from '../../types/units';
 
@@ -138,6 +141,13 @@ export function getThreadSelectorsPerThread(threadIndex: ThreadIndex): * {
         selectionEnd
       );
     }
+  );
+
+  const getEventDataForTimings: Selector<EventDataForTimings> = createSelector(
+    getThread,
+    getFilteredThread,
+    UrlState.getCallTreeSummaryStrategy,
+    ProfileData.getEventDataForTimings
   );
 
   /**
@@ -262,6 +272,7 @@ export function getThreadSelectorsPerThread(threadIndex: ThreadIndex): * {
     getSamplesTable,
     getThreadRange,
     getFilteredThread,
+    getEventDataForTimings,
     getRangeFilteredThread,
     getRangeAndTransformFilteredThread,
     getPreviewFilteredThread,

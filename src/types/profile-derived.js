@@ -12,6 +12,10 @@ import type {
   IndexIntoJsTracerEvents,
   IndexIntoCategoryList,
   CounterIndex,
+  IndexIntoStackTable,
+  Thread,
+  StackTable,
+  FuncTable,
 } from './profile';
 export type IndexIntoCallNodeTable = number;
 
@@ -206,3 +210,36 @@ export type SelectedState =
   // This call node is not selected, and the stacks are ordered after the selected
   // call node as sorted by the getTreeOrderComparator.
   | 'UNSELECTED_ORDERED_AFTER_SELECTED';
+
+/**
+ * This is a first step towards generalizing the idea of an EventTable for a variety
+ * of event-based data, like samples and allocation tables.
+ *
+ * For more information: https://github.com/firefox-devtools/profiler/issues/2165
+ */
+export type EventTable =
+  | {
+      time: Milliseconds[],
+      duration?: Milliseconds[],
+      stack: Array<IndexIntoStackTable | null>,
+      length: number,
+    }
+  | {
+      time: Milliseconds[],
+      duration: Milliseconds[],
+      stack: Array<IndexIntoStackTable | null>,
+      length: number,
+    };
+/**
+ * Computing timing information can be generic over a variety of timing types, including
+ * sample data and allocation data. This type collects the necessary information to
+ * compute it.
+ */
+export type EventDataForTimings = {|
+  +thread: Thread,
+  +eventTable: EventTable,
+  +stackTable: StackTable,
+  +funcTable: FuncTable,
+  +unfilteredEventTable: EventTable,
+  +unfilteredStackTable: StackTable,
+|};

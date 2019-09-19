@@ -16,6 +16,7 @@ type Props = {
   mouseX: CssPixels,
   mouseY: CssPixels,
   children?: React.Node,
+  childKey?: string | number,
 };
 
 type State = {
@@ -79,7 +80,7 @@ export default class Tooltip extends React.PureComponent<Props, State> {
   }
 
   render() {
-    const { children, mouseX, mouseY } = this.props;
+    const { children, mouseX, mouseY, childKey } = this.props;
     const { interiorElement } = this.state;
 
     // By default, position the tooltip below and at the right of the mouse cursor.
@@ -133,6 +134,7 @@ export default class Tooltip extends React.PureComponent<Props, State> {
       <div
         className="tooltip"
         data-testid="tooltip"
+        key={childKey}
         style={style}
         ref={this._takeInteriorElementRef}
       >

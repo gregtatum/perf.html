@@ -46,7 +46,12 @@
   border-radius: 2px;
 }
 
+.tooltipCallNodeImplementationTimingHeader {
+  padding: 0 3px;
+}
 .tooltipCallNodeImplementationTiming {
+  padding: 0 3px;
+  text-align: right;
   white-space: nowrap;
 }
 

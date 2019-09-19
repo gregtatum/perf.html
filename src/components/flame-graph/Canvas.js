@@ -27,9 +27,11 @@ import type {
 import type {
   CallNodeInfo,
   IndexIntoCallNodeTable,
+  EventDataForTimings,
 } from '../../types/profile-derived';
 import type { CallTree } from '../../profile-logic/call-tree';
 import type { Viewport } from '../shared/chart/Viewport';
+import type { CallTreeSummaryStrategy } from '../../types/actions';
 
 export type OwnProps = {|
   +thread: Thread,
@@ -48,6 +50,8 @@ export type OwnProps = {|
   +categories: CategoryList,
   +interval: Milliseconds,
   +isInverted: boolean,
+  +callTreeSummaryStrategy: CallTreeSummaryStrategy,
+  +eventDataForTimings: EventDataForTimings,
 |};
 
 type Props = {|
@@ -248,7 +252,7 @@ class FlameGraphCanvas extends React.PureComponent<Props> {
   }: HoveredStackTiming): React.Node => {
     const {
       thread,
-      unfilteredThread,
+      eventDataForTimings,
       sampleIndexOffset,
       flameGraphTiming,
       callTree,
@@ -257,6 +261,7 @@ class FlameGraphCanvas extends React.PureComponent<Props> {
       categories,
       interval,
       isInverted,
+      callTreeSummaryStrategy,
     } = this.props;
 
     if (!shouldDisplayTooltips()) {
@@ -280,13 +285,13 @@ class FlameGraphCanvas extends React.PureComponent<Props> {
         categories={categories}
         durationText={`${(100 * duration).toFixed(2)}%`}
         callTree={callTree}
+        callTreeSummaryStrategy={callTreeSummaryStrategy}
         timings={this._getTimingsForCallNodeIndex(
           callNodeIndex,
           callNodeInfo,
           interval,
           isInverted,
-          thread,
-          unfilteredThread,
+          eventDataForTimings,
           sampleIndexOffset,
           categories
         )}

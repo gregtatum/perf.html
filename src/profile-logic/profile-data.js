@@ -6,6 +6,7 @@
 
 import memoize from 'memoize-immutable';
 import MixedTupleMap from 'mixedtuplemap';
+import { getEmptyNativeAllocationsTable } from './data-structures';
 
 import type {
   Profile,
@@ -25,6 +26,7 @@ import type {
   Category,
   Counter,
   CounterSamplesTable,
+  NativeAllocationsTable,
 } from '../types/profile';
 import type {
   CallNodeInfo,
@@ -33,8 +35,9 @@ import type {
   IndexIntoCallNodeTable,
   AccumulatedCounterSamples,
   SelectedState,
+  EventDataForTimings,
 } from '../types/profile-derived';
-import { assertExhaustiveCheck } from '../utils/flow';
+import { assertExhaustiveCheck, ensureExists } from '../utils/flow';
 
 import type { Milliseconds, StartEndRange } from '../types/units';
 import { timeCode } from '../utils/time-code';
@@ -354,8 +357,7 @@ export function getTimingsForPath(
   callNodeInfo: CallNodeInfo,
   interval: Milliseconds,
   isInvertedTree: boolean,
-  thread: Thread,
-  unfilteredThread: Thread,
+  eventData: EventDataForTimings,
   sampleIndexOffset: number,
   categories: CategoryList
 ) {
@@ -364,11 +366,84 @@ export function getTimingsForPath(
     callNodeInfo,
     interval,
     isInvertedTree,
-    thread,
-    unfilteredThread,
+    eventData,
     sampleIndexOffset,
     categories
   );
+}
+
+/**
+ * The timing information supports different EventTables. This function pulls out the
+ * correct event tables for the given summary strategy.
+ */
+export function getEventDataForTimings(
+  thread: Thread,
+  unfilteredThread: Thread,
+  callTreeSummaryStrategy: CallTreeSummaryStrategy
+): EventDataForTimings {
+  switch (callTreeSummaryStrategy) {
+    case 'timing':
+      return {
+        thread,
+        eventTable: thread.samples,
+        stackTable: thread.stackTable,
+        funcTable: thread.funcTable,
+        unfilteredEventTable: unfilteredThread.samples,
+        unfilteredStackTable: unfilteredThread.stackTable,
+      };
+    case 'js-allocations': {
+      const errorMessage =
+        'The call tree summary strategy is set to JS allocations, but no ' +
+        'JS allocations were found on the thread.';
+      const jsAllocations = ensureExists(thread.jsAllocations, errorMessage);
+      const unfilteredJsAllocations = ensureExists(
+        unfilteredThread.jsAllocations,
+        errorMessage
+      );
+
+      return {
+        thread,
+        eventTable: jsAllocations,
+        stackTable: thread.stackTable,
+        funcTable: thread.funcTable,
+        unfilteredEventTable: unfilteredJsAllocations,
+        unfilteredStackTable: unfilteredThread.stackTable,
+      };
+    }
+    case 'native-allocations':
+    case 'native-deallocations': {
+      const errorMessage =
+        'The call tree summary strategy is set to native allocations, but no ' +
+        'native allocations were found on the thread.';
+      const nativeAllocations = ensureExists(
+        thread.nativeAllocations,
+        errorMessage
+      );
+      const unfilteredNativeAllocations = ensureExists(
+        unfilteredThread.nativeAllocations,
+        errorMessage
+      );
+
+      const filter =
+        callTreeSummaryStrategy === 'native-allocations'
+          ? filterToAllocations
+          : filterToDeallocations;
+
+      return {
+        thread,
+        eventTable: filter(nativeAllocations),
+        stackTable: thread.stackTable,
+        funcTable: thread.funcTable,
+        unfilteredEventTable: filter(unfilteredNativeAllocations),
+        unfilteredStackTable: unfilteredThread.stackTable,
+      };
+    }
+    default:
+      throw assertExhaustiveCheck(
+        callTreeSummaryStrategy,
+        'Unhandled callTreeSummaryStrategy.'
+      );
+  }
 }
 
 /**
@@ -384,16 +459,18 @@ export function getTimingsForCallNodeIndex(
   { callNodeTable, stackIndexToCallNodeIndex }: CallNodeInfo,
   interval: Milliseconds,
   isInvertedTree: boolean,
-  thread: Thread,
-  unfilteredThread: Thread,
+  eventData: EventDataForTimings,
   sampleIndexOffset: number,
   categories: CategoryList
 ): TimingsForPath {
-  const { samples, stackTable, funcTable } = thread;
   const {
-    samples: unfilteredSamples,
-    stackTable: unfilteredStackTable,
-  } = unfilteredThread;
+    thread,
+    eventTable,
+    stackTable,
+    funcTable,
+    unfilteredEventTable,
+    unfilteredStackTable,
+  } = eventData;
 
   const pathTimings: ItemTimings = {
     selfTime: {
@@ -464,7 +541,7 @@ export function getTimingsForCallNodeIndex(
     // step 4: find the category value for this stack. We want to use the
     // category of the unfilteredThread.
     const unfilteredStackIndex =
-      unfilteredSamples.stack[sampleIndex + sampleIndexOffset];
+      unfilteredEventTable.stack[sampleIndex + sampleIndexOffset];
     if (unfilteredStackIndex !== null) {
       const categoryIndex = unfilteredStackTable.category[unfilteredStackIndex];
       const subcategoryIndex =
@@ -488,14 +565,14 @@ export function getTimingsForCallNodeIndex(
 
   // Loop over each sample and accumulate the self time, running time, and
   // the implementation breakdown.
-  for (let sampleIndex = 0; sampleIndex < samples.length; sampleIndex++) {
-    const thisStackIndex = samples.stack[sampleIndex];
+  for (let sampleIndex = 0; sampleIndex < eventTable.length; sampleIndex++) {
+    const thisStackIndex = eventTable.stack[sampleIndex];
     if (thisStackIndex === null) {
       continue;
     }
 
-    const duration = samples.duration
-      ? samples.duration[sampleIndex]
+    const duration = eventTable.duration
+      ? eventTable.duration[sampleIndex]
       : interval;
 
     rootTime += Math.abs(duration);
@@ -779,6 +856,7 @@ export function toValidCallTreeSummaryStrategy(
     case 'timing':
     case 'js-allocations':
     case 'native-allocations':
+    case 'native-deallocations':
       return strategy;
     default:
       // Default to "timing" if the strategy is not recognized. This value can come
@@ -1066,7 +1144,7 @@ export function filterThreadSamplesToRange(
   }
 
   if (nativeAllocations) {
-    const [startAllocIndex, endAllocIndex] = _getSampleIndexRangeForSelection(
+    const [startAllocIndex, endAllocIndex] = getSampleIndexRangeForSelection(
       nativeAllocations,
       rangeStart,
       rangeEnd
@@ -1931,4 +2009,36 @@ export function getCategoryPairLabel(
   return subcategoryIndex !== 0
     ? `${category.name}: ${category.subcategories[subcategoryIndex]}`
     : `${category.name}`;
+}
+
+export function filterToAllocations(
+  nativeAllocations: NativeAllocationsTable
+): NativeAllocationsTable {
+  const newNativeAllocations = getEmptyNativeAllocationsTable();
+  for (let i = 0; i < nativeAllocations.length; i++) {
+    const duration = nativeAllocations.duration[i];
+    if (duration > 0) {
+      newNativeAllocations.time.push(nativeAllocations.time[i]);
+      newNativeAllocations.stack.push(nativeAllocations.stack[i]);
+      newNativeAllocations.duration.push(duration);
+      newNativeAllocations.length++;
+    }
+  }
+  return newNativeAllocations;
+}
+
+export function filterToDeallocations(
+  nativeAllocations: NativeAllocationsTable
+): NativeAllocationsTable {
+  const newNativeAllocations = getEmptyNativeAllocationsTable();
+  for (let i = 0; i < nativeAllocations.length; i++) {
+    const duration = nativeAllocations.duration[i];
+    if (duration < 0) {
+      newNativeAllocations.time.push(nativeAllocations.time[i]);
+      newNativeAllocations.stack.push(nativeAllocations.stack[i]);
+      newNativeAllocations.duration.push(duration);
+      newNativeAllocations.length++;
+    }
+  }
+  return newNativeAllocations;
 }

@@ -49,7 +49,8 @@ function callTreeFromProfile(
     callNodeInfo,
     categories,
     'combined',
-    callTreeCountsAndTimings
+    callTreeCountsAndTimings,
+    'ms'
   );
 }
 
@@ -439,7 +440,8 @@ describe('inverted call tree', function() {
       callNodeInfo,
       categories,
       'combined',
-      callTreeCountsAndTimings
+      callTreeCountsAndTimings,
+      'ms'
     );
 
     it('computes an non-inverted call tree', function() {
@@ -478,7 +480,8 @@ describe('inverted call tree', function() {
       invertedCallNodeInfo,
       categories,
       'combined',
-      invertedCallTreeCountsAndTimings
+      invertedCallTreeCountsAndTimings,
+      'ms'
     );
 
     /**

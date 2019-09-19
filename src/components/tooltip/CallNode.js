@@ -5,7 +5,7 @@
 import * as React from 'react';
 
 import { getStackType } from '../../profile-logic/transforms';
-import { objectEntries } from '../../utils/flow';
+import { objectEntries, assertExhaustiveCheck } from '../../utils/flow';
 import { formatNumberDependingOnInterval } from '../../utils/format-numbers';
 import NodeIcon from '../shared/NodeIcon';
 import {
@@ -22,6 +22,7 @@ import type {
 } from '../../types/profile-derived';
 import type { TimingsForPath } from '../../profile-logic/profile-data';
 import type { Milliseconds } from '../../types/units';
+import type { CallTreeSummaryStrategy } from '../../types/actions';
 
 import './CallNode.css';
 
@@ -29,16 +30,17 @@ const GRAPH_WIDTH = 150;
 const GRAPH_HEIGHT = 10;
 
 type Props = {|
-  thread: Thread,
-  callNodeIndex: IndexIntoCallNodeTable,
-  callNodeInfo: CallNodeInfo,
-  categories: CategoryList,
-  interval: Milliseconds,
+  +thread: Thread,
+  +callNodeIndex: IndexIntoCallNodeTable,
+  +callNodeInfo: CallNodeInfo,
+  +categories: CategoryList,
+  +interval: Milliseconds,
   // Since this tooltip can be used in different context, provide some kind of duration
   // label, e.g. "100ms" or "33%".
-  durationText: string,
-  callTree?: CallTree,
-  timings?: TimingsForPath,
+  +durationText: string,
+  +callTree?: CallTree,
+  +timings?: TimingsForPath,
+  +callTreeSummaryStrategy: CallTreeSummaryStrategy,
 |};
 
 /**
@@ -62,7 +64,7 @@ export class TooltipCallNode extends React.PureComponent<Props> {
     const sortedTotalBreakdownByImplementation = objectEntries(
       totalTime.breakdownByImplementation
     ).sort((a, b) => b[1] - a[1]);
-    const { interval } = this.props;
+    const { interval, callTreeSummaryStrategy } = this.props;
     const isIntegerInterval = Number.isInteger(interval);
 
     return (
@@ -70,11 +72,11 @@ export class TooltipCallNode extends React.PureComponent<Props> {
         {/* grid row -------------------------------------------------- */}
         <div />
         <div className="tooltipCallNodeImplementationHeader" />
-        <div className="tooltipCallNodeImplementationHeader">
+        <div className="tooltipCallNodeImplementationHeader tooltipCallNodeImplementationTimingHeader">
           <span className="tooltipCallNodeImplementationHeaderSwatchRunning" />
           Running
         </div>
-        <div className="tooltipCallNodeImplementationHeader">
+        <div className="tooltipCallNodeImplementationHeader tooltipCallNodeImplementationTimingHeader">
           <span className="tooltipCallNodeImplementationHeaderSwatchSelf" />
           Self
         </div>
@@ -94,8 +96,12 @@ export class TooltipCallNode extends React.PureComponent<Props> {
             }}
           />
         </div>
-        <div>{displayData.totalTimeWithUnit}</div>
-        <div>{displayData.selfTimeWithUnit}</div>
+        <div className="tooltipCallNodeImplementationTiming">
+          {displayData.totalTimeWithUnit}
+        </div>
+        <div className="tooltipCallNodeImplementationTiming">
+          {displayData.selfTimeWithUnit}
+        </div>
         {/* grid row -------------------------------------------------- */}
         {sortedTotalBreakdownByImplementation.map(
           ([implementation, time], index) => {
@@ -103,6 +109,39 @@ export class TooltipCallNode extends React.PureComponent<Props> {
             if (selfTime.breakdownByImplementation) {
               selfTimeValue =
                 selfTime.breakdownByImplementation[implementation] || 0;
+            }
+
+            let runningTotal;
+            let selfTotal;
+
+            switch (callTreeSummaryStrategy) {
+              case 'timing':
+                runningTotal = `${formatNumberDependingOnInterval(
+                  isIntegerInterval,
+                  time
+                )} ms`;
+
+                selfTotal =
+                  selfTimeValue === 0
+                    ? '—'
+                    : `${formatNumberDependingOnInterval(
+                        isIntegerInterval,
+                        selfTimeValue
+                      )} ms`;
+                break;
+              case 'js-allocations':
+              case 'native-allocations':
+              case 'native-deallocations':
+                runningTotal = `${time} bytes`;
+
+                selfTotal =
+                  selfTimeValue === 0 ? '—' : `${selfTimeValue} bytes`;
+                break;
+              default:
+                throw assertExhaustiveCheck(
+                  callTreeSummaryStrategy,
+                  'Unhandled callTreeSummaryStrategy.'
+                );
             }
 
             return (
@@ -125,15 +164,10 @@ export class TooltipCallNode extends React.PureComponent<Props> {
                   />
                 </div>
                 <div className="tooltipCallNodeImplementationTiming">
-                  {formatNumberDependingOnInterval(isIntegerInterval, time)}ms
+                  {runningTotal}
                 </div>
                 <div className="tooltipCallNodeImplementationTiming">
-                  {selfTimeValue === 0
-                    ? '—'
-                    : `${formatNumberDependingOnInterval(
-                        isIntegerInterval,
-                        selfTimeValue
-                      )}ms`}
+                  {selfTotal}
                 </div>
               </React.Fragment>
             );
