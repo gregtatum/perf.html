@@ -30,6 +30,7 @@ import type {
 } from '../../types/profile-derived';
 import type { CallTree } from '../../profile-logic/call-tree';
 import type { Viewport } from '../shared/chart/Viewport';
+import type { CallTreeSummaryStrategy } from '../../types/actions';
 
 export type OwnProps = {|
   +thread: Thread,
@@ -48,6 +49,7 @@ export type OwnProps = {|
   +categories: CategoryList,
   +interval: Milliseconds,
   +isInverted: boolean,
+  +callTreeSummaryStrategy: CallTreeSummaryStrategy,
 |};
 
 type Props = {|
@@ -257,6 +259,7 @@ class FlameGraphCanvas extends React.PureComponent<Props> {
       categories,
       interval,
       isInverted,
+      callTreeSummaryStrategy,
     } = this.props;
 
     if (!shouldDisplayTooltips()) {
@@ -280,16 +283,24 @@ class FlameGraphCanvas extends React.PureComponent<Props> {
         categories={categories}
         durationText={`${(100 * duration).toFixed(2)}%`}
         callTree={callTree}
-        timings={this._getTimingsForCallNodeIndex(
-          callNodeIndex,
-          callNodeInfo,
-          interval,
-          isInverted,
-          thread,
-          unfilteredThread,
-          sampleIndexOffset,
-          categories
-        )}
+        callTreeSummaryStrategy={callTreeSummaryStrategy}
+        timings={
+          // Only calculate this is our summary strategy is actually timing related.
+          // This function could be made more generic to handle other summary
+          // strategies, but it may not be worth implementing it.
+          callTreeSummaryStrategy === 'timing'
+            ? this._getTimingsForCallNodeIndex(
+                callNodeIndex,
+                callNodeInfo,
+                interval,
+                isInverted,
+                thread,
+                unfilteredThread,
+                sampleIndexOffset,
+                categories
+              )
+            : undefined
+        }
       />
     );
   };

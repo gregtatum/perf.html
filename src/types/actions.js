@@ -87,8 +87,7 @@ export type CallTreeSummaryStrategy =
   | 'timing'
   | 'js-allocations'
   | 'native-allocations'
-  | 'native-deallocations'
-  | 'native-summed-allocation';
+  | 'native-deallocations';
 
 /**
  * This type determines what kind of information gets sanitized from published profiles.

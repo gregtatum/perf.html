@@ -102,16 +102,19 @@ class StackSettings extends PureComponent<Props> {
 
   _renderCallTreeStrategyRadioButton(
     label: string,
-    strategy: CallTreeSummaryStrategy
+    strategy: CallTreeSummaryStrategy,
+    tooltip: string
   ) {
     return (
-      <label className="photon-label photon-label-micro stackSettingsFilterLabel">
+      <label
+        className="photon-label photon-label-micro stackSettingsFilterLabel"
+        title={tooltip}
+      >
         <input
           type="radio"
           className="photon-radio photon-radio-micro stackSettingsFilterInput"
           value={strategy}
           name="stack-settings-strategy"
-          title="Change how the call tree numerically summarizes the thread"
           onChange={this._onCallTreeSummaryStrategyChange}
           checked={this.props.callTreeSummaryStrategy === strategy}
         />
@@ -142,18 +145,31 @@ class StackSettings extends PureComponent<Props> {
           </li>
           {hasAllocations && !disableCallTreeSummaryButtons ? (
             <li className="stackSettingsListItem stackSettingsFilter">
-              {this._renderCallTreeStrategyRadioButton('Timing', 'timing')}
+              {this._renderCallTreeStrategyRadioButton(
+                'Timing',
+                'timing',
+                'Summarize using sampled stacks of executed code over time'
+              )}
               {hasJsAllocations
                 ? this._renderCallTreeStrategyRadioButton(
                     'JavaScript Allocations',
-                    'js-allocations'
+                    'js-allocations',
+                    'Summarize using bytes of JavaScript allocated (no de-allocations)'
                   )
                 : null}
               {hasNativeAllocations
-                ? this._renderCallTreeStrategyRadioButton(
-                    'Native Allocations',
-                    'native-allocations'
-                  )
+                ? [
+                    this._renderCallTreeStrategyRadioButton(
+                      'Allocations',
+                      'native-allocations',
+                      'Summarize using bytes of memory allocated'
+                    ),
+                    this._renderCallTreeStrategyRadioButton(
+                      'Deallocations',
+                      'native-deallocations',
+                      'Summarize using bytes of memory deallocated'
+                    ),
+                  ]
                 : null}
             </li>
           ) : null}

@@ -6,6 +6,7 @@
 
 import memoize from 'memoize-immutable';
 import MixedTupleMap from 'mixedtuplemap';
+import { getEmptyNativeAllocationsTable } from './data-structures';
 
 import type {
   Profile,
@@ -25,6 +26,7 @@ import type {
   Category,
   Counter,
   CounterSamplesTable,
+  NativeAllocationsTable,
 } from '../types/profile';
 import type {
   CallNodeInfo,
@@ -779,6 +781,7 @@ export function toValidCallTreeSummaryStrategy(
     case 'timing':
     case 'js-allocations':
     case 'native-allocations':
+    case 'native-deallocations':
       return strategy;
     default:
       // Default to "timing" if the strategy is not recognized. This value can come
@@ -1066,7 +1069,7 @@ export function filterThreadSamplesToRange(
   }
 
   if (nativeAllocations) {
-    const [startAllocIndex, endAllocIndex] = _getSampleIndexRangeForSelection(
+    const [startAllocIndex, endAllocIndex] = getSampleIndexRangeForSelection(
       nativeAllocations,
       rangeStart,
       rangeEnd
@@ -1931,4 +1934,49 @@ export function getCategoryPairLabel(
   return subcategoryIndex !== 0
     ? `${category.name}: ${category.subcategories[subcategoryIndex]}`
     : `${category.name}`;
+}
+
+/**
+ * Currently the native allocations naively collect allocations and deallocations.
+ * There is no attempt to match up the sampled allocations with the deallocations.
+ * Because of this, if a calltree were to combine both allocations and deallocations,
+ * then the summary would most likely lie and not misreport leaked or retained memory.
+ * For now, filter to only showing allocations or deallocations.
+ *
+ * This function filters to only positive values.
+ */
+export function filterToAllocations(
+  nativeAllocations: NativeAllocationsTable
+): NativeAllocationsTable {
+  const newNativeAllocations = getEmptyNativeAllocationsTable();
+  for (let i = 0; i < nativeAllocations.length; i++) {
+    const duration = nativeAllocations.duration[i];
+    if (duration > 0) {
+      newNativeAllocations.time.push(nativeAllocations.time[i]);
+      newNativeAllocations.stack.push(nativeAllocations.stack[i]);
+      newNativeAllocations.duration.push(duration);
+      newNativeAllocations.length++;
+    }
+  }
+  return newNativeAllocations;
+}
+
+/**
+ * See filterToAllocations for detailed documentation. This function filters to only
+ * negative values.
+ */
+export function filterToDeallocations(
+  nativeAllocations: NativeAllocationsTable
+): NativeAllocationsTable {
+  const newNativeAllocations = getEmptyNativeAllocationsTable();
+  for (let i = 0; i < nativeAllocations.length; i++) {
+    const duration = nativeAllocations.duration[i];
+    if (duration < 0) {
+      newNativeAllocations.time.push(nativeAllocations.time[i]);
+      newNativeAllocations.stack.push(nativeAllocations.stack[i]);
+      newNativeAllocations.duration.push(duration);
+      newNativeAllocations.length++;
+    }
+  }
+  return newNativeAllocations;
 }

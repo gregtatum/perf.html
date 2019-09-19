@@ -80,6 +80,8 @@ export class CallTree {
   _children: Array<CallNodeChildren>;
   _jsOnly: boolean;
   _isIntegerInterval: boolean;
+  // The unit of summary, e.g. "ms" or "bytes"
+  _unit: string;
 
   constructor(
     { funcTable, resourceTable, stringTable }: Thread,
@@ -90,7 +92,8 @@ export class CallTree {
     rootTotalTime: number,
     rootCount: number,
     jsOnly: boolean,
-    isIntegerInterval: boolean
+    isIntegerInterval: boolean,
+    unit: string
   ) {
     this._categories = categories;
     this._callNodeTable = callNodeTable;
@@ -105,6 +108,7 @@ export class CallTree {
     this._children = [];
     this._jsOnly = jsOnly;
     this._isIntegerInterval = isIntegerInterval;
+    this._unit = unit;
   }
 
   getRoots() {
@@ -238,9 +242,11 @@ export class CallTree {
 
       displayData = {
         totalTime: totalTime === 0 ? '—' : formattedTotalTime,
-        totalTimeWithUnit: totalTime === 0 ? '—' : formattedTotalTime + 'ms',
+        totalTimeWithUnit:
+          totalTime === 0 ? '—' : `${formattedTotalTime} ${this._unit}`,
         selfTime: selfTime === 0 ? '—' : formattedSelfTime,
-        selfTimeWithUnit: selfTime === 0 ? '—' : formattedSelfTime + 'ms',
+        selfTimeWithUnit:
+          selfTime === 0 ? '—' : `${formattedSelfTime} ${this._unit}`,
         totalTimePercent: `${formatPercent(totalTimeRelative)}`,
         name: funcName,
         lib: libName.slice(0, 1000),
@@ -443,7 +449,8 @@ export function getCallTree(
   callNodeInfo: CallNodeInfo,
   categories: CategoryList,
   implementationFilter: string,
-  callTreeCountsAndTimings: CallTreeCountsAndTimings
+  callTreeCountsAndTimings: CallTreeCountsAndTimings,
+  unit: string
 ): CallTree {
   return timeCode('getCallTree', () => {
     const {
@@ -465,7 +472,8 @@ export function getCallTree(
       rootTotalTime,
       rootCount,
       jsOnly,
-      isIntegerInterval
+      isIntegerInterval,
+      unit
     );
   });
 }
