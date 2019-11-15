@@ -15,7 +15,6 @@ import {
   getImplementationFilter,
   getInvertCallstack,
   getCurrentSearchString,
-  getCallTreeSummaryStrategy,
 } from '../../selectors/url-state';
 import PanelSearch from '../shared/PanelSearch';
 import {
@@ -209,7 +208,9 @@ export default explicitConnect<OwnProps, StateProps, DispatchProps>({
     hasNativeAllocations: selectedThreadSelectors.getHasNativeAllocations(
       state
     ),
-    callTreeSummaryStrategy: getCallTreeSummaryStrategy(state),
+    callTreeSummaryStrategy: selectedThreadSelectors.getCallTreeSummaryStrategy(
+      state
+    ),
   }),
   mapDispatchToProps: {
     changeImplementationFilter,

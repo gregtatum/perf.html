@@ -554,7 +554,7 @@ describe('actions/ProfileView', function() {
           ProfileView.changeCallTreeSummaryStrategy('native-allocations')
         );
         expect(
-          UrlStateSelectors.getCallTreeSummaryStrategy(getState())
+          selectedThreadSelectors.getCallTreeSummaryStrategy(getState())
         ).toEqual('native-allocations');
 
         // Switch to a thread without native allocations.
@@ -562,7 +562,7 @@ describe('actions/ProfileView', function() {
 
         // Expect that it switches the summary strategy to one it supports.
         expect(
-          UrlStateSelectors.getCallTreeSummaryStrategy(getState())
+          selectedThreadSelectors.getCallTreeSummaryStrategy(getState())
         ).toEqual('timing');
       });
 
@@ -574,7 +574,7 @@ describe('actions/ProfileView', function() {
         dispatch(ProfileView.selectTrack(jsAllocationsThread));
         dispatch(ProfileView.changeCallTreeSummaryStrategy('js-allocations'));
         expect(
-          UrlStateSelectors.getCallTreeSummaryStrategy(getState())
+          selectedThreadSelectors.getCallTreeSummaryStrategy(getState())
         ).toEqual('js-allocations');
 
         // Switch to a thread without js allocations.
@@ -582,7 +582,7 @@ describe('actions/ProfileView', function() {
 
         // Expect that it switches the summary strategy to one it supports.
         expect(
-          UrlStateSelectors.getCallTreeSummaryStrategy(getState())
+          selectedThreadSelectors.getCallTreeSummaryStrategy(getState())
         ).toEqual('timing');
       });
     });
@@ -2365,13 +2365,13 @@ describe('counter selectors', function() {
 describe('call tree summary strategy', function() {
   it('can change the call tree strategy', function() {
     const { dispatch, getState } = storeWithProfile();
-    expect(UrlStateSelectors.getCallTreeSummaryStrategy(getState())).toEqual(
-      'timing'
-    );
+    expect(
+      selectedThreadSelectors.getCallTreeSummaryStrategy(getState())
+    ).toEqual('timing');
     dispatch(ProfileView.changeCallTreeSummaryStrategy('js-allocations'));
-    expect(UrlStateSelectors.getCallTreeSummaryStrategy(getState())).toEqual(
-      'js-allocations'
-    );
+    expect(
+      selectedThreadSelectors.getCallTreeSummaryStrategy(getState())
+    ).toEqual('js-allocations');
   });
 });
 
