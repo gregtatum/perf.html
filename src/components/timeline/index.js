@@ -10,14 +10,12 @@ import TimelineGlobalTrack from './GlobalTrack';
 import TimelineRuler from './Ruler';
 import TimelineSelection from './Selection';
 import OverflowEdgeIndicator from './OverflowEdgeIndicator';
-import Reorderable from '../shared/Reorderable';
 import { withSize } from '../shared/WithSize';
 import explicitConnect from '../../utils/connect';
 import { getPanelLayoutGeneration } from '../../selectors/app';
 import {
   getCommittedRange,
   getZeroAt,
-  getGlobalTracks,
   getGlobalTrackReferences,
   getHiddenTrackCount,
 } from '../../selectors/profile';
@@ -36,14 +34,13 @@ import './index.css';
 import type { SizeProps } from '../shared/WithSize';
 
 import {
-  changeGlobalTrackOrder,
   updatePreviewSelection,
   commitRange,
   changeTimelineType,
   changeRightClickedTrack,
 } from '../../actions/profile-view';
 
-import type { TrackIndex, GlobalTrack } from '../../types/profile-derived';
+import type { TrackIndex } from '../../types/profile-derived';
 import type {
   GlobalTrackReference,
   TimelineType,
@@ -54,7 +51,6 @@ import type { ConnectedProps } from '../../utils/connect';
 
 type StateProps = {|
   +committedRange: StartEndRange,
-  +globalTracks: GlobalTrack[],
   +globalTrackOrder: TrackIndex[],
   +globalTrackReferences: GlobalTrackReference[],
   +panelLayoutGeneration: number,
@@ -64,7 +60,6 @@ type StateProps = {|
 |};
 
 type DispatchProps = {|
-  +changeGlobalTrackOrder: typeof changeGlobalTrackOrder,
   +commitRange: typeof commitRange,
   +updatePreviewSelection: typeof updatePreviewSelection,
   +changeTimelineType: typeof changeTimelineType,
@@ -156,9 +151,7 @@ class TimelineSettingsHiddenTracks extends React.PureComponent<{|
 class Timeline extends React.PureComponent<Props> {
   render() {
     const {
-      globalTracks,
       globalTrackOrder,
-      changeGlobalTrackOrder,
       committedRange,
       zeroAt,
       width,
@@ -201,24 +194,18 @@ class Timeline extends React.PureComponent<Props> {
             className="timelineOverflowEdgeIndicator"
             panelLayoutGeneration={panelLayoutGeneration}
           >
-            {
-              <Reorderable
-                tagName="ol"
-                className="timelineThreadList"
-                grippyClassName="timelineTrackGlobalGrippy"
-                order={globalTrackOrder}
-                orient="vertical"
-                onChangeOrder={changeGlobalTrackOrder}
-              >
-                {globalTracks.map((globalTrack, trackIndex) => (
-                  <TimelineGlobalTrack
-                    key={trackIndex}
-                    trackIndex={trackIndex}
-                    trackReference={globalTrackReferences[trackIndex]}
-                  />
-                ))}
-              </Reorderable>
-            }
+            <ol
+              className="timelineThreadList"
+              grippyClassName="timelineTrackGlobalGrippy"
+            >
+              {globalTrackOrder.map(trackIndex => (
+                <TimelineGlobalTrack
+                  key={trackIndex}
+                  trackIndex={trackIndex}
+                  trackReference={globalTrackReferences[trackIndex]}
+                />
+              ))}
+            </ol>
           </OverflowEdgeIndicator>
         </TimelineSelection>
       </>
@@ -228,7 +215,6 @@ class Timeline extends React.PureComponent<Props> {
 
 export default explicitConnect<{||}, StateProps, DispatchProps>({
   mapStateToProps: state => ({
-    globalTracks: getGlobalTracks(state),
     globalTrackOrder: getGlobalTrackOrder(state),
     globalTrackReferences: getGlobalTrackReferences(state),
     committedRange: getCommittedRange(state),
@@ -238,7 +224,6 @@ export default explicitConnect<{||}, StateProps, DispatchProps>({
     hiddenTrackCount: getHiddenTrackCount(state),
   }),
   mapDispatchToProps: {
-    changeGlobalTrackOrder,
     updatePreviewSelection,
     commitRange,
     changeTimelineType,
