@@ -14,7 +14,6 @@ import {
 import ContextMenuTrigger from '../shared/ContextMenuTrigger';
 import {
   getSelectedThreadIndex,
-  getHiddenGlobalTracks,
   getLocalTrackOrder,
   getSelectedTab,
 } from '../../selectors/url-state';
@@ -29,6 +28,7 @@ import {
   getContentfulSpeedIndexProgress,
 } from '../../selectors/profile';
 import { getThreadSelectors } from '../../selectors/per-thread';
+import { getComputedHiddenGlobalTracks } from '../../selectors/app';
 import './Track.css';
 import TimelineTrackThread from './TrackThread';
 import TimelineTrackScreenshots from './TrackScreenshots';
@@ -325,7 +325,7 @@ export default explicitConnect<OwnProps, StateProps, DispatchProps>({
       localTrackOrder,
       localTracks,
       pid,
-      isHidden: getHiddenGlobalTracks(state).has(trackIndex),
+      isHidden: getComputedHiddenGlobalTracks(state).has(trackIndex),
       selectedTab,
       processesWithMemoryTrack: getProcessesWithMemoryTrack(state),
       progressGraphData,

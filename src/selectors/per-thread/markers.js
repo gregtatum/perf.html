@@ -199,6 +199,26 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
   );
 
   /**
+   * This selector applies the tab filter to the full list of markers but
+   * excludes the global markers.
+   */
+  const getTabFilteredMarkerIndexesWithoutGlobals: Selector<
+    MarkerIndex[]
+  > = createSelector(
+    getMarkerGetter,
+    getFullMarkerListIndexes,
+    ProfileSelectors.getRelevantPagesForActiveTab,
+    (markerGetter, markerIndexes, relevantPages) => {
+      return MarkerData.getTabFilteredMarkerIndexes(
+        markerGetter,
+        markerIndexes,
+        relevantPages,
+        false
+      );
+    }
+  );
+
+  /**
    * This selector filters out markers that are usually too long to be displayed
    * in the header, because they would obscure the header, or that are displayed
    * in other tracks already.
@@ -465,6 +485,7 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
     getSearchFilteredMarkerChartMarkerIndexes,
     getMarkerChartTimingAndBuckets,
     getCommittedRangeFilteredMarkerIndexes,
+    getTabFilteredMarkerIndexesWithoutGlobals,
     getCommittedRangeAndTabFilteredMarkerIndexesForHeader,
     getTimelineVerticalMarkerIndexes,
     getFileIoMarkerIndexes,

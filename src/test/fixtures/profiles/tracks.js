@@ -5,12 +5,14 @@
 
 import * as profileViewSelectors from '../../../selectors/profile';
 import * as urlStateReducers from '../../../selectors/url-state';
+import * as appStateReducers from '../../../selectors/app';
 import {
   getProfileFromTextSamples,
   getCounterForThread,
 } from './processed-profile';
 import { storeWithProfile } from '../stores';
 import { oneLine } from 'common-tags';
+import { ensureExists } from '../../../utils/flow';
 
 import type { Profile } from '../../../types/profile';
 import type { State } from '../../../types/state';
@@ -41,7 +43,9 @@ import type { State } from '../../../types/state';
 export function getHumanReadableTracks(state: State): string[] {
   const threads = profileViewSelectors.getThreads(state);
   const globalTracks = profileViewSelectors.getGlobalTracks(state);
-  const hiddenGlobalTracks = urlStateReducers.getHiddenGlobalTracks(state);
+  const hiddenGlobalTracks = appStateReducers.getComputedHiddenGlobalTracks(
+    state
+  );
   const selectedThreadIndex = urlStateReducers.getSelectedThreadIndex(state);
   const text: string[] = [];
   for (const globalTrackIndex of urlStateReducers.getGlobalTrackOrder(state)) {
@@ -89,9 +93,11 @@ export function getHumanReadableTracks(state: State): string[] {
         } else {
           trackName = threads[track.threadIndex].name;
         }
-        const hiddenTracks = urlStateReducers.getHiddenLocalTracks(
-          state,
-          globalTrack.pid
+        const hiddenTracks = ensureExists(
+          appStateReducers
+            .getComputedHiddenLocalTracksByPid(state)
+            .get(globalTrack.pid),
+          'Unable to get the hidden tracks from the given pid'
         );
         const hiddenText = hiddenTracks.has(trackIndex) ? 'hide' : 'show';
         const selected =

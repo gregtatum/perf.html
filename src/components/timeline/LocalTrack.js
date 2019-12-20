@@ -10,7 +10,7 @@ import {
   changeRightClickedTrack,
   selectTrack,
 } from '../../actions/profile-view';
-import { assertExhaustiveCheck } from '../../utils/flow';
+import { assertExhaustiveCheck, ensureExists } from '../../utils/flow';
 import ContextMenuTrigger from '../shared/ContextMenuTrigger';
 import {
   getSelectedThreadIndex,
@@ -20,8 +20,8 @@ import explicitConnect from '../../utils/connect';
 import {
   getLocalTrackName,
   getCounterSelectors,
-  getIsLocalTrackHidden,
 } from '../../selectors/profile';
+import { getComputedHiddenLocalTracksByPid } from '../../selectors/app';
 import { getThreadSelectors } from '../../selectors/per-thread';
 import TrackThread from './TrackThread';
 import TrackNetwork from './TrackNetwork';
@@ -182,7 +182,10 @@ export default explicitConnect<OwnProps, StateProps, DispatchProps>({
       trackName: getLocalTrackName(state, pid, trackIndex),
       titleText,
       isSelected,
-      isHidden: getIsLocalTrackHidden(state, pid, trackIndex),
+      isHidden: ensureExists(
+        getComputedHiddenLocalTracksByPid(state).get(pid),
+        'Unable to get the hidden tracks from the given pid'
+      ).has(trackIndex),
     };
   },
   mapDispatchToProps: {

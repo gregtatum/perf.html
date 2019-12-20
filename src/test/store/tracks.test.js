@@ -27,6 +27,7 @@ import {
   showLocalTrack,
   isolateLocalTrack,
   isolateProcessMainThread,
+  changeShowTabOnly,
 } from '../../actions/profile-view';
 
 describe('ordering and hiding', function() {
@@ -48,6 +49,9 @@ describe('ordering and hiding', function() {
     );
     const parentPid = profile.threads[parentThreadIndex].pid;
     const tabPid = profile.threads[workerThreadIndex].pid;
+    if (tabThreadIndex !== -1) {
+      profile.threads[tabThreadIndex].frameTable.innerWindowID[0] = 1;
+    }
     const globalTracks = ProfileViewSelectors.getGlobalTracks(getState());
     const parentTrackIndex = globalTracks.findIndex(
       track =>
@@ -599,6 +603,25 @@ describe('ordering and hiding', function() {
         'hide [thread GeckoMain process]',
         'show [thread GeckoMain tab]',
         '  - show [thread DOM Worker] SELECTED',
+        '  - hide [thread Style]',
+      ]);
+    });
+
+    it('will be hidden when it is single tab view', function() {
+      const { getState, dispatch, tabThreadIndex } = init();
+      dispatch(changeSelectedThread(tabThreadIndex));
+      expect(getHumanReadableTracks(getState())).toEqual([
+        'show [thread GeckoMain process]',
+        'show [thread GeckoMain tab] SELECTED',
+        '  - show [thread DOM Worker]',
+        '  - show [thread Style]',
+      ]);
+      // Select an existing BrowsingContextID
+      dispatch(changeShowTabOnly(123123));
+      expect(getHumanReadableTracks(getState())).toEqual([
+        'hide [thread GeckoMain process]',
+        'show [thread GeckoMain tab] SELECTED',
+        '  - hide [thread DOM Worker]',
         '  - hide [thread Style]',
       ]);
     });

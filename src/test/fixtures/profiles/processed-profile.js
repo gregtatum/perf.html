@@ -195,6 +195,15 @@ export function getProfileFromTextSamples(
   const profile = getEmptyProfile();
   const categories = profile.meta.categories;
 
+  profile.pages = [
+    {
+      browsingContextID: 123123,
+      innerWindowID: 1,
+      url: 'https://developer.mozilla.org/en-US/',
+      embedderInnerWindowID: 0,
+    },
+  ];
+
   const funcNamesPerThread = [];
   const funcNamesDictPerThread = [];
 
