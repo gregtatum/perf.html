@@ -486,6 +486,7 @@ export function getMarkerSelectorsPerThread(threadSelectors: *) {
     getMarkerChartTimingAndBuckets,
     getCommittedRangeFilteredMarkerIndexes,
     getTabFilteredMarkerIndexesWithoutGlobals,
+    getCommittedRangeAndTabFilteredMarkerIndexes,
     getCommittedRangeAndTabFilteredMarkerIndexesForHeader,
     getTimelineVerticalMarkerIndexes,
     getFileIoMarkerIndexes,
