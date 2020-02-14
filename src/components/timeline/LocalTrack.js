@@ -20,7 +20,7 @@ import explicitConnect from '../../utils/connect';
 import {
   getLocalTrackName,
   getCounterSelectors,
-  getIsLocalTrackHidden,
+  getComputedHiddenLocalTracks,
 } from '../../selectors/profile';
 import { getThreadSelectors } from '../../selectors/per-thread';
 import TrackThread from './TrackThread';
@@ -182,7 +182,7 @@ export default explicitConnect<OwnProps, StateProps, DispatchProps>({
       trackName: getLocalTrackName(state, pid, trackIndex),
       titleText,
       isSelected,
-      isHidden: getIsLocalTrackHidden(state, pid, trackIndex),
+      isHidden: getComputedHiddenLocalTracks(state, pid).has(trackIndex),
     };
   },
   mapDispatchToProps: {

@@ -5,13 +5,13 @@
 // @flow
 import { createSelector } from 'reselect';
 
+import { getSelectedTab, getShowTabOnly } from './url-state';
 import {
-  getSelectedTab,
-  getHiddenGlobalTracks,
-  getHiddenLocalTracksByPid,
-  getShowTabOnly,
-} from './url-state';
-import { getGlobalTracks, getLocalTracksByPid } from './profile';
+  getGlobalTracks,
+  getLocalTracksByPid,
+  getComputedHiddenGlobalTracks,
+  getComputedHiddenLocalTracksByPid,
+} from './profile';
 import { assertExhaustiveCheck, ensureExists } from '../utils/flow';
 import {
   TRACK_SCREENSHOT_HEIGHT,
@@ -65,8 +65,8 @@ export const getIsNewlyPublished: Selector<boolean> = state =>
 export const getTimelineHeight: Selector<null | CssPixels> = createSelector(
   getGlobalTracks,
   getLocalTracksByPid,
-  getHiddenGlobalTracks,
-  getHiddenLocalTracksByPid,
+  getComputedHiddenGlobalTracks,
+  getComputedHiddenLocalTracksByPid,
   getTrackThreadHeights,
   getShowTabOnly,
   (
