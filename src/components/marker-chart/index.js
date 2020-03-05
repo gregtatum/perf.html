@@ -138,7 +138,6 @@ class MarkerChart extends React.PureComponent<Props> {
               chartProps={{
                 markerTimingAndBuckets,
                 getMarker,
-                // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
                 updatePreviewSelection,
                 changeRightClickedMarker,
                 rangeStart: timeRange.start,

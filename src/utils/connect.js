@@ -41,11 +41,23 @@ type ConnectOptions = {
  * This function type describes the operation of taking a simple action creator, and
  * just returning it.
  */
-type WrapActionCreator<Args> = (
-  // Take as input an action creator.
-  (...Args) => Action
-  // If this function matches the above signature, do not modify it.
-) => (...Args) => Action;
+type WrapActionCreator<Arg1, Arg2, Arg3, Arg4> = WrapActionCreator0 &
+  WrapActionCreator1<Arg1> &
+  WrapActionCreator2<Arg1, Arg2> &
+  WrapActionCreator3<Arg1, Arg2, Arg3> &
+  WrapActionCreator4<Arg1, Arg2, Arg3, Arg4>;
+
+type WrapActionCreator0 = (() => Action) => () => Action;
+type WrapActionCreator1<Arg1> = ((Arg1) => Action) => Arg1 => Action;
+type WrapActionCreator2<Arg1, Arg2> = (
+  (Arg1, Arg2) => Action
+) => (Arg1, Arg2) => Action;
+type WrapActionCreator3<Arg1, Arg2, Arg3> = (
+  (Arg1, Arg2, Arg3) => Action
+) => (Arg1, Arg2, Arg3) => Action;
+type WrapActionCreator4<Arg1, Arg2, Arg3, Arg4> = (
+  (Arg1, Arg2, Arg3, Arg4) => Action
+) => (Arg1, Arg2, Arg3, Arg4) => Action;
 
 /**
  * This function type describes the operation of removing the (Dispatch, GetState) from
@@ -56,11 +68,34 @@ type WrapActionCreator<Args> = (
  * Gets transformed into:
  *   (...Args) => Returns
  */
-type WrapThunkActionCreator<Args, Returns> = (
-  // Take as input a ThunkAction.
-  (...Args) => ThunkAction<Returns>
-  // Return the wrapped action.
-) => (...Args) => Returns;
+
+type WrapThunkActionCreator<
+  Returns,
+  Arg1,
+  Arg2,
+  Arg3,
+  Arg4
+> = WrapThunkActionCreator0<Returns> &
+  WrapThunkActionCreator1<Returns, Arg1> &
+  WrapThunkActionCreator2<Returns, Arg1, Arg2> &
+  WrapThunkActionCreator3<Returns, Arg1, Arg2, Arg3> &
+  WrapThunkActionCreator4<Returns, Arg1, Arg2, Arg3, Arg4>;
+
+type WrapThunkActionCreator0<Returns> = (
+  () => ThunkAction<Returns>
+) => () => Returns;
+type WrapThunkActionCreator1<Returns, Arg1> = (
+  (Arg1) => ThunkAction<Returns>
+) => Arg1 => Returns;
+type WrapThunkActionCreator2<Returns, Arg1, Arg2> = (
+  (Arg1, Arg2) => ThunkAction<Returns>
+) => (Arg1, Arg2) => Returns;
+type WrapThunkActionCreator3<Returns, Arg1, Arg2, Arg3> = (
+  (Arg1, Arg2, Arg3) => ThunkAction<Returns>
+) => (Arg1, Arg2, Arg3) => Returns;
+type WrapThunkActionCreator4<Returns, Arg1, Arg2, Arg3, Arg4> = (
+  (Arg1, Arg2, Arg3, Arg4) => ThunkAction<Returns>
+) => (Arg1, Arg2, Arg3, Arg4) => Returns;
 
 /**
  * This type takes a Props object and wraps each function in Redux's connect function.
@@ -70,7 +105,7 @@ type WrapThunkActionCreator<Args, Returns> = (
  */
 export type WrapDispatchProps<DispatchProps: Object> = $ObjMap<
   DispatchProps,
-  WrapActionCreator<*> & WrapThunkActionCreator<*, *>
+  WrapActionCreator<*, *, *, *> & WrapThunkActionCreator<*, *, *, *, *>
 >;
 
 /**
@@ -79,7 +114,7 @@ export type WrapDispatchProps<DispatchProps: Object> = $ObjMap<
  * ThunkActions it removes the (Dispatch, GetState) part of a ThunkAction.
  */
 export type WrapFunctionInDispatch<Fn: Function> = $Call<
-  WrapActionCreator<*> & WrapThunkActionCreator<*, *>,
+  WrapActionCreator<*, *, *, *> & WrapThunkActionCreator<*, *, *, *, *>,
   Fn
 >;
 
@@ -109,7 +144,7 @@ export type ConnectedProps<
 > = $ReadOnly<{|
   ...OwnProps,
   ...StateProps,
-  ...DispatchProps,
+  ...WrapDispatchProps<DispatchProps>,
 |}>;
 
 export type ConnectedComponent<

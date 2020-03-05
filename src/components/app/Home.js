@@ -361,7 +361,6 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
               profiler.firefox.com.
             </p>
             <ActionButtons
-              // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
               retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               triggerLoadingFromUrl={this.props.triggerLoadingFromUrl}
             />
@@ -403,7 +402,6 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
               profiler.firefox.com.
             </p>
             <ActionButtons
-              // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
               retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               triggerLoadingFromUrl={this.props.triggerLoadingFromUrl}
             />
@@ -440,7 +438,6 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
             </p>
             {this._renderShortcuts()}
             <ActionButtons
-              // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
               retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               triggerLoadingFromUrl={this.props.triggerLoadingFromUrl}
             />
@@ -475,7 +472,6 @@ class Home extends React.PureComponent<HomeProps, HomeState> {
               However, existing profiles can be viewed in any modern browser.
             </p>
             <ActionButtons
-              // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
               retrieveProfileFromFile={this.props.retrieveProfileFromFile}
               triggerLoadingFromUrl={this.props.triggerLoadingFromUrl}
             />

@@ -43,10 +43,15 @@ type StateProps = {|
 
 type ExampleActionCreator = string => Action;
 type ExampleThunkActionCreator = string => ThunkAction<number>;
+type ExampleMultiArgThunkActionCreator = (
+  string,
+  number
+) => ThunkAction<number>;
 
 type DispatchProps = {|
   +dispatchString: ExampleActionCreator,
   +dispatchThunk: ExampleThunkActionCreator,
+  +dispatchMultiArgThunk: ExampleMultiArgThunkActionCreator,
 |};
 
 type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
@@ -61,9 +66,8 @@ class ExampleComponent extends React.PureComponent<Props> {
 
     // The action creators are properly wrapped by dispatch.
     (this.props.dispatchString: string => Action);
-    // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
     (this.props.dispatchThunk: string => number);
-    // $FlowFixMe Error introduced by upgrading to v0.96.0. See issue #1936.
+    (this.props.dispatchMultiArgThunk: (string, number) => number);
     (this.props.dispatchThunk('foo'): number);
 
     return null;
@@ -83,6 +87,7 @@ const validMapStateToProps = (state, ownProps) => {
 declare var validDispatchToProps: {|
   +dispatchString: string => Action,
   +dispatchThunk: string => ThunkAction<number>,
+  +dispatchMultiArgThunk: (string, number) => ThunkAction<number>
 |};
 
 // This value also serves as a test for the common case of creating a component
@@ -102,6 +107,7 @@ const ConnectedExampleComponent = explicitConnect<
   const wrapped: WrapDispatchProps<DispatchProps> = (ANY_VALUE: {|
     +dispatchString: string => Action,
     +dispatchThunk: string => number,
+    +dispatchMultiArgThunk: (string, number) => number,
   |});
 }
 
@@ -111,6 +117,7 @@ const ConnectedExampleComponent = explicitConnect<
     +dispatchString: string => Action,
     // $FlowExpectError
     +dispatchThunk: string => ThunkAction<number>,
+    +dispatchMultiArgThunk: (string, number) => number,
   |});
 }
 
@@ -176,6 +183,7 @@ const ConnectedExampleComponent = explicitConnect<
       // $FlowExpectError
       +dispatchString: string => string,
       +dispatchThunk: string => ThunkAction<number>,
+      +dispatchMultiArgThunk: (string, number) => ThunkAction<number>,
     |}),
     component: ExampleComponent,
   });
