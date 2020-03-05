@@ -7,7 +7,7 @@ import * as React from 'react';
 import CallNodeContextMenu from '../../components/shared/CallNodeContextMenu';
 import { storeWithProfile } from '../fixtures/stores';
 import { getProfileFromTextSamples } from '../fixtures/profiles/processed-profile';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 import {
   changeRightClickedCallNode,
   changeExpandedCallNodes,
@@ -44,7 +44,7 @@ describe('calltree/CallNodeContextMenu', function() {
   function setup(store = createStore(), openMenuState = true) {
     store.dispatch(setContextMenuVisibility(openMenuState));
 
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <CallNodeContextMenu />
       </Provider>

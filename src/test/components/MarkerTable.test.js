@@ -4,7 +4,7 @@
 
 // @flow
 import * as React from 'react';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 import { Provider } from 'react-redux';
 // This module is mocked.
 import copy from 'copy-to-clipboard';
@@ -84,7 +84,7 @@ describe('MarkerTable', function() {
     );
 
     const store = storeWithProfile(profile);
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <>
           <MarkerContextMenu />

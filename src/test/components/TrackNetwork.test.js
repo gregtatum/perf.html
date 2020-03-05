@@ -5,7 +5,12 @@
 // @flow
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render, getByTestId, fireEvent } from 'react-testing-library';
+import {
+  render,
+  getByTestId,
+  fireEvent,
+  type RenderResult,
+} from 'react-testing-library';
 
 import TrackNetwork from '../../components/timeline/TrackNetwork';
 import {
@@ -103,7 +108,7 @@ function setup() {
     .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
     .mockImplementation(() => getBoundingBox(GRAPH_WIDTH, GRAPH_HEIGHT));
 
-  const renderResult = render(
+  const renderResult: RenderResult = render(
     <Provider store={store}>
       <TrackNetwork threadIndex={0} />
     </Provider>

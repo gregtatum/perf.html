@@ -11,7 +11,7 @@ import type { LocalTrack } from '../../types/profile-derived';
 
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 
 import {
   changeSelectedThread,
@@ -166,7 +166,7 @@ function setup(
     .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
     .mockImplementation(() => getBoundingBox(400, 400));
 
-  const renderResult = render(
+  const renderResult: RenderResult = render(
     <Provider store={store}>
       <TimelineLocalTrack
         pid={PID}

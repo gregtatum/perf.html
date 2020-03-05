@@ -11,7 +11,7 @@ import type {
 
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 
 import { commitRange } from '../../actions/profile-view';
 import TrackScreenshots from '../../components/timeline/TrackScreenshots';
@@ -176,7 +176,9 @@ function setup(
       return rect;
     });
 
-  const renderResult = render(<Provider store={store}>{component}</Provider>);
+  const renderResult: RenderResult = render(
+    <Provider store={store}>{component}</Provider>
+  );
   const { container } = renderResult;
 
   // WithSize uses requestAnimationFrame

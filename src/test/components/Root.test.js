@@ -27,7 +27,7 @@ jest.mock('../../components/app/CompareHome', () => 'compare-home');
 
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render } from 'react-testing-library';
+import { render, type RenderResult } from 'react-testing-library';
 
 import { AppViewRouter } from '../../components/app/AppViewRouter';
 import { ProfileLoader } from '../../components/app/ProfileLoader';
@@ -160,7 +160,7 @@ function setup() {
   (retrieveProfilesToCompare: any).mockImplementation(() => async () => {});
 
   const store = blankStore();
-  const renderResult = render(
+  const renderResult: RenderResult = render(
     <Provider store={store}>
       <>
         <ProfileLoader />

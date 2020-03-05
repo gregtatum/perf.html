@@ -5,7 +5,7 @@
 // @flow
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render } from 'react-testing-library';
+import { render, type RenderResult } from 'react-testing-library';
 
 import Details from '../../components/app/Details';
 import { changeSelectedTab, changeSidebarOpenState } from '../../actions/app';
@@ -38,7 +38,7 @@ describe('app/Details', function() {
     `);
 
     const store = storeWithProfile(profile);
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <Details />
       </Provider>

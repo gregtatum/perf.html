@@ -6,7 +6,7 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { TooltipCallNode } from '../../components/tooltip/CallNode';
-import { render } from 'react-testing-library';
+import { render, type RenderResult } from 'react-testing-library';
 import { storeWithProfile } from '../fixtures/stores';
 import {
   getProfileWithUnbalancedNativeAllocations,
@@ -109,7 +109,7 @@ describe('TooltipCallNode', function() {
       const callNodePath = ['A', 'Bjs', 'Cjs'].map(name => funcNamesDict[name]);
       const { dispatch, renderTooltip } = setup(profile);
       dispatch(changeSelectedCallNode(threadIndex, callNodePath));
-      const renderResults = renderTooltip();
+      const renderResults: RenderResult = renderTooltip();
       return {
         ...renderResults,
         pageUrl,

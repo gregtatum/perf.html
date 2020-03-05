@@ -5,7 +5,7 @@
 // @flow
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 // This module is mocked.
 import copy from 'copy-to-clipboard';
 import fakeIndexedDB from 'fake-indexeddb';
@@ -72,7 +72,7 @@ describe('calltree/ProfileCallTreeView', function() {
     }
 
     const store = storeWithProfile(profile);
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <>
           <CallNodeContextMenu />
@@ -508,7 +508,7 @@ describe('ProfileCallTreeView with JS Allocations', function() {
   function setup() {
     const { profile } = getProfileWithJsAllocations();
     const store = storeWithProfile(profile);
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <ProfileCallTreeView />
       </Provider>
@@ -564,7 +564,7 @@ describe('ProfileCallTreeView with unbalanced native allocations', function() {
   function setup() {
     const { profile } = getProfileWithUnbalancedNativeAllocations();
     const store = storeWithProfile(profile);
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <ProfileCallTreeView />
       </Provider>
@@ -632,7 +632,7 @@ describe('ProfileCallTreeView with balanced native allocations', function() {
   function setup() {
     const { profile } = getProfileWithBalancedNativeAllocations();
     const store = storeWithProfile(profile);
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <ProfileCallTreeView />
       </Provider>

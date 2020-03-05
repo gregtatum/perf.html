@@ -4,7 +4,7 @@
 
 // @flow
 import * as React from 'react';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 import { Provider } from 'react-redux';
 import * as UrlStateSelectors from '../../selectors/url-state';
 
@@ -372,7 +372,7 @@ function setup(profile: Profile, funcNames: string[] = []): * {
   const store = storeWithProfile(profile);
   store.dispatch(changeSelectedTab('stack-chart'));
 
-  const renderResult = render(
+  const renderResult: RenderResult = render(
     <Provider store={store}>
       <>
         <CallNodeContextMenu />

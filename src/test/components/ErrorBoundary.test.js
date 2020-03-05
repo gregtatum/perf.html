@@ -4,7 +4,7 @@
 
 // @flow
 import * as React from 'react';
-import { render } from 'react-testing-library';
+import { render, type RenderResult } from 'react-testing-library';
 
 import { ErrorBoundary } from '../../components/app/ErrorBoundary';
 import { withAnalyticsMock } from '../fixtures/mocks/analytics';
@@ -19,7 +19,7 @@ describe('app/ErrorBoundary', function() {
 
   function setupComponent(childComponent) {
     const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    const results = render(
+    const results: RenderResult = render(
       <ErrorBoundary message={friendlyErrorMessage}>
         {childComponent}
       </ErrorBoundary>

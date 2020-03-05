@@ -8,7 +8,7 @@ import type { Profile } from '../../types/profile';
 
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 import { oneLine } from 'common-tags';
 
 import { changeTimelineType } from '../../actions/profile-view';
@@ -95,7 +95,7 @@ describe('timeline/TrackThread', function() {
     // view.
     store.dispatch(changeTimelineType('stack'));
 
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <TrackThread threadIndex={threadIndex} />
       </Provider>

@@ -9,7 +9,7 @@ import type { CssPixels } from '../../types/units';
 
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 
 import { TrackMemory } from '../../components/timeline/TrackMemory';
 import { ensureExists } from '../../utils/flow';
@@ -67,7 +67,7 @@ describe('TrackMemory', function() {
       .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
       .mockImplementation(() => getBoundingBox(GRAPH_WIDTH, GRAPH_HEIGHT));
 
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <TrackMemory counterIndex={0} />
       </Provider>

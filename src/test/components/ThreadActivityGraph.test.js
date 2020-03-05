@@ -9,7 +9,7 @@ import type { CssPixels } from '../../types/units';
 
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 
 import { selectedThreadSelectors } from '../../selectors/per-thread';
 import { ensureExists } from '../../utils/flow';
@@ -61,7 +61,7 @@ describe('ThreadActivityGraph', function() {
       .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
       .mockImplementation(() => getBoundingBox(GRAPH_WIDTH, GRAPH_HEIGHT));
 
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <TrackThread threadIndex={0} />
       </Provider>

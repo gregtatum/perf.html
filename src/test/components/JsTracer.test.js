@@ -9,7 +9,7 @@ import {
   TIMELINE_MARGIN_RIGHT,
 } from '../../app-logic/constants';
 import JsTracer from '../../components/js-tracer';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 import { Provider } from 'react-redux';
 import mockCanvasContext from '../fixtures/mocks/canvas-context';
 import mockRaf from '../fixtures/mocks/request-animation-frame';
@@ -55,7 +55,7 @@ describe('StackChart', function() {
     const store = storeWithProfile(profile);
     const { getState, dispatch } = store;
 
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <JsTracer />
       </Provider>

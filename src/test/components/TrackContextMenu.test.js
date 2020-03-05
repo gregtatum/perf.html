@@ -6,7 +6,7 @@
 
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 import { ensureExists } from '../../utils/flow';
 
 import {
@@ -44,7 +44,7 @@ describe('timeline/TrackContextMenu', function() {
     const store = storeWithProfile(profile);
     const { getState, dispatch } = store;
 
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <TrackContextMenu />
       </Provider>

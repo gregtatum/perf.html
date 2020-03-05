@@ -5,7 +5,7 @@
 // @flow
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 
 import { withChartViewport } from '../../components/shared/chart/Viewport';
 import {
@@ -669,7 +669,7 @@ function setup(profileOverrides: Object = {}) {
   });
 
   const store = storeWithProfile(getProfileFromTextSamples('A').profile);
-  const renderResult = render(
+  const renderResult: RenderResult = render(
     <Provider store={store}>
       <ConnectedChartWithViewport />
     </Provider>

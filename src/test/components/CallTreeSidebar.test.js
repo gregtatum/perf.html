@@ -6,7 +6,7 @@
 
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { render } from 'react-testing-library';
+import { render, type RenderResult } from 'react-testing-library';
 
 import CallTreeSidebar from '../../components/sidebar/CallTreeSidebar';
 import {
@@ -42,7 +42,7 @@ describe('CallTreeSidebar', function() {
 
     const invertCallstack = () => store.dispatch(changeInvertCallstack(true));
 
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <CallTreeSidebar />
       </Provider>

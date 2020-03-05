@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 import serviceWorkerRuntime from '@mstange/offline-plugin/runtime';
 
 import ServiceWorkerManager from '../../components/app/ServiceWorkerManager';
@@ -72,7 +72,7 @@ describe('app/ServiceWorkerManager', () => {
 
     const store = blankStore();
 
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <ServiceWorkerManager />
       </Provider>

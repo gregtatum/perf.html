@@ -5,7 +5,11 @@
 // @flow
 import * as React from 'react';
 import Home from '../../components/app/Home';
-import { render, waitForElement } from 'react-testing-library';
+import {
+  render,
+  waitForElement,
+  type RenderResult,
+} from 'react-testing-library';
 import { Provider } from 'react-redux';
 import createStore from '../../app-logic/create-store';
 import { mockWebChannel } from '../fixtures/mocks/web-channel';
@@ -25,7 +29,7 @@ let userAgent;
 describe('app/Home', function() {
   function setup(userAgentToConfigure: string): * {
     userAgent = userAgentToConfigure;
-    const renderResults = render(
+    const renderResults: RenderResult = render(
       <Provider store={createStore()}>
         <Home specialMessage="This is a special message" />
       </Provider>

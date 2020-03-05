@@ -6,7 +6,7 @@
 import * as React from 'react';
 import ZipFileViewer from '../../components/app/ZipFileViewer';
 import { Provider } from 'react-redux';
-import { render, fireEvent } from 'react-testing-library';
+import { render, fireEvent, type RenderResult } from 'react-testing-library';
 
 import * as UrlStateSelectors from '../../selectors/url-state';
 import * as ZippedProfileSelectors from '../../selectors/zipped-profiles';
@@ -34,7 +34,7 @@ describe('calltree/ZipFileTree', function() {
       .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
       .mockImplementation(() => getBoundingBox(1000, 2000));
 
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <ZipFileViewer />
       </Provider>

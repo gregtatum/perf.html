@@ -5,7 +5,12 @@
 
 import React from 'react';
 import { Provider } from 'react-redux';
-import { render, fireEvent, cleanup } from 'react-testing-library';
+import {
+  render,
+  fireEvent,
+  cleanup,
+  type RenderResult,
+} from 'react-testing-library';
 
 import CompareHome from '../../components/app/CompareHome';
 import { getProfilesToCompare } from '../../selectors/url-state';
@@ -17,7 +22,7 @@ describe('app/CompareHome', () => {
 
   function setup() {
     const store = blankStore();
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <CompareHome />
       </Provider>

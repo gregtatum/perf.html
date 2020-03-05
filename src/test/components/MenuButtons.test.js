@@ -6,7 +6,12 @@
 import * as React from 'react';
 import MenuButtons from '../../components/app/MenuButtons';
 import { MenuButtonsMetaInfo } from '../../components/app/MenuButtons/MetaInfo';
-import { render, fireEvent, wait } from 'react-testing-library';
+import {
+  render,
+  fireEvent,
+  wait,
+  type RenderResult,
+} from 'react-testing-library';
 import { Provider } from 'react-redux';
 import { storeWithProfile } from '../fixtures/stores';
 import { TextEncoder } from 'util';
@@ -99,7 +104,7 @@ describe('app/MenuButtons', function() {
       }),
     });
 
-    const renderResult = render(
+    const renderResult: RenderResult = render(
       <Provider store={store}>
         <MenuButtons />
       </Provider>
