@@ -602,9 +602,9 @@ describe('actions/receive-profile', function() {
     }
 
     afterEach(function() {
-      delete window.geckoProfilerPromise;
-      delete window.TextDecoder;
-      delete window.fetch;
+      delete (window: any).geckoProfilerPromise;
+      delete (window: any).TextDecoder;
+      delete (window: any).fetch;
     });
 
     for (const profileAs of ['json', 'arraybuffer', 'gzip']) {
@@ -706,7 +706,7 @@ describe('actions/receive-profile', function() {
     });
 
     afterEach(function() {
-      delete window.fetch;
+      delete (window: any).fetch;
     });
 
     it('can retrieve a profile from the web and save it to state', async function() {
@@ -766,7 +766,7 @@ describe('actions/receive-profile', function() {
     it('requests several times in case of 403', async function() {
       const hash = 'c5e53f9ab6aecef926d4be68c84f2de550e2ac2f';
       const expectedUrl = `https://storage.googleapis.com/profile-store/${hash}`;
-      window.fetch
+      (window.fetch: any)
         .mockImplementationOnce(_ => Promise.resolve(fetch403Response))
         .mockImplementationOnce(url =>
           Promise.resolve(
@@ -866,7 +866,7 @@ describe('actions/receive-profile', function() {
     });
 
     afterEach(function() {
-      delete window.fetch;
+      delete (window: any).fetch;
     });
 
     it('can retrieve a profile from the web and save it to state', async function() {
@@ -892,7 +892,7 @@ describe('actions/receive-profile', function() {
     it('requests several times in case of 403', async function() {
       const expectedUrl = 'https://profiles.club/shared.json';
       // The first call will still be a 403 -- remember, it's the default return value.
-      window.fetch
+      (window.fetch: any)
         .mockResolvedValueOnce(fetch403Response)
         .mockImplementationOnce(url =>
           Promise.resolve(
@@ -979,7 +979,7 @@ describe('actions/receive-profile', function() {
     });
 
     afterEach(function() {
-      delete window.fetch;
+      delete (window: any).fetch;
     });
 
     /**
@@ -1246,7 +1246,7 @@ describe('actions/receive-profile', function() {
         })
       );
 
-      delete window.fetch;
+      delete (window: any).fetch;
     });
 
     it('can load json with an empty mime type', async function() {
@@ -1492,7 +1492,7 @@ describe('actions/receive-profile', function() {
         ])
       );
 
-      window.fetch
+      (window.fetch: any)
         .mockResolvedValueOnce(fetch200Response(serializeProfile(profile1)))
         .mockResolvedValueOnce(fetch200Response(serializeProfile(profile2)));
 
@@ -1528,7 +1528,7 @@ describe('actions/receive-profile', function() {
     });
 
     afterEach(function() {
-      delete window.fetch;
+      delete (window: any).fetch;
     });
 
     it('retrieves profiles and put them in the same view', async function() {
@@ -1666,7 +1666,7 @@ describe('actions/receive-profile', function() {
       // Add mock fetch response for the required number of times.
       // Usually it's 1 but it can be also 2 for `compare` dataSource.
       for (let i = 0; i < requiredProfile; i++) {
-        window.fetch.mockResolvedValueOnce(
+        (window.fetch: JestMockFn<any, any>).mockResolvedValueOnce(
           fetch200Response(serializeProfile(profile))
         );
       }
@@ -1720,8 +1720,8 @@ describe('actions/receive-profile', function() {
     });
 
     afterEach(function() {
-      delete window.fetch;
-      delete window.geckoProfilerPromise;
+      delete (window: any).fetch;
+      delete (window: any).geckoProfilerPromise;
     });
 
     it('retrieves profile from a `public` data source and loads it', async function() {

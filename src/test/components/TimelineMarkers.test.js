@@ -92,7 +92,7 @@ describe('TimelineMarkers', function() {
     expect(container.firstChild).toMatchSnapshot();
     expect(drawCalls).toMatchSnapshot();
 
-    delete window.devicePixelRatio;
+    delete (window: any).devicePixelRatio;
   });
 
   it('does not render several dot markers in the same position', () => {
@@ -146,6 +146,6 @@ describe('TimelineMarkers', function() {
       )
     ).toBe(true);
 
-    delete window.devicePixelRatio;
+    delete (window: any).devicePixelRatio;
   });
 });

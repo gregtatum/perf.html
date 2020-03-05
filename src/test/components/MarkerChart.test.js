@@ -159,7 +159,7 @@ describe('MarkerChart', function() {
     expect(container.firstChild).toMatchSnapshot();
     expect(drawCalls).toMatchSnapshot();
 
-    delete window.devicePixelRatio;
+    delete (window: any).devicePixelRatio;
   });
 
   it('does not render several dot markers on the same pixel', () => {
@@ -208,7 +208,7 @@ describe('MarkerChart', function() {
     );
     expect(fillRectOperations).toHaveLength(1);
 
-    delete window.devicePixelRatio;
+    delete (window: any).devicePixelRatio;
   });
 
   it('renders the hoveredItem markers properly', () => {

@@ -12,7 +12,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  delete window.fetch;
+  delete (window: any).fetch;
 });
 
 // This is a partial implementation of the Fetch API's Response object,
@@ -54,38 +54,40 @@ function mockFetchForBitly({
   endpointUrl: string,
   responseFromRequestPayload: any => Response,
 |}) {
-  window.fetch.mockImplementation(async (urlString, options) => {
-    const { method, headers, body } = options;
+  (window.fetch: JestMockFn<any, any>).mockImplementation(
+    async (urlString, options) => {
+      const { method, headers, body } = options;
 
-    if (urlString !== endpointUrl) {
-      return new Response(null, {
-        status: 404,
-        statusText: 'Not found',
-      });
+      if (urlString !== endpointUrl) {
+        return new Response(null, {
+          status: 404,
+          statusText: 'Not found',
+        });
+      }
+
+      if (method !== 'POST') {
+        return new Response(null, {
+          status: 405,
+          statusText: 'Method not allowed',
+        });
+      }
+
+      const authorization = headers.Authorization;
+      if (!authorization || !authorization.startsWith('Bearer')) {
+        return new Response(null, { status: 401, statusText: 'Unauthorized' });
+      }
+
+      if (headers['Content-Type'] !== 'application/json') {
+        return new Response(null, {
+          status: 406,
+          statusText: 'Not acceptable',
+        });
+      }
+
+      const payload = JSON.parse(body);
+      return responseFromRequestPayload(payload);
     }
-
-    if (method !== 'POST') {
-      return new Response(null, {
-        status: 405,
-        statusText: 'Method not allowed',
-      });
-    }
-
-    const authorization = headers.Authorization;
-    if (!authorization || !authorization.startsWith('Bearer')) {
-      return new Response(null, { status: 401, statusText: 'Unauthorized' });
-    }
-
-    if (headers['Content-Type'] !== 'application/json') {
-      return new Response(null, {
-        status: 406,
-        statusText: 'Not acceptable',
-      });
-    }
-
-    const payload = JSON.parse(body);
-    return responseFromRequestPayload(payload);
-  });
+  );
 }
 
 describe('shortenUrl', () => {
@@ -199,7 +201,7 @@ describe('expandUrl', () => {
   });
 
   it('forwards errors', async () => {
-    window.fetch.mockImplementation(
+    (window.fetch: JestMockFn<any, any>).mockImplementation(
       async () =>
         new Response(null, {
           status: 503,
@@ -211,7 +213,7 @@ describe('expandUrl', () => {
   });
 
   it('returns an error when there is no match for this hash', async () => {
-    window.fetch.mockImplementation(
+    (window.fetch: JestMockFn<any, any>).mockImplementation(
       async () =>
         new Response(null, {
           status: 404,

@@ -146,8 +146,8 @@ describe('app/MenuButtons', function() {
     });
 
     afterAll(async function() {
-      delete URL.createObjectURL;
-      delete URL.revokeObjectURL;
+      delete (URL: any).createObjectURL;
+      delete (URL: any).revokeObjectURL;
       delete (window: any).TextEncoder;
     });
 

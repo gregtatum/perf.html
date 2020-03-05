@@ -32,8 +32,9 @@ describe('console-accessible values on the window object', function() {
     const log = console.log;
     (console: Object).log = jest.fn();
     logFriendlyPreamble();
-    expect(console.log.mock.calls.length).toEqual(2);
-    expect(console.log.mock.calls).toMatchSnapshot();
+    const { mock } = (console.log: JestMockFn<any, any>);
+    expect(mock.calls.length).toEqual(2);
+    expect(mock.calls).toMatchSnapshot();
     (console: Object).log = log;
   });
 });

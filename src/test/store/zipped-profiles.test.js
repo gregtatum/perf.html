@@ -116,8 +116,9 @@ describe('reducer zipFileState', function() {
       'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE'
     );
     // console error was called.
-    expect(console.error.mock.calls.length >= 1).toEqual(true);
-    expect(console.error.mock.calls).toMatchSnapshot();
+    const { mock } = (console.error: JestMockFn<any, any>);
+    expect(mock.calls.length >= 1).toEqual(true);
+    expect(mock.calls).toMatchSnapshot();
   });
 
   it('will fail when not finding a profile', async function() {

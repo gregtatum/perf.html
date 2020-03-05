@@ -37,7 +37,7 @@ describe('doSymbolicateProfile', function() {
   afterAll(async function() {
     delete window.indexedDB;
     delete window.IDBKeyRange;
-    delete window.TextDecoder;
+    delete (window: any).TextDecoder;
     await _deleteDatabase(`${symbolStoreName}-symbol-tables`);
   });
 

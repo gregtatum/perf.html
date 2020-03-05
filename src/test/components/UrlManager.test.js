@@ -59,8 +59,8 @@ describe('UrlManager', function() {
   });
 
   afterEach(function() {
-    delete window.geckoProfilerPromise;
-    delete window.fetch;
+    delete (window: any).geckoProfilerPromise;
+    delete (window: any).fetch;
   });
 
   it('sets up the URL', async function() {

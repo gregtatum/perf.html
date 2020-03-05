@@ -18,8 +18,8 @@ describe('shared/BlobUrlLink', () => {
   });
 
   afterAll(async () => {
-    delete URL.createObjectURL;
-    delete URL.revokeObjectURL;
+    delete (URL: any).createObjectURL;
+    delete (URL: any).revokeObjectURL;
   });
 
   it('injects a blob url into a link', () => {

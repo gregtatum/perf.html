@@ -110,7 +110,7 @@ describe('Timeline', function() {
     expect(container.firstChild).toMatchSnapshot();
     expect(drawCalls).toMatchSnapshot();
 
-    delete window.devicePixelRatio;
+    delete (window: any).devicePixelRatio;
   });
 
   describe('TimelineSettingsActiveTabView', function() {

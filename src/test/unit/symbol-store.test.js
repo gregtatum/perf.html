@@ -33,7 +33,7 @@ describe('SymbolStore', function() {
   afterAll(function() {
     delete window.indexedDB;
     delete window.IDBKeyRange;
-    delete window.TextDecoder;
+    delete (window: any).TextDecoder;
 
     symbolStore = null;
   });
