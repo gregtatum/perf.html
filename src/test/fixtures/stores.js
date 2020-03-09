@@ -12,7 +12,7 @@ import { getProfileFromTextSamples } from './profiles/processed-profile';
 import type { Store } from '../../types/store';
 import type { Profile } from '../../types/profile';
 
-export function blankStore() {
+export function blankStore(): Store {
   return createStore();
 }
 

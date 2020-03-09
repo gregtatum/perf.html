@@ -92,7 +92,7 @@ const isSidebarOpenPerPanel: Reducer<IsSidebarOpenPerPanelState> = (
       // stored value against the new value.
       return {
         ...state,
-        [tab]: isOpen,
+        [(tab: string)]: isOpen,
       };
     }
     default:

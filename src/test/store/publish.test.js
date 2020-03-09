@@ -134,10 +134,10 @@ describe('attemptToPublish', function() {
 
   function setupFakeUploadsWithStore(store: Store): * {
     let updateUploadProgress;
-    let resolveUpload;
-    let rejectUpload;
+    let resolveUpload: string => void;
+    let rejectUpload: () => void;
     const abortFunction = jest.fn();
-    const promise = new Promise((resolve, reject) => {
+    const promise: Promise<string> = new Promise((resolve, reject) => {
       resolveUpload = resolve;
       rejectUpload = reject;
     });
@@ -167,6 +167,10 @@ describe('attemptToPublish', function() {
 
     function waitUntilPhase(phase) {
       return waitUntilState(store, state => getUploadPhase(state) === phase);
+    }
+
+    if (!resolveUpload || !rejectUpload) {
+      throw new Error('Resolve and reject uploads were not set up correctly.');
     }
 
     return {

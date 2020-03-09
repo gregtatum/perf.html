@@ -80,4 +80,4 @@ export type Dispatch = PlainDispatch & ThunkDispatch;
  * Export a store that is opinionated about our State definition, and the union
  * of all Actions, as well as specific Dispatch behavior.
  */
-export type Store = ReduxStore<State, Action, Dispatch>;
+export type Store = $Exact<ReduxStore<State, Action, Dispatch>>;

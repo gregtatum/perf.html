@@ -98,8 +98,10 @@ export function getComposedSelectorsPerThread(
     ]
   );
 
+  // For some reason Flow won't infer these properties without doing this weird
+  // `typeof` trick.
   return {
-    getUsefulTabs,
-    getCombinedTimingRows,
+    getUsefulTabs: (getUsefulTabs: typeof getUsefulTabs),
+    getCombinedTimingRows: (getCombinedTimingRows: typeof getCombinedTimingRows),
   };
 }

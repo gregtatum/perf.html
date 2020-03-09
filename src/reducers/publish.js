@@ -44,7 +44,7 @@ const checkedSharingOptions: Reducer<CheckedSharingOptions> = (
     case 'TOGGLE_CHECKED_SHARING_OPTION':
       return {
         ...state,
-        [action.slug]: !state[action.slug],
+        [(action.slug: string)]: !state[action.slug],
       };
     default:
       return state;

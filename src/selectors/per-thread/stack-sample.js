@@ -331,22 +331,24 @@ export function getStackAndSampleSelectorsPerThread(
     FlameGraph.getFlameGraphTiming
   );
 
+  // For some reason Flow won't infer these properties without doing this weird
+  // `typeof` trick.
   return {
-    unfilteredSamplesRange,
-    getCallNodeInfo,
-    getCallNodeMaxDepth,
-    getSelectedCallNodePath,
-    getSelectedCallNodeIndex,
-    getRightClickedCallNodePath,
-    getRightClickedCallNodeIndex,
-    getExpandedCallNodePaths,
-    getExpandedCallNodeIndexes,
-    getSamplesSelectedStatesInFilteredThread,
-    getTreeOrderComparatorInFilteredThread,
-    getCallTreeSummaryStrategy,
-    getCallTree,
-    getStackTimingByDepth,
-    getCallNodeMaxDepthForFlameGraph,
-    getFlameGraphTiming,
+    unfilteredSamplesRange: (unfilteredSamplesRange: typeof unfilteredSamplesRange),
+    getCallNodeInfo: (getCallNodeInfo: typeof getCallNodeInfo),
+    getCallNodeMaxDepth: (getCallNodeMaxDepth: typeof getCallNodeMaxDepth),
+    getSelectedCallNodePath: (getSelectedCallNodePath: typeof getSelectedCallNodePath),
+    getSelectedCallNodeIndex: (getSelectedCallNodeIndex: typeof getSelectedCallNodeIndex),
+    getRightClickedCallNodePath: (getRightClickedCallNodePath: typeof getRightClickedCallNodePath),
+    getRightClickedCallNodeIndex: (getRightClickedCallNodeIndex: typeof getRightClickedCallNodeIndex),
+    getExpandedCallNodePaths: (getExpandedCallNodePaths: typeof getExpandedCallNodePaths),
+    getExpandedCallNodeIndexes: (getExpandedCallNodeIndexes: typeof getExpandedCallNodeIndexes),
+    getSamplesSelectedStatesInFilteredThread: (getSamplesSelectedStatesInFilteredThread: typeof getSamplesSelectedStatesInFilteredThread),
+    getTreeOrderComparatorInFilteredThread: (getTreeOrderComparatorInFilteredThread: typeof getTreeOrderComparatorInFilteredThread),
+    getCallTreeSummaryStrategy: (getCallTreeSummaryStrategy: typeof getCallTreeSummaryStrategy),
+    getCallTree: (getCallTree: typeof getCallTree),
+    getStackTimingByDepth: (getStackTimingByDepth: typeof getStackTimingByDepth),
+    getCallNodeMaxDepthForFlameGraph: (getCallNodeMaxDepthForFlameGraph: typeof getCallNodeMaxDepthForFlameGraph),
+    getFlameGraphTiming: (getFlameGraphTiming: typeof getFlameGraphTiming),
   };
 }

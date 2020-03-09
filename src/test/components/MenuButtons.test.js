@@ -45,7 +45,8 @@ const hash = 'c5e53f9ab6aecef926d4be68c84f2de550e2ac2f';
 describe('app/MenuButtons', function() {
   function mockUpload() {
     // Create a promise with the resolve function outside of it.
-    let resolveUpload, rejectUpload;
+    let resolveUpload: Function;
+    let rejectUpload: Function;
     const promise = new Promise((resolve, reject) => {
       resolveUpload = resolve;
       rejectUpload = reject;
@@ -58,6 +59,10 @@ describe('app/MenuButtons', function() {
         startUpload: () => promise,
       }): typeof uploadBinaryProfileData)
     );
+
+    if (!resolveUpload || !rejectUpload) {
+      throw new Error('Resolve or reject where left uninitialized.');
+    }
 
     return { resolveUpload, rejectUpload };
   }
