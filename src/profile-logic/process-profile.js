@@ -29,6 +29,10 @@ import {
   isPerfScriptFormat,
   convertPerfScriptProfile,
 } from './import/linux-perf';
+import {
+  importFromInstrumentsDeepCopy,
+  importFromInstrumentsTrace,
+} from './import/instruments';
 import { convertPhaseTimes } from './convert-markers';
 import { PROCESSED_PROFILE_VERSION } from '../app-logic/constants';
 import { getFriendlyThreadName } from '../profile-logic/profile-data';
