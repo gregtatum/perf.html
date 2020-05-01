@@ -1,0 +1,70 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+
+import React, { PureComponent } from "react";
+import { getProfileViewOptions, getSymbolicationStatus } from "../../selectors/profile";
+import explicitConnect from "../../utils/connect";
+
+import { RequestedLib } from "../../types/actions";
+import { ConnectedProps } from "../../utils/connect";
+
+function englishSgPlLibrary(count) {
+  return count === 1 ? 'library' : 'libraries';
+}
+
+function englishListJoin(list) {
+  switch (list.length) {
+    case 0:
+      return '';
+    case 1:
+      return list[0];
+    default:
+      {
+        const allButLast = list.slice(0, list.length - 1);
+        return allButLast.join(', ') + ' and ' + list[list.length - 1];
+      }
+
+  }
+}
+
+type StateProps = {
+  readonly symbolicationStatus: string;
+  readonly waitingForLibs: Set<RequestedLib>;
+};
+
+type Props = ConnectedProps<{}, StateProps, {}>;
+
+class SymbolicationStatusOverlay extends PureComponent<Props> {
+
+  render() {
+    const {
+      symbolicationStatus,
+      waitingForLibs
+    } = this.props;
+    if (symbolicationStatus === 'SYMBOLICATING') {
+      if (waitingForLibs.size > 0) {
+        const libNames = Array.from(waitingForLibs.values()).map(lib => lib.debugName);
+        return <div className="symbolicationStatusOverlay">
+            <span className="symbolicationStatusOverlayThrobber" />
+            {`Waiting for symbol tables for ${englishSgPlLibrary(libNames.length)} ${englishListJoin(libNames)}...`}
+          </div>;
+      }
+      return <div className="symbolicationStatusOverlay">
+          <span className="symbolicationStatusOverlayThrobber" />
+          Symbolicating call stacks...
+        </div>;
+    }
+    return <div className="symbolicationStatusOverlay hidden" />;
+  }
+}
+
+export default explicitConnect<{}, StateProps, {}>({
+  mapStateToProps: state => ({
+    symbolicationStatus: getSymbolicationStatus(state),
+    waitingForLibs: getProfileViewOptions(state).waitingForLibs
+  }),
+  component: SymbolicationStatusOverlay
+});

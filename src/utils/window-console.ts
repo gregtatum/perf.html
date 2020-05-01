@@ -17,7 +17,7 @@ const defineProperty = Object.defineProperty;
  * This function adds various values from the Redux Store to the window object so that
  * people can access useful things.
  */
-export function addDataToWindowObject(getState: GetState, dispatch: Dispatch, target: Object = window) {
+export function addDataToWindowObject(getState: GetState, dispatch: Dispatch, target: any = window) {
   defineProperty(target, 'profile', {
     enumerable: true,
     get() {

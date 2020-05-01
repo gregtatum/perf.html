@@ -9,6 +9,7 @@
     "target": "esnext",
     "lib": ["esnext", "dom"]
   },
+  "baseUrl": "./src",
   "include": ["./**/*.ts"],
   "exclude": [
     "node_modules",

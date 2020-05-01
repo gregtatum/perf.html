@@ -1,0 +1,52 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+import bisection from "bisection";
+
+import { LibSymbolicationRequest, AddressResult } from "../../profile-logic/symbol-store";
+
+export class FakeSymbolStore {
+
+  _symbolTables: Map<string, {addrs: Uint32Array;syms: string[];}>;
+
+  constructor(symbolTables: Map<string, Map<number, string>>) {
+    this._symbolTables = new Map();
+    for (const [debugName, symbolTable] of symbolTables.entries()) {
+      const entries = Array.from(symbolTable.entries());
+      entries.sort(([addr1], [addr2]) => addr1 - addr2);
+      this._symbolTables.set(debugName, {
+        addrs: new Uint32Array(entries.map(([addr]) => addr)),
+        syms: entries.map(([, sym]) => sym)
+      });
+    }
+  }
+
+  async getSymbols(requests: LibSymbolicationRequest[], successCb: (arg0: LibSymbolicationRequest, arg1: Map<number, AddressResult>) => void, errorCb: (arg0: LibSymbolicationRequest, arg1: Error) => void): Promise<void> {
+    // Make sure that the callbacks are never called synchronously, by enforcing
+    // a dummy roundtrip to the microtask queue.
+    await Promise.resolve();
+
+    for (const request of requests) {
+      const {
+        lib,
+        addresses
+      } = request;
+      const symbolTable = this._symbolTables.get(lib.debugName);
+      if (symbolTable) {
+        const results = new Map();
+        for (const address of addresses) {
+          const index = bisection.right(symbolTable.addrs, address) - 1;
+          results.set(address, {
+            name: symbolTable.syms[index],
+            functionOffset: address - symbolTable.addrs[index]
+          });
+        }
+        successCb(request, results);
+      } else {
+        errorCb(request, new Error('symbol table not found'));
+      }
+    }
+  }
+}

@@ -1,0 +1,474 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+import * as React from "react";
+import { render, fireEvent } from "react-testing-library";
+import { Provider } from "react-redux";
+import * as UrlStateSelectors from "../../selectors/url-state";
+
+// This module is mocked.
+import copy from "copy-to-clipboard";
+
+import { TIMELINE_MARGIN_LEFT, TIMELINE_MARGIN_RIGHT } from "../../app-logic/constants";
+import StackChartGraph from "../../components/stack-chart";
+import CallNodeContextMenu from "../../components/shared/CallNodeContextMenu";
+import { getEmptyThread, getEmptyProfile } from "../../profile-logic/data-structures";
+import { changeSelectedCallNode, commitRange, changeImplementationFilter } from "../../actions/profile-view";
+import { changeSelectedTab } from "../../actions/app";
+import { selectedThreadSelectors } from "../../selectors/per-thread";
+import { ensureExists } from "../../utils/flow";
+
+import mockCanvasContext from "../fixtures/mocks/canvas-context";
+import mockRaf from "../fixtures/mocks/request-animation-frame";
+import { storeWithProfile } from "../fixtures/stores";
+import { getBoundingBox, getMouseEvent, addRootOverlayElement, removeRootOverlayElement, findFillTextPositionFromDrawLog } from "../fixtures/utils";
+import { getProfileFromTextSamples, getProfileWithMarkers } from "../fixtures/profiles/processed-profile";
+
+import { Profile } from "../../types/profile";
+import { UserTimingMarkerPayload } from "../../types/markers";
+import { CssPixels } from "../../types/units";
+
+jest.useFakeTimers();
+
+const GRAPH_BASE_WIDTH = 200;
+const GRAPH_WIDTH = GRAPH_BASE_WIDTH + TIMELINE_MARGIN_LEFT + TIMELINE_MARGIN_RIGHT;
+const GRAPH_HEIGHT = 300;
+
+describe('StackChart', function () {
+  beforeEach(addRootOverlayElement);
+  afterEach(removeRootOverlayElement);
+
+  it('matches the snapshot', () => {
+    const {
+      container,
+      ctx
+    } = setupSamples();
+    const drawCalls = ctx.__flushDrawLog();
+    expect(container.firstChild).toMatchSnapshot();
+    expect(drawCalls).toMatchSnapshot();
+  });
+
+  it('can select a call node when clicking the chart', function () {
+    const {
+      dispatch,
+      getState,
+      leftClick,
+      findFillTextPosition
+    } = setupSamples();
+
+    // Start out deselected
+    dispatch(changeSelectedCallNode(0, []));
+    expect(selectedThreadSelectors.getSelectedCallNodeIndex(getState())).toBe(null);
+
+    const {
+      x,
+      y
+    } = findFillTextPosition('A');
+    const callNodeAIndex = 0;
+
+    // Click on function A's box.
+    leftClick({ x, y });
+
+    expect(selectedThreadSelectors.getSelectedCallNodeIndex(getState())).toBe(callNodeAIndex);
+
+    // Click on a region without any drawn box to deselect.
+    leftClick({ x, y: y + GRAPH_HEIGHT });
+
+    expect(selectedThreadSelectors.getSelectedCallNodeIndex(getState())).toBe(null);
+  });
+
+  it('can display a context menu when right clicking the chart', function () {
+    // Fake timers are indicated when dealing with the context menus.
+    jest.useFakeTimers();
+
+    const {
+      rightClick,
+      getContextMenu,
+      clickMenuItem,
+      findFillTextPosition
+    } = setupSamples();
+
+    rightClick(findFillTextPosition('A'));
+
+    expect(getContextMenu()).toHaveClass('react-contextmenu--visible');
+    clickMenuItem('Copy function name');
+    expect(copy).toHaveBeenLastCalledWith('A');
+
+    // The menu should be closed now.
+    expect(getContextMenu()).not.toHaveClass('react-contextmenu--visible');
+
+    // Run the timers to have a clean state.
+    jest.runAllTimers();
+
+    // Try another to make sure the menu works for other stacks too.
+    rightClick(findFillTextPosition('B'));
+
+    expect(getContextMenu()).toHaveClass('react-contextmenu--visible');
+    clickMenuItem('Copy function name');
+    expect(copy).toHaveBeenLastCalledWith('B');
+  });
+
+  function getDrawnFrames(ctx) {
+    const drawCalls = ctx.__flushDrawLog();
+    return drawCalls.filter(([fn]) => fn === 'fillText').map(([, arg]) => arg);
+  }
+
+  it('can scroll into view when selecting a node', function () {
+    // Create a stack deep enough to not have all its rendered frames
+    // fit within GRAPH_HEIGHT.
+    const frames = 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z'.split(' ');
+    const {
+      dispatch,
+      ctx,
+      funcNames,
+      flushRafCalls
+    } = setupSamples(frames.join('\n'));
+    ctx.__flushDrawLog();
+
+    // Select the last frame, 'Z', and then make sure we can "see" the
+    // drawn 'Z', but not 'A'.
+    dispatch(changeSelectedCallNode(0, frames.map(name => funcNames.indexOf(name))));
+    flushRafCalls();
+
+    let drawnFrames = getDrawnFrames(ctx);
+    expect(drawnFrames).toContain('Z');
+    expect(drawnFrames).not.toContain('A');
+
+    // Now select the first frame, 'A', and check that we also can
+    // scroll up again and see 'A', but not 'Z'.
+    dispatch(changeSelectedCallNode(0, [funcNames.indexOf('A')]));
+    flushRafCalls();
+
+    drawnFrames = getDrawnFrames(ctx);
+    expect(drawnFrames).toContain('A');
+    expect(drawnFrames).not.toContain('Z');
+  });
+
+  describe('EmptyReasons', () => {
+    it('shows reasons when a profile has no samples', () => {
+      const profile = getEmptyProfile();
+      const thread = getEmptyThread();
+      thread.name = 'Empty Thread';
+      profile.threads.push(thread);
+
+      const store = storeWithProfile(profile);
+      const container = render(<Provider store={store}>
+          <>
+            <StackChartGraph />
+          </>
+        </Provider>).container;
+
+      expect(container.querySelector('.EmptyReasons')).toMatchSnapshot();
+    });
+
+    it('shows reasons when samples are out of range', () => {
+      const {
+        dispatch,
+        container
+      } = setupSamples();
+      dispatch(commitRange(5, 10));
+      expect(container.querySelector('.EmptyReasons')).toMatchSnapshot();
+    });
+
+    it('shows reasons when samples have been completely filtered out', function () {
+      const {
+        dispatch,
+        container
+      } = setupSamples();
+      dispatch(changeImplementationFilter('js'));
+      expect(container.querySelector('.EmptyReasons')).toMatchSnapshot();
+    });
+  });
+});
+
+describe('MarkerChart', function () {
+  beforeEach(addRootOverlayElement);
+  afterEach(removeRootOverlayElement);
+
+  it('can turn on the show user timings', () => {
+    const {
+      getByLabelText,
+      getState
+    } = setupUserTimings({
+      isShowUserTimingsClicked: false
+    });
+
+    const checkbox = getByLabelText('Show user timing');
+
+    expect(UrlStateSelectors.getShowUserTimings(getState())).toBe(false);
+    expect(getCheckedState(checkbox)).toBe(false);
+
+    checkbox.click();
+
+    expect(UrlStateSelectors.getShowUserTimings(getState())).toBe(true);
+    expect(getCheckedState(checkbox)).toBe(true);
+  });
+
+  it('matches the snapshots for the component and draw log', () => {
+    const {
+      container,
+      ctx
+    } = setupUserTimings({
+      isShowUserTimingsClicked: true
+    });
+
+    expect(container.firstChild).toMatchSnapshot();
+    expect(ctx.__flushDrawLog()).toMatchSnapshot();
+  });
+
+  // TODO implement selecting user timing markers #2355
+  // eslint-disable-next-line jest/no-disabled-tests
+  it.skip('can select a marker when clicking the chart', function () {});
+
+  // TODO implement selecting user timing markers #2355
+  // eslint-disable-next-line jest/no-disabled-tests
+  it.skip('can right click a marker and show a context menu', function () {});
+
+  it('shows a tooltip when hovering', () => {
+    const {
+      getTooltip,
+      moveMouse,
+      findFillTextPosition
+    } = setupUserTimings({
+      isShowUserTimingsClicked: true
+    });
+
+    expect(getTooltip()).toBe(null);
+
+    moveMouse(findFillTextPosition('componentB'));
+    expect(getTooltip()).toBeTruthy();
+    expect(getTooltip()).toMatchSnapshot();
+  });
+});
+
+describe('CombinedChart', function () {
+  beforeEach(addRootOverlayElement);
+  afterEach(removeRootOverlayElement);
+
+  it('renders combined stack chart', () => {
+    const {
+      container,
+      ctx
+    } = setupCombinedTimings();
+
+    expect(container.firstChild).toMatchSnapshot();
+    expect(ctx.__flushDrawLog()).toMatchSnapshot();
+  });
+});
+
+function getUserTiming(name: string, startTime: number, duration: number) {
+  return ['UserTiming', startTime, ({
+    type: 'UserTiming',
+    startTime,
+    endTime: startTime + duration,
+    name,
+    entryType: 'measure'
+  } as UserTimingMarkerPayload)];
+}
+
+function showUserTimings({
+  ctx,
+  getByLabelText,
+  flushRafCalls
+}) {
+  ctx.__flushDrawLog();
+  const checkbox = getByLabelText('Show user timing');
+  checkbox.click();
+  flushRafCalls();
+}
+
+function setupCombinedTimings() {
+  const userTimingsProfile = getProfileWithMarkers([getUserTiming('renderFunction', 0, 10), getUserTiming('componentA', 1, 8), getUserTiming('componentB', 2, 4), getUserTiming('componentC', 3, 1), getUserTiming('componentD', 7, 1)]);
+
+  const {
+    profile
+  } = getProfileFromTextSamples(`
+    A[cat:DOM]       A[cat:DOM]       A[cat:DOM]
+    B[cat:DOM]       B[cat:DOM]       B[cat:DOM]
+    C[cat:Graphics]  C[cat:Graphics]  H[cat:Network]
+    D[cat:Graphics]  F[cat:Graphics]  I[cat:Network]
+    E[cat:Graphics]  G[cat:Graphics]
+  `);
+
+  profile.threads[0].markers = userTimingsProfile.threads[0].markers;
+  const results = setup(profile);
+  showUserTimings(results);
+  return results;
+}
+
+function setupUserTimings(config: {isShowUserTimingsClicked: boolean;}) {
+  // Approximately generate this type of graph with the following user timings.
+  //
+  // [renderFunction---------------------]
+  //   [componentA---------------------]
+  //     [componentB----]  [componentD]
+  //      [componentC-]
+  const profile = getProfileWithMarkers([getUserTiming('renderFunction', 0, 10), getUserTiming('componentA', 1, 8), getUserTiming('componentB', 2, 4), getUserTiming('componentC', 3, 1), getUserTiming('componentD', 7, 1)]);
+
+  const results = setup(profile);
+
+  if (config.isShowUserTimingsClicked) {
+    showUserTimings(results);
+  }
+
+  return results;
+}
+
+/**
+ * Currently the stack chart only accepts samples, but in the future it will accept
+ * markers, see PR #2345.
+ */
+function setupSamples(samples: string = `
+    A[cat:DOM]       A[cat:DOM]       A[cat:DOM]
+    B[cat:DOM]       B[cat:DOM]       B[cat:DOM]
+    C[cat:Graphics]  C[cat:Graphics]  H[cat:Network]
+    D[cat:Graphics]  F[cat:Graphics]  I[cat:Network]
+    E[cat:Graphics]  G[cat:Graphics]
+  `) {
+  const {
+    profile,
+    funcNamesPerThread: [funcNames]
+  } = getProfileFromTextSamples(samples);
+
+  return setup(profile, funcNames);
+}
+
+/**
+ * Setup the stack chart component with a profile.
+ */
+function setup(profile: Profile, funcNames: string[] = []): any {
+  const flushRafCalls = mockRaf();
+  const ctx = mockCanvasContext();
+
+  jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => ctx);
+
+  jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => getBoundingBox(GRAPH_WIDTH, GRAPH_HEIGHT));
+
+  const store = storeWithProfile(profile);
+  store.dispatch(changeSelectedTab('stack-chart'));
+
+  const renderResult = render(<Provider store={store}>
+      <>
+        <CallNodeContextMenu />
+        <StackChartGraph />
+      </>
+    </Provider>);
+  const {
+    container,
+    getByText
+  } = renderResult;
+
+  flushRafCalls();
+
+  const stackChartCanvas = ensureExists(container.querySelector('.chartCanvas.stackChartCanvas'), `Couldn't find the stack chart canvas, with selector .chartCanvas.stackChartCanvas`);
+
+  // Mouse event tools
+  function getPositioningOptions({
+    x,
+    y
+  }) {
+    // These positioning options will be sent to all our mouse events. Note
+    // that the values aren't really consistent, especially offsetY and
+    // pageY shouldn't be the same, but in the context of our test this will
+    // be good enough.
+    // pageX/Y values control the position of the tooltip so it's not super
+    // important.
+    // offsetX/Y are more important as they're used to find which node is
+    // actually clicked.
+    // clientX/Y is used in the Viewport HOC when dragging and zooming.
+    const positioningOptions = {
+      offsetX: x,
+      offsetY: y,
+      clientX: x,
+      clientY: y,
+      pageX: x,
+      pageY: y
+    };
+
+    return positioningOptions;
+  }
+
+  function fireMouseEvent(eventName, options) {
+    fireEvent(stackChartCanvas, getMouseEvent(eventName, options));
+  }
+
+  /**
+   * The tooltip is in a portal, and created in the root overlay elements.
+   */
+  function getTooltip() {
+    return document.querySelector('#root-overlay .tooltip');
+  }
+
+  type Position = {x: CssPixels;y: CssPixels;};
+
+  // Use findFillTextPosition to determin the position.
+  function leftClick(where: Position) {
+    const positioningOptions = getPositioningOptions(where);
+    const clickOptions = {
+      ...positioningOptions,
+      button: 0,
+      buttons: 0
+    };
+
+    fireMouseEvent('mousemove', positioningOptions);
+    fireMouseEvent('mousedown', clickOptions);
+    fireMouseEvent('mouseup', clickOptions);
+    fireMouseEvent('click', clickOptions);
+    flushRafCalls();
+  }
+
+  function rightClick(where: Position) {
+    const positioningOptions = getPositioningOptions(where);
+    const clickOptions = {
+      ...positioningOptions,
+      button: 2,
+      buttons: 2
+    };
+
+    fireMouseEvent('mousemove', positioningOptions);
+    fireMouseEvent('mousedown', clickOptions);
+    fireMouseEvent('mouseup', clickOptions);
+    fireMouseEvent('contextmenu', clickOptions);
+    flushRafCalls();
+  }
+
+  function moveMouse(where) {
+    fireMouseEvent('mousemove', getPositioningOptions(where));
+  }
+
+  // Context menu tools
+  const getContextMenu = () => ensureExists(container.querySelector('.react-contextmenu'), `Couldn't find the context menu.`);
+
+  function clickMenuItem(strOrRegexp) {
+    fireEvent.click(getByText(strOrRegexp));
+  }
+
+  function findFillTextPosition(fillText: string): Position {
+    return findFillTextPositionFromDrawLog(ctx.__flushDrawLog(), fillText);
+  }
+
+  return {
+    ...renderResult,
+    ...store,
+    funcNames,
+    ctx,
+    flushRafCalls,
+    stackChartCanvas,
+    moveMouse,
+    leftClick,
+    rightClick,
+    clickMenuItem,
+    getContextMenu,
+    getTooltip,
+    findFillTextPosition
+  };
+}
+
+/**
+ * Get around the type constraints of refining an HTMLElement into a radio input.
+ */
+function getCheckedState(element: HTMLElement): unknown {
+  return (element as any).checked;
+}
