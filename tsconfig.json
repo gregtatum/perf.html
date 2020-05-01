@@ -7,9 +7,15 @@
     "strict": true,
     // Allow esnext syntax. Otherwise the default is ES5 only.
     "target": "esnext",
-    "lib": ["esnext", "dom"]
+    "lib": ["esnext", "dom"],
+    "baseUrl": "./",
+    "paths": {
+      // Map firefox-profiler for shortcuts for imports.
+      "firefox-profiler/*": [
+        "./src/*"
+      ]
+    }
   },
-  "baseUrl": "./src",
   "include": ["./**/*.ts"],
   "exclude": [
     "node_modules",

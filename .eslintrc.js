@@ -4,13 +4,12 @@ module.exports = {
     es6: true,
     node: true,
   },
-  parser: 'babel-eslint',
+  parser: '@typescript-eslint/parser',
   extends: [
     'eslint:recommended',
     'plugin:react/recommended',
     'plugin:flowtype/recommended',
     'prettier',
-    'prettier/flowtype',
     'prettier/react',
     'plugin:jest/recommended'
   ],
