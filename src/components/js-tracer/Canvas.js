@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import { GREY_20 } from 'photon-colors';
+import { GREY_20, BLUE_40 } from 'photon-colors';
 import * as React from 'react';
 import classNames from 'classnames';
 import {
@@ -18,7 +18,6 @@ import ChartCanvas from '../shared/chart/Canvas';
 import TextMeasurement from '../../utils/text-measurement';
 import { FastFillStyle } from '../../utils';
 import { updatePreviewSelection } from '../../actions/profile-view';
-import { BLUE_40 } from '../../utils/colors';
 
 import type {
   Milliseconds,

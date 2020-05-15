@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import { GREY_20, GREY_30 } from 'photon-colors';
+import { GREY_20, GREY_30, BLUE_40 } from 'photon-colors';
 import * as React from 'react';
 import {
   withChartViewport,
@@ -17,7 +17,6 @@ import {
   typeof updatePreviewSelection as UpdatePreviewSelection,
   typeof changeRightClickedMarker as ChangeRightClickedMarker,
 } from '../../actions/profile-view';
-import { BLUE_40 } from '../../utils/colors';
 import { TIMELINE_MARGIN_LEFT } from '../../app-logic/constants';
 import type {
   Milliseconds,
