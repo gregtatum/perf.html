@@ -28,6 +28,7 @@ module.exports = {
     'import/no-duplicates': 'error',
     'import/no-unresolved': 'error',
     'import/named': 'error',
+    'import/no-unused-modules': [1, {"unusedExports": true}],
     'prettier/prettier': 'error',
     'react/button-has-type': 'error',
     'react/no-access-state-in-setstate': 'error',
