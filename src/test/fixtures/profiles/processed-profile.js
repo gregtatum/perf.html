@@ -80,18 +80,20 @@ function _refineMockPayload(
 
 export function addMarkersToThreadWithCorrespondingSamples(
   thread: Thread,
-  markers: TestDefinedMarkers
+  testMarkers: TestDefinedMarkers
 ) {
-  const stringTable = thread.stringTable;
-  const markersTable = thread.markers;
+  const { markers } = thread;
 
-  markers.forEach(([name, time, data]) => {
-    markersTable.name.push(stringTable.indexForString(name));
-    markersTable.time.push(time);
-    markersTable.data.push(_refineMockPayload(data));
-    markersTable.category.push(0);
-    markersTable.length++;
-  });
+  for (const [name, start, data] of testMarkers) {
+    markers.push({
+      name,
+      dur: 0,
+      title: '',
+      start,
+      category: 0,
+      data: _refineMockPayload(data),
+    });
+  }
 }
 
 export function getThreadWithMarkers(markers: TestDefinedMarkers) {

@@ -105,8 +105,8 @@ describe('timeline/TrackScreenshots', function() {
     const { dispatch, container } = setup(profile);
     dispatch(
       commitRange(
-        thread.markers.time[markerIndexA],
-        thread.markers.time[markerIndexB]
+        thread.markers[markerIndexA].start,
+        thread.markers[markerIndexB].start
       )
     );
 
@@ -129,8 +129,8 @@ describe('timeline/TrackScreenshots', function() {
     const { dispatch, container } = setup(profile);
     dispatch(
       commitRange(
-        thread.markers.time[markerIndexA],
-        thread.markers.time[markerIndexB]
+        thread.markers[markerIndexA].start,
+        thread.markers[markerIndexB].start
       )
     );
     expect(container.querySelector('.timelineTrackScreenshotImg')).toBeFalsy();
@@ -235,17 +235,12 @@ function _setScreenshotMarkersToUnknown(
   thread: Thread,
   ...markerIndexes: IndexIntoRawMarkerTable[]
 ) {
-  // Remove off the last few screenshot markers
-  const unknownStringIndex = thread.stringTable.indexForString('Unknown');
-  const screenshotStringIndex = thread.stringTable.indexForString(
-    'CompositorScreenshot'
-  );
   for (const markerIndex of markerIndexes) {
     // Double check that we've actually got screenshot markers:
-    if (thread.markers.name[markerIndex] !== screenshotStringIndex) {
+    if (thread.markers[markerIndex].name !== 'CompositorScreenshot') {
       throw new Error('This is not a screenshot marker.');
     }
-    thread.markers.name[markerIndex] = unknownStringIndex;
-    thread.markers.data[markerIndex] = null;
+    thread.markers[markerIndex].name = 'Unknown';
+    thread.markers[markerIndex].data = null;
   }
 }

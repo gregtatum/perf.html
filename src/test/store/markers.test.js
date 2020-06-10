@@ -144,11 +144,11 @@ describe('selectors/getMarkerChartTimingAndBuckets', function() {
   });
 });
 
-describe('getProcessedRawMarkerTable', function() {
+describe('getProcessedMarkers', function() {
   function setup(testMarkers) {
     const profile = getProfileWithMarkers(testMarkers);
     const { getState } = storeWithProfile(profile);
-    return selectedThreadSelectors.getProcessedRawMarkerTable(getState());
+    return selectedThreadSelectors.getProcessedMarkers(getState());
   }
 
   it('can process Invalidation markers', function() {
@@ -158,8 +158,8 @@ describe('getProcessedRawMarkerTable', function() {
       ['Invalidate resource://foo -> resource://bar:3456', 30, null],
       ['Invalidate moz-extension://<URL>', 40, null],
     ]);
-    expect(markers.time).toEqual([10, 20, 30, 40]);
-    expect(markers.data).toEqual([
+    expect(markers.map(({ start }) => start)).toEqual([10, 20, 30, 40]);
+    expect(markers.map(({ data }) => data)).toEqual([
       {
         type: 'Invalidation',
         url: 'http://mozilla.com/script.js',
@@ -210,8 +210,8 @@ describe('getProcessedRawMarkerTable', function() {
         null,
       ],
     ]);
-    expect(markers.time).toEqual([10, 20, 30]);
-    expect(markers.data).toEqual([
+    expect(markers.map(({ start }) => start)).toEqual([10, 20, 30]);
+    expect(markers.map(({ data }) => data)).toEqual([
       {
         type: 'Bailout',
         bailoutType: 'ShapeGuard',

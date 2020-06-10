@@ -232,12 +232,12 @@ export function computeLocalTracksByPid(
       tracks.push({ type: 'thread', threadIndex });
     }
 
-    if (thread.markers.data.some(datum => datum && datum.type === 'Network')) {
+    if (thread.markers.some(({ data }) => data && data.type === 'Network')) {
       // This thread has network markers.
       tracks.push({ type: 'network', threadIndex });
     }
 
-    if (thread.markers.data.some(datum => datum && datum.type === 'IPC')) {
+    if (thread.markers.some(({ data }) => data && data.type === 'IPC')) {
       // This thread has IPC markers.
       tracks.push({ type: 'ipc', threadIndex });
     }
@@ -329,14 +329,11 @@ export function computeGlobalTracks(profile: Profile): GlobalTrack[] {
     // Check for screenshots.
     const ids: Set<string> = new Set();
     if (stringTable.hasString('CompositorScreenshot')) {
-      const screenshotNameIndex = stringTable.indexForString(
-        'CompositorScreenshot'
-      );
       for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
-        if (markers.name[markerIndex] === screenshotNameIndex) {
+        if (markers[markerIndex].name === 'CompositorScreenshot') {
           // Coerce the payload to a screenshot one. Don't do a runtime check that
           // this is correct.
-          const data: ScreenshotPayload = (markers.data[markerIndex]: any);
+          const data: ScreenshotPayload = (markers[markerIndex].data: any);
           ids.add(data.windowID);
         }
       }
@@ -672,10 +669,8 @@ function _isContentThreadWithNoPaint(thread: Thread): boolean {
 function _isThreadWithNoPaint({ markers, stringTable }: Thread): boolean {
   let isPaintMarkerFound = false;
   if (stringTable.hasString('RefreshDriverTick')) {
-    const paintStringIndex = stringTable.indexForString('RefreshDriverTick');
-
     for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
-      if (paintStringIndex === markers.name[markerIndex]) {
+      if ('RefreshDriverTick' === markers[markerIndex].name) {
         isPaintMarkerFound = true;
         break;
       }

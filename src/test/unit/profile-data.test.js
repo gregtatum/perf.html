@@ -184,37 +184,37 @@ describe('process-profile', function() {
       expect(thread2.samples.time[1]).toEqual(1001);
 
       // Now about markers
-      expect(thread0.markers.time[0]).toEqual(1);
-      expect(thread0.markers.time[1]).toEqual(2);
-      expect(thread0.markers.time[2]).toEqual(3);
-      expect(thread0.markers.time[3]).toEqual(4);
-      expect(thread0.markers.time[4]).toEqual(5);
+      expect(thread0.markers[0].start).toEqual(1);
+      expect(thread0.markers[1].start).toEqual(2);
+      expect(thread0.markers[2].start).toEqual(3);
+      expect(thread0.markers[3].start).toEqual(4);
+      expect(thread0.markers[4].start).toEqual(5);
 
-      expect(thread0.markers.time[6]).toEqual(9);
-      expect(thread0.markers.time[7]).toEqual(10);
+      expect(thread0.markers[6].start).toEqual(9);
+      expect(thread0.markers[7].start).toEqual(10);
 
       // 1 second later than the same markers in the main process.
-      expect(thread2.markers.time[0]).toEqual(1001);
-      expect(thread2.markers.time[1]).toEqual(1002);
-      expect(thread2.markers.time[2]).toEqual(1003);
-      expect(thread2.markers.time[3]).toEqual(1004);
-      expect(thread2.markers.time[4]).toEqual(1005);
+      expect(thread2.markers[0].start).toEqual(1001);
+      expect(thread2.markers[1].start).toEqual(1002);
+      expect(thread2.markers[2].start).toEqual(1003);
+      expect(thread2.markers[3].start).toEqual(1004);
+      expect(thread2.markers[4].start).toEqual(1005);
 
-      expect(thread2.markers.time[6]).toEqual(1009);
-      expect(thread2.markers.time[7]).toEqual(1010);
+      expect(thread2.markers[6].start).toEqual(1009);
+      expect(thread2.markers[7].start).toEqual(1010);
 
       expect(
-        thread2.markers.data[6] &&
-          thread2.markers.data[6].type === 'tracing' &&
-          thread2.markers.data[6].category === 'DOMEvent'
-          ? thread2.markers.data[6].timeStamp
+        thread2.markers[6].data &&
+          thread2.markers[6].data.type === 'tracing' &&
+          thread2.markers[6].data.category === 'DOMEvent'
+          ? thread2.markers[6].data.timeStamp
           : null
       ).toEqual(1001);
       expect(
-        thread2.markers.data[7] &&
-          thread2.markers.data[7].type === 'tracing' &&
-          thread2.markers.data[7].category === 'DOMEvent'
-          ? thread2.markers.data[7].timeStamp
+        thread2.markers[7].data &&
+          thread2.markers[7].data.type === 'tracing' &&
+          thread2.markers[7].data.category === 'DOMEvent'
+          ? thread2.markers[7].data.timeStamp
           : null
       ).toEqual(1001);
       // TODO: also shift the samples inside marker callstacks

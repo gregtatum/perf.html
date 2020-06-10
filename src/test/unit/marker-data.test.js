@@ -7,19 +7,21 @@ import { getThreadSelectors } from '../../selectors/per-thread';
 import { processProfile } from '../../profile-logic/process-profile';
 import {
   IPCMarkerCorrelations,
-  deriveMarkersFromRawMarkerTable,
   filterRawMarkerTableToRange,
   filterRawMarkerTableToRangeWithMarkersToDelete,
 } from '../../profile-logic/marker-data';
 import { getTimeRangeForThread } from '../../profile-logic/profile-data';
 
 import { createGeckoProfile } from '../fixtures/profiles/gecko-profile';
-import { getThreadWithMarkers } from '../fixtures/profiles/processed-profile';
+import {
+  getThreadWithMarkers,
+  getProfileWithMarkers,
+} from '../fixtures/profiles/processed-profile';
 import { storeWithProfile } from '../fixtures/stores';
 
 import type { Thread, Milliseconds } from 'firefox-profiler/types';
 
-describe('deriveMarkersFromRawMarkerTable', function() {
+describe('match marker phases', function() {
   function setup() {
     // We have a broken marker on purpose in our test data, which outputs an
     // error. Let's silence an error to have a clean output. We check that the
@@ -362,9 +364,7 @@ describe('deriveMarkersFromRawMarkerTable', function() {
 });
 
 describe('filterRawMarkerTableToRange', () => {
-  function setup(
-    markers: Array<[string, Milliseconds, null | Object]>
-  ): Thread {
+  function setup(markers: Array<[string, Milliseconds, null | Object]>): * {
     markers = markers.map(([name, time, payload]) => {
       if (payload) {
         // Force a type 'DummyForTests' if it's inexistant
@@ -373,9 +373,10 @@ describe('filterRawMarkerTableToRange', () => {
       return [name, time, payload];
     });
 
-    // Our marker payload union type is too difficult to work with in a
-    // generic way here.
-    return getThreadWithMarkers((markers: any));
+    const profile = getProfileWithMarkers(markers);
+    const [thread] = profile.threads;
+    const store = storeWithProfile(profile);
+    return { profile, thread, store };
   }
 
   it('filters generic markers', () => {
@@ -389,9 +390,9 @@ describe('filterRawMarkerTableToRange', () => {
       ['6', 6, null],
       ['7', 7, null],
     ];
-    const { markers: markerTable } = setup(markers);
+    const { thread } = setup(markers);
     const filteredMarkerTable = filterRawMarkerTableToRange(
-      markerTable,
+      thread.markers,
       2.3,
       5.6
     );
@@ -473,6 +474,8 @@ describe('filterRawMarkerTableToRange', () => {
     };
 
     const threadRange = getTimeRangeForThread(filteredThread, 1);
+
+    storeWithProfile();
 
     // We're using `deriveMarkersFromRawMarkerTable` here because it makes it
     // easier to assert the result for tracing markers.

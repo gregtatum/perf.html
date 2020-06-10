@@ -776,18 +776,18 @@ function _getTimeRangeForThread(
     // Finding start and end times sadly requires looping through all markers :(
     for (let i = 0; i < markers.length; i++) {
       const thisStartTime =
-        markers.data[i] && typeof markers.data[i].startTime === 'number'
-          ? markers.data[i].startTime
-          : markers.time[i];
+        markers[i].data && typeof markers[i].data.startTime === 'number'
+          ? markers[i].data.startTime
+          : markers[i].start;
 
       // We add `interval` to the read value here. It could be any number, but
       // we use `interval` instead of for example 0.001 so that numbers round a
       // bit more in tests, and this doesn't change things much in practice
       // otherwise.
       const thisEndTime =
-        markers.data[i] && typeof markers.data[i].endTime === 'number'
-          ? markers.data[i].endTime + interval
-          : markers.time[i] + interval;
+        markers[i].data && typeof markers[i].data.endTime === 'number'
+          ? markers[i].data.endTime + interval
+          : markers[i].start + interval;
 
       result.start = Math.min(result.start, thisStartTime);
       result.end = Math.max(result.end, thisEndTime);

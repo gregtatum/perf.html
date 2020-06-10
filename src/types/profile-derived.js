@@ -3,14 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import type { Milliseconds, StartEndRange } from './units';
-import type { MarkerPayload } from './markers';
+import type { StartEndRange } from './units';
 import type {
   IndexIntoFuncTable,
   ThreadIndex,
   Pid,
   IndexIntoJsTracerEvents,
-  IndexIntoCategoryList,
   CounterIndex,
   InnerWindowID,
   Page,
@@ -76,16 +74,6 @@ export type CallNodeInfo = {
  * that goes from tip to root.
  */
 export type CallNodePath = IndexIntoFuncTable[];
-
-export type Marker = {|
-  start: Milliseconds,
-  dur: Milliseconds,
-  name: string,
-  title: string | null,
-  category: IndexIntoCategoryList,
-  data: MarkerPayload,
-  incomplete?: boolean,
-|};
 
 /**
  * A value with this type uniquely identifies a marker. This is the index of a

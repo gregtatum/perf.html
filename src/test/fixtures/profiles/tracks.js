@@ -140,17 +140,18 @@ export function getProfileWithNiceTracks(): Profile {
   thread2.pid = 222;
 
   // Add a refresh driver tick so that this thread will not be idle.
-  thread2.markers.data.push({
-    type: 'tracing',
-    category: 'Paint',
-    interval: 'start',
+  thread2.markers.push({
+    start: 0,
+    dur: 0,
+    title: '',
+    name: 'RefreshDriverTick',
+    category: 0,
+    data: {
+      type: 'tracing',
+      category: 'Paint',
+      interval: 'start',
+    },
   });
-  thread2.markers.category.push(0);
-  thread2.markers.name.push(
-    thread2.stringTable.indexForString('RefreshDriverTick')
-  );
-  thread2.markers.time.push(0);
-  thread2.markers.length++;
 
   thread3.name = 'DOM Worker';
   thread3.processType = 'tab';

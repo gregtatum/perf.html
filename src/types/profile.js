@@ -238,17 +238,19 @@ export type ProfilerMarkerPayload = {
  * Engineers can easily add arbitrary markers to their code without coordinating with
  * profiler.firefox.com to instrument their code.
  *
- * In the profile, these markers are raw and unprocessed. In the marker selectors, we
- * can run them through a processing pipeline to match up start and end markers to
- * create markers with durations, or even take a string-only marker and parse
+ * In the Gecko profile version, these markers are raw and unprocessed. In the profile
+ * processing step, we run them through a processing step to match up start and end
+ * markers to create markers with durations, or even take a string-only marker and parse
  * it into a structured marker.
  */
-export type RawMarkerTable = {|
-  data: MarkerPayload[],
-  name: IndexIntoStringTable[],
-  time: number[],
-  category: IndexIntoCategoryList[],
-  length: number,
+export type Marker = {|
+  start: Milliseconds,
+  dur: Milliseconds | null,
+  name: string,
+  title: string | null,
+  category: IndexIntoCategoryList,
+  data: MarkerPayload,
+  incomplete?: boolean,
 |};
 
 /**
@@ -556,7 +558,7 @@ export type Thread = {|
   samples: SamplesTable,
   jsAllocations?: JsAllocationsTable,
   nativeAllocations?: NativeAllocationsTable,
-  markers: RawMarkerTable,
+  markers: Marker[],
   stackTable: StackTable,
   frameTable: FrameTable,
   // Strings for profiles are collected into a single table, and are referred to by

@@ -153,7 +153,7 @@ describe('sanitizePII', function() {
     // Checking if we have screenshot markers just in case.
     let screenshotMarkerFound = false;
     for (const thread of profile.threads) {
-      for (const data of thread.markers.data) {
+      for (const { data } of thread.markers) {
         if (data && data.type === 'CompositorScreenshot') {
           screenshotMarkerFound = true;
           break;
@@ -169,7 +169,7 @@ describe('sanitizePII', function() {
     const sanitizedProfile = sanitizePII(profile, PIIToRemove).profile;
     screenshotMarkerFound = false;
     for (const thread of sanitizedProfile.threads) {
-      for (const data of thread.markers.data) {
+      for (const { data } of thread.markers) {
         if (data && data.type === 'CompositorScreenshot') {
           screenshotMarkerFound = true;
           break;
@@ -238,9 +238,8 @@ describe('sanitizePII', function() {
 
     const sanitizedProfile = sanitizePII(profile, PIIToRemove).profile;
     for (const thread of sanitizedProfile.threads) {
-      const stringArray = thread.stringTable.serializeToArray();
       for (let i = 0; i < thread.markers.length; i++) {
-        const currentMarker = thread.markers.data[i];
+        const currentMarker = thread.markers[i].data;
         if (
           currentMarker &&
           currentMarker.type &&
@@ -248,8 +247,7 @@ describe('sanitizePII', function() {
         ) {
           expect(currentMarker.URI).toBeFalsy();
           expect(currentMarker.RedirectURI).toBeFalsy();
-          const stringIndex = thread.markers.name[i];
-          expect(stringArray[stringIndex].includes('http')).toBe(false);
+          expect(thread.markers[i].name.includes('http')).toBe(false);
         }
       }
     }
@@ -276,7 +274,7 @@ describe('sanitizePII', function() {
     });
 
     const sanitizedProfile = sanitizePII(profile, PIIToRemove).profile;
-    const marker = sanitizedProfile.threads[0].markers.data[0];
+    const marker = sanitizedProfile.threads[0].markers[0].data;
     if (!marker || marker.type !== 'Text') {
       throw new Error('Expected a Text marker');
     }
@@ -355,7 +353,7 @@ describe('sanitizePII', function() {
     const thread = sanitizedProfile.threads[0];
     expect(thread.markers.length).toEqual(1);
 
-    const marker = thread.markers.data[0];
+    const marker = thread.markers[0].data;
     // All the conditions have to be checked to make Flow happy.
     expect(
       marker &&
@@ -392,7 +390,7 @@ describe('sanitizePII', function() {
     const thread = sanitizedProfile.threads[0];
     expect(thread.markers.length).toEqual(1);
 
-    const marker = thread.markers.data[0];
+    const marker = thread.markers[0].data;
     // All the conditions have to be checked to make Flow happy.
     expect(
       marker &&
@@ -414,10 +412,10 @@ describe('sanitizePII', function() {
       for (let i = 0; i < markersTable.length; i++) {
         // `toBeTruthy` doesn't work here because there are marker categories with `0` value.
         // expect.anything() means anything other than null or undefined.
-        expect(markersTable.name[i]).toEqual(expect.anything());
-        expect(markersTable.time[i]).toEqual(expect.anything());
-        expect(markersTable.data[i]).toEqual(expect.anything());
-        expect(markersTable.category[i]).toEqual(expect.anything());
+        expect(markersTable[i].name).toEqual(expect.anything());
+        expect(markersTable[i].start).toEqual(expect.anything());
+        expect(markersTable[i].data).toEqual(expect.anything());
+        expect(markersTable[i].category).toEqual(expect.anything());
       }
     }
   });
@@ -471,8 +469,8 @@ describe('sanitizePII', function() {
     const thread = sanitizedProfile.threads[0];
     expect(thread.markers.length).toEqual(2);
 
-    const marker1 = thread.markers.data[0];
-    const marker2 = thread.markers.data[1];
+    const marker1 = thread.markers[0].data;
+    const marker2 = thread.markers[1].data;
 
     // Marker filename fields should be there.
     if (!marker1 || !marker1.filename || !marker2 || !marker2.filename) {

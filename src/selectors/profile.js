@@ -262,14 +262,11 @@ export const getGlobalTrackReferences: Selector<
 export const getHasPreferenceMarkers: Selector<boolean> = createSelector(
   getThreads,
   threads => {
-    return threads.some(({ stringTable, markers }) => {
+    return threads.some(({ markers }) => {
       /*
        * Does this particular thread have a Preference in it?
        */
-      const indexForPreferenceString = stringTable.indexForString(
-        'PreferenceRead'
-      );
-      return markers.name.some(name => name === indexForPreferenceString);
+      return markers.some(marker => marker.name === 'PreferenceRead');
     });
   }
 );

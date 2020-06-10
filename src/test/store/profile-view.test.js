@@ -1504,8 +1504,8 @@ describe('actions/ProfileView', function() {
       expect(markers.length).toBe(20);
       const startIndex = 3;
       const endIndex = 8;
-      const startTime = markers.time[startIndex];
-      const endTime = markers.time[endIndex];
+      const startTime = markers[startIndex].start;
+      const endTime = markers[endIndex].start;
       dispatch(ProfileView.commitRange(startTime, endTime));
 
       // Get out the markers.
@@ -1705,10 +1705,10 @@ describe('snapshots of selectors/profile', function() {
         .map(getMarker)
     ).toMatchSnapshot();
   });
-  it('matches the last stored run of markerThreadSelectors.getProcessedRawMarkerTable', function() {
+  it('matches the last stored run of markerThreadSelectors.getProcessedMarkers', function() {
     const { getState, markerThreadSelectors } = setupStore();
     expect(
-      markerThreadSelectors.getProcessedRawMarkerTable(getState())
+      markerThreadSelectors.getProcessedMarkers(getState())
     ).toMatchSnapshot();
   });
   it('matches the last stored run of markerThreadSelectors.getFullMarkerListIndexes', function() {

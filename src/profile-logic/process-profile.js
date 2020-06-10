@@ -11,11 +11,10 @@ import {
   getEmptyExtensions,
   getEmptyFuncTable,
   getEmptyResourceTable,
-  getEmptyRawMarkerTable,
   getEmptyJsAllocationsTable,
   getEmptyUnbalancedNativeAllocationsTable,
 } from './data-structures';
-import { immutableUpdate, ensureExists } from '../utils/flow';
+import { ensureExists } from '../utils/flow';
 import {
   upgradeProcessedProfileToCurrentVersion,
   isProcessedProfile,
@@ -46,7 +45,7 @@ import type {
   FrameTable,
   SamplesTable,
   StackTable,
-  RawMarkerTable,
+  Marker,
   Lib,
   FuncTable,
   ResourceTable,
@@ -595,13 +594,14 @@ function _convertPayloadStackToIndex(
  *  Extract Native allocations into the NativeAllocationsTable.
  */
 function _processMarkers(
-  geckoMarkers: GeckoMarkerStruct
+  geckoMarkers: GeckoMarkerStruct,
+  stringTable: UniqueStringArray
 ): {|
-  markers: RawMarkerTable,
+  markers: Marker[],
   jsAllocations: JsAllocationsTable | null,
   nativeAllocations: NativeAllocationsTable | null,
 |} {
-  const markers = getEmptyRawMarkerTable();
+  const markers: Marker[] = [];
   const jsAllocations = getEmptyJsAllocationsTable();
   const inProgressNativeAllocations = getEmptyUnbalancedNativeAllocationsTable();
   const memoryAddress: number[] = [];
@@ -668,13 +668,22 @@ function _processMarkers(
 
     const payload = _processMarkerPayload(geckoPayload);
     const name = geckoMarkers.name[markerIndex];
-    const time = geckoMarkers.time[markerIndex];
+    const startTime = geckoMarkers.startTime[markerIndex];
+    const endTime = geckoMarkers.endTime[markerIndex];
+    const phase = geckoMarkers.phase[markerIndex];
     const category = geckoMarkers.category[markerIndex];
-    markers.name.push(name);
-    markers.time.push(time);
-    markers.category.push(category);
-    markers.data.push(payload);
-    markers.length++;
+
+    markers.push({
+      // TODO - Should we use an index here or the string?
+      name: stringTable.getString(name),
+      // TODO - Update these to startTime / endTime. This is a bigger patch so
+      // follow-up with it.
+      start: startTime,
+      dur: endTime - startTime,
+      title: null,
+      category,
+      data: payload,
+    });
   }
 
   // Properly handle the different cases of native allocations.
@@ -977,7 +986,8 @@ function _processThread(
     categories
   );
   const { markers, jsAllocations, nativeAllocations } = _processMarkers(
-    geckoMarkers
+    geckoMarkers,
+    stringTable
   );
   const samples = _processSamples(geckoSamples);
 
@@ -1104,74 +1114,73 @@ export function adjustProfilerOverheadTimestamps<
 }
 
 /**
+ * Mutation warning! This function mutates the times in order to avoid GC penalties.
+ *
  * Adjust all timestamp fields by the given delta. This is needed when
  * integrating subprocess profiles into the parent process profile; each
  * profile's process has its own timebase, and we don't want to keep
  * converting timestamps when we deal with the integrated profile.
  */
 export function adjustMarkerTimestamps(
-  markers: RawMarkerTable,
+  markers: Marker[],
   delta: Milliseconds
-): RawMarkerTable {
-  return {
-    ...markers,
-    time: markers.time.map(time => time + delta),
-    data: markers.data.map(data => {
-      if (!data) {
-        return data;
+): void {
+  for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
+    const marker = markers[markerIndex];
+    marker.start = marker.start + delta;
+    const data = marker.data;
+    if (!data) {
+      continue;
+    }
+    if (typeof data.startTime === 'number') {
+      data.startTime += delta;
+    }
+    if (typeof data.endTime === 'number') {
+      data.endTime += delta;
+    }
+    if (data.type === 'tracing' || data.type === 'Styles') {
+      if (data.cause) {
+        data.cause.time += delta;
       }
-      const newData = immutableUpdate(data);
-      if (typeof newData.startTime === 'number') {
-        newData.startTime += delta;
+      if (data.category === 'DOMEvent' && 'timeStamp' in data) {
+        data.timeStamp += delta;
       }
-      if (typeof newData.endTime === 'number') {
-        newData.endTime += delta;
+    }
+    if (data.type === 'Network') {
+      if (typeof data.domainLookupStart === 'number') {
+        data.domainLookupStart += delta;
       }
-      if (newData.type === 'tracing' || newData.type === 'Styles') {
-        if (newData.cause) {
-          newData.cause.time += delta;
-        }
-        if (newData.category === 'DOMEvent' && 'timeStamp' in newData) {
-          newData.timeStamp += delta;
-        }
+      if (typeof data.domainLookupEnd === 'number') {
+        data.domainLookupEnd += delta;
       }
-      if (newData.type === 'Network') {
-        if (typeof newData.domainLookupStart === 'number') {
-          newData.domainLookupStart += delta;
-        }
-        if (typeof newData.domainLookupEnd === 'number') {
-          newData.domainLookupEnd += delta;
-        }
-        if (typeof newData.connectStart === 'number') {
-          newData.connectStart += delta;
-        }
-        if (typeof newData.tcpConnectEnd === 'number') {
-          newData.tcpConnectEnd += delta;
-        }
-        if (typeof newData.secureConnectionStart === 'number') {
-          newData.secureConnectionStart += delta;
-        }
-        if (typeof newData.connectEnd === 'number') {
-          newData.connectEnd += delta;
-        }
-        if (typeof newData.requestStart === 'number') {
-          newData.requestStart += delta;
-        }
-        if (typeof newData.responseStart === 'number') {
-          newData.responseStart += delta;
-        }
-        if (typeof newData.responseEnd === 'number') {
-          newData.responseEnd += delta;
-        }
+      if (typeof data.connectStart === 'number') {
+        data.connectStart += delta;
       }
-      // Note: When adding code for new fields here, you may need to fix up
-      // existing processed profiles that were missing the relevant adjustments.
-      // This should be done by adding an upgrader in processed-profile-versioning.js.
-      // In fact, that file already includes code duplicated from this function
-      // for at least two cases where we forgot to do the adjustment initially.
-      return newData;
-    }),
-  };
+      if (typeof data.tcpConnectEnd === 'number') {
+        data.tcpConnectEnd += delta;
+      }
+      if (typeof data.secureConnectionStart === 'number') {
+        data.secureConnectionStart += delta;
+      }
+      if (typeof data.connectEnd === 'number') {
+        data.connectEnd += delta;
+      }
+      if (typeof data.requestStart === 'number') {
+        data.requestStart += delta;
+      }
+      if (typeof data.responseStart === 'number') {
+        data.responseStart += delta;
+      }
+      if (typeof data.responseEnd === 'number') {
+        data.responseEnd += delta;
+      }
+    }
+    // Note: When adding code for new fields here, you may need to fix up
+    // existing processed profiles that were missing the relevant adjustments.
+    // This should be done by adding an upgrader in processed-profile-versioning.js.
+    // In fact, that file already includes code duplicated from this function
+    // for at least two cases where we forgot to do the adjustment initially.
+  }
 }
 
 /**
@@ -1217,10 +1226,8 @@ export function processProfile(
           newThread.samples,
           adjustTimestampsBy
         );
-        newThread.markers = adjustMarkerTimestamps(
-          newThread.markers,
-          adjustTimestampsBy
-        );
+        // Mutation warning! This function avoids GC by mutating the times.
+        adjustMarkerTimestamps(newThread.markers, adjustTimestampsBy);
         if (newThread.jsTracer) {
           newThread.jsTracer = _adjustJsTracerTimestamps(
             newThread.jsTracer,

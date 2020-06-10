@@ -13,7 +13,6 @@ import * as ProfileSelectors from '../profile';
 import { getRightClickedMarkerInfo } from '../right-clicked-marker';
 
 import type {
-  RawMarkerTable,
   ThreadIndex,
   MarkerIndex,
   Marker,
@@ -39,7 +38,7 @@ export function getMarkerSelectorsPerThread(
   threadSelectors: *,
   threadIndex: ThreadIndex
 ) {
-  const _getRawMarkerTable: Selector<RawMarkerTable> = state =>
+  const _getMarkerTable: Selector<Marker[]> = state =>
     threadSelectors.getThread(state).markers;
 
   /**
@@ -50,19 +49,19 @@ export function getMarkerSelectorsPerThread(
    * variants of the selectors that are created for specific views that have been
    * omitted, but the ordered steps below give the general picture.
    *
-   * 1. _getRawMarkerTable - Get the RawMarkerTable from the current thread.
-   * 2. getProcessedRawMarkerTable - Process marker payloads out of raw strings, and
-   *                                 other future processing needs. This returns a
-   *                                 RawMarkerTable still.
-   * 3a. _getDerivedMarkers        - Match up start/end markers, and start
-   *                                 returning the Marker[] type.
-   * 3b. _getDerivedJankMarkers    - Jank markers come from our samples data, and
-   *                                 this selector returns Marker structures out of
-   *                                 the samples structure.
-   * 4. getFullMarkerList          - Concatenates and sorts all markers coming from
-   *                                 different origin structures.
-   * 5. getFullMarkerListIndexes   - From the full marker list, generates an array
-   *                                 containing the sequence of indexes for all markers.
+   * 1. _getMarkerTable           - Get the Markers from the current thread.
+   * 2. getProcessedMarkers      - Process marker payloads out of raw strings, and
+   *                               other future processing needs. This returns a
+   *                               RawMarkerTable still.
+   * 3a. _getDerivedMarkers      - Match up start/end markers, and start
+   *                               returning the Marker[] type.
+   * 3b. _getDerivedJankMarkers  - Jank markers come from our samples data, and
+   *                               this selector returns Marker structures out of
+   *                               the samples structure.
+   * 4. getFullMarkerList        - Concatenates and sorts all markers coming from
+   *                               different origin structures.
+   * 5. getFullMarkerListIndexes - From the full marker list, generates an array
+   *                               containing the sequence of indexes for all markers.
    * 5. getCommittedRangeFilteredMarkerIndexes - Apply the committed range.
    * 6. getSearchFilteredMarkerIndexes         - Apply the search string
    * 7. getPreviewFilteredMarkerIndexes        - Apply the preview range
@@ -70,8 +69,8 @@ export function getMarkerSelectorsPerThread(
    * Selectors are commonly written using the utility filterMarkerIndexesCreator
    * (see below for more information about this function).
    */
-  const getProcessedRawMarkerTable: Selector<RawMarkerTable> = createSelector(
-    _getRawMarkerTable,
+  const getProcessedMarkers: Selector<Marker[]> = createSelector(
+    _getMarkerTable,
     threadSelectors.getStringTable,
     MarkerData.extractMarkerDataFromName
   );
@@ -83,7 +82,7 @@ export function getMarkerSelectorsPerThread(
    * into our Marker structure that we use in the rest of our code. This is the
    * very start of our marker pipeline. */
   const _getDerivedMarkers: Selector<Marker[]> = createSelector(
-    getProcessedRawMarkerTable,
+    getProcessedMarkers,
     threadSelectors.getStringTable,
     _getThreadId,
     threadSelectors.getThreadRange,
@@ -489,7 +488,7 @@ export function getMarkerSelectorsPerThread(
   return {
     getMarkerGetter,
     getJankMarkerIndexesForHeader,
-    getProcessedRawMarkerTable,
+    getProcessedMarkers,
     getFullMarkerListIndexes,
     getNetworkMarkerIndexes,
     getSearchFilteredNetworkMarkerIndexes,

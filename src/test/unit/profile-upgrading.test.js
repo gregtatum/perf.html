@@ -16,6 +16,7 @@ import {
   GECKO_PROFILE_VERSION,
   PROCESSED_PROFILE_VERSION,
 } from '../../app-logic/constants';
+import type { Profile } from 'firefox-profiler/types';
 
 /* eslint-disable jest/expect-expect */
 // testProfileUpgrading and testCleopatraProfile are assertions, although eslint
@@ -46,26 +47,24 @@ describe('upgrading old cleopatra profiles', function() {
   // Executing this only for oldCleopatraProfile because
   // ancientCleopatraProfile doesn't have any causes for markers.
   it('should be able to convert causes from old cleopatra profiles', async function() {
-    const profile = await unserializeProfileOfArbitraryFormat(
+    const profile: Profile = await unserializeProfileOfArbitraryFormat(
       oldCleopatraProfile
     );
 
     const [thread] = profile.threads;
     const { markers } = thread;
 
-    const markerWithCauseIndex = markers.data.findIndex(
-      marker =>
-        marker !== null && marker.type === 'tracing' && 'cause' in marker
+    const markerWithCauseIndex = markers.findIndex(
+      ({ data }) => data !== null && data.type === 'tracing' && 'cause' in data
     );
 
     if (markerWithCauseIndex < -1) {
       throw new Error('We should have found one marker with a cause!');
     }
 
-    const markerNameIndex = markers.name[markerWithCauseIndex];
-    expect(thread.stringTable.getString(markerNameIndex)).toEqual('Styles');
+    expect(markers[markerWithCauseIndex].name).toEqual('Styles');
 
-    const markerWithCause = markers.data[markerWithCauseIndex];
+    const markerWithCause = markers[markerWithCauseIndex].data;
 
     // This makes Flow happy
     if (
