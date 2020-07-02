@@ -668,10 +668,15 @@ function _processMarkers(
 
     const payload = _processMarkerPayload(geckoPayload);
     const name = geckoMarkers.name[markerIndex];
-    const time = geckoMarkers.time[markerIndex];
+    const startTime = geckoMarkers.startTime[markerIndex];
+    const endTime = geckoMarkers.endTime[markerIndex];
+    const phase = geckoMarkers.phase[markerIndex];
     const category = geckoMarkers.category[markerIndex];
+
     markers.name.push(name);
-    markers.time.push(time);
+    markers.startTime.push(startTime);
+    markers.endTime.push(endTime);
+    markers.phase.push(phase);
     markers.category.push(category);
     markers.data.push(payload);
     markers.length++;
@@ -948,7 +953,7 @@ function _processThread(
   );
   const geckoSamples: GeckoSampleStruct = _toStructOfArrays(thread.samples);
   const geckoMarkers: GeckoMarkerStruct = _toStructOfArrays(
-    _sortByField('time', thread.markers)
+    _sortByField('startTime', thread.markers)
   );
 
   const { libs, pausedRanges, meta } = processProfile;
@@ -1113,9 +1118,13 @@ export function adjustMarkerTimestamps(
   markers: RawMarkerTable,
   delta: Milliseconds
 ): RawMarkerTable {
+  function adjustTimeIfNotNull(time: number | null) {
+    return time === null ? time : time + delta;
+  }
   return {
     ...markers,
-    time: markers.time.map(time => time + delta),
+    startTime: markers.startTime.map(adjustTimeIfNotNull),
+    endTime: markers.endTime.map(adjustTimeIfNotNull),
     data: markers.data.map(data => {
       if (!data) {
         return data;
