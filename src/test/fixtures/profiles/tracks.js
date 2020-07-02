@@ -149,7 +149,8 @@ export function getProfileWithNiceTracks(): Profile {
   thread2.markers.name.push(
     thread2.stringTable.indexForString('RefreshDriverTick')
   );
-  thread2.markers.time.push(0);
+  thread2.markers.startTime.push(0);
+  thread2.markers.endTime.push(null);
   thread2.markers.length++;
 
   thread3.name = 'DOM Worker';

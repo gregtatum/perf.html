@@ -603,7 +603,7 @@ describe('filterRawMarkerTableToRange', () => {
       2.3,
       5.6
     );
-    expect(filteredMarkerTable.time).toEqual([0, 3]);
+    expect(filteredMarkerTable.startTime).toEqual([0, 3]);
   });
 
   it('keeps a screenshot markers happening before the range if there is no other marker', () => {
@@ -617,7 +617,7 @@ describe('filterRawMarkerTableToRange', () => {
       2.3,
       5.6
     );
-    expect(filteredMarkerTable.time).toEqual([0]);
+    expect(filteredMarkerTable.startTime).toEqual([0]);
   });
 
   it('filters network markers', () => {
