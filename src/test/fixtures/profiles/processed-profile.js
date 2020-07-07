@@ -33,6 +33,7 @@ import type {
   IPCMarkerPayload,
   UserTimingMarkerPayload,
   Milliseconds,
+  MarkerPhase,
 } from 'firefox-profiler/types';
 
 // Array<[MarkerName, Milliseconds, Data]>
@@ -42,6 +43,17 @@ type MockPayload = {| startTime: Milliseconds, endTime: Milliseconds |};
 export type TestDefinedMarkers = Array<
   [MarkerName, MarkerTime, MarkerPayload | MockPayload]
 >;
+
+// This type is used when needing to create a specific RawMarkerTable.
+export type TestDefinedRawMarker = {|
+  +name?: string,
+  +startTime: Milliseconds | null,
+  +endTime: Milliseconds | null,
+  +phase: MarkerPhase,
+  +category?: IndexIntoCategoryList,
+  +data?: MarkerPayload,
+|};
+
 export type TestDefinedJsTracerEvent = [
   // Event name:
   string,

@@ -29,7 +29,7 @@ import {
 import { getThreadWithMarkers } from '../fixtures/profiles/processed-profile';
 import { storeWithProfile } from '../fixtures/stores';
 
-import type { Thread, Milliseconds } from 'firefox-profiler/types';
+import type { Thread, Milliseconds, MixedObject } from 'firefox-profiler/types';
 
 describe('deriveMarkersFromRawMarkerTable targeted', function() {
   function setupWithTestDefinedMarkers(markers) {
@@ -682,19 +682,15 @@ describe('deriveMarkersFromRawMarkerTable', function() {
 
 describe('filterRawMarkerTableToRange', () => {
   function setup(
-    markers: Array<[string, Milliseconds, null | Object]>
+    markers: Array<[string, Milliseconds, null | MixedObject]>
   ): Thread {
-    markers = markers.map(([name, time, payload]) => {
-      if (payload) {
-        // Force a type 'DummyForTests' if it's inexistant
-        payload = { type: 'DummyForTests', ...payload };
-      }
-      return [name, time, payload];
-    });
-
-    // Our marker payload union type is too difficult to work with in a
-    // generic way here.
-    return getThreadWithMarkers((markers: any));
+    return getThreadWithMarkers(
+      markers.map(([name, time, payload]) => [
+        name,
+        time,
+        payload ? ({ type: 'DummyForTests', ...payload }: any) : null,
+      ])
+    );
   }
 
   it('filters generic markers', () => {
@@ -801,7 +797,7 @@ describe('filterRawMarkerTableToRange', () => {
       1 /* thread id */,
       threadRange,
       new IPCMarkerCorrelations()
-    ).sort((markerA, markerB) => markerA.start - markerB.start);
+    ).markers.sort((markerA, markerB) => markerA.start - markerB.start);
     expect(processedMarkers.map(marker => marker.name)).toEqual([
       '0',
       '1',
@@ -838,7 +834,7 @@ describe('filterRawMarkerTableToRange', () => {
       1 /* thread id */,
       threadRange,
       new IPCMarkerCorrelations()
-    ).sort((markerA, markerB) => markerA.start - markerB.start);
+    ).markers.sort((markerA, markerB) => markerA.start - markerB.start);
     expect(processedMarkers).toHaveLength(1);
     // Only the marker starting from 0 and ending at 6 is kept. The marker
     // between 1 and 2 is filtered out.
@@ -866,7 +862,7 @@ describe('filterRawMarkerTableToRange', () => {
 
     // We're using `deriveMarkersFromRawMarkerTable` here because it makes it
     // easier to assert the result for tracing markers.
-    const processedMarkers = deriveMarkersFromRawMarkerTable(
+    const { markers: processedMarkers } = deriveMarkersFromRawMarkerTable(
       filteredThread.markers,
       filteredThread.stringTable,
       1 /* thread id */,
@@ -1036,7 +1032,7 @@ describe('filterRawMarkerTableToRange', () => {
 
     // We're using `deriveMarkersFromRawMarkerTable` here because it makes it
     // easier to assert the result for tracing markers.
-    const processedMarkers = deriveMarkersFromRawMarkerTable(
+    const { markers: processedMarkers } = deriveMarkersFromRawMarkerTable(
       filteredThread.markers,
       filteredThread.stringTable,
       1 /* thread id */,
@@ -1140,7 +1136,7 @@ describe('filterRawMarkerTableToRange', () => {
 
     // We're using `deriveMarkersFromRawMarkerTable` here because it makes it
     // easier to assert the result for tracing markers.
-    const processedMarkers = deriveMarkersFromRawMarkerTable(
+    const { markers: processedMarkers } = deriveMarkersFromRawMarkerTable(
       filteredThread.markers,
       filteredThread.stringTable,
       1 /* thread id */,
@@ -1242,7 +1238,7 @@ describe('filterRawMarkerTableToRange', () => {
 
     // We're using `deriveMarkersFromRawMarkerTable` here because it makes it
     // easier to assert the result for tracing markers.
-    const processedMarkers = deriveMarkersFromRawMarkerTable(
+    const { markers: processedMarkers } = deriveMarkersFromRawMarkerTable(
       filteredThread.markers,
       filteredThread.stringTable,
       1 /* thread id */,
@@ -1369,7 +1365,7 @@ describe('filterRawMarkerTableToRange', () => {
 
     // We're using `deriveMarkersFromRawMarkerTable` here because it makes it
     // easier to assert the result for tracing markers.
-    const processedMarkers = deriveMarkersFromRawMarkerTable(
+    const { markers: processedMarkers } = deriveMarkersFromRawMarkerTable(
       filteredThread.markers,
       filteredThread.stringTable,
       1 /* thread id */,

@@ -15,7 +15,6 @@ import type {
   GeckoMarkers,
   GeckoMarkerStack,
   GeckoProfilerOverhead,
-  IndexIntoStringTable,
   Milliseconds,
   MarkerPhase,
   IndexIntoCategoryList,
