@@ -490,6 +490,7 @@ export function getMarkerSelectorsPerThread(
     getMarkerGetter,
     getJankMarkerIndexesForHeader,
     getProcessedRawMarkerTable,
+    getFullMarkerList,
     getFullMarkerListIndexes,
     getNetworkMarkerIndexes,
     getSearchFilteredNetworkMarkerIndexes,

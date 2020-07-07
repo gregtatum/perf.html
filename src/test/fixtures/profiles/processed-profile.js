@@ -16,6 +16,7 @@ import { mergeProfiles } from '../../../profile-logic/comparison';
 import { stateFromLocation } from '../../../app-logic/url-handling';
 import { UniqueStringArray } from '../../../utils/unique-string-array';
 import { ensureExists } from '../../../utils/flow';
+import { INTERVAL, INSTANT } from 'firefox-profiler/app-logic/constants';
 
 import type {
   Profile,
@@ -101,9 +102,11 @@ export function addMarkersToThreadWithCorrespondingSamples(
           'The payload startTime or endTime did not match the time of the marker. Is this an error?'
         );
       }
+      markersTable.phase.push(INTERVAL);
       markersTable.startTime.push(startTime);
       markersTable.endTime.push(endTime);
     } else {
+      markersTable.phase.push(INSTANT);
       markersTable.startTime.push(time);
       markersTable.endTime.push(null);
     }

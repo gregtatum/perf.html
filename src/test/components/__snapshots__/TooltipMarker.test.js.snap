@@ -1447,6 +1447,42 @@ exports[`TooltipMarker renders tooltips for various markers: ConstructRootFrame-
 </div>
 `;
 
+exports[`TooltipMarker renders tooltips for various markers: ConstructRootFrame-113.3 1`] = `
+<div
+  class="tooltipMarker propClass"
+>
+  <div
+    class=""
+  >
+    <div
+      class="tooltipOneLine"
+    >
+      <div
+        class="tooltipTiming"
+      >
+        —
+      </div>
+      <div
+        class="tooltipTitle"
+      >
+        ConstructRootFrame
+      </div>
+    </div>
+    <div
+      class="tooltipDetails"
+    >
+      <div
+        class="tooltipLabel"
+      >
+        Thread
+        :
+      </div>
+      Main Thread
+    </div>
+  </div>
+</div>
+`;
+
 exports[`TooltipMarker renders tooltips for various markers: DOMEvent-10.5 1`] = `
 <div
   class="tooltipMarker propClass"
@@ -1497,6 +1533,42 @@ exports[`TooltipMarker renders tooltips for various markers: DOMEvent-10.5 1`] =
       :
     </div>
     commandupdate
+  </div>
+</div>
+`;
+
+exports[`TooltipMarker renders tooltips for various markers: DOMEvent-11.3 1`] = `
+<div
+  class="tooltipMarker propClass"
+>
+  <div
+    class=""
+  >
+    <div
+      class="tooltipOneLine"
+    >
+      <div
+        class="tooltipTiming"
+      >
+        —
+      </div>
+      <div
+        class="tooltipTitle"
+      >
+        DOMEvent
+      </div>
+    </div>
+    <div
+      class="tooltipDetails"
+    >
+      <div
+        class="tooltipLabel"
+      >
+        Thread
+        :
+      </div>
+      Main Thread
+    </div>
   </div>
 </div>
 `;
@@ -3053,6 +3125,42 @@ exports[`TooltipMarker renders tooltips for various markers: Styles-18.5 1`] = `
         />
       </li>
     </ol>
+  </div>
+</div>
+`;
+
+exports[`TooltipMarker renders tooltips for various markers: Styles-19 1`] = `
+<div
+  class="tooltipMarker propClass"
+>
+  <div
+    class=""
+  >
+    <div
+      class="tooltipOneLine"
+    >
+      <div
+        class="tooltipTiming"
+      >
+        —
+      </div>
+      <div
+        class="tooltipTitle"
+      >
+        Styles
+      </div>
+    </div>
+    <div
+      class="tooltipDetails"
+    >
+      <div
+        class="tooltipLabel"
+      >
+        Thread
+        :
+      </div>
+      Main Thread
+    </div>
   </div>
 </div>
 `;
