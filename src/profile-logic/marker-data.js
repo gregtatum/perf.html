@@ -588,6 +588,8 @@ export function deriveMarkersFromRawMarkerTable(
           // about the start of the request. But most of the interesting bits are
           // in the stop marker.
 
+          const ensureMessage =
+            'Network markers are assumed to have a start and end time.';
           if (data.status === 'STATUS_START') {
             openNetworkMarkers.set(data.id, rawMarkerIndex);
           } else {
@@ -596,7 +598,6 @@ export function deriveMarkersFromRawMarkerTable(
             const endData = data;
 
             const startIndex = openNetworkMarkers.get(data.id);
-
             if (startIndex !== undefined) {
               // A start marker matches this end marker.
               openNetworkMarkers.delete(data.id);
@@ -606,16 +607,23 @@ export function deriveMarkersFromRawMarkerTable(
                 startIndex
               ]: any);
 
+              const startStartTime = ensureExists(
+                rawMarkers.startTime[startIndex],
+                ensureMessage
+              );
+              const endStartTime = ensureExists(maybeStartTime, ensureMessage);
+              const endEndTime = ensureExists(maybeEndTime, ensureMessage);
+
               markers.push({
-                start: startData.startTime,
-                dur: endData.endTime - startData.startTime,
+                start: startStartTime,
+                dur: endEndTime - startStartTime,
                 name: stringTable.getString(name),
                 title: null,
                 category,
                 data: {
                   ...endData,
-                  startTime: startData.startTime,
-                  fetchStart: endData.startTime,
+                  startTime: startStartTime,
+                  fetchStart: endStartTime,
                   cause: startData.cause || endData.cause,
                 },
               });
@@ -623,10 +631,17 @@ export function deriveMarkersFromRawMarkerTable(
             } else {
               // There's no start marker matching this end marker. This means an
               // abstract marker exists before the start of the profile.
-              const start = Math.min(threadRange.start, endData.startTime);
+              const start = Math.min(
+                threadRange.start,
+                ensureExists(
+                  maybeStartTime,
+                  'Network markers are assumed to have a start time.'
+                )
+              );
+              const end = ensureExists(maybeEndTime, ensureMessage);
               markers.push({
                 start,
-                dur: endData.endTime - start,
+                dur: end - start,
                 name: stringTable.getString(name),
                 title: null,
                 category,
@@ -661,7 +676,6 @@ export function deriveMarkersFromRawMarkerTable(
               'The CompositorScreenshot is assumed to have a start time.'
             );
             const data = rawMarkers.data[previousScreenshotMarker];
-
             markers.push({
               start: previousStartTime,
               dur: thisStartTime - previousStartTime,
@@ -684,7 +698,7 @@ export function deriveMarkersFromRawMarkerTable(
             // Since shared data is generated for every IPC message, this should
             // never happen unless something has gone catastrophically wrong.
             console.error('Unable to find shared data for IPC marker');
-            break;
+            continue;
           }
 
           if (
@@ -696,7 +710,7 @@ export function deriveMarkersFromRawMarkerTable(
             // sender's IO thread, but we also have a marker for the *start* of
             // the transfer. Since we don't need to show two markers for the same
             // IPC message on the same thread, skip this one.
-            break;
+            continue;
           }
 
           let name = data.direction === 'sending' ? 'IPCOut' : 'IPCIn';
@@ -872,15 +886,17 @@ export function deriveMarkersFromRawMarkerTable(
   }
 
   for (const startIndex of openNetworkMarkers.values()) {
-    // We know this startIndex points to a Network marker.
-    const startData: NetworkPayload = (rawMarkers.data[startIndex]: any);
+    const startTime = ensureExists(
+      rawMarkers.startTime[startIndex],
+      'Network markers are assumed to always have a start time.'
+    );
     markers.push({
-      start: startData.startTime,
-      dur: Math.max(endOfThread - startData.startTime, 0),
+      start: startTime,
+      dur: Math.max(endOfThread - startTime, 0),
       name: stringTable.getString(rawMarkers.name[startIndex]),
       title: null,
       category: rawMarkers.category[startIndex],
-      data: startData,
+      data: rawMarkers.data[startIndex],
       incomplete: true,
     });
     markerIndexToRawMarkerIndexes.push([startIndex]);
@@ -967,7 +983,8 @@ export function filterRawMarkerTableIndexesToRange(
       }
     }
   }
-  return [...inRange].sort();
+
+  return [...inRange].sort((a, b) => a - b);
 }
 
 /**

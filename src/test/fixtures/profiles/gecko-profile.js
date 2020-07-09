@@ -733,8 +733,8 @@ function _createGeckoThread(extraMarkers = []): GeckoThread {
         ],
         [
           13, // Load 32: https://github.com/rustwasm/wasm-bindgen/issues/5
-          23,
-          null, // End time
+          22, // Start time
+          23, // End time
           INTERVAL,
           0, // Other
           {
