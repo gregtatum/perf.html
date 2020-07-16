@@ -320,6 +320,14 @@ export type InvalidationPayload = {|
  * that redirects are logged as well.
  */
 
+/**
+ * The startTime and endTime are not included in the payload, but here is what they
+ * represent:
+ *
+ * startTime - is when the channel opens. This happens on the process' main thread.
+ * endTime   - is the time when the response is sent back to the caller, this
+ *             happens on the process' main thread.
+ */
 export type NetworkPayload = {|
   type: 'Network',
   URI: string,
@@ -341,13 +349,6 @@ export type NetworkPayload = {|
   // NOTE: the following comments are valid for the merged markers. For the raw
   // markers, startTime and endTime have different meanings. Please look
   // `src/profile-logic/marker-data.js` for more information.
-
-  // startTime is when the channel opens. This happens on the process' main
-  // thread.
-  startTime: Milliseconds,
-  // endTime is the time when the response is sent back to the caller, this
-  // happens on the process' main thread.
-  endTime: Milliseconds,
 
   // fetchStart doesn't exist directly in raw markers. This is added in the
   // deriving process and represents the junction between START and END markers.

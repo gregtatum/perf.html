@@ -582,6 +582,8 @@ export function deriveMarkersFromRawMarkerTable(
             // End status can be any status other than 'STATUS_START'. They are
             // either 'STATUS_STOP' or 'STATUS_REDIRECT'.
             const endData = data;
+            const endStartTime = ensureExists(maybeStartTime, ensureMessage);
+            const endEndTime = ensureExists(maybeEndTime, ensureMessage);
 
             const startIndex = openNetworkMarkers.get(data.id);
             if (startIndex !== undefined) {
@@ -597,8 +599,6 @@ export function deriveMarkersFromRawMarkerTable(
                 rawMarkers.startTime[startIndex],
                 ensureMessage
               );
-              const endStartTime = ensureExists(maybeStartTime, ensureMessage);
-              const endEndTime = ensureExists(maybeEndTime, ensureMessage);
 
               markers.push({
                 start: startStartTime,
@@ -608,7 +608,6 @@ export function deriveMarkersFromRawMarkerTable(
                 category,
                 data: {
                   ...endData,
-                  startTime: startStartTime,
                   fetchStart: endStartTime,
                   cause: startData.cause || endData.cause,
                 },
@@ -624,17 +623,15 @@ export function deriveMarkersFromRawMarkerTable(
                   'Network markers are assumed to have a start time.'
                 )
               );
-              const end = ensureExists(maybeEndTime, ensureMessage);
               markers.push({
                 start,
-                dur: end - start,
+                dur: endEndTime - start,
                 name: stringTable.getString(name),
                 title: null,
                 category,
                 data: {
                   ...endData,
-                  startTime: start,
-                  fetchStart: endData.startTime,
+                  fetchStart: endStartTime,
                   cause: endData.cause,
                 },
                 incomplete: true,

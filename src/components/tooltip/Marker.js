@@ -588,7 +588,11 @@ function getMarkerDetails(
       }
       case 'Network': {
         tooltipDetails = (
-          <TooltipNetworkMarker payload={data} zeroAt={zeroAt} />
+          <TooltipNetworkMarker
+            payload={data}
+            marker={marker}
+            zeroAt={zeroAt}
+          />
         );
         break;
       }

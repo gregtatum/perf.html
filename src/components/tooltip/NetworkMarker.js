@@ -18,7 +18,13 @@ import {
   formatMilliseconds,
 } from '../../utils/format-numbers';
 
-import type { NetworkPayload, Milliseconds } from 'firefox-profiler/types';
+import { ensureExists } from 'firefox-profiler/utils/flow';
+
+import type {
+  NetworkPayload,
+  Milliseconds,
+  Marker,
+} from 'firefox-profiler/types';
 
 import './NetworkMarker.css';
 
@@ -97,12 +103,45 @@ const ALL_NETWORK_PROPERTIES_IN_ORDER = [
 
 /* For a marker with a preconnect phase, the second displayed diagram may only
  * contain these properties.
- * We use `splice` to generate this list out of the previous arrays, taking
- * ALL_NETWORK_PROPERTIES_IN_ORDER as source, then removing all the properties
- * of PRECONNECT_PROPERTIES_IN_ORDER.
  */
-const REQUEST_PROPERTIES_IN_ORDER = ALL_NETWORK_PROPERTIES_IN_ORDER.slice();
-REQUEST_PROPERTIES_IN_ORDER.splice(1, PRECONNECT_PROPERTIES_IN_ORDER.length);
+const REQUEST_PROPERTIES_IN_ORDER = [
+  'startTime',
+  'requestStart',
+  'responseStart',
+  'responseEnd',
+  'endTime',
+];
+
+function filterToAvailableProperties(
+  properties: *,
+  payload: NetworkPayload
+): * {
+  return properties.filter(property => {
+    if (property === 'startTime' || property === 'endTime') {
+      // These are always available, but not on the payload.
+      return true;
+    }
+    return typeof payload[property] === 'number';
+  });
+}
+
+function getPropertyFromMarker(
+  marker: Marker,
+  payload: NetworkPayload,
+  property: *
+): * {
+  if (property === 'startTime') {
+    return ensureExists(marker.start);
+  }
+  if (property === 'endTime') {
+    return ensureExists(marker.start + marker.dur);
+  }
+
+  return ensureExists(
+    payload[property],
+    'getPropertyFromMarker assumes that it is used with properties that exist on a marker payload'
+  );
+}
 
 /* The labels are for the duration between _this_ label and the next label. */
 const PROPERTIES_HUMAN_LABELS = {
@@ -178,13 +217,14 @@ class NetworkPhase extends React.PureComponent<NetworkPhaseProps> {
 }
 
 type Props = {|
+  +marker: Marker,
   +payload: NetworkPayload,
   +zeroAt: Milliseconds,
 |};
 
 export class TooltipNetworkMarker extends React.PureComponent<Props> {
   _getPhasesForProperties(
-    properties: string[],
+    properties: typeof ALL_NETWORK_PROPERTIES_IN_ORDER,
     sectionDuration: Milliseconds,
     startTime: Milliseconds
   ): Array<React.Element<typeof NetworkPhase>> | null {
@@ -195,7 +235,7 @@ export class TooltipNetworkMarker extends React.PureComponent<Props> {
       return null;
     }
 
-    const { payload } = this.props;
+    const { payload, marker } = this.props;
     const phases = [];
 
     for (let i = 1; i < properties.length; i++) {
@@ -204,8 +244,12 @@ export class TooltipNetworkMarker extends React.PureComponent<Props> {
       // We force-coerce the values into numbers just to appease Flow. Indeed the
       // previous filter ensures that all values are numbers but Flow can't know
       // that.
-      const startValue = +payload[previousProperty];
-      const endValue = +payload[thisProperty];
+      const startValue = getPropertyFromMarker(
+        marker,
+        payload,
+        previousProperty
+      );
+      const endValue = getPropertyFromMarker(marker, payload, thisProperty);
       const phaseDuration = endValue - startValue;
       const startPosition = startValue - startTime;
 
@@ -243,7 +287,7 @@ export class TooltipNetworkMarker extends React.PureComponent<Props> {
   }
 
   _renderPreconnectPhases(): React.Node {
-    const { payload, zeroAt } = this.props;
+    const { payload, marker, zeroAt } = this.props;
     const preconnectStart = payload.domainLookupStart;
     if (typeof preconnectStart !== 'number') {
       // All preconnect operations include a domain lookup part.
@@ -263,13 +307,14 @@ export class TooltipNetworkMarker extends React.PureComponent<Props> {
     // It could theorically happen that a preconnect session starts before
     // `startTime` but ends after `startTime`; in that case we'll still draw
     // only one diagram.
-    const hasPreconnect = preconnectEnd < payload.startTime;
+    const hasPreconnect = preconnectEnd < marker.start;
     if (!hasPreconnect) {
       return null;
     }
 
-    const availableProperties = PRECONNECT_PROPERTIES_IN_ORDER.filter(
-      property => typeof payload[property] === 'number'
+    const availableProperties = filterToAvailableProperties(
+      PRECONNECT_PROPERTIES_IN_ORDER,
+      payload
     );
     const dur = preconnectEnd - preconnectStart;
 
@@ -291,7 +336,7 @@ export class TooltipNetworkMarker extends React.PureComponent<Props> {
   }
 
   _renderPhases(markerColorClass: string): React.Node {
-    const { payload } = this.props;
+    const { payload, marker } = this.props;
 
     if (payload.status === 'STATUS_START') {
       return null;
@@ -302,8 +347,9 @@ export class TooltipNetworkMarker extends React.PureComponent<Props> {
       ? REQUEST_PROPERTIES_IN_ORDER
       : ALL_NETWORK_PROPERTIES_IN_ORDER;
 
-    const availableProperties = networkProperties.filter(
-      property => typeof payload[property] === 'number'
+    const availableProperties = filterToAvailableProperties(
+      networkProperties,
+      payload
     );
 
     if (availableProperties.length === 0 || availableProperties.length === 1) {
@@ -311,7 +357,7 @@ export class TooltipNetworkMarker extends React.PureComponent<Props> {
       return null;
     }
 
-    const dur = payload.endTime - payload.startTime;
+    const dur = marker.dur;
     if (availableProperties.length === 2) {
       // We only have startTime and endTime.
       return (
@@ -330,7 +376,7 @@ export class TooltipNetworkMarker extends React.PureComponent<Props> {
     const phases = this._getPhasesForProperties(
       availableProperties,
       dur,
-      payload.startTime
+      marker.start
     );
     return (
       // We render both phase sections in the same grid so that they're aligned

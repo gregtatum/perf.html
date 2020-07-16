@@ -1148,12 +1148,6 @@ export function adjustMarkerTimestamps(
         return data;
       }
       const newData = immutableUpdate(data);
-      if (typeof newData.startTime === 'number') {
-        newData.startTime += delta;
-      }
-      if (typeof newData.endTime === 'number') {
-        newData.endTime += delta;
-      }
       if (newData.type === 'tracing' || newData.type === 'Styles') {
         if (newData.cause) {
           newData.cause.time += delta;
