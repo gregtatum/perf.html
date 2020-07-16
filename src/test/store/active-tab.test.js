@@ -79,8 +79,6 @@ describe('ActiveTab', function() {
             id: 5,
             pri: 1,
             status: 'STATUS_STOP',
-            startTime: 7,
-            endTime: 8,
           },
         ],
       ]);

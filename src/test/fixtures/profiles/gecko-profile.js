@@ -19,6 +19,7 @@ import type {
   MarkerPhase,
   IndexIntoCategoryList,
   MarkerPayload_Gecko,
+  GCMinorMarkerPayload,
 } from 'firefox-profiler/types';
 
 import {
@@ -380,8 +381,6 @@ function _createIPCMarker({
     0, // Other
     {
       type: 'IPC',
-      startTime: time,
-      endTime: time,
       otherPid,
       messageType: 'PContent::Msg_PreferenceUpdate',
       messageSeqno,
@@ -584,12 +583,10 @@ function _createGeckoThread(extraMarkers = []): GeckoThread {
           12, // End time
           INTERVAL,
           0, // Other
-          {
+          ({
             // MinorGC at time 11ms from 11ms to 12ms
             type: 'GCMinor',
-            startTime: 11,
-            endTime: 12,
-          },
+          }: GCMinorMarkerPayload),
         ],
         [
           8,
@@ -630,8 +627,6 @@ function _createGeckoThread(extraMarkers = []): GeckoThread {
           INTERVAL,
           0, // Other
           {
-            startTime: 12,
-            endTime: 13,
             type: 'UserTiming',
             name: 'processing-thread',
             entryType: 'measure',
@@ -739,8 +734,6 @@ function _createGeckoThread(extraMarkers = []): GeckoThread {
           0, // Other
           {
             type: 'Network',
-            startTime: 22,
-            endTime: 23,
             id: 388634410746504,
             status: 'STATUS_START',
             pri: -20,
@@ -756,8 +749,6 @@ function _createGeckoThread(extraMarkers = []): GeckoThread {
           0, // Other
           {
             type: 'Network',
-            startTime: 23,
-            endTime: 24,
             id: 388634410746504,
             status: 'STATUS_STOP',
             pri: -20,
@@ -782,8 +773,6 @@ function _createGeckoThread(extraMarkers = []): GeckoThread {
           0, // Other
           {
             type: 'FileIO',
-            startTime: 22,
-            endTime: 24,
             source: 'PoisionOIInterposer',
             filename: '/foo/bar/',
             operation: 'create/open',
@@ -829,8 +818,6 @@ function _createGeckoThread(extraMarkers = []): GeckoThread {
           0, // Other
           {
             type: 'PreferenceRead',
-            startTime: 26,
-            endTime: 27,
             prefAccessTime: 114.9,
             prefName: 'layout.css.dpi',
             prefKind: 'User',

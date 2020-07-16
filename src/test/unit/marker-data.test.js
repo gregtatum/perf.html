@@ -850,8 +850,6 @@ describe('filterRawMarkerTableToRange', () => {
       type: 'Network',
       URI: 'https://example.com',
       pri: 0,
-      startTime: 0,
-      endTime: 0,
     };
 
     const { processedMarkers } = setup({
@@ -951,8 +949,6 @@ describe('filterRawMarkerTableToRange', () => {
       type: 'Network',
       URI: 'https://example.com',
       pri: 0,
-      startTime: 0,
-      endTime: 0,
     };
 
     const { processedMarkers } = setup({
@@ -1023,8 +1019,6 @@ describe('filterRawMarkerTableToRange', () => {
       type: 'Network',
       URI: 'https://example.com',
       pri: 0,
-      startTime: 0,
-      endTime: 0,
     };
 
     const { processedMarkers } = setup({
@@ -1095,8 +1089,6 @@ describe('filterRawMarkerTableToRange', () => {
       type: 'Network',
       URI: 'https://example.com',
       pri: 0,
-      startTime: 0,
-      endTime: 0,
     };
 
     // Network markers can be unique despite sharing the same name if
