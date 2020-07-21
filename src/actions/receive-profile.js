@@ -72,6 +72,7 @@ import type {
 
 import type { SymbolicationStepInfo } from '../profile-logic/symbolication';
 import { assertExhaustiveCheck, ensureExists } from '../utils/flow';
+import { viewProfileFromZipFile } from './zipped-profiles';
 
 /**
  * This file collects all the actions that are used for receiving the profile in the
@@ -934,10 +935,20 @@ export function waitingForProfileFromUrl(profileUrl?: string): Action {
   };
 }
 
-export function receiveZipFile(zip: JSZip): Action {
-  return {
-    type: 'RECEIVE_ZIP_FILE',
-    zip,
+export function receiveZipFile(zip: JSZip): ThunkAction<void> {
+  return dispatch => {
+    const paths = Object.keys(zip.files);
+    if (paths.length === 1) {
+      const initialLoad = true;
+      const [pathInZipFile] = paths;
+      const file = zip.files[pathInZipFile];
+      dispatch(viewProfileFromZipFile(pathInZipFile, zip, file, initialLoad));
+    } else {
+      dispatch({
+        type: 'RECEIVE_ZIP_FILE',
+        zip,
+      });
+    }
   };
 }
 

@@ -3,12 +3,19 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import { getZipFileTable, getZipFileState } from '../selectors/zipped-profiles';
+import {
+  getZipFileTable,
+  getZipFileState,
+  getZipFile,
+} from 'firefox-profiler/selectors/zipped-profiles';
 import { unserializeProfileOfArbitraryFormat } from '../profile-logic/process-profile';
 import { loadProfile } from './receive-profile';
+import JSZip from 'jszip';
 
 import type { Action, ThunkAction } from 'firefox-profiler/types';
 import type { IndexIntoZipFileTable } from '../profile-logic/zip-files';
+import type { JSZipFile } from 'jszip';
+import { ensureExists } from '../utils/flow';
 
 export function changeSelectedZipFile(
   selectedZipFileIndex: IndexIntoZipFileTable
@@ -37,7 +44,7 @@ export function changeExpandedZipFile(
  * This ThunkAction needs to properly handle when the UrlState changes faster than it
  * can change the ZipFileState, and not have any race conditions.
  */
-export function viewProfileFromZip(
+export function viewProfileFromZipFileTable(
   zipFileIndex: IndexIntoZipFileTable,
   initialLoad: boolean = false
 ): ThunkAction<Promise<void>> {
@@ -45,13 +52,36 @@ export function viewProfileFromZip(
     const zipFileTable = getZipFileTable(getState());
     const pathInZipFile = zipFileTable.path[zipFileIndex];
     const file = zipFileTable.file[zipFileIndex];
+    const zip = ensureExists(
+      getZipFile(getState()),
+      'The zip file is assumed to exist when viewing a profile from the ZipFileTable'
+    );
     if (!file) {
       throw new Error(
         'Attempted to load a zip file that did not exist or was a directory.'
       );
     }
+    dispatch(viewProfileFromZipFile(pathInZipFile, zip, file, initialLoad));
+  };
+}
 
-    dispatch({ type: 'PROCESS_PROFILE_FROM_ZIP_FILE', pathInZipFile });
+/**
+ * This ThunkAction has a bit of complexity to it, due to the asynchronous nature of
+ * reading in profiles from a zip file. The UrlState represents the current desired state
+ * of what file to view in a zip file, and the ZipFileState represents the actual steps
+ * being performed to reach the desired UrlState.
+ *
+ * This ThunkAction needs to properly handle when the UrlState changes faster than it
+ * can change the ZipFileState, and not have any race conditions.
+ */
+export function viewProfileFromZipFile(
+  pathInZipFile: string,
+  zip: JSZip,
+  file: JSZipFile,
+  initialLoad: boolean = false
+): ThunkAction<Promise<void>> {
+  return async (dispatch, getState) => {
+    dispatch({ type: 'PROCESS_PROFILE_FROM_ZIP_FILE', pathInZipFile, zip });
 
     try {
       // Attempt to unserialize the profile.
@@ -93,7 +123,7 @@ export function viewProfileFromPathInZipFile(
       dispatch(showErrorForNoFileInZip(pathInZipFile));
       return Promise.resolve();
     }
-    return dispatch(viewProfileFromZip(zipFileIndex));
+    return dispatch(viewProfileFromZipFileTable(zipFileIndex));
   };
 }
 

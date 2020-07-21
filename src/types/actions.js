@@ -292,7 +292,11 @@ type ReceiveProfileAction =
       +type: 'DATA_RELOAD',
     |}
   | {| +type: 'RECEIVE_ZIP_FILE', +zip: JSZip |}
-  | {| +type: 'PROCESS_PROFILE_FROM_ZIP_FILE', +pathInZipFile: string |}
+  | {|
+      +type: 'PROCESS_PROFILE_FROM_ZIP_FILE',
+      +pathInZipFile: string,
+      +zip: JSZip,
+    |}
   | {| +type: 'FAILED_TO_PROCESS_PROFILE_FROM_ZIP_FILE', +error: any |}
   | {| +type: 'DISMISS_PROCESS_PROFILE_FROM_ZIP_ERROR' |}
   | {| +type: 'RETURN_TO_ZIP_FILE_LIST' |}

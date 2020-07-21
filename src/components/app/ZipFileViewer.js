@@ -10,7 +10,7 @@ import { procureInitialInterestingExpandedNodes } from '../../profile-logic/zip-
 import {
   changeSelectedZipFile,
   changeExpandedZipFile,
-  viewProfileFromZip,
+  viewProfileFromZipFileTable,
   returnToZipFileList,
   showErrorForNoFileInZip,
 } from '../../actions/zipped-profiles';
@@ -54,7 +54,7 @@ type StateProps = {|
 type DispatchProps = {|
   +changeSelectedZipFile: typeof changeSelectedZipFile,
   +changeExpandedZipFile: typeof changeExpandedZipFile,
-  +viewProfileFromZip: typeof viewProfileFromZip,
+  +viewProfileFromZipFileTable: typeof viewProfileFromZipFileTable,
   +returnToZipFileList: typeof returnToZipFileList,
   +showErrorForNoFileInZip: typeof showErrorForNoFileInZip,
 |};
@@ -62,7 +62,7 @@ type DispatchProps = {|
 type Props = ConnectedProps<{||}, StateProps, DispatchProps>;
 
 type ZipFileRowDispatchProps = {|
-  +viewProfileFromZip: typeof viewProfileFromZip,
+  +viewProfileFromZipFileTable: typeof viewProfileFromZipFileTable,
 |};
 type ZipFileRowOwnProps = {|
   +displayData: ZipDisplayData,
@@ -81,11 +81,11 @@ class ZipFileRowImpl extends React.PureComponent<ZipFileRowProps> {
     }
     event.preventDefault();
     const {
-      viewProfileFromZip,
+      viewProfileFromZipFileTable,
       displayData: { zipTableIndex },
     } = this.props;
     if (zipTableIndex !== null) {
-      viewProfileFromZip(zipTableIndex);
+      viewProfileFromZipFileTable(zipTableIndex);
     }
   };
   render() {
@@ -111,7 +111,7 @@ const ZipFileRow = explicitConnect<
   // dispatch-wrapped actions. Please consider the performance impact of using
   // mapStateToProps here.
   mapDispatchToProps: {
-    viewProfileFromZip,
+    viewProfileFromZipFileTable,
   },
   component: ZipFileRowImpl,
 });
@@ -167,7 +167,7 @@ class ZipFileViewer extends React.PureComponent<Props> {
     const {
       pathInZipFile,
       zipFileState,
-      viewProfileFromZip,
+      viewProfileFromZipFileTable,
       zipFileTable,
       returnToZipFileList,
       showErrorForNoFileInZip,
@@ -187,7 +187,7 @@ class ZipFileViewer extends React.PureComponent<Props> {
         if (zipFileIndex === -1) {
           showErrorForNoFileInZip(pathInZipFile);
         } else {
-          viewProfileFromZip(zipFileIndex);
+          viewProfileFromZipFileTable(zipFileIndex);
         }
       }
     }
@@ -239,7 +239,7 @@ class ZipFileViewer extends React.PureComponent<Props> {
   }
 
   _onEnterKey = (zipTableIndex: IndexIntoZipFileTable) => {
-    this.props.viewProfileFromZip(zipTableIndex);
+    this.props.viewProfileFromZipFileTable(zipTableIndex);
   };
 
   render() {
@@ -366,7 +366,7 @@ export default explicitConnect<{||}, StateProps, DispatchProps>({
   mapDispatchToProps: {
     changeSelectedZipFile,
     changeExpandedZipFile,
-    viewProfileFromZip,
+    viewProfileFromZipFileTable,
     returnToZipFileList,
     showErrorForNoFileInZip,
   },

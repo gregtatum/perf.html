@@ -62,7 +62,7 @@ const zipFile: Reducer<ZipFileState> = (
     case 'PROCESS_PROFILE_FROM_ZIP_FILE':
       return _validateStateTransition(state, {
         phase: 'PROCESS_PROFILE_FROM_ZIP_FILE',
-        zip: ensureExists(state.zip),
+        zip: action.zip,
         pathInZipFile: action.pathInZipFile,
       });
     case 'FILE_NOT_FOUND_IN_ZIP_FILE':
