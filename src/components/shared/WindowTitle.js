@@ -7,7 +7,7 @@
 import { PureComponent } from 'react';
 import explicitConnect from '../../utils/connect';
 
-import { getProfileName, getDataSource } from '../../selectors/url-state';
+import { getProfileNameOrNull, getDataSource } from '../../selectors/url-state';
 import { getProfile } from '../../selectors/profile';
 import {
   formatProductAndVersion,
@@ -26,6 +26,7 @@ type StateProps = {|
 type Props = ConnectedProps<{||}, StateProps, {||}>;
 
 const SEPARATOR = ' – ';
+const PRODUCT = 'Firefox Profiler';
 
 class WindowTitle extends PureComponent<Props> {
   // This component updates window title in the form of:
@@ -33,22 +34,22 @@ class WindowTitle extends PureComponent<Props> {
   _updateTitle() {
     const { profile, profileName, dataSource } = this.props;
     const { meta } = profile;
-    let title = '';
 
     if (profileName) {
-      title += profileName + SEPARATOR;
+      document.title = profileName + SEPARATOR + PRODUCT;
+    } else {
+      let title = formatProductAndVersion(meta) + SEPARATOR;
+      const os = formatPlatform(meta);
+      if (os) {
+        title += os + SEPARATOR;
+      }
+      title += _formatDateTime(meta.startTime);
+      if (dataSource === 'public') {
+        title += ` (${dataSource})`;
+      }
+      title += SEPARATOR + PRODUCT;
+      document.title = title;
     }
-    title += formatProductAndVersion(meta) + SEPARATOR;
-    const os = formatPlatform(meta);
-    if (os) {
-      title += os + SEPARATOR;
-    }
-    title += _formatDateTime(meta.startTime);
-    if (dataSource === 'public') {
-      title += ` (${dataSource})`;
-    }
-    title += SEPARATOR + 'Firefox profiler';
-    document.title = title;
   }
 
   componentDidMount() {
@@ -75,7 +76,7 @@ function _formatDateTime(timestamp: number): string {
 
 export default explicitConnect<{||}, StateProps, {||}>({
   mapStateToProps: state => ({
-    profileName: getProfileName(state),
+    profileName: getProfileNameOrNull(state),
     profile: getProfile(state),
     dataSource: getDataSource(state),
   }),

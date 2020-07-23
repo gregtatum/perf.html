@@ -24,11 +24,13 @@ import type {
   DangerousSelectorWithArguments,
   StartEndRange,
   TrackIndex,
+  State,
 } from 'firefox-profiler/types';
 
 import type { TabSlug } from '../app-logic/tabs-handling';
 
 import urlStateReducer from '../reducers/url-state';
+import { formatMetaInfoString } from '../profile-logic/profile-metainfo';
 
 /**
  * Various simple selectors into the UrlState.
@@ -241,9 +243,19 @@ export const getPathInZipFileFromUrl: Selector<string | null> = state =>
   getUrlState(state).pathInZipFile;
 
 /**
+ * Avoid circular dependencies when loading the profile meta.
+ */
+function getProfileMeta(state: State) {
+  return ensureExists(
+    state.profileView.profile,
+    'Expected the profile to exist.'
+  ).meta;
+}
+
+/**
  * For now only provide a name for a profile if it came from a zip file.
  */
-export const getProfileName: Selector<string> = createSelector(
+export const getProfileNameOrNull: Selector<string | null> = createSelector(
   getProfileNameFromUrl,
   getPathInZipFileFromUrl,
   (profileName, pathInZipFile) => {
@@ -256,8 +268,18 @@ export const getProfileName: Selector<string> = createSelector(
         return matchResult[0];
       }
     }
-    return '';
+    return null;
   }
+);
+
+/**
+ * For now only provide a name for a profile if it came from a zip file.
+ */
+export const getProfileName: Selector<string> = createSelector(
+  getProfileNameOrNull,
+  getProfileMeta,
+  (profileNameOrNull, meta) =>
+    profileNameOrNull === null ? formatMetaInfoString(meta) : profileNameOrNull
 );
 
 /**

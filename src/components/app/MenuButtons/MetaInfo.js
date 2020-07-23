@@ -11,13 +11,10 @@ import { formatBytes, formatTimestamp } from '../../../utils/format-numbers';
 import {
   formatProductAndVersion,
   formatPlatform,
+  formatMetaInfoString,
 } from '../../../profile-logic/profile-metainfo';
 
-import type {
-  Profile,
-  ProfileMeta,
-  SymbolicationStatus,
-} from 'firefox-profiler/types';
+import type { Profile, SymbolicationStatus } from 'firefox-profiler/types';
 
 import { typeof resymbolicateProfile } from '../../../actions/receive-profile';
 import { assertExhaustiveCheck } from '../../../utils/flow';
@@ -36,7 +33,7 @@ type Props = {|
 export class MenuButtonsMetaInfo extends React.PureComponent<Props> {
   /**
    * This method provides information about the symbolication status, and a button
-   * to re-trigger symbolication.
+   * to re–trigger symbolication.
    */
   renderSymbolication() {
     const { profile, symbolicationStatus, resymbolicateProfile } = this.props;
@@ -93,7 +90,7 @@ export class MenuButtonsMetaInfo extends React.PureComponent<Props> {
       <ButtonWithPanel
         className="menuButtonsMetaInfoButton"
         buttonClassName="menuButtonsMetaInfoButtonButton"
-        label={_formatMetaInfoString(meta) || 'Profile information'}
+        label="Profile Info"
         panel={
           <ArrowPanel className="arrowPanelOpenMetaInfo">
             <h2 className="arrowPanelSubTitle">Profile Information</h2>
@@ -262,10 +259,4 @@ function _formatDate(timestamp: number): string {
     minute: 'numeric',
   });
   return timestampDate;
-}
-
-function _formatMetaInfoString(meta: ProfileMeta) {
-  const productAndVersion = formatProductAndVersion(meta);
-  const os = formatPlatform(meta);
-  return productAndVersion + (os ? ` – ${os}` : '');
 }
