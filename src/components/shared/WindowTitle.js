@@ -19,7 +19,7 @@ import type { ConnectedProps } from '../../utils/connect';
 
 type StateProps = {|
   +profile: Profile,
-  +profileName: string,
+  +profileName: string | null,
   +dataSource: string,
 |};
 
@@ -30,7 +30,7 @@ const PRODUCT = 'Firefox Profiler';
 
 class WindowTitle extends PureComponent<Props> {
   // This component updates window title in the form of:
-  // profile name - version - platform - date time - data source - 'Firefox profiler'
+  // profile name - version - platform - date time - data source - 'Firefox Profiler'
   _updateTitle() {
     const { profile, profileName, dataSource } = this.props;
     const { meta } = profile;
