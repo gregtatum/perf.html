@@ -17,7 +17,7 @@ import {
   formatValueTotal,
 } from '../../utils/format-numbers';
 import explicitConnect from '../../utils/connect';
-import { getThreadSelectors } from '../../selectors/per-thread';
+import { getThreadSelectorsFromThreadsKey } from '../../selectors/per-thread';
 import { getImplementationFilter } from '../../selectors/url-state';
 import {
   getPageList,
@@ -37,7 +37,7 @@ import type {
   Marker,
   ImplementationFilter,
   Thread,
-  ThreadIndex,
+  ThreadsKey,
   PageList,
   PhaseTimes,
 } from 'firefox-profiler/types';
@@ -700,7 +700,7 @@ function getMarkerDetails(
 
 type OwnProps = {|
   +marker: Marker,
-  +threadIndex: ThreadIndex,
+  +threadsKey: ThreadsKey,
   +className?: string,
 |};
 
@@ -833,8 +833,8 @@ class MarkerTooltipContents extends React.PureComponent<Props> {
 
 export const TooltipMarker = explicitConnect<OwnProps, StateProps, {||}>({
   mapStateToProps: (state, props) => {
-    const { threadIndex } = props;
-    const selectors = getThreadSelectors(threadIndex);
+    const { threadsKey } = props;
+    const selectors = getThreadSelectorsFromThreadsKey(threadsKey);
     const threadName = selectors.getFriendlyThreadName(state);
     const thread = selectors.getThread(state);
     const implementationFilter = getImplementationFilter(state);
