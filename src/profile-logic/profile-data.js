@@ -10,6 +10,7 @@ import {
   resourceTypes,
   getEmptyUnbalancedNativeAllocationsTable,
   getEmptyBalancedNativeAllocationsTable,
+  getEmptyThread,
 } from './data-structures';
 
 import type {
@@ -57,7 +58,7 @@ import { timeCode } from '../utils/time-code';
 import { hashPath } from '../utils/path';
 
 import bisection from 'bisection';
-import type { UniqueStringArray } from '../utils/unique-string-array';
+import { UniqueStringArray } from '../utils/unique-string-array';
 
 /**
  * Various helpers for dealing with the profile as a data structure.
@@ -2668,4 +2669,99 @@ export function getOrCreateURIResource(
     resourceTable.type[resourceIndex] = resourceTypes.url;
   }
   return resourceIndex;
+}
+
+export function mergeThreads(threads: Thread[]): Thread {
+  const newThread: Thread = getEmptyThread();
+  if (threads.length === 0) {
+    throw new Error('mergeThreads expects at least one thread');
+  }
+
+  if (threads.length === 1) {
+    return threads[0];
+  }
+
+  // Take a string key, and determine if a similar function exists.
+  const mergedFuncLookup: Map<string, IndexIntoFuncTable> = new Map();
+  const oldFuncToNewFunc: Map<
+    IndexIntoFuncTable,
+    IndexIntoFuncTable
+  > = new Map();
+
+  // Copy the first thread.
+  const firstThread = threads[0];
+
+  newThread.funcTable = {
+    name: firstThread.funcTable.name.slice(),
+    isJS: firstThread.funcTable.isJS.slice(),
+    relevantForJS: firstThread.funcTable.relevantForJS.slice(),
+    resource: firstThread.funcTable.resource.slice(),
+    fileName: firstThread.funcTable.fileName.slice(),
+    lineNumber: firstThread.funcTable.lineNumber.slice(),
+    columnNumber: firstThread.funcTable.columnNumber.slice(),
+    address: firstThread.funcTable.address.slice(),
+    length: firstThread.funcTable.length,
+  };
+
+  for (const oldThread of threads) {
+    // Merge the func table.
+    for (
+      let oldFuncIndex = 0;
+      oldFuncIndex < oldThread.funcTable.length;
+      oldFuncIndex++
+    ) {
+      const oldNameIndex = oldThread.funcTable.name[oldFuncIndex];
+      const isJS = oldThread.funcTable.isJS[oldFuncIndex];
+      const relevantForJS = oldThread.funcTable.relevantForJS[oldFuncIndex];
+      const lineNumber = oldThread.funcTable.lineNumber[oldFuncIndex];
+      const columnNumber = oldThread.funcTable.columnNumber[oldFuncIndex];
+      const address = oldThread.funcTable.address[oldFuncIndex];
+      const resource = oldThread.funcTable.resource[oldFuncIndex];
+      const oldFileNameIndex = oldThread.funcTable.fileName[oldFuncIndex];
+
+      const newFileNameIndex =
+        oldFileNameIndex === null
+          ? null
+          : newThread.stringTable.indexForString(
+              oldThread.stringTable.getString(oldFileNameIndex)
+            );
+
+      const newNameIndex = newThread.stringTable.indexForString(
+        oldThread.stringTable.getString(oldNameIndex)
+      );
+
+      const key =
+        newNameIndex +
+        '-' +
+        (isJS ? 'y' : 'n') +
+        '-' +
+        (lineNumber === null ? 'n' : lineNumber) +
+        '-' +
+        (columnNumber === null ? 'n' : columnNumber) +
+        '-' +
+        (newFileNameIndex === null ? 'n' : newFileNameIndex);
+
+      let newFuncIndex = mergedFuncLookup.get(key);
+
+      if (newFuncIndex === undefined) {
+        newFuncIndex = newThread.funcTable.length;
+        mergedFuncLookup.set(key, newFuncIndex);
+        newThread.funcTable.name.push(newNameIndex);
+        newThread.funcTable.isJS.push(isJS);
+        newThread.funcTable.relevantForJS.push(relevantForJS);
+        newThread.funcTable.resource.push(resource);
+        newThread.funcTable.fileName.push(newFileNameIndex);
+        newThread.funcTable.lineNumber.push(lineNumber);
+        newThread.funcTable.columnNumber.push(columnNumber);
+        newThread.funcTable.address.push(address);
+        newThread.funcTable.length++;
+      }
+
+      oldFuncToNewFunc.set(oldFuncIndex, newFuncIndex);
+
+      newThread.funcTable.name.push(newNameIndex);
+    }
+  }
+
+  return newThread;
 }

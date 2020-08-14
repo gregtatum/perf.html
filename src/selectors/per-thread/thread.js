@@ -29,6 +29,7 @@ import type {
 } from 'firefox-profiler/types';
 
 import type { UniqueStringArray } from '../../utils/unique-string-array';
+import { ensureExists } from '../../utils/flow';
 
 /**
  * Infer the return type from the getThreadSelectorsPerThread function. This
@@ -43,9 +44,22 @@ export type ThreadSelectorsPerThread = $ReturnType<
  * Create the selectors for a thread that have to do with an entire thread. This includes
  * the general filtering pipeline for threads.
  */
-export function getThreadSelectorsPerThread(threadIndex: ThreadIndex): * {
+export function getThreadSelectorsPerThread(
+  threadIndexes: Set<ThreadIndex>
+): * {
+  const getMergedThread: Selector<Thread> = createSelector(
+    ProfileSelectors.getProfile,
+    profile =>
+      ProfileData.mergeThreads(
+        [...threadIndexes].map(index => profile.threads[index])
+      )
+  );
   const getThread: Selector<Thread> = state =>
-    ProfileSelectors.getProfile(state).threads[threadIndex];
+    threadIndexes.size === 1
+      ? ProfileSelectors.getProfile(state).threads[
+          ensureExists(threadIndexes.values().next().value)
+        ]
+      : getMergedThread(state);
   const getStringTable: Selector<UniqueStringArray> = state =>
     getThread(state).stringTable;
   const getSamplesTable: Selector<SamplesTable> = state =>
