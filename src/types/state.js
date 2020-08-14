@@ -231,7 +231,7 @@ export type ActiveTabSpecificProfileUrlState = {|
 |};
 
 export type ProfileSpecificUrlState = {|
-  selectedThread: ThreadIndex | null,
+  selectedThreads: Set<ThreadIndex> | null,
   implementation: ImplementationFilter,
   lastSelectedCallTreeSummaryStrategy: CallTreeSummaryStrategy,
   invertCallstack: boolean,
