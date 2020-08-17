@@ -3173,7 +3173,7 @@ describe('right clicked call node info', () => {
     dispatch(ProfileView.changeRightClickedCallNode(0, [0, 1]));
 
     expect(getRightClickedCallNodeInfo(getState())).toEqual({
-      threadIndex: 0,
+      threadsKey: 0,
       callNodePath: [0, 1],
     });
   });
@@ -3184,7 +3184,7 @@ describe('right clicked call node info', () => {
     dispatch(ProfileView.changeRightClickedCallNode(0, [0, 1]));
 
     expect(getRightClickedCallNodeInfo(getState())).toEqual({
-      threadIndex: 0,
+      threadsKey: 0,
       callNodePath: [0, 1],
     });
 
@@ -3219,7 +3219,7 @@ describe('right clicked marker info', () => {
     dispatch(ProfileView.changeRightClickedMarker(0, 0));
 
     expect(getRightClickedMarkerInfo(getState())).toEqual({
-      threadIndex: 0,
+      threadsKey: 0,
       markerIndex: 0,
     });
   });
@@ -3230,7 +3230,7 @@ describe('right clicked marker info', () => {
     dispatch(ProfileView.changeRightClickedMarker(0, 1));
 
     expect(getRightClickedMarkerInfo(getState())).toEqual({
-      threadIndex: 0,
+      threadsKey: 0,
       markerIndex: 1,
     });
 
