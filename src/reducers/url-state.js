@@ -184,17 +184,17 @@ const transforms: Reducer<TransformStacksPerThread> = (state = {}, action) => {
     case 'PROFILE_LOADED':
       return action.transformStacks || state;
     case 'ADD_TRANSFORM_TO_STACK': {
-      const { threadIndex, transform } = action;
-      const transforms = state[threadIndex] || [];
+      const { threadsKey, transform } = action;
+      const transforms = state[threadsKey] || [];
       return Object.assign({}, state, {
-        [threadIndex]: [...transforms, transform],
+        [threadsKey]: [...transforms, transform],
       });
     }
     case 'POP_TRANSFORMS_FROM_STACK': {
-      const { threadIndex, firstPoppedFilterIndex } = action;
-      const transforms = state[threadIndex] || [];
+      const { threadsKey, firstPoppedFilterIndex } = action;
+      const transforms = state[threadsKey] || [];
       return Object.assign({}, state, {
-        [threadIndex]: transforms.slice(0, firstPoppedFilterIndex),
+        [threadsKey]: transforms.slice(0, firstPoppedFilterIndex),
       });
     }
     case 'SANITIZED_PROFILE_PUBLISHED': {
@@ -205,8 +205,8 @@ const transforms: Reducer<TransformStacksPerThread> = (state = {}, action) => {
       }
       // This may no longer be valid because of PII sanitization.
       const newTransforms = {};
-      for (const [threadIndex, transformStack] of objectEntries(state)) {
-        const newThreadIndex = oldThreadIndexToNew.get(Number(threadIndex));
+      for (const [threadsKey, transformStack] of objectEntries(state)) {
+        const newThreadIndex = oldThreadIndexToNew.get(Number(threadsKey));
         if (newThreadIndex !== undefined) {
           newTransforms[newThreadIndex] = transformStack;
         }

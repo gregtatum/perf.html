@@ -21,6 +21,7 @@ import type {
   MarkerIndex,
   OriginsTimeline,
   ActiveTabTimeline,
+  ThreadsKey,
 } from './profile-derived';
 import type { FuncToFuncMap } from '../profile-logic/symbolication';
 import type { TemporaryError } from '../utils/errors';
@@ -131,7 +132,7 @@ type ProfileAction =
     |}
   | {|
       +type: 'CHANGE_SELECTED_CALL_NODE',
-      +threadIndex: ThreadIndex,
+      +threadsKey: ThreadsKey,
       +selectedCallNodePath: CallNodePath,
       +optionalExpandedToCallNodePath: ?CallNodePath,
     |}
@@ -142,7 +143,7 @@ type ProfileAction =
     |}
   | {|
       +type: 'CHANGE_RIGHT_CLICKED_CALL_NODE',
-      +threadIndex: ThreadIndex,
+      +threadsKey: ThreadsKey,
       +callNodePath: CallNodePath | null,
     |}
   | {|
@@ -150,17 +151,17 @@ type ProfileAction =
     |}
   | {|
       +type: 'CHANGE_EXPANDED_CALL_NODES',
-      +threadIndex: ThreadIndex,
+      +threadsKey: ThreadsKey,
       +expandedCallNodePaths: Array<CallNodePath>,
     |}
   | {|
       +type: 'CHANGE_SELECTED_MARKER',
-      +threadIndex: ThreadIndex,
+      +threadsKey: ThreadsKey,
       +selectedMarker: MarkerIndex | null,
     |}
   | {|
       +type: 'CHANGE_RIGHT_CLICKED_MARKER',
-      +threadIndex: ThreadIndex,
+      +threadsKey: ThreadsKey,
       +markerIndex: MarkerIndex | null,
     |}
   | {|
@@ -341,13 +342,13 @@ type UrlStateAction =
   | {| +type: 'CHANGE_CALL_TREE_SEARCH_STRING', +searchString: string |}
   | {|
       +type: 'ADD_TRANSFORM_TO_STACK',
-      +threadIndex: ThreadIndex,
+      +threadsKey: ThreadsKey,
       +transform: Transform,
       +transformedThread: Thread,
     |}
   | {|
       +type: 'POP_TRANSFORMS_FROM_STACK',
-      +threadIndex: ThreadIndex,
+      +threadsKey: ThreadsKey,
       +firstPoppedFilterIndex: number,
     |}
   | {|
@@ -357,7 +358,7 @@ type UrlStateAction =
   | {|
       +type: 'CHANGE_IMPLEMENTATION_FILTER',
       +implementation: ImplementationFilter,
-      +threadIndexes: Set<ThreadIndex>,
+      +threadsKey: ThreadsKey,
       +transformedThread: Thread,
       +previousImplementation: ImplementationFilter,
       +implementation: ImplementationFilter,

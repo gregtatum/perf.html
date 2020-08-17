@@ -414,7 +414,7 @@ describe('TooltipMarker', function() {
         <Provider store={store}>
           <TooltipMarker
             marker={marker}
-            threadIndex={threadIndex}
+            threadsKey={threadIndex}
             className="propClass"
           />
         </Provider>
@@ -449,7 +449,7 @@ describe('TooltipMarker', function() {
 
     return render(
       <Provider store={store}>
-        <TooltipMarker marker={marker} threadIndex={0} className="propClass" />
+        <TooltipMarker marker={marker} threadsKey={0} className="propClass" />
       </Provider>
     );
   }
@@ -674,7 +674,7 @@ describe('TooltipMarker', function() {
       <Provider store={store}>
         <TooltipMarker
           marker={marker}
-          threadIndex={threadIndex}
+          threadsKey={threadIndex}
           className="propClass"
         />
       </Provider>

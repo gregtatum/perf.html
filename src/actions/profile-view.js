@@ -18,12 +18,13 @@ import {
 } from '../selectors/profile';
 import {
   getThreadSelectors,
+  getThreadSelectorsFromThreadsKey,
   selectedThreadSelectors,
 } from '../selectors/per-thread';
 import {
   getImplementationFilter,
   getSelectedThreadIndexes,
-  getFirstSelectedThreadIndex,
+  getSelectedThreadsKey,
   getHiddenGlobalTracks,
   getGlobalTrackOrder,
   getLocalTrackOrder,
@@ -36,7 +37,7 @@ import {
   getSampleCategories,
   findBestAncestorCallNode,
 } from '../profile-logic/profile-data';
-import { ensureExists, assertExhaustiveCheck } from '../utils/flow';
+import { assertExhaustiveCheck } from '../utils/flow';
 import { sendAnalytics } from '../utils/analytics';
 import { objectShallowEquals } from '../utils/index';
 
@@ -60,6 +61,7 @@ import type {
   TrackIndex,
   MarkerIndex,
   Transform,
+  ThreadsKey,
 } from 'firefox-profiler/types';
 
 /**
@@ -76,7 +78,7 @@ import type {
  * of selectedCallNodePath.
  */
 export function changeSelectedCallNode(
-  threadIndex: ThreadIndex,
+  threadsKey: ThreadsKey,
   selectedCallNodePath: CallNodePath,
   optionalExpandedToCallNodePath?: CallNodePath
 ): Action {
@@ -97,7 +99,7 @@ export function changeSelectedCallNode(
     type: 'CHANGE_SELECTED_CALL_NODE',
     selectedCallNodePath,
     optionalExpandedToCallNodePath,
-    threadIndex,
+    threadsKey,
   };
 }
 
@@ -107,12 +109,12 @@ export function changeSelectedCallNode(
  * to display the context menu.
  */
 export function changeRightClickedCallNode(
-  threadIndex: ThreadIndex,
+  threadsKey: ThreadsKey,
   callNodePath: CallNodePath | null
 ) {
   return {
     type: 'CHANGE_RIGHT_CLICKED_CALL_NODE',
-    threadIndex,
+    threadsKey,
     callNodePath,
   };
 }
@@ -122,11 +124,11 @@ export function changeRightClickedCallNode(
  * of that sample's stack.
  */
 export function selectLeafCallNode(
-  threadIndex: ThreadIndex,
+  threadsKey: ThreadsKey,
   sampleIndex: IndexIntoSamplesTable
 ): ThunkAction<void> {
   return (dispatch, getState) => {
-    const threadSelectors = getThreadSelectors(threadIndex);
+    const threadSelectors = getThreadSelectorsFromThreadsKey(threadsKey);
     const filteredThread = threadSelectors.getFilteredThread(getState());
     const callNodeInfo = threadSelectors.getCallNodeInfo(getState());
 
@@ -137,7 +139,7 @@ export function selectLeafCallNode(
         : callNodeInfo.stackIndexToCallNodeIndex[newSelectedStack];
     dispatch(
       changeSelectedCallNode(
-        threadIndex,
+        threadsKey,
         getCallNodePathFromIndex(
           newSelectedCallNode,
           callNodeInfo.callNodeTable
@@ -152,11 +154,11 @@ export function selectLeafCallNode(
  * of that sample's stack.
  */
 export function selectRootCallNode(
-  threadIndex: ThreadIndex,
+  threadsKey: ThreadsKey,
   sampleIndex: IndexIntoSamplesTable
 ): ThunkAction<void> {
   return (dispatch, getState) => {
-    const threadSelectors = getThreadSelectors(threadIndex);
+    const threadSelectors = getThreadSelectorsFromThreadsKey(threadsKey);
     const filteredThread = threadSelectors.getFilteredThread(getState());
     const callNodeInfo = threadSelectors.getCallNodeInfo(getState());
 
@@ -174,11 +176,7 @@ export function selectRootCallNode(
     const rootCallNodePath = [selectedCallNodePath[0]];
 
     dispatch(
-      changeSelectedCallNode(
-        threadIndex,
-        rootCallNodePath,
-        selectedCallNodePath
-      )
+      changeSelectedCallNode(threadsKey, rootCallNodePath, selectedCallNodePath)
     );
   };
 }
@@ -190,11 +188,11 @@ export function selectRootCallNode(
  * on the "best" call node.
  */
 export function selectBestAncestorCallNodeAndExpandCallTree(
-  threadIndex: ThreadIndex,
+  threadsKey: ThreadsKey,
   sampleIndex: IndexIntoSamplesTable
 ): ThunkAction<boolean> {
   return (dispatch, getState) => {
-    const threadSelectors = getThreadSelectors(threadIndex);
+    const threadSelectors = getThreadSelectorsFromThreadsKey(threadsKey);
     const fullThread = threadSelectors.getRangeFilteredThread(getState());
     const filteredThread = threadSelectors.getFilteredThread(getState());
     const unfilteredStack = fullThread.samples.stack[sampleIndex];
@@ -232,7 +230,7 @@ export function selectBestAncestorCallNodeAndExpandCallTree(
     // also expand out to the clicked call node.
     dispatch(
       changeSelectedCallNode(
-        threadIndex,
+        threadsKey,
         // Select the best ancestor call node.
         getCallNodePathFromIndex(bestAncestorCallNode, callNodeTable),
         // Also expand the children nodes out further below it to what was actually
@@ -1068,7 +1066,7 @@ export function changeCallTreeSearchString(searchString: string): Action {
 }
 
 export function expandAllCallNodeDescendants(
-  threadIndex: ThreadIndex,
+  threadsKey: ThreadsKey,
   callNodeIndex: IndexIntoCallNodeTable,
   callNodeInfo: CallNodeInfo
 ): ThunkAction<void> {
@@ -1091,29 +1089,29 @@ export function expandAllCallNodeDescendants(
     const expandedCallNodePaths = [...descendants].map(callNodeIndex =>
       getCallNodePathFromIndex(callNodeIndex, callNodeInfo.callNodeTable)
     );
-    dispatch(changeExpandedCallNodes(threadIndex, expandedCallNodePaths));
+    dispatch(changeExpandedCallNodes(threadsKey, expandedCallNodePaths));
   };
 }
 
 export function changeExpandedCallNodes(
-  threadIndex: ThreadIndex,
+  threadsKey: ThreadsKey,
   expandedCallNodePaths: Array<CallNodePath>
 ): Action {
   return {
     type: 'CHANGE_EXPANDED_CALL_NODES',
-    threadIndex,
+    threadsKey,
     expandedCallNodePaths,
   };
 }
 
 export function changeSelectedMarker(
-  threadIndex: ThreadIndex,
+  threadsKey: ThreadsKey,
   selectedMarker: MarkerIndex | null
 ): Action {
   return {
     type: 'CHANGE_SELECTED_MARKER',
     selectedMarker,
-    threadIndex,
+    threadsKey,
   };
 }
 
@@ -1122,12 +1120,12 @@ export function changeSelectedMarker(
  * used to display its context menu.
  */
 export function changeRightClickedMarker(
-  threadIndex: ThreadIndex,
+  threadsKey: ThreadsKey,
   markerIndex: MarkerIndex | null
 ): Action {
   return {
     type: 'CHANGE_RIGHT_CLICKED_MARKER',
-    threadIndex,
+    threadsKey,
     markerIndex,
   };
 }
@@ -1151,10 +1149,7 @@ export function changeImplementationFilter(
 ): ThunkAction<void> {
   return (dispatch, getState) => {
     const previousImplementation = getImplementationFilter(getState());
-    const threadIndexes = ensureExists(
-      getSelectedThreadIndexes(getState()),
-      'Attempting to add an implementation filter when no thread is currently selected.'
-    );
+    const threadsKey = getSelectedThreadsKey(getState());
     const transformedThread = selectedThreadSelectors.getRangeAndTransformFilteredThread(
       getState()
     );
@@ -1169,7 +1164,7 @@ export function changeImplementationFilter(
     dispatch({
       type: 'CHANGE_IMPLEMENTATION_FILTER',
       implementation,
-      threadIndexes,
+      threadsKey,
       transformedThread,
       previousImplementation,
     });
@@ -1292,17 +1287,17 @@ export function popCommittedRanges(firstPoppedFilterIndex: number): Action {
 }
 
 export function addTransformToStack(
-  threadIndex: ThreadIndex,
+  threadsKey: ThreadsKey,
   transform: Transform
 ): ThunkAction<void> {
   return (dispatch, getState) => {
-    const transformedThread = getThreadSelectors(
-      threadIndex
+    const transformedThread = getThreadSelectorsFromThreadsKey(
+      threadsKey
     ).getRangeAndTransformFilteredThread(getState());
 
     dispatch({
       type: 'ADD_TRANSFORM_TO_STACK',
-      threadIndex,
+      threadsKey,
       transform,
       transformedThread,
     });
@@ -1319,10 +1314,10 @@ export function popTransformsFromStack(
   firstPoppedFilterIndex: number
 ): ThunkAction<void> {
   return (dispatch, getState) => {
-    const threadIndex = getFirstSelectedThreadIndex(getState());
+    const threadsKey = getSelectedThreadsKey(getState());
     dispatch({
       type: 'POP_TRANSFORMS_FROM_STACK',
-      threadIndex,
+      threadsKey,
       firstPoppedFilterIndex,
     });
   };
