@@ -263,7 +263,7 @@ export function changeSelectedThreads(
  */
 export function selectTrack(
   trackReference: TrackReference,
-  modifier: 'none' | 'ctrl' | 'shift'
+  modifier: 'none' | 'ctrl'
 ): ThunkAction<void> {
   return (dispatch, getState) => {
     const currentlySelectedTab = getSelectedTab(getState());
