@@ -7,20 +7,26 @@
 import { PureComponent } from 'react';
 import explicitConnect from '../../utils/connect';
 
-import { getProfileNameOrNull, getDataSource } from '../../selectors/url-state';
-import { getProfile } from '../../selectors/profile';
+import {
+  getProfile,
+  getProfileNameOrNull,
+  getDataSource,
+  getFileName,
+} from 'firefox-profiler/selectors';
 import {
   formatProductAndVersion,
   formatPlatform,
 } from '../../profile-logic/profile-metainfo';
 
-import type { Profile } from 'firefox-profiler/types';
+import type { Profile, DataSource } from 'firefox-profiler/types';
 import type { ConnectedProps } from '../../utils/connect';
+import { assertExhaustiveCheck } from '../../utils/flow';
 
 type StateProps = {|
   +profile: Profile,
   +profileName: string | null,
-  +dataSource: string,
+  +dataSource: DataSource,
+  +fileName: string | null,
 |};
 
 type Props = ConnectedProps<{||}, StateProps, {||}>;
@@ -32,24 +38,56 @@ class WindowTitle extends PureComponent<Props> {
   // This component updates window title in the form of:
   // profile name - version - platform - date time - data source - 'Firefox Profiler'
   _updateTitle() {
-    const { profile, profileName, dataSource } = this.props;
+    const { profile, profileName, dataSource, fileName } = this.props;
     const { meta } = profile;
+    let title;
 
     if (profileName) {
-      document.title = profileName + SEPARATOR + PRODUCT;
+      title = profileName + SEPARATOR + PRODUCT;
     } else {
-      let title = formatProductAndVersion(meta) + SEPARATOR;
+      // If there is no profile name set, then generate a new one.
+      title = formatProductAndVersion(meta) + SEPARATOR;
       const os = formatPlatform(meta);
       if (os) {
         title += os + SEPARATOR;
       }
       title += _formatDateTime(meta.startTime);
-      if (dataSource === 'public') {
-        title += ` (${dataSource})`;
-      }
       title += SEPARATOR + PRODUCT;
-      document.title = title;
     }
+
+    switch (dataSource) {
+      case 'from-addon':
+        title = `(unpublished) ${title}`;
+        break;
+      case 'public':
+      case 'none':
+      case 'from-url':
+      case 'local':
+        // Do nothing.
+        break;
+      case 'from-file':
+        if (!fileName) {
+          throw new Error(
+            'If loading a data source from file, then the file name should be set.'
+          );
+        }
+        title = `(${fileName}) ${title}`;
+        break;
+      case 'compare':
+        title = `(compare) ${title}`;
+        break;
+      case 'uploaded-recordings':
+        throw new Error(
+          `The data source "${dataSource}" is not supported by the WindowTitle`
+        );
+      default:
+        throw assertExhaustiveCheck(
+          dataSource,
+          `Unknown dataSource ${dataSource}.`
+        );
+    }
+
+    document.title = title;
   }
 
   componentDidMount() {
@@ -79,6 +117,7 @@ export default explicitConnect<{||}, StateProps, {||}>({
     profileName: getProfileNameOrNull(state),
     profile: getProfile(state),
     dataSource: getDataSource(state),
+    fileName: getFileName(state),
   }),
   component: WindowTitle,
 });

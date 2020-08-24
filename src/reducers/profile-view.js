@@ -555,6 +555,19 @@ const originsTimeline: Reducer<OriginsTimeline> = (state = [], action) => {
 };
 
 /**
+ * If we are loading a profile from a file, then this value will be set. It is
+ * displayed in the document title.
+ */
+const fileName: Reducer<string | null> = (state = null, action) => {
+  switch (action.type) {
+    case 'WAITING_FOR_PROFILE_FROM_FILE':
+      return action.fileName;
+    default:
+      return state;
+  }
+};
+
+/**
  * Provide a mechanism to wrap the reducer in a special function that can reset
  * the state to the default values. This is useful when viewing multiple profiles
  * (e.g. in zip files).
@@ -602,6 +615,7 @@ const profileViewReducer: Reducer<ProfileViewState> = wrapReducerInResetter(
     origins: combineReducers({
       originsTimeline,
     }),
+    fileName,
   })
 );
 

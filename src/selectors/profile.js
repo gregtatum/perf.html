@@ -74,6 +74,8 @@ export const getActiveTabProfileView: Selector<ActiveTabProfileViewState> = stat
   getProfileView(state).activeTab;
 export const getOriginsProfileView: Selector<OriginsViewState> = state =>
   getProfileView(state).origins;
+export const getFileName: Selector<string | null> = state =>
+  getProfileView(state).fileName;
 
 /**
  * Profile View Options

@@ -316,7 +316,7 @@ type UrlEnhancerAction =
   | {| +type: 'UPDATE_URL_STATE', +newUrlState: UrlState | null |};
 
 type UrlStateAction =
-  | {| +type: 'WAITING_FOR_PROFILE_FROM_FILE' |}
+  | {| +type: 'WAITING_FOR_PROFILE_FROM_FILE', fileName: string |}
   | {|
       +type: 'PROFILE_PUBLISHED',
       +hash: string,

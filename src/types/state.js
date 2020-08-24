@@ -96,6 +96,7 @@ export type ProfileViewState = {
   +full: FullProfileViewState,
   +activeTab: ActiveTabProfileViewState,
   +origins: OriginsViewState,
+  +fileName: string | null,
 };
 
 export type AppViewState =

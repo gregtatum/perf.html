@@ -6,10 +6,7 @@
 import * as React from 'react';
 
 import explicitConnect from '../../utils/connect';
-import {
-  getProfileName,
-  getProfileNameOrNull,
-} from 'firefox-profiler/selectors';
+import { getProfileName } from 'firefox-profiler/selectors';
 import { changeProfileName } from '../../actions/profile-view';
 
 import type { ConnectedProps } from '../../utils/connect';
@@ -18,7 +15,6 @@ import './ProfileName.css';
 
 type StateProps = {|
   +profileName: string,
-  +profileNameOrNull: string | null,
 |};
 
 type DispatchProps = {|
@@ -99,6 +95,11 @@ class ProfileNameImpl extends React.PureComponent<Props, State> {
     const { profileName } = this.props;
     const title = 'Edit the profile name';
 
+    // Use both a button and input at the same time. Buttons can be sized according
+    // to their content, and text inputs cannot. Once the button is focused, it
+    // activates the input. The input ref needs to be available to focus, so it
+    // is unconditionally attached the DOM, and both element's visibility is
+    // controlled by CSS.
     return (
       <>
         <button
@@ -114,7 +115,9 @@ class ProfileNameImpl extends React.PureComponent<Props, State> {
           {profileName}
         </button>
         <input
-          key={focusGeneration}
+          // The key requires both the profile name and focus generation to properly
+          // support the back button and blur events.
+          key={`${profileName}-${focusGeneration}`}
           className="profileNameInput"
           style={{
             display: isFocused ? 'block' : 'none',

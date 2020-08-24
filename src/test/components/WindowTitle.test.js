@@ -32,7 +32,7 @@ describe('WindowTitle', () => {
     );
   });
 
-  it('shows platform details in the window title if it is available', () => {
+  function setup() {
     const profile = getEmptyProfile();
     profile.threads.push(getEmptyThread());
     Object.assign(profile.meta, {
@@ -41,36 +41,35 @@ describe('WindowTitle', () => {
       toolkit: 'cocoa',
     });
     const store = storeWithProfile(profile);
-    render(
+    const renderResult = render(
       <Provider store={store}>
         <WindowTitle />
       </Provider>
     );
+    return { ...store, ...renderResult };
+  }
 
+  it('shows platform details in the window title if it is available', () => {
+    setup();
     expect(document.title).toBe(
       'Firefox – macOS 10.14 – 1/1/1970, 12:00:00 AM UTC – Firefox Profiler'
     );
   });
 
   it('shows profile name in the window title if it is available', () => {
-    const profile = getEmptyProfile();
-    profile.threads.push(getEmptyThread());
-    Object.assign(profile.meta, {
-      oscpu: 'Intel Mac OS X 10.14',
-      platform: 'Macintosh',
-      toolkit: 'cocoa',
-    });
-    const store = storeWithProfile(profile);
-    store.dispatch(changeProfileName('good profile'));
-    render(
-      <Provider store={store}>
-        <WindowTitle />
-      </Provider>
-    );
-
+    const { dispatch } = setup();
+    dispatch(changeProfileName('good profile'));
     expect(document.title).toBe('good profile – Firefox Profiler');
 
-    store.dispatch(changeProfileName('awesome profile'));
+    dispatch(changeProfileName('awesome profile'));
     expect(document.title).toBe('awesome profile – Firefox Profiler');
+  });
+
+  it('denotes that a profile is local', function() {
+    const { dispatch } = setup();
+    dispatch({ type: 'SET_DATA_SOURCE', dataSource: 'from-addon' });
+    expect(document.title).toBe(
+      '(unpublished) Firefox – macOS 10.14 – 1/1/1970, 12:00:00 AM UTC – Firefox Profiler'
+    );
   });
 });

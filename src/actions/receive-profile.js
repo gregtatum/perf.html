@@ -1201,9 +1201,10 @@ export function retrieveProfileOrZipFromUrl(
   };
 }
 
-export function waitingForProfileFromFile(): Action {
+export function waitingForProfileFromFile(fileName: string): Action {
   return {
     type: 'WAITING_FOR_PROFILE_FROM_FILE',
+    fileName,
   };
 }
 
@@ -1243,7 +1244,7 @@ export function retrieveProfileFromFile(
   return async dispatch => {
     // Notify the UI that we are loading and parsing a profile. This can take
     // a little bit of time.
-    dispatch(waitingForProfileFromFile());
+    dispatch(waitingForProfileFromFile(file.name));
 
     try {
       switch (file.type) {
