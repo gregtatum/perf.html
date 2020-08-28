@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 // @flow
-import type { MarkerFormatType } from 'firefox-profiler/types';
+import type { MarkerFormatType, MarkerSchema } from 'firefox-profiler/types';
 import {
   formatNumber,
   formatPercent,
@@ -17,7 +17,7 @@ import {
  * TODO - These will eventually be stored in the profile, but for now
  * define them here.
  */
-export const markerSchema = [
+export const markerSchema: MarkerSchema[] = [
   {
     name: 'Bailout',
     display: ['marker-chart', 'marker-table'],
@@ -168,7 +168,7 @@ export const markerSchema = [
   },
   {
     name: 'IPC',
-    display: ['marker-chart', 'marker-table'],
+    display: ['marker-chart', 'marker-table', 'timeline-ipc'],
     data: [
       { key: 'messageType', label: 'Type', format: 'string' },
       { key: 'sync', label: 'Sync', format: 'string' },
