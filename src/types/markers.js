@@ -59,21 +59,26 @@ export type MarkerFormatType =
 export type MarkerDisplayLocation =
   | 'marker-chart'
   | 'marker-table'
-  | 'timeline'
+  // This adds markers to the main marker timeline in the header.
+  | 'timeline-overview'
   // In the timeline, this is a section that breaks out markers that are related
   // to memory. When memory counters are enabled, this is its own track, otherwise
   // it is displayed with the main thread.
   | 'timeline-memory'
+  // This adds markers to the IPC timeline area in the header.
+  | 'timeline-ipc'
+  // This adds markers to the FileIO timeline area in the header.
+  | 'timeline-fileio'
   // TODO - This is not supported yet.
   | 'stack-chart';
 
-export type MarkerSchema = {
+export type MarkerSchema = {|
   // The unique identifier for this marker.
   name: string, // e.g. "CC"
 
   // The label of how this marker should be displayed in the UI.
   // If none is provided, then the name is used.
-  label?: string, // e.g. "Cycle Collect"
+  tooltipLabel?: string, // e.g. "Cycle Collect"
 
   // The locations to display
   display: MarkerDisplayLocation[],
@@ -85,7 +90,7 @@ export type MarkerSchema = {
     format: MarkerFormatType,
     searchable?: boolean,
   }>,
-};
+|};
 
 export type MarkerSchemaByName = { [name: string]: MarkerSchema };
 

@@ -12,13 +12,13 @@ import {
   formatMicroseconds,
   formatNanoseconds,
 } from '../utils/format-numbers';
-import type { MarkerFormatType } from 'firefox-profiler/types';
+import type { MarkerFormatType, MarkerSchema } from 'firefox-profiler/types';
 
 /**
  * TODO - These will eventually be stored in the profile, but for now
  * define them here.
  */
-export const markerSchema = [
+export const markerSchema: MarkerSchema[] = [
   {
     name: 'Bailout',
     display: ['marker-chart', 'marker-table'],
@@ -53,7 +53,7 @@ export const markerSchema = [
   },
   {
     name: 'CC',
-    label: 'Cycle Collect',
+    tooltipLabel: 'Cycle Collect',
     display: ['marker-chart', 'marker-table', 'timeline-memory'],
     data: [],
   },
@@ -99,7 +99,7 @@ export const markerSchema = [
   },
   {
     name: 'Styles',
-    display: ['marker-chart', 'marker-table'],
+    display: ['marker-chart', 'marker-table', 'timeline-overview'],
     data: [
       {
         key: 'elementsTraversed',
@@ -132,8 +132,11 @@ export const markerSchema = [
   },
   {
     name: 'UserTiming',
+    tooltipLabel: 'UserTiming "{name}"',
     display: ['marker-chart', 'marker-table'],
-    data: [{ key: 'name', label: 'Name', format: 'string' }],
+    data: [
+      // name
+    ],
   },
   {
     name: 'Text',
@@ -149,16 +152,39 @@ export const markerSchema = [
     ],
   },
   {
-    name: 'tracing',
-    display: ['marker-chart', 'marker-table'],
+    name: 'DOMEvent',
+    tooltipLabel: '{eventType} – DOMEvent',
+    display: ['marker-chart', 'marker-table', 'timeline-overview'],
     data: [
-      // This is really the "type" of the marker.
-      { key: 'category', label: 'Category', format: 'string' },
+      { key: 'category', label: 'Type', format: 'string' },
+      { key: 'eventType', label: 'Event Type', format: 'string' },
+      // eventType is used in the labels.
     ],
   },
   {
+    // TODO - Note that this marker is a "tracing" marker currently.
+    // See issue #2749
+    name: 'Paint',
+    display: ['marker-chart', 'marker-table', 'timeline-overview'],
+    data: [{ key: 'category', label: 'Type', format: 'string' }],
+  },
+  {
+    // TODO - Note that this marker is a "tracing" marker currently.
+    // See issue #2749
+    name: 'Navigation',
+    display: ['marker-chart', 'marker-table', 'timeline-overview'],
+    data: [{ key: 'category', label: 'Type', format: 'string' }],
+  },
+  {
+    // TODO - Note that this marker is a "tracing" marker currently.
+    // See issue #2749
+    name: 'Layout',
+    display: ['marker-chart', 'marker-table', 'timeline-overview'],
+    data: [{ key: 'category', label: 'Type', format: 'string' }],
+  },
+  {
     name: 'IPC',
-    display: ['marker-chart', 'marker-table'],
+    display: ['marker-chart', 'marker-table', 'timeline-ipc'],
     data: [
       { key: 'messageType', label: 'Type', format: 'string' },
       { key: 'sync', label: 'Sync', format: 'string' },
@@ -205,4 +231,39 @@ export function formatFromMarkerSchema(
       );
       return value;
   }
+}
+
+export function getMarkerLabelMaker(label: string) {
+  // Split the label on the "{key}" capture groups.
+  // Each (zero-indexed) even entry will be a string label.
+  // Each (zero-indexed) odd entry will be a key to the payload.
+  //
+  // e.g.
+  // "asdf {foo} jkl {bar}" -> ["asdf ", "foo", " jkl ", "bar"]
+  // "{foo} jkl {bar}"      -> ["", "foo", " jkl ", "bar"];
+  // "{foo}"                -> ["", "foo", ""];
+  const splits = label.split(/{(.+?)}/);
+  //                          {     } Split anytime text is in brackets.
+  //                           (   )  Capture the text inside the brackets.
+  //                            .+?   Match any character, non-greedily.
+
+  if (splits.length === 1) {
+    // Just return the label.
+    return () => label;
+  }
+
+  type DynamicPayload = { [key: string]: mixed };
+  return (data: DynamicPayload) => {
+    let result: string = '';
+    for (let i = 0; i < splits.length; i++) {
+      const part = splits[i];
+      // Flip-flop between inserting a label, and looking up a value.
+      if (i % 2 === 0) {
+        result += part;
+      } else {
+        result += String(data[part]);
+      }
+    }
+    return result;
+  };
 }

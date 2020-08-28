@@ -33,7 +33,10 @@ import {
 import Backtrace from '../shared/Backtrace';
 
 import { bailoutTypeInformation } from '../../profile-logic/marker-info';
-import { formatFromMarkerSchema } from '../../profile-logic/marker-schema';
+import {
+  formatFromMarkerSchema,
+  getMarkerLabelMaker,
+} from '../../profile-logic/marker-schema';
 
 import type {
   Milliseconds,
@@ -152,16 +155,33 @@ class MarkerTooltipContents extends React.PureComponent<Props> {
     const details: TooltipDetailComponent[] = [];
 
     if (data) {
+      // TODO - Tracing markers have a duplicate "category" field.
+      // See issue #2749
+      const type =
+        data.type === 'tracing' && data.category ? data.category : data.type;
+
       // Add the details for the markers based on their Marker schema.
       const schema = markerSchemaByName[data.type];
       if (schema) {
-        for (const { key, label, format } of schema.data) {
-          if (key in data) {
+        for (const schemaData of schema.data) {
+          if (schemaData.value !== undefined) {
+            // This is a simple label.
+            const { label, value } = schemaData;
+            const key = type + '-' + label + '-' + value;
             details.push(
-              <TooltipDetail key={data.type + '-' + key} label={label || key}>
-                {formatFromMarkerSchema(data.type, format, data[key])}
+              <TooltipDetail key={key} label={label}>
+                {value}
               </TooltipDetail>
             );
+          } else {
+            const { key, label, format } = schemaData;
+            if (key in data) {
+              details.push(
+                <TooltipDetail key={type + '-' + key} label={label || key}>
+                  {formatFromMarkerSchema(type, format, data[key])}
+                </TooltipDetail>
+              );
+            }
           }
         }
       }
@@ -303,6 +323,25 @@ class MarkerTooltipContents extends React.PureComponent<Props> {
     return null;
   }
 
+  _renderTitle(): string {
+    const { marker, markerSchemaByName } = this.props;
+    const { data } = marker;
+    if (data) {
+      // Add the details for the markers based on their Marker schema.
+
+      // TODO - Tracing markers have a duplicate "category" field.
+      // See issue #2749
+      const type =
+        data.type === 'tracing' && data.category ? data.category : data.type;
+      const schema = markerSchemaByName[type];
+      if (schema && schema.tooltipLabel) {
+        const applyLabel = getMarkerLabelMaker(schema.tooltipLabel);
+        return applyLabel(data);
+      }
+    }
+    return marker.title || marker.name;
+  }
+
   /**
    * Often-times component logic is split out into several different components. This
    * is really helpful for interactive components, as each list of Props serves as
@@ -326,14 +365,12 @@ class MarkerTooltipContents extends React.PureComponent<Props> {
    * a short list of rendering strategies, in the order they appear.
    */
   render() {
-    const { marker, className } = this.props;
-
     return (
-      <div className={classNames('tooltipMarker', className)}>
+      <div className={classNames('tooltipMarker', this.props.className)}>
         <div className="tooltipHeader">
           <div className="tooltipOneLine">
             {this._maybeRenderMarkerDuration()}
-            <div className="tooltipTitle">{marker.title || marker.name}</div>
+            <div className="tooltipTitle">{this._renderTitle()}</div>
           </div>
         </div>
         <TooltipDetails>
