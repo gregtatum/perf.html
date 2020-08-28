@@ -5,6 +5,10 @@
 
 import { unserializeProfileOfArbitraryFormat } from '../../profile-logic/process-profile';
 import { GECKO_PROFILE_VERSION } from '../../app-logic/constants';
+import type {
+  TracingEventUnion,
+  CpuProfileEvent,
+} from '../../profile-logic/import/chrome';
 
 describe('converting Linux perf profile', function() {
   it('should import a perf profile', async function() {
@@ -92,6 +96,35 @@ describe('converting Google Chrome profile', function() {
       'src/test/fixtures/upgrades/test.chrome-unchunked.json'
     );
     const text = buffer.toString('utf8');
+    const profile = await unserializeProfileOfArbitraryFormat(text);
+    if (profile === undefined) {
+      throw new Error('Unable to parse the profile.');
+    }
+    expect(profile).toMatchSnapshot();
+  });
+
+  it('successfully imports a single CpuProfile, e.g. from node', async function() {
+    const fs = require('fs');
+    const buffer = fs.readFileSync(
+      'src/test/fixtures/upgrades/test.chrome-unchunked.json'
+    );
+    const events: TracingEventUnion[] = JSON.parse(buffer.toString('utf8'));
+
+    // Use a for loop to look this up, as Flow is happier than a .find().
+    let cpuProfile: CpuProfileEvent | void;
+    for (const event of events) {
+      if (event.name === 'CpuProfile') {
+        cpuProfile = event;
+        break;
+      }
+    }
+
+    if (!cpuProfile) {
+      throw new Error('Could not find a CPU profile');
+    }
+
+    const text = JSON.stringify(cpuProfile.args.data.cpuProfile);
+
     const profile = await unserializeProfileOfArbitraryFormat(text);
     if (profile === undefined) {
       throw new Error('Unable to parse the profile.');
