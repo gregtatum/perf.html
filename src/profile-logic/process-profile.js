@@ -1461,6 +1461,7 @@ export async function unserializeProfileOfArbitraryFormat(
     // Else: Treat it as a Gecko profile and just attempt to process it.
     return processProfile(profile);
   } catch (e) {
+    console.log('The profile', stringOrObject);
     throw new Error(`Unserializing the profile failed: ${e}`);
   }
 }

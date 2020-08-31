@@ -39,6 +39,11 @@ export type TracingEventUnion =
   | ThreadSortIndexEvent
   | ScreenshotEvent;
 
+// This is the format that `node --trace-events-enabled` provides.
+type NodeTraceEvents = {|
+  traceEvents: TracingEventUnion[],
+|};
+
 type TracingEvent<Event> = {|
   cat: string,
   // List out all known phase values, but then also allow strings. This will get
@@ -106,7 +111,7 @@ export type CpuProfileEvent = TracingEvent<{|
 |}>;
 
 // A node performance profile only outputs this.
-type CpuProfileData = {
+type CpuProfileData = {|
   nodes?: Array<{
     callFrame: {
       functionName: string,
@@ -122,7 +127,7 @@ type CpuProfileData = {
   timeDeltas: number[],
   startTime: number,
   endTime: number,
-};
+|};
 
 type ThreadNameEvent = TracingEvent<{|
   name: 'thread_name',
@@ -160,6 +165,15 @@ type ScreenshotEvent = TracingEvent<{|
   args: { snapshot: string },
 |}>;
 
+/**
+ * It's nice when importing a chrome profile to compare it against the original.
+ * Expose the information to the console.
+ */
+export type ChromeImportDiagnostics = {
+  profile: mixed,
+  eventsByName: Map<string, TracingEventUnion[]>,
+};
+
 export function isChromeProfile(profile: mixed): boolean {
   if (!profile || typeof profile !== 'object') {
     return false;
@@ -179,12 +193,17 @@ export function isChromeProfile(profile: mixed): boolean {
   }
 
   // A node.js profile is a single CpuProfileData, as opposed to a list of events.
-  return (
+  if (
     'samples' in profile &&
     'timeDeltas' in profile &&
     'startTime' in profile &&
     'endTime' in profile
-  );
+  ) {
+    return true;
+  }
+
+  // This is node `--trace-events-enabled` profile.
+  return 'traceEvents' in profile;
 }
 
 function wrapCpuProfileInEvent(cpuProfile: CpuProfileData): CpuProfileEvent {
@@ -203,12 +222,17 @@ function wrapCpuProfileInEvent(cpuProfile: CpuProfileData): CpuProfileEvent {
 }
 
 export function convertChromeProfile(
-  profile: CpuProfileData | TracingEventUnion[]
+  originalProfile: CpuProfileData | TracingEventUnion[] | NodeTraceEvents
 ): Promise<Profile> {
+  let profile = originalProfile;
   if (!Array.isArray(profile)) {
-    // Assume that this is CpuProfileData from a node profile. Wrap it
-    // in a list of TracingEvents so that the logic below can be re-used.
-    profile = [wrapCpuProfileInEvent(profile)];
+    if (profile.traceEvents) {
+      profile = profile.traceEvents;
+    } else {
+      // Assume that this is CpuProfileData from a node profile. Wrap it
+      // in a list of TracingEvents so that the logic below can be re-used.
+      profile = [wrapCpuProfileInEvent(profile)];
+    }
   }
 
   const eventsByName: Map<string, TracingEventUnion[]> = new Map();
@@ -231,6 +255,14 @@ export function convertChromeProfile(
     }
     list.push((tracingEvent: any));
   }
+
+  console.log(
+    'Here is some information about the chrome profile that is being imported.',
+    {
+      chromeProfile: originalProfile,
+      eventsByName,
+    }
+  );
 
   return processTracingEvents(eventsByName);
 }
