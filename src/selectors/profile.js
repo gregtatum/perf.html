@@ -476,10 +476,10 @@ export const getActiveTabMainTrack: Selector<ActiveTabMainTrack> = state =>
 
 export const getActiveTabGlobalTracks: Selector<
   ActiveTabGlobalTrack[]
-> = state => [
-  ...getActiveTabTimeline(state).screenshots,
-  getActiveTabTimeline(state).mainTrack,
-];
+> = createSelector(getActiveTabTimeline, activeTabTimeline => [
+  ...activeTabTimeline.screenshots,
+  activeTabTimeline.mainTrack,
+]);
 
 /**
  * Returns resource tracks for the active tab view.
