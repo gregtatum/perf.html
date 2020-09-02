@@ -1,41 +1,15 @@
 .backtrace {
-  --gradient-height: calc(var(--max-height) - 5em);
-
-  /* Box */
-  max-width: 35em;
+  max-width: var(--tooltip-detail-max-width);
   padding: 0;
-  margin: 5px;
-
-  /* Other */
-  font-size: 0.9em;
-  line-height: 1.5;
+  margin: 0;
 }
 
 .tooltip .backtrace {
   overflow: hidden;
-  max-height: var(--max-height);
-
-  /* The gradient is defined towards the bottom so that we hide the end of the
-   * backtrace only when the element is tall enough, which is when the backtrace
-   * is long. */
-
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    white,
-    white var(--gradient-height),
-    transparent
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    white,
-    white var(--gradient-height),
-    transparent
-  );
 }
 
 .backtraceStackFrame {
   /* Position */
-  display: block;
   overflow: hidden;
 
   /* Box */
@@ -43,9 +17,9 @@
   margin: 0;
 
   /* Other */
-  list-style: none;
   text-overflow: ellipsis;
   white-space: nowrap;
+  list-style-position: inside;
 }
 
 .backtraceStackFrameOrigin {
