@@ -165,12 +165,11 @@ export const markerSchema: MarkerSchema[] = [
   },
   {
     name: 'DOMEvent',
-    tooltipLabel: '{eventType} – DOMEvent',
+    tooltipLabel: '{eventType}',
     display: ['marker-chart', 'marker-table', 'timeline-overview'],
     data: [
-      { key: 'category', label: 'Type', format: 'string' },
-      { key: 'eventType', label: 'Event Type', format: 'string' },
-      // eventType is used in the labels.
+      { key: 'category', label: 'Marker', format: 'string' },
+      // eventType is only in the tooltipLabel
     ],
   },
   {
@@ -201,6 +200,11 @@ export const markerSchema: MarkerSchema[] = [
       { key: 'messageType', label: 'Type', format: 'string' },
       { key: 'sync', label: 'Sync', format: 'string' },
     ],
+  },
+  {
+    name: 'RefreshDriverTick',
+    display: ['marker-chart', 'marker-table', 'timeline-overview'],
+    data: [{ key: 'name', label: 'Tick Reasons', format: 'string' }],
   },
 ];
 
