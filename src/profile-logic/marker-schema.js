@@ -12,7 +12,12 @@ import {
   formatMicroseconds,
   formatNanoseconds,
 } from '../utils/format-numbers';
-import type { MarkerFormatType, MarkerSchema } from 'firefox-profiler/types';
+import type {
+  MarkerFormatType,
+  MarkerSchema,
+  MarkerSchemaByName,
+  Marker,
+} from 'firefox-profiler/types';
 
 /**
  * TODO - These will eventually be stored in the profile, but for now
@@ -193,9 +198,43 @@ export const markerSchema: MarkerSchema[] = [
 ];
 
 /**
+ * For the most part, schema is matched up by the Payload's "type" field,
+ * but for practical purposes, there are a few other options, see the
+ * implementation of this function for details.
+ */
+export function getMarkerSchemaName(marker: Marker): string {
+  const { data, name } = marker;
+  // Fall back to using the name if no payload exists.
+
+  if (data) {
+    const { type } = data;
+    if (type === 'tracing' && data.category) {
+      // TODO - Tracing markers have a duplicate "category" field.
+      // See issue #2749
+      return data.category;
+    }
+    if (type === 'Text') {
+      // Text markers are a cheap and easy way to create markers with
+      // a category,
+      return marker.name;
+    }
+    return data.type;
+  }
+
+  return name;
+}
+
+/**
  * This function takes the intended marker schema for a marker field, and applies
  * the appropriate formatting function.
  */
+export function getMarkerSchema(
+  markerSchemaByName: MarkerSchemaByName,
+  marker: Marker
+): MarkerSchema | null {
+  return markerSchemaByName[getMarkerSchemaName(marker)] || null;
+}
+
 export function formatFromMarkerSchema(
   markerType: string,
   format: MarkerFormatType,
@@ -233,7 +272,8 @@ export function formatFromMarkerSchema(
   }
 }
 
-export function getMarkerLabelMaker(label: string) {
+type DynamicPayload = { [key: string]: any };
+export function getMarkerLabelMaker(label: string): DynamicPayload => string {
   // Split the label on the "{key}" capture groups.
   // Each (zero-indexed) even entry will be a string label.
   // Each (zero-indexed) odd entry will be a key to the payload.
@@ -252,7 +292,6 @@ export function getMarkerLabelMaker(label: string) {
     return () => label;
   }
 
-  type DynamicPayload = { [key: string]: mixed };
   return (data: DynamicPayload) => {
     let result: string = '';
     for (let i = 0; i < splits.length; i++) {

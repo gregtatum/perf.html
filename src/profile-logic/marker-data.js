@@ -13,6 +13,7 @@ import {
   INTERVAL_START,
   INTERVAL_END,
 } from 'firefox-profiler/app-logic/constants';
+import { getMarkerSchemaName } from './marker-schema';
 
 import type {
   Thread,
@@ -1377,24 +1378,14 @@ export function filterMarkerByDisplayLocation(
 ): MarkerIndex[] {
   const markerTypes = getMarkerTypesForDisplay(markerSchema, displayLocation);
   return filterMarkerIndexes(getMarker, markerIndexes, marker => {
-    const { data } = marker;
     const additionalResult = preemptiveFilterFunc(marker);
 
     if (additionalResult !== undefined) {
-      // This is a boolean value, us it rather than the schema.
+      // This is a boolean value, use it rather than the schema.
       return additionalResult;
     }
 
-    if (!data) {
-      return false;
-    }
-
-    if (data.type === 'tracing' && data.category) {
-      // TODO - This is a bit gross, but tracing markers are all of type "tracing", but
-      // differentiate on their categories. See issue #2749.
-      return markerTypes.has(data.category);
-    }
-    return markerTypes.has(data.type);
+    return markerTypes.has(getMarkerSchemaName(marker));
   });
 }
 

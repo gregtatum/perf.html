@@ -36,6 +36,7 @@ import { bailoutTypeInformation } from '../../profile-logic/marker-info';
 import {
   formatFromMarkerSchema,
   getMarkerLabelMaker,
+  getMarkerSchema,
 } from '../../profile-logic/marker-schema';
 
 import type {
@@ -174,13 +175,8 @@ class MarkerTooltipContents extends React.PureComponent<Props> {
     const details: TooltipDetailComponent[] = [];
 
     if (data) {
-      // TODO - Tracing markers have a duplicate "category" field.
-      // See issue #2749
-      const type =
-        data.type === 'tracing' && data.category ? data.category : data.type;
-
       // Add the details for the markers based on their Marker schema.
-      const schema = markerSchemaByName[data.type];
+      const schema = getMarkerSchema(markerSchemaByName, marker);
       if (schema) {
         for (const schemaData of schema.data) {
           if (schemaData.value !== undefined) {
@@ -356,11 +352,7 @@ class MarkerTooltipContents extends React.PureComponent<Props> {
     if (data) {
       // Add the details for the markers based on their Marker schema.
 
-      // TODO - Tracing markers have a duplicate "category" field.
-      // See issue #2749
-      const type =
-        data.type === 'tracing' && data.category ? data.category : data.type;
-      const schema = markerSchemaByName[type];
+      const schema = getMarkerSchema(markerSchemaByName, marker);
       if (schema && schema.tooltipLabel) {
         const applyLabel = getMarkerLabelMaker(schema.tooltipLabel);
         return applyLabel(data);
