@@ -452,7 +452,7 @@ describe('showTabOnly', function() {
       {
         type: 'tab',
         mainThreadIndex: 0,
-        threadIndexes: [0],
+        threadIndexes: new Set([0]),
       },
     ]);
     // TODO: Resource track type will be changed soon.
