@@ -137,10 +137,17 @@ export const markerSchema: MarkerSchema[] = [
   },
   {
     name: 'UserTiming',
-    tooltipLabel: 'UserTiming "{name}"',
+    tooltipLabel: '{name}',
     display: ['marker-chart', 'marker-table'],
     data: [
       // name
+      { label: 'Marker', value: 'UserTiming' },
+      { key: 'entryType', label: 'Entry Type', format: 'string' },
+      {
+        label: 'Description',
+        value:
+          'UserTiming is created using the DOM APIs performance.mark() and performance.measure().',
+      },
     ],
   },
   {

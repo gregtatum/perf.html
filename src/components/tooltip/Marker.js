@@ -179,24 +179,33 @@ class MarkerTooltipContents extends React.PureComponent<Props> {
       const schema = getMarkerSchema(markerSchemaByName, marker);
       if (schema) {
         for (const schemaData of schema.data) {
-          if (schemaData.value !== undefined) {
-            // This is a simple label.
+          // Check for a schema that is looking up and formatting a value from
+          // the payload.
+          if (schemaData.value === undefined) {
+            const { key, label, format } = schemaData;
+            if (key in data) {
+              details.push(
+                <TooltipDetail
+                  key={schema.name + '-' + key}
+                  label={label || key}
+                >
+                  {formatFromMarkerSchema(schema.name, format, data[key])}
+                </TooltipDetail>
+              );
+            }
+          }
+
+          // Do a check to see if there is no key. This means this is a simple
+          // label that is applied to every marker of this type, with no data
+          // lookup. For some reason Flow as not able to refine this.
+          if (schemaData.key === undefined) {
             const { label, value } = schemaData;
-            const key = type + '-' + label + '-' + value;
+            const key = label + '-' + value;
             details.push(
               <TooltipDetail key={key} label={label}>
                 {value}
               </TooltipDetail>
             );
-          } else {
-            const { key, label, format } = schemaData;
-            if (key in data) {
-              details.push(
-                <TooltipDetail key={type + '-' + key} label={label || key}>
-                  {formatFromMarkerSchema(type, format, data[key])}
-                </TooltipDetail>
-              );
-            }
           }
         }
       }

@@ -83,13 +83,20 @@ export type MarkerSchema = {|
   // The locations to display
   display: MarkerDisplayLocation[],
 
-  data: Array<{
-    key: string,
-    // If no label is provided, the key is displayed.
-    label?: string,
-    format: MarkerFormatType,
-    searchable?: boolean,
-  }>,
+  data: Array<
+    | {|
+        key: string,
+        // If no label is provided, the key is displayed.
+        label?: string,
+        format: MarkerFormatType,
+        searchable?: boolean,
+      |}
+    | {|
+        // This type is a static bit of text that will be displayed
+        label: string,
+        value: string,
+      |}
+  >,
 |};
 
 export type MarkerSchemaByName = { [name: string]: MarkerSchema };
