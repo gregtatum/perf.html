@@ -13,12 +13,12 @@ import {
 } from '../../utils/format-numbers';
 import explicitConnect from '../../utils/connect';
 import {
-  getThreadSelectors,
   getMarkerSchemaByName,
   getImplementationFilter,
   getPageList,
   getZeroAt,
   getThreadIdToNameMap,
+  getThreadSelectorsFromThreadsKey,
 } from 'firefox-profiler/selectors';
 
 import {
@@ -40,7 +40,7 @@ import type {
   Marker,
   ImplementationFilter,
   Thread,
-  ThreadIndex,
+  ThreadsKey,
   PageList,
   MarkerSchemaByName,
 } from 'firefox-profiler/types';
@@ -64,7 +64,7 @@ function _maybeFormatDuration(
 
 type OwnProps = {|
   +marker: Marker,
-  +threadIndex: ThreadIndex,
+  +threadsKey: ThreadsKey,
   +className?: string,
 |};
 
@@ -350,7 +350,7 @@ class MarkerTooltipContents extends React.PureComponent<Props> {
 
 export const TooltipMarker = explicitConnect<OwnProps, StateProps, {||}>({
   mapStateToProps: (state, props) => {
-    const selectors = getThreadSelectors(props.threadIndex);
+    const selectors = getThreadSelectorsFromThreadsKey(props.threadsKey);
     return {
       threadName: selectors.getFriendlyThreadName(state),
       thread: selectors.getThread(state),
