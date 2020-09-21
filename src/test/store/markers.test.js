@@ -11,6 +11,7 @@ import {
   type TestDefinedMarkers,
 } from '../fixtures/profiles/processed-profile';
 import { changeTimelineTrackOrganization } from '../../actions/receive-profile';
+import type { State, MarkerIndex } from 'firefox-profiler/types';
 
 describe('selectors/getMarkerChartTimingAndBuckets', function() {
   function getMarkerChartTimingAndBuckets(testMarkers: TestDefinedMarkers) {
@@ -418,5 +419,28 @@ describe('selectors/getCommittedRangeAndTabFilteredMarkerIndexes', function() {
       ['Dummy 2', 20, null],
     ]);
     expect(markers).toEqual(['Jank']);
+  });
+});
+
+describe.only('Marker schema filtering', function() {
+  function setup(selector, markers, schema) {
+    const profile = getProfileWithMarkers(markers);
+    const { getState } = storeWithProfile(profile);
+    profile.meta.markerSchema = schema;
+    const getMarker = selectedThreadSelectors.getMarkerGetter(getState());
+    return selector(getState()).map(getMarker);
+  }
+
+  it('with getMarkerTableMarkerIndexes', function() {
+    const selector = selectedThreadSelectors.getMarkerTableMarkerIndexes;
+    const markers = [];
+    const schema = [];
+    expect(setup({ selector, markers, schema })).toEqual([]);
+  });
+
+  it('with getMarkerChartMarkerIndexes', function() {
+    expect(
+      setup(selectedThreadSelectors.getMarkerChartMarkerIndexes, [])
+    ).toEqual([]);
   });
 });
