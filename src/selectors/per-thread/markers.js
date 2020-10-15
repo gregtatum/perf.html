@@ -500,6 +500,20 @@ export function getMarkerSelectorsPerThread(
   );
 
   /**
+   * TODO
+   */
+  const getTimelineTestingMarkerIndexes: Selector<
+    MarkerIndex[]
+  > = createSelector(
+    getMarkerGetter,
+    getCommittedRangeAndTabFilteredMarkerIndexes,
+    ProfileSelectors.getMarkerSchema,
+    ProfileSelectors.getMarkerSchemaByName,
+    () => 'timeline-testing',
+    MarkerData.filterMarkerByDisplayLocation
+  );
+
+  /**
    * This returns only memory markers.
    */
   const getTimelineMemoryMarkerIndexes: Selector<
@@ -621,6 +635,7 @@ export function getMarkerSelectorsPerThread(
     getActiveTabFilteredMarkerIndexesWithoutGlobals,
     getTimelineVerticalMarkerIndexes,
     getTimelineFileIoMarkerIndexes,
+    getTimelineTestingMarkerIndexes,
     getTimelineMemoryMarkerIndexes,
     getTimelineIPCMarkerIndexes,
     getNetworkTrackTiming,

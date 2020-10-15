@@ -608,6 +608,32 @@ export const TimelineMarkersFileIo = explicitConnect<
 });
 
 /**
+ * TODO
+ */
+export const TimelineMarkersTesting = explicitConnect<
+  OwnProps,
+  StateProps,
+  DispatchProps
+>({
+  mapStateToProps: (state, props) => {
+    const { threadsKey } = props;
+    const selectors = getThreadSelectorsFromThreadsKey(threadsKey);
+    const selectedThreads = getSelectedThreadIndexes(state);
+
+    return {
+      getMarker: selectors.getMarkerGetter(state),
+      markerIndexes: selectors.getTimelineTestingMarkerIndexes(state),
+      isSelected: _getTimelineMarkersIsSelected(selectedThreads, threadsKey),
+      isModifyingSelection: getPreviewSelection(state).isModifying,
+      testId: 'TimelineMarkersTesting',
+      rightClickedMarker: selectors.getRightClickedMarker(state),
+    };
+  },
+  mapDispatchToProps: { changeRightClickedMarker },
+  component: TimelineMarkers,
+});
+
+/**
  * Create a component for memory-related markers.
  */
 export const TimelineMarkersMemory = explicitConnect<

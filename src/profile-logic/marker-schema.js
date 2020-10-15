@@ -229,6 +229,13 @@ export const markerSchemaFrontEndOnly: MarkerSchema[] = [
       },
     ],
   },
+  {
+    name: 'Mochitest',
+    display: ['marker-table', 'marker-chart', 'timeline-testing'],
+    tooltipLabel: '{marker.data.name} – {marker.name}',
+    chartLabel: '{marker.data.name}',
+    data: [],
+  },
 ];
 
 /**

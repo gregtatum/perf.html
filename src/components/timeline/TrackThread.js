@@ -24,6 +24,7 @@ import {
 import {
   TimelineMarkersJank,
   TimelineMarkersFileIo,
+  TimelineMarkersTesting,
   TimelineMarkersOverview,
   TimelineMarkersMemory,
 } from './Markers';
@@ -80,6 +81,7 @@ type StateProps = {|
   +categories: CategoryList,
   +timelineType: TimelineType,
   +hasFileIoMarkers: boolean,
+  +hasTestingMarkers: boolean,
   +samplesSelectedStates: null | SelectedState[],
   +invertCallstack: boolean,
   +treeOrderSampleComparator: (
@@ -188,6 +190,7 @@ class TimelineTrackThread extends PureComponent<Props> {
       categories,
       timelineType,
       hasFileIoMarkers,
+      hasTestingMarkers,
       showMemoryMarkers,
       samplesSelectedStates,
       treeOrderSampleComparator,
@@ -207,6 +210,7 @@ class TimelineTrackThread extends PureComponent<Props> {
         filteredThread.name.startsWith('MediaDecoderStateMachine')) &&
       processType !== 'plugin';
 
+    console.log(`!!! hasTestingMarkers`, hasTestingMarkers);
     return (
       <div className={classNames('timelineTrackThread', trackType)}>
         {timelineTrackOrganization.type !== 'active-tab' ? (
@@ -221,6 +225,14 @@ class TimelineTrackThread extends PureComponent<Props> {
             ) : null}
             {hasFileIoMarkers ? (
               <TimelineMarkersFileIo
+                rangeStart={rangeStart}
+                rangeEnd={rangeEnd}
+                threadsKey={threadsKey}
+                onSelect={this._onMarkerSelect}
+              />
+            ) : null}
+            {hasTestingMarkers ? (
+              <TimelineMarkersTesting
                 rangeStart={rangeStart}
                 rangeEnd={rangeEnd}
                 threadsKey={threadsKey}
@@ -356,6 +368,8 @@ export default explicitConnect<OwnProps, StateProps, DispatchProps>({
       timelineType: getTimelineType(state),
       hasFileIoMarkers:
         selectors.getTimelineFileIoMarkerIndexes(state).length !== 0,
+      hasTestingMarkers:
+        selectors.getTimelineTestingMarkerIndexes(state).length !== 0,
       samplesSelectedStates: selectors.getSamplesSelectedStatesInFilteredThread(
         state
       ),
