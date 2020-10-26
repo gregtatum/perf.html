@@ -11,6 +11,7 @@ import {
   getPreviewSelection,
   getCommittedRange,
   getZeroAt,
+  getMouseTimePosition,
 } from 'firefox-profiler/selectors/profile';
 import {
   updatePreviewSelection,
@@ -44,6 +45,7 @@ type StateProps = {|
   +previewSelection: PreviewSelection,
   +committedRange: StartEndRange,
   +zeroAt: Milliseconds,
+  +mouseTimePosition: Milliseconds,
 |};
 
 type DispatchProps = {|
@@ -351,9 +353,19 @@ class TimelineRulerAndSelection extends React.PureComponent<Props, State> {
   }
 
   render() {
-    const { children, previewSelection, className } = this.props;
+    const {
+      children,
+      previewSelection,
+      className,
+      mouseTimePosition,
+      width,
+      committedRange,
+    } = this.props;
     const { hoverLocation } = this.state;
-
+    //This is for testing new hoverlocation using mouseTimePosition.
+    const newHoverLocation =
+      (width * (mouseTimePosition - committedRange.start)) /
+      (committedRange.end - committedRange.start);
     return (
       <div
         className={classNames('timelineSelection', className)}
@@ -369,10 +381,18 @@ class TimelineRulerAndSelection extends React.PureComponent<Props, State> {
           className="timelineSelectionHoverLine"
           style={{
             visibility:
-              previewSelection.isModifying || hoverLocation === null
+              previewSelection.isModifying || newHoverLocation === null
                 ? 'hidden'
                 : undefined,
-            left: hoverLocation === null ? '0' : `${hoverLocation}px`,
+            //These comments are by greg:
+            // Update this logic to use the mouseTimePosition.
+            // I think it would be best to store the current time in the redux store
+            // and then translate that into CssPixels here.
+
+            // Off the top of my head, I think this may be the math needed:
+
+            // width * (mouseTimePosition - committedRange.start) / (committedRange.end - committedRange.start)
+            left: newHoverLocation === null ? '0' : `${newHoverLocation}px`,
           }}
         />
       </div>
@@ -385,6 +405,7 @@ export default explicitConnect<OwnProps, StateProps, DispatchProps>({
     previewSelection: getPreviewSelection(state),
     committedRange: getCommittedRange(state),
     zeroAt: getZeroAt(state),
+    mouseTimePosition: getMouseTimePosition(state),
   }),
   mapDispatchToProps: {
     updatePreviewSelection,
