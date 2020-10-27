@@ -16,6 +16,7 @@ import {
 import {
   updatePreviewSelection,
   commitRange,
+  changeMouseTimePosition,
 } from 'firefox-profiler/actions/profile-view';
 import explicitConnect from 'firefox-profiler/utils/connect';
 import classNames from 'classnames';
@@ -51,6 +52,7 @@ type StateProps = {|
 type DispatchProps = {|
   +commitRange: typeof commitRange,
   +updatePreviewSelection: typeof updatePreviewSelection,
+  +changeMouseTimePosition: typeof changeMouseTimePosition,
 |};
 
 type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
@@ -215,6 +217,7 @@ class TimelineRulerAndSelection extends React.PureComponent<Props, State> {
     if (!this._container) {
       return;
     }
+    const { width, committedRange, changeMouseTimePosition } = this.props;
 
     const rect = getContentRect(this._container);
     if (
@@ -223,9 +226,17 @@ class TimelineRulerAndSelection extends React.PureComponent<Props, State> {
       event.pageY < rect.top ||
       event.pageY >= rect.bottom
     ) {
-      this.setState({ hoverLocation: null });
+      changeMouseTimePosition(null);
+      //this.setState({ hoverLocation: null });
     } else {
-      this.setState({ hoverLocation: event.pageX - rect.left });
+      const hoverPostionInPixels = event.pageX - rect.left;
+      const pixelsToMouseTimePosition = Math.round(
+        ((committedRange.end - committedRange.start) * hoverPostionInPixels) /
+          width +
+          committedRange.start
+      );
+      changeMouseTimePosition(pixelsToMouseTimePosition);
+      //this.setState({ hoverLocation: hoverPostionInPixels });
     }
   };
 
@@ -384,14 +395,6 @@ class TimelineRulerAndSelection extends React.PureComponent<Props, State> {
               previewSelection.isModifying || newHoverLocation === null
                 ? 'hidden'
                 : undefined,
-            //These comments are by greg:
-            // Update this logic to use the mouseTimePosition.
-            // I think it would be best to store the current time in the redux store
-            // and then translate that into CssPixels here.
-
-            // Off the top of my head, I think this may be the math needed:
-
-            // width * (mouseTimePosition - committedRange.start) / (committedRange.end - committedRange.start)
             left: newHoverLocation === null ? '0' : `${newHoverLocation}px`,
           }}
         />
@@ -410,6 +413,7 @@ export default explicitConnect<OwnProps, StateProps, DispatchProps>({
   mapDispatchToProps: {
     updatePreviewSelection,
     commitRange,
+    changeMouseTimePosition,
   },
   component: TimelineRulerAndSelection,
 });
