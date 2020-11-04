@@ -46,7 +46,7 @@ type StateProps = {|
   +previewSelection: PreviewSelection,
   +committedRange: StartEndRange,
   +zeroAt: Milliseconds,
-  +mouseTimePosition: Milliseconds,
+  +mouseTimePosition: Milliseconds | null,
 |};
 
 type DispatchProps = {|
@@ -373,10 +373,15 @@ class TimelineRulerAndSelection extends React.PureComponent<Props, State> {
       committedRange,
     } = this.props;
     const { hoverLocation } = this.state;
+    let newHoverLocation;
     //This is for testing new hoverlocation using mouseTimePosition.
-    const newHoverLocation =
-      (width * (mouseTimePosition - committedRange.start)) /
-      (committedRange.end - committedRange.start);
+    if (mouseTimePosition === null) {
+      newHoverLocation = 0;
+    } else {
+      newHoverLocation =
+        (width * (mouseTimePosition - committedRange.start)) /
+        (committedRange.end - committedRange.start);
+    }
     return (
       <div
         className={classNames('timelineSelection', className)}
