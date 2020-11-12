@@ -4,17 +4,8 @@ import * as React from 'react';
 
 declare module 'react-query' {
   // overloaded useQuery function
-  declare function useQuery<
-    TResult,
-    TKey: AnyQueryKey,
-    TVariables: Array
-  >(query: {
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+  declare function useQuery<TResult, TKey: AnyQueryKey, TVariables>(query: {
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     variables?: TVariables,
     queryFn: QueryFunctionWithVariables<TResult, TKey, TVariables>,
     config?: QueryOptions<TResult>,
@@ -29,20 +20,15 @@ declare module 'react-query' {
       | TSingleKey
       | false
       | null
-      | undefined
-      | (() => TSingleKey | false | null | undefined),
+      | void
+      | (() => TSingleKey | false | null | void),
     variables?: TVariables,
     queryFn: QueryFunctionWithVariables<TResult, [TSingleKey], TVariables>,
     config?: QueryOptions<TResult>,
   }): QueryResult<TResult>;
 
   declare function useQuery<TResult, TKey: AnyQueryKey>(
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     queryFn: QueryFunction<TResult, TKey>,
     config?: QueryOptions<TResult>
   ): QueryResult<TResult>;
@@ -52,8 +38,8 @@ declare module 'react-query' {
       | TSingleKey
       | false
       | null
-      | undefined
-      | (() => TSingleKey | false | null | undefined),
+      | void
+      | (() => TSingleKey | false | null | void),
     queryFn: QueryFunction<TResult, [TSingleKey]>,
     config?: QueryOptions<TResult>
   ): QueryResult<TResult>;
@@ -63,24 +49,14 @@ declare module 'react-query' {
     TKey: AnyQueryKey,
     TVariables: AnyVariables
   >(
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     variables: TVariables,
     queryFn: QueryFunctionWithVariables<TResult, TKey, TVariables>,
     config?: QueryOptions<TResult>
   ): QueryResult<TResult>;
 
   declare function useQuery<TResult, TKey: string, TVariables: AnyVariables>(
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     variables: TVariables,
     queryFn: QueryFunctionWithVariables<TResult, [TKey], TVariables>,
     config?: QueryOptions<TResult>
@@ -92,12 +68,7 @@ declare module 'react-query' {
     TKey: AnyQueryKey,
     TVariables: AnyVariables
   >(query: {
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     variables?: TVariables,
     queryFn: QueryFunctionWithVariables<TResult, TKey, TVariables>,
     config?: QueryOptions<TResult>,
@@ -112,31 +83,21 @@ declare module 'react-query' {
       | TSingleKey
       | false
       | null
-      | undefined
-      | (() => TSingleKey | false | null | undefined),
+      | void
+      | (() => TSingleKey | false | null | void),
     variables?: TVariables,
     queryFn: QueryFunctionWithVariables<TResult, [TSingleKey], TVariables>,
     config?: QueryOptions<TResult>,
   }): PaginatedQueryResult<TResult>;
 
   declare function usePaginatedQuery<TResult, TKey: AnyQueryKey>(
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     queryFn: QueryFunction<TResult, TKey>,
     config?: QueryOptions<TResult>
   ): PaginatedQueryResult<TResult>;
 
   declare function usePaginatedQuery<TResult, TKey: string>(
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     queryFn: QueryFunction<TResult, [TKey]>,
     config?: QueryOptions<TResult>
   ): PaginatedQueryResult<TResult>;
@@ -146,12 +107,7 @@ declare module 'react-query' {
     TKey: AnyQueryKey,
     TVariables: AnyVariables
   >(
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     variables: TVariables,
     queryFn: QueryFunctionWithVariables<TResult, TKey, TVariables>,
     config?: QueryOptions<TResult>
@@ -162,12 +118,7 @@ declare module 'react-query' {
     TKey: string,
     TVariables: AnyVariables
   >(
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     variables: TVariables,
     queryFn: QueryFunctionWithVariables<TResult, [TKey], TVariables>,
     config?: QueryOptions<TResult>
@@ -180,12 +131,7 @@ declare module 'react-query' {
     TMoreVariable,
     TVariables: AnyVariables
   >(query: {
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     variables?: TVariables,
     queryFn: InfiniteQueryFunctionWithVariables<
       TResult,
@@ -206,8 +152,8 @@ declare module 'react-query' {
       | TSingleKey
       | false
       | null
-      | undefined
-      | (() => TSingleKey | false | null | undefined),
+      | void
+      | (() => TSingleKey | false | null | void),
     variables?: TVariables,
     queryFn: InfiniteQueryFunctionWithVariables<
       TResult,
@@ -219,23 +165,13 @@ declare module 'react-query' {
   }): InfiniteQueryResult<TResult, TMoreVariable>;
 
   declare function useInfiniteQuery<TResult, TKey: AnyQueryKey, TMoreVariable>(
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     queryFn: InfiniteQueryFunction<TResult, TKey, TMoreVariable>,
     config?: InfiniteQueryOptions<TResult, TMoreVariable>
   ): InfiniteQueryResult<TResult, TMoreVariable>;
 
   declare function useInfiniteQuery<TResult, TKey: string, TMoreVariable>(
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     queryFn: InfiniteQueryFunction<TResult, [TKey], TMoreVariable>,
     config?: InfiniteQueryOptions<TResult, TMoreVariable>
   ): InfiniteQueryResult<TResult, TMoreVariable>;
@@ -246,12 +182,7 @@ declare module 'react-query' {
     TVariables: AnyVariables,
     TMoreVariable
   >(
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     variables: TVariables,
     queryFn: InfiniteQueryFunctionWithVariables<
       TResult,
@@ -268,12 +199,7 @@ declare module 'react-query' {
     TVariables: AnyVariables,
     TMoreVariable
   >(
-    queryKey:
-      | TKey
-      | false
-      | null
-      | undefined
-      | (() => TKey | false | null | undefined),
+    queryKey: TKey | false | null | void | (() => TKey | false | null | void),
     variables: TVariables,
     queryFn: InfiniteQueryFunctionWithVariables<
       TResult,
@@ -292,7 +218,7 @@ declare module 'react-query' {
     | null
     | QueryKeyPart[]
     | null
-    | undefined;
+    | void;
 
   declare type AnyVariables = Array<unknown>;
   declare type AnyQueryKey = Array<unknown>;
@@ -354,8 +280,8 @@ declare module 'react-query' {
 
   declare class QueryOptions<TResult> extends BaseQueryOptions {
     onSuccess?: (data: TResult) => void;
-    onSettled?: (data: TResult | undefined, error: unknown | null) => void;
-    initialData?: TResult | (() => TResult | undefined);
+    onSettled?: (data: TResult | void, error: unknown | null) => void;
+    initialData?: TResult | (() => TResult | void);
   }
 
   declare class InfiniteQueryOptions<
@@ -381,13 +307,13 @@ declare module 'react-query' {
 
   declare class QueryLoadingResult<TResult> extends QueryResultBase<TResult> {
     status: 'loading';
-    data: TResult | undefined; // even when error, data can have stale data
+    data: TResult | void; // even when error, data can have stale data
     error: unknown | null; // it still can be error
   }
 
   declare class QueryErrorResult<TResult> extends QueryResultBase<TResult> {
     status: 'error';
-    data: TResult | undefined; // even when error, data can have stale data
+    data: TResult | void; // even when error, data can have stale data
     error: unknown;
   }
 
@@ -406,8 +332,8 @@ declare module 'react-query' {
     TResult
   > extends QueryResultBase<TResult> {
     status: 'loading';
-    resolvedData: undefined | TResult; // even when error, data can have stale data
-    latestData: undefined | TResult; // even when error, data can have stale data
+    resolvedData: void | TResult; // even when error, data can have stale data
+    latestData: void | TResult; // even when error, data can have stale data
     error: unknown | null; // it still can be error
   }
 
@@ -415,8 +341,8 @@ declare module 'react-query' {
     TResult
   > extends QueryResultBase<TResult> {
     status: 'error';
-    resolvedData: undefined | TResult; // even when error, data can have stale data
-    latestData: undefined | TResult; // even when error, data can have stale data
+    resolvedData: void | TResult; // even when error, data can have stale data
+    latestData: void | TResult; // even when error, data can have stale data
     error: unknown;
   }
 
@@ -440,10 +366,10 @@ declare module 'react-query' {
   > extends QueryResultBase<TResult[]> {
     data: TResult[];
     isFetchingMore: boolean;
-    canFetchMore: boolean | undefined;
+    canFetchMore: boolean | void;
     fetchMore: (
       moreVariable?: TMoreVariable | false
-    ) => Promise<TResult[]> | undefined;
+    ) => Promise<TResult[]> | void;
   }
 
   declare function useMutation<TResults, TVariables>(
@@ -463,7 +389,7 @@ declare module 'react-query' {
       snapshotValue: unknown
     ) => Promise<void> | void;
     onSettled?: (
-      data: undefined | TResult,
+      data: void | TResult,
       error: unknown | null,
       variables: TVariables,
       snapshotValue?: unknown
@@ -480,13 +406,13 @@ declare module 'react-query' {
   }
 
   declare type MutateFunction<TResult, TVariables> = unknown;
-  // undefined: TVariables
+  // void: TVariables
   //   ? (variables?: TVariables, options?: MutateOptions<TResult, TVariables>) => Promise<TResult>
   //   : (variables: TVariables, options?: MutateOptions<TResult, TVariables>) => Promise<TResult>;
 
   declare class MutationResultBase<TResult> {
     status: 'idle' | 'loading' | 'error' | 'success';
-    data: undefined | TResult;
+    data: void | TResult;
     error: null | unknown;
     promise: Promise<TResult>;
     reset: () => void;
@@ -496,7 +422,7 @@ declare module 'react-query' {
     TResult
   > extends MutationResultBase<TResult> {
     status: 'idle';
-    data: undefined;
+    data: void;
     error: null;
   }
 
@@ -504,15 +430,15 @@ declare module 'react-query' {
     TResult
   > extends MutationResultBase<TResult> {
     status: 'loading';
-    data: undefined;
-    error: undefined;
+    data: void;
+    error: void;
   }
 
   declare class ErrorMutationResult<
     TResult
   > extends MutationResultBase<TResult> {
     status: 'error';
-    data: undefined;
+    data: void;
     error: unknown;
   }
 
@@ -521,7 +447,7 @@ declare module 'react-query' {
   > extends MutationResultBase<TResult> {
     status: 'success';
     data: TResult;
-    error: undefined;
+    error: void;
   }
 
   declare type MutationResult<TResult> =
@@ -537,73 +463,48 @@ declare module 'react-query' {
     config: QueryOptions<unknown>;
     state: unknown;
     setData(
-      dataOrUpdater: unknown | ((oldData: unknown | undefined) => unknown)
+      dataOrUpdater: unknown | ((oldData: unknown | void) => unknown)
     ): void;
   }
 
   declare class QueryCache {
     prefetchQuery<TResult, TKey: AnyQueryKey>(
-      queryKey:
-        | TKey
-        | false
-        | null
-        | undefined
-        | (() => TKey | false | null | undefined),
+      queryKey: TKey | false | null | void | (() => TKey | false | null | void),
       queryFn: QueryFunction<TResult, TKey>,
       config?: QueryOptions<TResult>
     ): Promise<TResult>;
 
     prefetchQuery<TResult, TKey: string>(
-      queryKey:
-        | TKey
-        | false
-        | null
-        | undefined
-        | (() => TKey | false | null | undefined),
+      queryKey: TKey | false | null | void | (() => TKey | false | null | void),
       queryFn: QueryFunction<TResult, [TKey]>,
       config?: QueryOptions<TResult>
     ): Promise<TResult>;
 
     prefetchQuery<TResult, TKey: AnyQueryKey, TVariables: AnyVariables>(
-      queryKey:
-        | TKey
-        | false
-        | null
-        | undefined
-        | (() => TKey | false | null | undefined),
+      queryKey: TKey | false | null | void | (() => TKey | false | null | void),
       variables: TVariables,
       queryFn: QueryFunctionWithVariables<TResult, TKey, TVariables>,
       config?: QueryOptions<TResult>
     ): Promise<TResult>;
 
     prefetchQuery<TResult, TKey: string, TVariables: AnyVariables>(
-      queryKey:
-        | TKey
-        | false
-        | null
-        | undefined
-        | (() => TKey | false | null | undefined),
+      queryKey: TKey | false | null | void | (() => TKey | false | null | void),
       variables: TVariables,
       queryFn: QueryFunctionWithVariables<TResult, [TKey], TVariables>,
       config?: QueryOptions<TResult>
     ): Promise<TResult>;
 
     prefetchQuery<TResult, TKey: AnyQueryKey, TVariables: AnyVariables>(query: {
-      queryKey:
-        | TKey
-        | false
-        | null
-        | undefined
-        | (() => TKey | false | null | undefined),
+      queryKey: TKey | false | null | void | (() => TKey | false | null | void),
       variables?: TVariables,
       queryFn: QueryFunctionWithVariables<TResult, TKey, TVariables>,
       config?: QueryOptions<TResult>,
     }): Promise<TResult>;
 
-    getQueryData(key: AnyQueryKey | string): unknown | undefined;
+    getQueryData(key: AnyQueryKey | string): unknown | void;
     setQueryData(
       key: AnyQueryKey | string,
-      dataOrUpdater: unknown | ((oldData: unknown | undefined) => unknown)
+      dataOrUpdater: unknown | ((oldData: unknown | void) => unknown)
     ): void;
     refetchQueries(
       queryKeyOrPredicateFn:
@@ -619,7 +520,7 @@ declare module 'react-query' {
         | ((query: CachedQuery) => boolean),
       options?: { exact?: boolean }
     ): Promise<void>;
-    getQuery(queryKey: AnyQueryKey): CachedQuery | undefined;
+    getQuery(queryKey: AnyQueryKey): CachedQuery | void;
     getQueries(queryKey: AnyQueryKey): CachedQuery[];
     isFetching: number;
     subscribe(callback: (queryCache: QueryCache) => void): () => void;
@@ -649,15 +550,15 @@ declare module 'react-query' {
         | QueryKeyPart[]
         | string
         | false
-        | undefined
-        | (() => QueryKeyPart[] | string | false | undefined)
+        | void
+        | (() => QueryKeyPart[] | string | false | void)
     ) => [string, QueryKeyPart[]] | [];
 
     onMutate?: (variables: unknown) => Promise<unknown> | unknown;
     onSuccess?: (data: unknown, variables?: unknown) => void;
     onError?: (err: unknown, snapshotValue?: unknown) => void;
     onSettled?: (
-      data: unknown | undefined,
+      data: unknown | void,
       error: unknown | null,
       snapshotValue?: unknown
     ) => void;
@@ -671,4 +572,13 @@ declare module 'react-query' {
   }
 
   declare function setConsole(consoleObject: ConsoleObject): void;
+
+  declare function useContextConfig(): ReactQueryConfig<
+    unknown,
+    unknown
+  > | void;
+  declare type ReactQueryConfigProviderProps = {
+    config: ReactQueryConfig,
+  };
+  declare var ReactQueryConfigProvider: React.FC<ReactQueryConfigProviderProps>;
 }
