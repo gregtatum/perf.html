@@ -143,6 +143,7 @@ class ServiceWorkerManagerImpl extends PureComponent<Props, State> {
     switch (dataSource) {
       case 'none':
       case 'uploaded-recordings':
+      case 'perf-test':
         return false;
       case 'from-file':
       case 'from-addon':
@@ -189,6 +190,7 @@ class ServiceWorkerManagerImpl extends PureComponent<Props, State> {
     switch (dataSource) {
       case 'none':
       case 'uploaded-recordings':
+      case 'perf-test':
         // These datasources have no profile loaded, we can update it right away.
         return true;
       case 'from-file':

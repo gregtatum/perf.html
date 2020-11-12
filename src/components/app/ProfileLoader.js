@@ -74,6 +74,7 @@ class ProfileLoaderImpl extends PureComponent<Props> {
         break;
       case 'uploaded-recordings':
       case 'none':
+      case 'perf-test':
         // nothing to do
         break;
       default:

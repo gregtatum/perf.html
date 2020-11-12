@@ -1441,6 +1441,7 @@ export function getProfilesFromRawUrl(
       case 'none':
       case 'from-file':
       case 'local':
+      case 'perf-test':
         // There is no profile to download for these datasources.
         break;
       default:

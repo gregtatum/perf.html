@@ -17,6 +17,7 @@ import {
   assertExhaustiveCheck,
   toValidTabSlug,
   ensureExists,
+  coerce,
 } from 'firefox-profiler/utils/flow';
 import { toValidCallTreeSummaryStrategy } from 'firefox-profiler/profile-logic/profile-data';
 import { oneLine } from 'common-tags';
@@ -108,6 +109,8 @@ function getPathParts(urlState: UrlState): string[] {
       return [];
     case 'compare':
       return ['compare'];
+    case 'perf-test':
+      return ['perf-test'];
     case 'uploaded-recordings':
       return ['uploaded-recordings'];
     case 'from-addon':
@@ -257,6 +260,7 @@ export function getQueryStringFromUrlState(urlState: UrlState): string {
     case 'from-addon':
     case 'from-file':
     case 'from-url':
+    case 'perf-test':
       break;
     default:
       throw assertExhaustiveCheck(dataSource);
@@ -462,9 +466,11 @@ export function urlFromState(urlState: UrlState): string {
 }
 
 export function getDataSourceFromPathParts(pathParts: string[]): DataSource {
-  const str = pathParts[0] || 'none';
+  const stringAsDataSource: DataSource = coerce<string, DataSource>(
+    pathParts[0] || 'none'
+  );
   // With this switch, flow is able to understand that we return a valid value
-  switch (str) {
+  switch (stringAsDataSource) {
     case 'none':
     case 'from-addon':
     case 'from-file':
@@ -473,9 +479,10 @@ export function getDataSourceFromPathParts(pathParts: string[]): DataSource {
     case 'from-url':
     case 'compare':
     case 'uploaded-recordings':
-      return str;
+    case 'perf-test':
+      return stringAsDataSource;
     default:
-      throw new Error(`Unexpected data source ${str}`);
+      throw new Error(`Unexpected data source ${(stringAsDataSource: empty)}`);
   }
 }
 

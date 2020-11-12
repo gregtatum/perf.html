@@ -25,6 +25,7 @@ import { assertExhaustiveCheck } from 'firefox-profiler/utils/flow';
 import type { AppViewState, State, DataSource } from 'firefox-profiler/types';
 
 import type { ConnectedProps } from 'firefox-profiler/utils/connect';
+import { PerfTest } from '../perftest';
 
 const ERROR_MESSAGES: { [string]: string } = Object.freeze({
   'from-addon': "Couldn't retrieve the profile from the Firefox.",
@@ -62,6 +63,8 @@ class AppViewRouterImpl extends PureComponent<AppViewRouterProps> {
         break;
       case 'uploaded-recordings':
         return <UploadedRecordingsHome />;
+      case 'perf-test':
+        return <PerfTest />;
       case 'from-addon':
       case 'from-file':
       case 'local':
