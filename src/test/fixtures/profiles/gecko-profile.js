@@ -20,6 +20,7 @@ import type {
   IndexIntoCategoryList,
   MarkerPayload_Gecko,
   IPCMarkerPayload_Gecko,
+  GeckoMarkerTuple,
 } from 'firefox-profiler/types';
 
 import {
@@ -82,7 +83,7 @@ export function createGeckoMarkerStack({
 
 export function createGeckoSubprocessProfile(
   parentProfile: GeckoProfile,
-  extraMarkers: * = []
+  extraMarkers: GeckoMarkerTuple[] = []
 ): GeckoSubprocessProfile {
   const contentProcessMeta: GeckoProfileShortMeta = {
     version: parentProfile.meta.version,
@@ -372,7 +373,7 @@ function _createIPCMarker({
   side,
   direction,
   phase,
-}) {
+}): GeckoMarkerTuple {
   return [
     18, // IPC: see string table in _createGeckoThread
     time,
@@ -403,7 +404,7 @@ function _createIPCMarkerSet({
   recvEndTime,
   endTime,
   messageSeqno,
-}) {
+}): GeckoMarkerTuple[] {
   return [
     _createIPCMarker({
       time: startTime,

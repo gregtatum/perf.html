@@ -1418,7 +1418,7 @@ describe('actions/receive-profile', function() {
         urlSearch1: 'thread=0',
         urlSearch2: 'thread=0',
       }
-    ): * {
+    ) {
       const fakeUrl1 = `https://fakeurl.com/public/fakehash1/?${urlSearch1}&v=3`;
       const fakeUrl2 = `https://fakeurl.com/public/fakehash2/?${urlSearch2}&v=3`;
 
@@ -1428,7 +1428,7 @@ describe('actions/receive-profile', function() {
     async function setupWithShortUrl(
       profiles: SetupProfileParams,
       { urlSearch1, urlSearch2 }: SetupUrlSearchParams
-    ): * {
+    ) {
       const longUrl1 = `https://fakeurl.com/public/fakehash1/?${urlSearch1}&v=3`;
       const longUrl2 = `https://fakeurl.com/public/fakehash2/?${urlSearch2}&v=3`;
       const shortUrl1 = 'https://perfht.ml/FAKEBITLYHASH1';
@@ -1470,7 +1470,7 @@ describe('actions/receive-profile', function() {
       { profile1, profile2 }: SetupProfileParams,
       { url1, url2 }: SetupUrlParams,
       { skipMarkers }: SetupOptionsParams = {}
-    ): * {
+    ) {
       if (skipMarkers !== true) {
         profile1.threads.forEach(thread =>
           addMarkersToThreadWithCorrespondingSamples(thread, [
