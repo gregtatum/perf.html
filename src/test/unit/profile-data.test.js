@@ -7,7 +7,10 @@ import {
   symbolicateProfile,
   applySymbolicationStep,
 } from '../../profile-logic/symbolication';
-import { processGeckoProfile } from '../../profile-logic/process-profile';
+import {
+  processGeckoProfile,
+  processGeckoOrDevToolsProfile,
+} from '../../profile-logic/process-profile';
 import {
   getCallNodeInfo,
   filterThreadByImplementation,
@@ -321,7 +324,7 @@ describe('process-profile', function() {
   describe('DevTools profiles', function() {
     it('should process correctly', function() {
       // Mock out a DevTools profile.
-      const profile = processGeckoProfile({
+      const profile = processGeckoOrDevToolsProfile({
         label: null,
         duration: null,
         markers: null,
