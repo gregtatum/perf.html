@@ -115,6 +115,8 @@ type ExplicitConnectOptions<
   >,
 |};
 
+// Note: This type is duplicated in src/types/stores while we are migrating away
+// from using explicitConnect.
 export type ConnectedProps<
   OwnProps: Object,
   StateProps: Object,

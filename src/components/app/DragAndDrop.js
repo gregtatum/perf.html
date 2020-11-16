@@ -1,27 +1,14 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
 // @flow
 
 import * as React from 'react';
 import classNames from 'classnames';
-import { retrieveProfileFromFile } from 'firefox-profiler/actions/receive-profile';
-import type { ConnectedProps } from 'firefox-profiler/utils/connect';
-import explicitConnect from 'firefox-profiler/utils/connect';
-
-import {
-  startDragging,
-  stopDragging,
-  registerDragAndDropOverlay,
-  unregisterDragAndDropOverlay,
-} from 'firefox-profiler/actions/app';
-import {
-  getIsDragAndDropDragging,
-  getIsDragAndDropOverlayRegistered,
-  getIsNewProfileLoadAllowed,
-} from 'firefox-profiler/selectors/app';
-
+import { connect } from 'react-redux';
+import * as A from 'firefox-profiler/actions';
+import * as S from 'firefox-profiler/selectors';
+import * as T from 'firefox-profiler/types';
 import './DragAndDrop.css';
 
 function _dragPreventDefault(event: DragEvent) {
@@ -39,12 +26,23 @@ type StateProps = {|
 |};
 
 type DispatchProps = {|
-  +retrieveProfileFromFile: typeof retrieveProfileFromFile,
-  +startDragging: typeof startDragging,
-  +stopDragging: typeof stopDragging,
+  +retrieveProfileFromFile: typeof A.retrieveProfileFromFile,
+  +startDragging: typeof A.startDragging,
+  +stopDragging: typeof A.stopDragging,
 |};
 
-type Props = ConnectedProps<OwnProps, StateProps, DispatchProps>;
+const mapStateToProps = (state: T.State): StateProps => ({
+  isNewProfileLoadAllowed: S.getIsNewProfileLoadAllowed(state),
+  useDefaultOverlay: !S.getIsDragAndDropOverlayRegistered(state),
+});
+
+const mapDispatchToProps: DispatchProps = {
+  retrieveProfileFromFile: A.retrieveProfileFromFile,
+  startDragging: A.startDragging,
+  stopDragging: A.stopDragging,
+};
+
+type Props = T.ConnectedProps<OwnProps, StateProps, DispatchProps>;
 
 /**
  * Creates a target area to drop files on. Any elements which should
@@ -139,33 +137,35 @@ class DragAndDropImpl extends React.PureComponent<Props> {
   }
 }
 
-export const DragAndDrop = explicitConnect<OwnProps, StateProps, DispatchProps>(
-  {
-    mapStateToProps: state => ({
-      isNewProfileLoadAllowed: getIsNewProfileLoadAllowed(state),
-      useDefaultOverlay: !getIsDragAndDropOverlayRegistered(state),
-    }),
-    mapDispatchToProps: {
-      retrieveProfileFromFile,
-      startDragging,
-      stopDragging,
-    },
-    component: DragAndDropImpl,
-  }
-);
+export const DragAndDrop = connect<
+  Props,
+  OwnProps,
+  StateProps,
+  DispatchProps,
+  T.State,
+  T.Dispatch
+>(
+  mapStateToProps,
+  mapDispatchToProps
+)(DragAndDropImpl);
 
 type OverlayOwnProps = {|
   +isDefault?: boolean,
 |};
-type OverlayStateProps = {|
-  +isDragging: boolean,
-  +isNewProfileLoadAllowed: boolean,
-|};
-type OverlayDispatchProps = {|
-  +registerDragAndDropOverlay: typeof registerDragAndDropOverlay,
-  +unregisterDragAndDropOverlay: typeof unregisterDragAndDropOverlay,
-|};
-type OverlayProps = ConnectedProps<
+
+const overlayMapStateToProps = state => ({
+  isDragging: S.getIsDragAndDropDragging(state),
+  isNewProfileLoadAllowed: S.getIsNewProfileLoadAllowed(state),
+});
+
+const overlayMapDispatchToProps = {
+  registerDragAndDropOverlay: A.registerDragAndDropOverlay,
+  unregisterDragAndDropOverlay: A.unregisterDragAndDropOverlay,
+};
+
+type OverlayStateProps = T.$ReturnType<typeof overlayMapStateToProps>;
+type OverlayDispatchProps = typeof overlayMapDispatchToProps;
+type OverlayProps = T.ConnectedProps<
   OverlayOwnProps,
   OverlayStateProps,
   OverlayDispatchProps
@@ -207,18 +207,14 @@ class DragAndDropOverlayImpl extends React.PureComponent<OverlayProps> {
   }
 }
 
-export const DragAndDropOverlay = explicitConnect<
+export const DragAndDropOverlay = connect<
+  OverlayProps,
   OverlayOwnProps,
   OverlayStateProps,
-  OverlayDispatchProps
->({
-  mapStateToProps: state => ({
-    isDragging: getIsDragAndDropDragging(state),
-    isNewProfileLoadAllowed: getIsNewProfileLoadAllowed(state),
-  }),
-  mapDispatchToProps: {
-    registerDragAndDropOverlay,
-    unregisterDragAndDropOverlay,
-  },
-  component: DragAndDropOverlayImpl,
-});
+  OverlayDispatchProps,
+  T.State,
+  T.Dispatch
+>(
+  overlayMapStateToProps,
+  overlayMapDispatchToProps
+)(DragAndDropOverlayImpl);

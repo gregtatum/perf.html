@@ -81,3 +81,20 @@ export type Dispatch = PlainDispatch & ThunkDispatch;
  * of all Actions, as well as specific Dispatch behavior.
  */
 export type Store = ReduxStore<State, Action, Dispatch>;
+
+/**
+ * Combines the various props for a react-redux connected component. Disable the
+ * flowtype/no-weak-types rule, as this is a false-positive.
+ */
+export type ConnectedProps<
+  // eslint-disable-next-line flowtype/no-weak-types
+  OwnProps: Object,
+  // eslint-disable-next-line flowtype/no-weak-types
+  StateProps: Object,
+  // eslint-disable-next-line flowtype/no-weak-types
+  DispatchProps: Object
+> = $ReadOnly<{|
+  ...OwnProps,
+  ...StateProps,
+  ...DispatchProps,
+|}>;

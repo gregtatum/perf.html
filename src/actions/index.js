@@ -3,19 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // @flow
-import * as app from './app';
-import * as icons from './icons';
-import * as profileView from './profile-view';
-import * as publish from './publish';
-import * as receiveProfile from './receive-profile';
-import * as zippedProfiles from './zipped-profiles';
-
-export default Object.assign(
-  {},
-  app,
-  icons,
-  profileView,
-  publish,
-  receiveProfile,
-  zippedProfiles
-);
+export * from './app';
+export * from './icons';
+export * from './profile-view';
+export * from './publish';
+export * from './receive-profile';
+export * from './zipped-profiles';
