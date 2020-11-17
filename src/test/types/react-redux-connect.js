@@ -4,7 +4,7 @@
 // @flow
 
 import * as React from 'react';
-import { connect } from 'react-redux';
+import { connect } from 'firefox-profiler/utils/connect';
 
 import type {
   State,
@@ -50,8 +50,6 @@ type ExampleThunkActionCreator = string => ThunkAction<number>;
 
 type DispatchProps = {|
   +dispatchString: ExampleActionCreator,
-  // TODO - Switch to TypeScript and use a coerceThunk strategy, and infer the
-  // DispatchProps.
   +dispatchThunk: ExampleThunkActionCreator,
 |};
 
@@ -67,39 +65,7 @@ class ExampleComponent extends React.PureComponent<Props> {
 
     // The action creators are properly wrapped by dispatch.
     (this.props.dispatchString: string => Action);
-
-    // DispatchThunk is currently broken, but can be properly fixed by inferring
-    // the type using a DeThunk strategy if and when we switch to TypeScript.
-    //
-    // ```js
-    //   const mapStateToProps = (state: State) => ({
-    //     foo: getFoo(state),
-    //     bar: getBar(state),
-    //   });
-
-    //   const mapDispatchToProps = {
-    //     // Fakes the transform:
-    //     //   () => (D, GS) => Return
-    //     //   () => Return
-    //     doThunkAction0: coerceThunk0(doThunkAction0),
-    //     // Fakes the transform:
-    //     //   (A) => (D, GS) => Return
-    //     //   (A) => Return
-    //     doThunkAction1: coerceThunk1(doThunkAction1),
-    //     // Fakes the transform:
-    //     //   (A, B) => (D, GS) => Return
-    //     //   (A, B) => Return
-    //     doThunkAction2: coerceThunk2(doThunkAction2),
-    //   };
-
-    //   type StateProps = ReturnType<typeof mapStateToProps>;
-    //   type DispatchProps = typeof mapDispatchToProps;
-    //   type Props = ConnectedProps<{}, StateProps, DispatchProps>;
-    // ```
-
-    // $FlowFixMe - See comment above
     (this.props.dispatchThunk: string => number);
-    // $FlowFixMe - See comment above
     (this.props.dispatchThunk('foo'): number);
 
     return null;
@@ -213,6 +179,11 @@ type DeThunk2Expected = (a: string, b: number) => number;
 }
 
 {
+  const props: OwnProps = {
+    ownPropString: 'string',
+    ownPropNumber: 0,
+  };
+
   // The connected component correctly takes OwnProps.
   <ConnectedExampleComponent ownPropString="string" ownPropNumber={0} />;
 }

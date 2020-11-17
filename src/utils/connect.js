@@ -12,13 +12,71 @@
 /* eslint-disable flowtype/no-existential-type */
 
 import * as React from 'react';
-import { connect } from 'react-redux';
+import { connect as reactReduxConnect } from 'react-redux';
 import type {
   Dispatch,
   State,
   ThunkAction,
   Action,
+  GetState,
 } from 'firefox-profiler/types';
+import { coerce } from './flow';
+
+type ActionCreatorBounds = (...args: any[]) => Action;
+type ThunkActionCreatorBounds = (...args: any[]) => ThunkAction<any>;
+
+/**
+ * Use this to extend a generic.
+ *
+ * For example:
+ *   type MyType<DispatchProps extends DispatchPropsBounds>
+ */
+export type DispatchPropsBounds = {
+  +[key: string]: ActionCreatorBounds | ThunkActionCreatorBounds,
+};
+
+type ExtractReturnType<A> = <R>(
+  (...args: A) => (GetState, Dispatch) => R
+) => (...arg: A) => mixed;
+
+/**
+ * Apply DeThunk to an object, like DispatchProps.
+ */
+export type DeThunkObj<DispatchProps: DispatchPropsBounds> = $ReadOnly<
+  $ObjMap<DispatchProps, ExtractReturnType<*>>
+>;
+
+export function connect<
+  OwnProps,
+  StateProps,
+  ThunkedDispatch: DispatchPropsBounds
+>(
+  mapStateToProps:
+    | ((state: State, ownProps: OwnProps) => StateProps)
+    | ((state: State) => StateProps),
+  mapDispatchToProps: ThunkedDispatch
+) {
+  return reactReduxConnect<OwnProps, StateProps, ThunkedDispatch>(
+    mapStateToProps,
+    mapDispatchToProps
+  );
+}
+
+// export function connect2<
+//   OwnProps,
+//   StateProps,
+//   ThunkedDispatch: DispatchPropsBounds
+// >(
+//   mapStateToProps:
+//     | ((state: State, ownProps: OwnProps) => StateProps)
+//     | ((state: State) => StateProps),
+//   mapDispatchToProps: ThunkedDispatch
+// ) {
+//   return reactReduxConnect<OwnProps, StateProps, ThunkedDispatch>(
+//     mapStateToProps,
+//     coerce<ThunkedDispatch, DeThunkObj<ThunkedDispatch>>(mapDispatchToProps)
+//   );
+// }
 
 type MapStateToProps<OwnProps: Object, StateProps: Object> = (
   state: State,
@@ -156,7 +214,7 @@ export default function explicitConnect<
   } = connectOptions;
 
   // Opt out of the flow-typed definition of react-redux's connect, and use our own.
-  return (connect: any)(
+  return (reactReduxConnect: any)(
     mapStateToProps,
     mapDispatchToProps,
     mergeProps,

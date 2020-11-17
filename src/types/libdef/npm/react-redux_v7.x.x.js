@@ -32,6 +32,7 @@ Decrypting the abbreviations:
   EFO = Extra factory options (used only in connectAdvanced)
 */
 
+import type { WrapDispatchProps } from 'firefox-profiler/utils/connect';
 import type { State, PlainDispatch, ConnectedProps } from 'firefox-profiler/types';
 
 declare module "react-redux" {
@@ -111,7 +112,7 @@ declare module "react-redux" {
     mapDispatchToProps: MapDispatchToPropsFn<PlainDispatch, OP, DP>,
     mergeProps?: null | void,
     options?: ?Options<State, OP, {||}, MergeOPDP<OP, DP>>,
-  ): Connector<ConnectedProps<OP, SP, DP>, OP, MergeOPDP<OP, DP>>;
+  ): Connector<ConnectedProps<OP, SP, DP>, OP, MergeOPDP<OP, WrapDispatchProps<DP>>>;
 
   // In this case DP is an object of action creators not yet bound to dispatch,
   // this difference is not important in the vanila redux,
@@ -121,7 +122,7 @@ declare module "react-redux" {
     mapDispatchToProps: DP,
     mergeProps?: null | void,
     options?: ?Options<State, OP, {||}, MergeOPDP<OP, DP>>,
-  ): Connector<ConnectedProps<OP, SP, DP>, OP, MergeOPDP<OP, $ObjMap<DP, Bind<PlainDispatch>>>>;
+  ): Connector<ConnectedProps<OP, SP, DP>, OP, MergeOPDP<OP, $ObjMap<WrapDispatchProps<DP>, Bind<PlainDispatch>>>>;
 
   declare export function connect<-OP, -SP, -DP>(
     // If you get error here try adding return type to your mapStateToProps function
@@ -129,7 +130,7 @@ declare module "react-redux" {
     mapDispatchToProps: MapDispatchToPropsFn<PlainDispatch, OP, DP>,
     mergeProps?: null | void,
     options?: ?Options<State, OP, SP, {| ...OP, ...SP, ...DP |}>,
-  ): Connector<ConnectedProps<OP, SP, DP>, OP, {| ...OP, ...SP, ...DP |}>;
+  ): Connector<ConnectedProps<OP, SP, DP>, OP, {| ...OP, ...SP, ...WrapDispatchProps<DP> |}>;
 
   declare export function connect<-OP, -SP, -DP>(
     // If you get error here try adding return type to your mapStateToProps function
@@ -137,7 +138,7 @@ declare module "react-redux" {
     mapDispatchToProps: DP,
     mergeProps?: null | void,
     options?: ?Options<State, OP, SP, MergeOPSPDP<OP, SP, DP>>,
-  ): Connector<ConnectedProps<OP, SP, DP>, OP, MergeOPSPDP<OP, SP, $ObjMap<DP, Bind<PlainDispatch>>>>;
+  ): Connector<ConnectedProps<OP, SP, DP>, OP, MergeOPSPDP<OP, SP, $ObjMap<WrapDispatchProps<DP>, Bind<PlainDispatch>>>>;
 
   // With `mergeProps` argument
 

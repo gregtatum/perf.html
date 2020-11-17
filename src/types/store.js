@@ -6,6 +6,7 @@
 import type { Store as ReduxStore } from 'redux';
 import type { Action as ActionsRef } from './actions';
 import type { State as StateRef } from './state';
+import type { WrapDispatchProps } from '../utils/connect';
 
 /**
  * This file contains type definitions for the Redux store. Unlike the definitions
@@ -82,6 +83,24 @@ export type Dispatch = PlainDispatch & ThunkDispatch;
  */
 export type Store = ReduxStore<State, Action, Dispatch>;
 
+declare type ActionCreatorBounds = (...args: any[]) => Action;
+declare type ThunkActionCreatorBounds = (...args: any[]) => ThunkAction<any>;
+declare type DispatchPropsBounds = {
+  +[key: string]: ActionCreatorBounds | ThunkActionCreatorBounds,
+};
+
+declare type DeThunk<A> = <R>(
+  (...args: A) => (GetState, Dispatch) => R
+) => (...arg: A) => R;
+
+/**
+ * Apply DeThunk to an object, like DispatchProps.
+ */
+declare type DeThunkObj<DispatchProps: DispatchPropsBounds> = $ReadOnly<
+  // eslint-disable-next-line flowtype/no-existential-type
+  $ObjMap<DispatchProps, DeThunk<*>>
+>;
+
 /**
  * Combines the various props for a react-redux connected component. Disable the
  * flowtype/no-weak-types rule, as this is a false-positive.
@@ -96,5 +115,5 @@ export type ConnectedProps<
 > = $ReadOnly<{|
   ...OwnProps,
   ...StateProps,
-  ...DispatchProps,
+  ...WrapDispatchProps<DispatchProps>,
 |}>;
