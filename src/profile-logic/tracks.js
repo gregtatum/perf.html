@@ -664,6 +664,7 @@ export function getLocalTrackName(
  * various rules to determine if a thread is idle.
  */
 function _isThreadIdle(profile: Profile, thread: Thread): boolean {
+  // Check for threads that we will never hide.
   if (
     // Don't hide the compositor.
     thread.name === 'Compositor' ||
@@ -679,12 +680,17 @@ function _isThreadIdle(profile: Profile, thread: Thread): boolean {
     // This is a profile without any sample (taken with no periodic sampling mode)
     // and we can't take a look at the samples to decide whether that thread is
     // active or not. So we are checking if we have a paint marker instead.
-    return _isThreadWithNoPaint(thread);
+    return !_isThreadWithPaint(thread);
   }
 
-  if (_isContentThreadWithNoPaint(thread)) {
+  if (thread.name === 'GeckoMain' && thread.processType === 'tab') {
+    // This is a content thread
+    if (_isThreadWithPaint(thread)) {
+      // Show any thread that has at least one paint.
+      return false;
+    }
     // If content thread doesn't have any paint markers, set it idle if the
-    // thread has at least 80% idle samples.
+    // thread has at least 20% active samples.
     return _isThreadMostlyFullOfIdleSamples(
       profile,
       thread,
@@ -702,43 +708,35 @@ function _isThreadIdle(profile: Profile, thread: Thread): boolean {
     return !_hasThreadAtLeastOneNonIdleSample(profile, thread);
   }
 
-  return _isThreadMostlyFullOfIdleSamples(profile, thread);
+  return _isThreadMostlyFullOfIdleSamples(
+    profile,
+    thread,
+    PERCENTAGE_ACTIVE_SAMPLES
+  );
 }
-
-function _isContentThreadWithNoPaint(thread: Thread): boolean {
-  if (thread.name === 'GeckoMain' && thread.processType === 'tab') {
-    return _isThreadWithNoPaint(thread);
-  }
-
-  return false;
-}
-
-// Returns true if the thread doesn't include any RefreshDriverTick. This
-// indicates they were not painted to, and most likely idle. This is just
-// a heuristic to help users.
-function _isThreadWithNoPaint({ markers, stringTable }: Thread): boolean {
-  let isPaintMarkerFound = false;
+/**
+ * This function searches for a RefreshDriverTick to determine if the thread
+ * painted or not. In general, this signals that the thread was doing some kinf
+ * of interesting work.
+ */
+function _isThreadWithPaint({ markers, stringTable }: Thread): boolean {
   if (stringTable.hasString('RefreshDriverTick')) {
     const paintStringIndex = stringTable.indexForString('RefreshDriverTick');
 
     for (let markerIndex = 0; markerIndex < markers.length; markerIndex++) {
       if (paintStringIndex === markers.name[markerIndex]) {
-        isPaintMarkerFound = true;
-        break;
+        return true;
       }
     }
-  }
-  if (!isPaintMarkerFound) {
-    return true;
   }
   return false;
 }
 
 // Any thread, except content thread with no RefreshDriverTick, with less than
-// 5% non-idle time will be hidden.
+// 5% active time will be hidden.
 const PERCENTAGE_ACTIVE_SAMPLES = 0.05;
 
-// Any content thread with no RefreshDriverTick with less than 20% non-idle
+// Any content thread with no RefreshDriverTick with less than 20% active
 // time will be hidden.
 const PERCENTAGE_ACTIVE_SAMPLES_NON_PAINT = 0.2;
 
@@ -749,7 +747,7 @@ const PERCENTAGE_ACTIVE_SAMPLES_NON_PAINT = 0.2;
 function _isThreadMostlyFullOfIdleSamples(
   profile: Profile,
   thread: Thread,
-  activeSamplePercentage: number = PERCENTAGE_ACTIVE_SAMPLES
+  activeSamplePercentage: number
 ): boolean {
   let maxActiveStackCount = activeSamplePercentage * thread.samples.length;
   let activeStackCount = 0;
