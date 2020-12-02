@@ -57,6 +57,12 @@ export type RightClickedMarker = {|
   +markerIndex: MarkerIndex,
 |};
 
+export type ProfileLoadingState =
+  | 'DOWNLOADING'
+  | 'LOADING-FILE'
+  | 'INJECTING'
+  | 'PROCESSING';
+
 /**
  * Full profile view state
  * They should not be used from the active tab view.
@@ -97,6 +103,7 @@ export type ProfileViewState = {
     rightClickedMarker: RightClickedMarker | null,
     mouseTimePosition: Milliseconds | null,
   |},
+  +loading: ProfileLoadingState,
   +profile: Profile | null,
   +full: FullProfileViewState,
   +activeTab: ActiveTabProfileViewState,

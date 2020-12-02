@@ -30,6 +30,7 @@ import type {
   IndexIntoFuncTable,
   ThreadsKey,
   Milliseconds,
+  ProfileLoadingState,
 } from 'firefox-profiler/types';
 import { objectMap } from '../utils/flow';
 
@@ -610,6 +611,22 @@ const originsTimeline: Reducer<OriginsTimeline> = (state = [], action) => {
 };
 
 /**
+ * The origins timeline is experimental. See the OriginsTimeline component
+ * for more information.
+ */
+const loading: Reducer<ProfileLoadingState> = (
+  state = 'DOWNLOADING',
+  action
+) => {
+  switch (action.type) {
+    case 'START_FETCHING_PROFILES':
+      return 'DOWNLOADING';
+    default:
+      return state;
+  }
+};
+
+/**
  * Provide a mechanism to wrap the reducer in a special function that can reset
  * the state to the default values. This is useful when viewing multiple profiles
  * (e.g. in zip files).
@@ -647,6 +664,7 @@ const profileViewReducer: Reducer<ProfileViewState> = wrapReducerInResetter(
       rightClickedMarker,
       mouseTimePosition,
     }),
+    loading,
     profile,
     full: combineReducers({
       globalTracks,
