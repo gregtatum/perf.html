@@ -15,6 +15,10 @@
  * implementation, and if the current stacks are inverted to refer to a node in the tree.
  * This combination of information will provide a stable reference to a call node for a
  * given view into a call tree.
+ *
+ * When creating transforms with just functions, they can generally be grouped into
+ * a Set<IndexIntoFuncTable> since these operations are commutative. This is because
+ * consecutive function operations don't rely on stable CallNodePaths.
  */
 import type { IndexIntoFuncTable, IndexIntoResourceTable } from './profile';
 import type { CallNodePath, ThreadsKey } from './profile-derived';
@@ -188,7 +192,7 @@ export type TransformDefinitions = {
    */
   'merge-function': {|
     +type: 'merge-function',
-    +funcIndex: IndexIntoFuncTable,
+    +funcIndexes: Set<IndexIntoFuncTable>,
   |},
 
   /**
@@ -208,7 +212,7 @@ export type TransformDefinitions = {
    */
   'drop-function': {|
     +type: 'drop-function',
-    +funcIndex: IndexIntoFuncTable,
+    +funcIndexes: Set<IndexIntoFuncTable>,
   |},
 
   /**
@@ -276,7 +280,7 @@ export type TransformDefinitions = {
    */
   'collapse-function-subtree': {|
     +type: 'collapse-function-subtree',
-    +funcIndex: IndexIntoFuncTable,
+    +funcIndexes: Set<IndexIntoFuncTable>,
   |},
 };
 

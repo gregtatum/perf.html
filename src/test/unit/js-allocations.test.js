@@ -113,7 +113,7 @@ describe('JS allocation call trees', function () {
     dispatch(
       addTransformToStack(0, {
         type: 'merge-function',
-        funcIndex: C,
+        funcIndexes: new Set([C]),
       })
     );
 

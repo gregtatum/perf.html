@@ -5,7 +5,7 @@
 // @flow
 import { combineReducers } from 'redux';
 import { oneLine } from 'common-tags';
-import { objectEntries } from '../utils/flow';
+import { objectEntries, assertExhaustiveCheck } from '../utils/flow';
 import { tabSlugs } from '../app-logic/tabs-handling';
 
 import type {
@@ -23,6 +23,8 @@ import type {
   TimelineTrackOrganization,
   SourceViewState,
   IsOpenPerPanelState,
+  Transform,
+  IndexIntoFuncTable,
 } from 'firefox-profiler/types';
 
 import type { TabSlug } from '../app-logic/tabs-handling';
@@ -187,16 +189,87 @@ const networkSearchString: Reducer<string> = (state = '', action) => {
   }
 };
 
-const transforms: Reducer<TransformStacksPerThread> = (state = {}, action) => {
+function getCollapsableFuncs(
+  transform: Transform
+): Set<IndexIntoFuncTable> | null {
+  switch (transform.type) {
+    case 'drop-function':
+    case 'collapse-function-subtree':
+    case 'merge-function': {
+      return transform.funcIndexes;
+    }
+    case 'focus-function':
+    case 'focus-subtree':
+    case 'merge-call-node':
+    case 'collapse-resource':
+    case 'collapse-direct-recursion':
+      return null;
+    default:
+      throw assertExhaustiveCheck(transform);
+  }
+}
+
+const transforms: Reducer<TransformStacksPerThread> = (
+  state = ({}: TransformStacksPerThread),
+  action
+) => {
   switch (action.type) {
     case 'PROFILE_LOADED':
       return action.transformStacks || state;
     case 'ADD_TRANSFORM_TO_STACK': {
       const { threadsKey, transform } = action;
-      const transforms = state[threadsKey] || [];
-      return Object.assign({}, state, {
-        [threadsKey]: [...transforms, transform],
-      });
+
+      const nextTransforms: Transform[] = state[threadsKey]?.slice() ?? [];
+      const lastTransform = nextTransforms[nextTransforms.length - 1];
+      const lastSet = getCollapsableFuncs(lastTransform);
+      const nextSet = getCollapsableFuncs(transform);
+      const { type } = transform;
+
+      if (
+        lastTransform?.type === transform.type &&
+        lastSet &&
+        nextSet &&
+        (type === 'drop-function' ||
+          type === 'collapse-function-subtree' ||
+          type === "merge-function':")
+      ) {
+        nextTransforms.pop();
+        switch (transform.type) {
+          case 'drop-function':
+            nextTransforms.push({
+              type: 'drop-function',
+              funcIndexes: new Set([...lastSet, ...nextSet]),
+            });
+            break;
+          case 'collapse-function-subtree':
+            nextTransforms.push({
+              type: 'collapse-function-subtree',
+              funcIndexes: new Set([...lastSet, ...nextSet]),
+            });
+            break;
+          case 'merge-function': {
+            nextTransforms.push({
+              type: 'merge-function',
+              funcIndexes: new Set([...lastSet, ...nextSet]),
+            });
+            break;
+          }
+          case 'focus-function':
+          case 'focus-subtree':
+          case 'merge-call-node':
+          case 'collapse-resource':
+          case 'collapse-direct-recursion':
+            throw new Error('Logic error.');
+          default:
+            throw assertExhaustiveCheck(transform);
+        }
+      } else {
+        nextTransforms.push(transform);
+      }
+      return {
+        ...state,
+        [threadsKey]: nextTransforms,
+      };
     }
     case 'POP_TRANSFORMS_FROM_STACK': {
       const { threadsKey, firstPoppedFilterIndex } = action;

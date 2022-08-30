@@ -83,7 +83,7 @@ describe('thread merging', function () {
     dispatch(
       addTransformToStack(0, {
         type: 'merge-function',
-        funcIndex: func.B,
+        funcIndexes: new Set([func.B]),
       })
     );
 
@@ -114,7 +114,7 @@ describe('thread merging', function () {
     dispatch(
       addTransformToStack(getSelectedThreadsKey(getState()), {
         type: 'merge-function',
-        funcIndex: func.C,
+        funcIndexes: new Set([func.C]),
       })
     );
 

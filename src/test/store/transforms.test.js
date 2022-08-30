@@ -478,7 +478,7 @@ describe('"merge-function" transform', function () {
       dispatch(
         addTransformToStack(threadIndex, {
           type: 'merge-function',
-          funcIndex: C,
+          funcIndexes: new Set([C]),
         })
       );
       const callTree = selectedThreadSelectors.getCallTree(getState());
@@ -527,7 +527,7 @@ describe('"drop-function" transform', function () {
       dispatch(
         addTransformToStack(threadIndex, {
           type: 'drop-function',
-          funcIndex: C,
+          funcIndexes: new Set([C]),
         })
       );
       const callTree = selectedThreadSelectors.getCallTree(getState());
@@ -845,7 +845,7 @@ describe('"collapse-function-subtree" transform', function () {
   const threadIndex = 0;
   const collapseTransform = {
     type: 'collapse-function-subtree',
-    funcIndex: funcNames.indexOf('C'),
+    funcIndexes: new Set([funcNames.indexOf('C')]),
   };
 
   it('starts as an unfiltered call tree', function () {
@@ -889,6 +889,7 @@ describe('"collapse-function-subtree" transform', function () {
         ['A', 'B', 'C', 'D', 'E'].map((name) => funcNames.indexOf(name))
       )
     );
+
     dispatch(addTransformToStack(threadIndex, collapseTransform));
     expect(selectedThreadSelectors.getSelectedCallNodePath(getState())).toEqual(
       ['A', 'B', 'C'].map((name) => funcNames.indexOf(name))

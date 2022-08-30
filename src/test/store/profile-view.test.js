@@ -1445,7 +1445,7 @@ describe('actions/ProfileView', function () {
         dispatch(
           ProfileView.addTransformToStack(0, {
             type: 'merge-function',
-            funcIndex: 1,
+            funcIndexes: new Set([1]),
           })
         );
         expect(self.ga).toBeCalledWith('send', {
@@ -1458,7 +1458,7 @@ describe('actions/ProfileView', function () {
       expect(UrlStateSelectors.getTransformStack(getState(), 0)).toEqual([
         {
           type: 'merge-function',
-          funcIndex: 1,
+          funcIndexes: new Set([1]),
         },
       ]);
     });
@@ -1476,30 +1476,30 @@ describe('actions/ProfileView', function () {
       dispatch(
         ProfileView.addTransformToStack(0, {
           type: 'merge-function',
-          funcIndex: 1,
+          funcIndexes: new Set([1]),
         })
       );
       dispatch(
         ProfileView.addTransformToStack(0, {
           type: 'merge-function',
-          funcIndex: 2,
+          funcIndexes: new Set([2]),
         })
       );
       expect(UrlStateSelectors.getTransformStack(getState(), 0)).toEqual([
         {
           type: 'merge-function',
-          funcIndex: 1,
+          funcIndexes: new Set([1]),
         },
         {
           type: 'merge-function',
-          funcIndex: 2,
+          funcIndexes: new Set([2]),
         },
       ]);
       dispatch(ProfileView.popTransformsFromStack(1));
       expect(UrlStateSelectors.getTransformStack(getState(), 0)).toEqual([
         {
           type: 'merge-function',
-          funcIndex: 1,
+          funcIndexes: new Set([1]),
         },
       ]);
     });
@@ -1646,7 +1646,7 @@ describe('snapshots of selectors/profile', function () {
     const { getState, dispatch } = storeWithProfile(profile);
     const mergeFunction = {
       type: 'merge-function',
-      funcIndex: C,
+      funcIndexes: new Set([C]),
     };
     dispatch(ProfileView.addTransformToStack(0, mergeFunction));
     dispatch(ProfileView.changeExpandedCallNodes(0, [[A], [A, B]]));

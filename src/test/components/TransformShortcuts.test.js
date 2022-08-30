@@ -72,7 +72,7 @@ function testTransformKeyboardShortcuts(setup: () => TestSetup) {
     const transform = getTransform();
     expect(transform).toEqual({
       type: 'merge-function',
-      funcIndex: expectedFuncIndex,
+      funcIndexes: new Set([expectedFuncIndex]),
     });
   });
 
@@ -81,7 +81,7 @@ function testTransformKeyboardShortcuts(setup: () => TestSetup) {
     pressKey({ key: 'd' });
     expect(getTransform()).toEqual({
       type: 'drop-function',
-      funcIndex: expectedFuncIndex,
+      funcIndexes: new Set([expectedFuncIndex]),
     });
   });
 
@@ -108,7 +108,7 @@ function testTransformKeyboardShortcuts(setup: () => TestSetup) {
     pressKey({ key: 'c' });
     expect(getTransform()).toEqual({
       type: 'collapse-function-subtree',
-      funcIndex: expectedFuncIndex,
+      funcIndexes: new Set([expectedFuncIndex]),
     });
   });
 

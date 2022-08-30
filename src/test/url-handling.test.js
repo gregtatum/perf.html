@@ -1375,7 +1375,7 @@ describe('URL serialization of the transform stack', function () {
       },
       {
         type: 'merge-function',
-        funcIndex: 6,
+        funcIndexes: new Set([6]),
       },
       {
         type: 'focus-function',
@@ -1394,11 +1394,11 @@ describe('URL serialization of the transform stack', function () {
       },
       {
         type: 'drop-function',
-        funcIndex: 11,
+        funcIndexes: new Set([11]),
       },
       {
         type: 'collapse-function-subtree',
-        funcIndex: 12,
+        funcIndexes: new Set([12]),
       },
     ]);
   });
@@ -1433,7 +1433,7 @@ describe('URL persistence of transform stacks for a combined thread (multi-threa
     dispatch(
       addTransformToStack(getThreadsKey(new Set([0, 2])), {
         type: 'drop-function',
-        funcIndex: 11,
+        funcIndexes: new Set([11]),
       })
     );
     return store;
@@ -1518,7 +1518,7 @@ describe('URL persistence of transform stacks for a combined thread (multi-threa
     expect(transformStack).toEqual([
       {
         type: 'drop-function',
-        funcIndex: 11,
+        funcIndex: new Set([11]),
       },
     ]);
   });

@@ -261,13 +261,13 @@ class CallNodeContextMenuImpl extends React.PureComponent<Props> {
       case 'merge-function':
         addTransformToStack(threadsKey, {
           type: 'merge-function',
-          funcIndex: selectedFunc,
+          funcIndexes: new Set([selectedFunc]),
         });
         break;
       case 'drop-function':
         addTransformToStack(threadsKey, {
           type: 'drop-function',
-          funcIndex: selectedFunc,
+          funcIndexes: new Set([selectedFunc]),
         });
         break;
       case 'collapse-resource': {
@@ -295,7 +295,7 @@ class CallNodeContextMenuImpl extends React.PureComponent<Props> {
       case 'collapse-function-subtree': {
         addTransformToStack(threadsKey, {
           type: 'collapse-function-subtree',
-          funcIndex: selectedFunc,
+          funcIndexes: new Set([selectedFunc]),
         });
         break;
       }

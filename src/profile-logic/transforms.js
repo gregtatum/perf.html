@@ -14,7 +14,12 @@ import {
   getMapStackUpdater,
 } from './profile-data';
 import { timeCode } from '../utils/time-code';
-import { assertExhaustiveCheck, convertToTransformType } from '../utils/flow';
+import {
+  ensureExists,
+  assertExhaustiveCheck,
+  convertToTransformType,
+  getFirstItemFromSet,
+} from '../utils/flow';
 import { CallTree } from '../profile-logic/call-tree';
 import {
   shallowCloneFrameTable,
@@ -111,7 +116,7 @@ export function parseTransforms(transformString: string): TransformStack {
   if (!transformString) {
     return [];
   }
-  const transforms = [];
+  const transforms: Transform[] = [];
 
   transformString.split('~').forEach((s) => {
     const tuple = s.split('-');
@@ -159,38 +164,46 @@ export function parseTransforms(transformString: string): TransformStack {
         });
         break;
       }
-      case 'merge-function':
-      case 'focus-function':
-      case 'drop-function':
-      case 'collapse-function-subtree': {
-        // e.g. "mf-325"
+      case 'focus-function': {
+        // e.g. "ff-325"
         const [, funcIndexRaw] = tuple;
         const funcIndex = parseInt(funcIndexRaw, 10);
         // Validate that the funcIndex makes sense.
         if (!isNaN(funcIndex) && funcIndex >= 0) {
+          transforms.push({
+            type: 'focus-function',
+            funcIndex,
+          });
+        }
+        break;
+      }
+      case 'merge-function':
+      case 'drop-function':
+      case 'collapse-function-subtree': {
+        // e.g. "mf-325"
+        const [, funcIndexesRaw] = tuple;
+        const funcIndexes = new Set(
+          decodeUintArrayFromUrlComponent(funcIndexesRaw)
+        );
+        // Validate that the funcIndex makes sense.
+        if (funcIndexes.size > 0) {
           switch (type) {
             case 'merge-function':
               transforms.push({
                 type: 'merge-function',
-                funcIndex,
-              });
-              break;
-            case 'focus-function':
-              transforms.push({
-                type: 'focus-function',
-                funcIndex,
+                funcIndexes,
               });
               break;
             case 'drop-function':
               transforms.push({
                 type: 'drop-function',
-                funcIndex,
+                funcIndexes,
               });
               break;
             case 'collapse-function-subtree':
               transforms.push({
                 type: 'collapse-function-subtree',
-                funcIndex,
+                funcIndexes,
               });
               break;
             default:
@@ -259,6 +272,9 @@ export function stringifyTransforms(transformStack: TransformStack): string {
         case 'merge-function':
         case 'drop-function':
         case 'collapse-function-subtree':
+          return `${shortKey}-${encodeUintArrayForUrlComponent([
+            ...transform.funcIndexes,
+          ])}`;
         case 'focus-function':
           return `${shortKey}-${transform.funcIndex}`;
         case 'collapse-resource':
@@ -313,24 +329,33 @@ export function getTransformLabelL10nIds(
     }
 
     // Lookup function name.
-    let funcIndex;
+    let funcIndex = null;
     switch (transform.type) {
       case 'focus-subtree':
       case 'merge-call-node':
         funcIndex = transform.callNodePath[transform.callNodePath.length - 1];
         break;
       case 'focus-function':
+        funcIndex = transform.funcIndex;
+        break;
       case 'merge-function':
       case 'drop-function':
-      case 'collapse-direct-recursion':
       case 'collapse-function-subtree':
+        if (transform.funcIndexes.size === 1) {
+          funcIndex = ensureExists(getFirstItemFromSet(transform.funcIndexes));
+        }
+        break;
+      case 'collapse-direct-recursion':
         funcIndex = transform.funcIndex;
         break;
       default:
         throw assertExhaustiveCheck(transform);
     }
-    const nameIndex = funcTable.name[funcIndex];
-    const funcName = getFunctionName(stringTable.getString(nameIndex));
+    const nameIndex = funcIndex === null ? null : funcTable.name[funcIndex];
+    const funcName =
+      nameIndex === null
+        ? ''
+        : getFunctionName(stringTable.getString(nameIndex));
 
     switch (transform.type) {
       case 'focus-subtree':
@@ -383,9 +408,9 @@ export function applyTransformToCallNodePath(
     case 'merge-call-node':
       return _mergeNodeInCallNodePath(transform.callNodePath, callNodePath);
     case 'merge-function':
-      return _mergeFunctionInCallNodePath(transform.funcIndex, callNodePath);
+      return _mergeFunctionInCallNodePath(transform.funcIndexes, callNodePath);
     case 'drop-function':
-      return _dropFunctionInCallNodePath(transform.funcIndex, callNodePath);
+      return _dropFunctionInCallNodePath(transform.funcIndexes, callNodePath);
     case 'collapse-resource':
       return _collapseResourceInCallNodePath(
         transform.resourceIndex,
@@ -400,7 +425,7 @@ export function applyTransformToCallNodePath(
       );
     case 'collapse-function-subtree':
       return _collapseFunctionSubtreeInCallNodePath(
-        transform.funcIndex,
+        transform.funcIndexes,
         callNodePath
       );
     default:
@@ -435,18 +460,23 @@ function _mergeNodeInCallNodePath(
 }
 
 function _mergeFunctionInCallNodePath(
-  funcIndex: IndexIntoFuncTable,
+  funcIndexes: Set<IndexIntoFuncTable>,
   callNodePath: CallNodePath
 ): CallNodePath {
-  return callNodePath.filter((nodeFunc) => nodeFunc !== funcIndex);
+  return callNodePath.filter((nodeFunc) => !funcIndexes.has(nodeFunc));
 }
 
 function _dropFunctionInCallNodePath(
-  funcIndex: IndexIntoFuncTable,
+  funcIndexes: Set<IndexIntoFuncTable>,
   callNodePath: CallNodePath
 ): CallNodePath {
-  // If the CallNodePath contains the function, return an empty path.
-  return callNodePath.includes(funcIndex) ? [] : callNodePath;
+  for (const funcIndex of funcIndexes) {
+    if (callNodePath.includes(funcIndex)) {
+      // If the CallNodePath contains the function, return an empty path.
+      return [];
+    }
+  }
+  return callNodePath;
 }
 
 function _collapseResourceInCallNodePath(
@@ -492,11 +522,21 @@ function _collapseDirectRecursionInCallNodePath(
 }
 
 function _collapseFunctionSubtreeInCallNodePath(
-  funcIndex: IndexIntoFuncTable,
+  funcIndexes: Set<IndexIntoFuncTable>,
   callNodePath: CallNodePath
 ) {
-  const index = callNodePath.indexOf(funcIndex);
-  return index === -1 ? callNodePath : callNodePath.slice(0, index + 1);
+  let minIndex = Infinity;
+  for (const funcIndex of funcIndexes) {
+    const index = callNodePath.indexOf(funcIndex);
+    if (index === -1) {
+      continue;
+    }
+    minIndex = Math.min(minIndex, index);
+  }
+  if (minIndex === Infinity) {
+    return callNodePath;
+  }
+  return callNodePath.slice(0, minIndex + 1);
 }
 
 function _callNodePathHasPrefixPath(
@@ -658,7 +698,7 @@ export function mergeCallNode(
  */
 export function mergeFunction(
   thread: Thread,
-  funcIndexToMerge: IndexIntoFuncTable
+  funcIndexesToMerge: Set<IndexIntoFuncTable>
 ): Thread {
   const { stackTable, frameTable } = thread;
   const oldStackToNewStack: Map<
@@ -677,7 +717,7 @@ export function mergeFunction(
     const subcategory = stackTable.subcategory[stackIndex];
     const funcIndex = frameTable.func[frameIndex];
 
-    if (funcIndex === funcIndexToMerge) {
+    if (funcIndexesToMerge.has(funcIndex)) {
       const newStackPrefix = oldStackToNewStack.get(prefix);
       oldStackToNewStack.set(
         stackIndex,
@@ -707,7 +747,7 @@ export function mergeFunction(
  */
 export function dropFunction(
   thread: Thread,
-  funcIndexToDrop: IndexIntoFuncTable
+  funcIndexesToDrop: Set<IndexIntoFuncTable>
 ) {
   const { stackTable, frameTable } = thread;
 
@@ -719,7 +759,7 @@ export function dropFunction(
     const funcIndex = frameTable.func[frameIndex];
     if (
       // This is the function we want to remove.
-      funcIndex === funcIndexToDrop ||
+      funcIndexesToDrop.has(funcIndex) ||
       // The parent of this stack contained the function.
       (prefix !== null && stackContainsFunc[prefix])
     ) {
@@ -1009,7 +1049,7 @@ const FUNC_MATCHES = {
 
 export function collapseFunctionSubtree(
   thread: Thread,
-  funcToCollapse: IndexIntoFuncTable,
+  funcsToCollapse: Set<IndexIntoFuncTable>,
   defaultCategory: IndexIntoCategoryList
 ): Thread {
   const { stackTable, frameTable } = thread;
@@ -1077,7 +1117,7 @@ export function collapseFunctionSubtree(
       // If this is the function to collapse, keep the stack, but note that its children
       // should be discarded.
       const funcIndex = frameTable.func[frameIndex];
-      if (funcToCollapse === funcIndex) {
+      if (funcsToCollapse.has(funcIndex)) {
         collapsedStacks.add(stackIndex);
       }
     }
@@ -1414,9 +1454,9 @@ export function applyTransform(
         transform.implementation
       );
     case 'merge-function':
-      return mergeFunction(thread, transform.funcIndex);
+      return mergeFunction(thread, transform.funcIndexes);
     case 'drop-function':
-      return dropFunction(thread, transform.funcIndex);
+      return dropFunction(thread, transform.funcIndexes);
     case 'focus-function':
       return focusFunction(thread, transform.funcIndex);
     case 'collapse-resource':
@@ -1435,7 +1475,7 @@ export function applyTransform(
     case 'collapse-function-subtree':
       return collapseFunctionSubtree(
         thread,
-        transform.funcIndex,
+        transform.funcIndexes,
         defaultCategory
       );
     default:

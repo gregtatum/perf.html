@@ -1719,7 +1719,7 @@ export function handleCallNodeTransformShortcut(
         dispatch(
           addTransformToStack(threadsKey, {
             type: 'focus-function',
-            funcIndex,
+            funcIndex: funcIndex,
           })
         );
         break;
@@ -1736,7 +1736,7 @@ export function handleCallNodeTransformShortcut(
         dispatch(
           addTransformToStack(threadsKey, {
             type: 'merge-function',
-            funcIndex,
+            funcIndexes: new Set([funcIndex]),
           })
         );
         break;
@@ -1744,7 +1744,7 @@ export function handleCallNodeTransformShortcut(
         dispatch(
           addTransformToStack(threadsKey, {
             type: 'drop-function',
-            funcIndex,
+            funcIndexes: new Set([funcIndex]),
           })
         );
         break;
@@ -1780,7 +1780,7 @@ export function handleCallNodeTransformShortcut(
         dispatch(
           addTransformToStack(threadsKey, {
             type: 'collapse-function-subtree',
-            funcIndex,
+            funcIndexes: new Set([funcIndex]),
           })
         );
         break;
