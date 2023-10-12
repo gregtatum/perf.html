@@ -16,6 +16,7 @@ import FirefoxPopupScreenshot from 'firefox-profiler-res/img/jpg/firefox-profile
 import {
   retrieveProfileFromFile,
   triggerLoadingFromUrl,
+  triggerLoadingFromTaskCluster
 } from 'firefox-profiler/actions/receive-profile';
 import type { BrowserConnection } from 'firefox-profiler/app-logic/browser-connection';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
@@ -206,6 +207,7 @@ type StateHomeProps = {|
 type DispatchHomeProps = {|
   +retrieveProfileFromFile: typeof retrieveProfileFromFile,
   +triggerLoadingFromUrl: typeof triggerLoadingFromUrl,
+  +triggerLoadingFromTaskCluster: typeof triggerLoadingFromTaskCluster,
 |};
 
 type HomeProps = ConnectedProps<
@@ -635,6 +637,6 @@ export const Home = explicitConnect<
   mapStateToProps: (state) => ({
     browserConnection: getBrowserConnection(state),
   }),
-  mapDispatchToProps: { retrieveProfileFromFile, triggerLoadingFromUrl },
+  mapDispatchToProps: { retrieveProfileFromFile, triggerLoadingFromUrl, triggerLoadingFromTaskCluster },
   component: HomeImpl,
 });

@@ -99,6 +99,13 @@ import type { LibSymbolicationRequest } from '../profile-logic/symbol-store';
  * client and getting it into the processed format.
  */
 
+export function triggerLoadingFromTaskCluster(taskGroup: string): Action {
+  return {
+    type: 'TRIGGER_LOADING_FROM_TASK_CLUSTER',
+    taskGroup
+  }
+}
+
 export function triggerLoadingFromUrl(profileUrl: string): Action {
   return {
     type: 'TRIGGER_LOADING_FROM_URL',

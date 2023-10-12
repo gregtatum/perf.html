@@ -436,7 +436,8 @@ type ReceiveProfileAction =
   | {| +type: 'WAITING_FOR_PROFILE_FROM_BROWSER' |}
   | {| +type: 'WAITING_FOR_PROFILE_FROM_STORE' |}
   | {| +type: 'WAITING_FOR_PROFILE_FROM_URL', +profileUrl: ?string |}
-  | {| +type: 'TRIGGER_LOADING_FROM_URL', +profileUrl: string |};
+  | {| +type: 'TRIGGER_LOADING_FROM_URL', +profileUrl: string |}
+  | {| +type: 'TRIGGER_LOADING_FROM_TASK_CLUSTER', +taskGroup: string |};
 
 type UrlEnhancerAction =
   | {| +type: 'START_FETCHING_PROFILES' |}
