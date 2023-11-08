@@ -37,7 +37,7 @@ declare class Window {
   persistTooltips?: boolean;
 
   // WebChannel events.
-  // https://searchfox.org/mozilla-central/source/toolkit/modules/WebChannel.jsm
+  // https://searchfox.org/mozilla-central/source/toolkit/modules/WebChannel.sys.mjs
   addEventListener: $PropertyType<EventTarget, 'addEventListener'> &
     ((
       'WebChannelMessageToContent',

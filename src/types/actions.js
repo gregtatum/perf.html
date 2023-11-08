@@ -55,6 +55,9 @@ export type DataSource =
   // This datasource is used to fetch a profile from Firefox via a frame script.
   // This is the first entry-point when a profile is captured in the browser.
   | 'from-browser'
+  // Addons can use a content script and the following call to inject a profile
+  // into the profiler: postMessage({ name: "inject-profile", profile: Profile })
+  | 'from-addon'
   // This is used for profiles that have been shared / uploaded to the Profiler
   // Server.
   | 'public'
@@ -396,6 +399,7 @@ type ReceiveProfileAction =
       +pathInZipFile: ?string,
       +implementationFilter: ?ImplementationFilter,
       +transformStacks: ?TransformStacksPerThread,
+      +dataSource: ?DataSource,
     |}
   | {|
       +type: 'VIEW_FULL_PROFILE',

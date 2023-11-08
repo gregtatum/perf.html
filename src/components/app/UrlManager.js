@@ -106,7 +106,8 @@ class UrlManagerImpl extends React.PureComponent<Props> {
     // will be done for all URLs.
     let browserConnectionStatus;
     const route = window.location.pathname.split('/').filter((s) => s)[0];
-    if (['from-browser', 'from-addon', 'from-file'].includes(route)) {
+    if (['from-browser', 'from-file'].includes(route)) {
+      // TODO - Should "from-addon" be here? I'm not sure what this is doing.
       updateBrowserConnectionStatus({ status: 'WAITING' });
       browserConnectionStatus = await createBrowserConnection('Firefox/123.0');
       updateBrowserConnectionStatus(browserConnectionStatus);
@@ -173,14 +174,15 @@ class UrlManagerImpl extends React.PureComponent<Props> {
     //     back).
     // But we want to accept the other interactions.
 
-    // 1. Do we move between "from-browser" and "public"?
+    // 1. Do we move between a transient data source and "public"?
+    const transientDataSources = ['from-browser', 'from-addon', 'unpublished']
     const movesBetweenFromBrowserAndPublic =
-      // from-browser -> public
-      (['from-browser', 'unpublished'].includes(previousUrlState.dataSource) &&
+      // transient -> public
+      (transientDataSources.includes(previousUrlState.dataSource) &&
         newUrlState.dataSource === 'public') ||
-      // or public -> from-browser
+      // or public -> transient
       (previousUrlState.dataSource === 'public' &&
-        ['from-browser', 'unpublished'].includes(newUrlState.dataSource));
+      transientDataSources.includes(newUrlState.dataSource));
 
     // 2. Do we move between 2 different hashes for a public profile
     const movesBetweenHashValues =

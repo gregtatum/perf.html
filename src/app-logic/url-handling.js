@@ -129,6 +129,7 @@ function getPathParts(urlState: UrlState): string[] {
     case 'uploaded-recordings':
       return ['uploaded-recordings'];
     case 'from-browser':
+    case 'from-addon':
     case 'unpublished':
     case 'from-file':
       return [dataSource, urlState.selectedTab];
@@ -274,6 +275,7 @@ export function getQueryStringFromUrlState(urlState: UrlState): string {
     case 'public':
     case 'local':
     case 'from-browser':
+    case 'from-addon':
     case 'unpublished':
     case 'from-file':
     case 'from-url':
@@ -494,6 +496,7 @@ export function ensureIsValidDataSource(
   switch (coercedDataSource) {
     case 'none':
     case 'from-browser':
+    case 'from-addon':
     case 'unpublished':
     case 'from-file':
     case 'local':
@@ -617,6 +620,7 @@ export function stateFromLocation(
   );
   const localTrackOrderChangedPids = new Set(localTrackOrderByPid.keys());
 
+  console.log(`!!! query.hiddenLocalTracksByPid`, query.hiddenLocalTracksByPid);
   return {
     dataSource,
     hash: hasProfileHash ? pathParts[1] : '',
@@ -828,16 +832,6 @@ export function upgradeLocationToCurrentVersion(
   processedLocation: ProcessedLocationBeforeUpgrade,
   profile?: Profile | null
 ): ProcessedLocation {
-  // Forward /from-addon to /from-browser immediately, outside of the versioning process.
-  // This ensures compatibility with Firefox versions < 93.
-  // It's possible we get 2 '/' characters if the user changes their base-url
-  // preference in about:config, so we should handle this case so that we don't
-  // get errors later in the loading process.
-  processedLocation.pathname = processedLocation.pathname.replace(
-    /^\/+from-addon/,
-    '/from-browser'
-  );
-
   const urlVersion = +processedLocation.query.v || 0;
   if (profile === null || urlVersion === CURRENT_URL_VERSION) {
     // Do not upgrade when either profile data is null or url is on the latest

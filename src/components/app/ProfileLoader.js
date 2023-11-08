@@ -61,6 +61,9 @@ class ProfileLoaderImpl extends PureComponent<Props> {
         retrieveProfileFromBrowser(browserConnectionStatus);
         break;
       }
+      case 'from-addon':
+        console.log(`!!! possibly move the listener here.`);
+        break;
       case 'from-file':
         // retrieveProfileFromFile should already have been called
         break;

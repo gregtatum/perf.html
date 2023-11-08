@@ -61,6 +61,7 @@ class WindowTitleImpl extends PureComponent<Props> {
       case 'local':
       case 'unpublished':
       case 'from-browser':
+      case 'from-addon':
       case 'from-file':
       case 'from-url':
         if (profileNameFromUrl) {

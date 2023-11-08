@@ -329,7 +329,7 @@ export function attemptToPublish(): ThunkAction<Promise<boolean>> {
       } else {
         const dataSource = getDataSource(prePublishedState);
         const isUnpublished =
-          dataSource === 'unpublished' || dataSource === 'from-browser';
+          dataSource === 'unpublished' || dataSource === 'from-browser' || dataSource === 'from-addon';
         dispatch(
           profilePublished(
             hash,

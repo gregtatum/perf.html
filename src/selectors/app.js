@@ -262,6 +262,7 @@ export const getTimelineHeight: Selector<null | CssPixels> = createSelector(
             continue;
           }
           for (const [trackIndex, localTrack] of localTracks.entries()) {
+            console.log(`!!! hiddenLocalTracksByPid.get(pid)`, hiddenLocalTracksByPid, pid);
             const hiddenLocalTracks = ensureExists(
               hiddenLocalTracksByPid.get(pid),
               'Could not look up the hidden local tracks from the given PID'

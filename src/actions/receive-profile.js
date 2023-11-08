@@ -81,6 +81,7 @@ import type {
   InnerWindowID,
   Pid,
   OriginsTimelineRoot,
+  DataSource,
 } from 'firefox-profiler/types';
 
 import type {
@@ -125,6 +126,7 @@ export function loadProfile(
     transformStacks: TransformStacksPerThread,
     browserConnection: BrowserConnection | null,
     skipSymbolication: boolean, // Please use this in tests only.
+    dataSource: DataSource,
   |}> = {},
   initialLoad: boolean = false
 ): ThunkAction<Promise<void>> {
@@ -154,6 +156,7 @@ export function loadProfile(
       pathInZipFile: config.pathInZipFile,
       implementationFilter: config.implementationFilter,
       transformStacks: config.transformStacks,
+      dataSource: config.dataSource,
     });
 
     // During initial load, we are upgrading the URL and generating the UrlState
@@ -712,6 +715,7 @@ export function viewProfile(
     transformStacks: TransformStacksPerThread,
     skipSymbolication: boolean,
     browserConnection: BrowserConnection | null,
+    dataSource: DataSource,
   |}> = {}
 ): ThunkAction<Promise<void>> {
   return async (dispatch) => {
@@ -1470,6 +1474,30 @@ export function retrieveProfileFromFile(
 }
 
 /**
+ * View a profile that was injected via a WebExtension "postMessage".
+ */
+export function viewProfileFromWebExt(
+  rawProfile: any,
+): ThunkAction<Promise<void>> {
+  return async (dispatch) => {
+
+    try {
+
+    const profile = await unserializeProfileOfArbitraryFormat(rawProfile);
+    if (profile === undefined) {
+      throw new Error('Unable to parse the profile.');
+    }
+
+    await withHistoryReplaceStateAsync(async () => {
+      await dispatch(viewProfile(profile));
+    });
+    } catch (error) {
+      dispatch(fatalError(error));
+    }
+  };
+}
+
+/**
  * This action retrieves several profiles and push them into 1 profile using the
  * information contained in the query.
  */
@@ -1567,14 +1595,7 @@ export function retrieveProfileForRawUrl(
 ): ThunkAction<Promise<Profile | null>> {
   return async (dispatch, getState) => {
     const pathParts = location.pathname.split('/').filter((d) => d);
-    let possibleDataSource = pathParts[0];
-
-    // Treat from-addon as from-browser, for compatibility with Firefox < 93.
-    if (possibleDataSource === 'from-addon') {
-      possibleDataSource = 'from-browser';
-    }
-
-    let dataSource = ensureIsValidDataSource(possibleDataSource);
+    let dataSource = ensureIsValidDataSource(pathParts[0]);
     if (dataSource === 'from-file') {
       // Redirect to 'none' if `dataSource` is 'from-file' since initial urls can't
       // be 'from-file' and needs to be redirected to home page.
@@ -1608,6 +1629,15 @@ export function retrieveProfileForRawUrl(
         if (Array.isArray(query.profiles)) {
           await dispatch(retrieveProfilesToCompare(query.profiles, true));
         }
+        break;
+      }
+      case 'from-addon': {
+        (window.addEventListener: any)("message", event => {
+          if (event.data?.name === "inject-profile" && event.data?.profile) {
+            // TODO - Data source doesn't like none.
+            dispatch(viewProfileFromWebExt(event.data?.profile))
+          }
+        });
         break;
       }
       case 'uploaded-recordings':

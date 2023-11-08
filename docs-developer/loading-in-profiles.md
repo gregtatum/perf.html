@@ -103,6 +103,12 @@ Note that if you have a copy of the project locally, you can add the profile pat
 
 Firefox loads the profiles directly into the front-end through a WebChannel mechanism. This is done with the profile menu button, which can be enabled on the homepage of [profiler.firefox.com](https://profiler.firefox.com/)
 
+### From an addon
+
+> `https://profiler.firefox.com/from-addon/`
+
+TODO
+
 ### File
 
 > `https://profiler.firefox.com/from-file/`
