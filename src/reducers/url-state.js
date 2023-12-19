@@ -99,6 +99,12 @@ const selectedTab: Reducer<TabSlug> = (state = 'calltree', action) => {
       return action.selectedTab;
     case 'FOCUS_CALL_TREE':
       return 'calltree';
+    // case 'CHANGE_SELECTED_MARKER':
+    //   if (action.context.source === 'pointer') {
+    //     return 'marker-table';
+    //   }
+    //   return state;
+    case 'VIEW_MARKER':
     default:
       return state;
   }

@@ -298,6 +298,7 @@ export class ChartCanvas<HoveredItem> extends React.Component<
   };
 
   _onDoubleClick = () => {
+    this._doubleClickTime = Date.now();
     this.props.onDoubleClickItem(this.state.hoveredItem);
   };
 
@@ -327,6 +328,10 @@ export class ChartCanvas<HoveredItem> extends React.Component<
     ) {
       this.setState({ hoveredItem: null });
     }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   componentDidUpdate(

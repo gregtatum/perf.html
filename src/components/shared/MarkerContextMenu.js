@@ -223,6 +223,10 @@ class MarkerContextMenuImpl extends PureComponent<Props> {
     copy(page.url);
   };
 
+  viewMarkerData = () => {
+    const { markerIndex } = this.props.markerIndex;
+  };
+
   selectOtherThreadForIPCMarkers = () => {
     const { marker, selectTrackFromTid } = this.props;
     if (!marker.data || marker.data.type !== 'IPC') {
@@ -505,6 +509,12 @@ class MarkerContextMenuImpl extends PureComponent<Props> {
           <span className="react-contextmenu-icon markerContextMenuIconCopyPayload" />
           <Localized id="MarkerContextMenu--copy-as-json">
             Copy as JSON
+          </Localized>
+        </MenuItem>
+        <MenuItem onClick={this.viewInMarkerTable}>
+          <span />
+          <Localized id="MarkerContextMenu--view-in-marker-table">
+            View in Marker Table
           </Localized>
         </MenuItem>
         {this.maybeRenderIPCMarkerMenuItem()}
